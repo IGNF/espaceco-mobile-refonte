@@ -1,0 +1,16 @@
+:root {
+  --color-primary: #0050a0;
+  --color-bg: #ffffff;
+  --radius-md: 8px;
+  --space-sm: 8px;
+  --space-md: 16px;
+
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--color-bg);
+}
