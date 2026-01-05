@@ -7,7 +7,8 @@ ENV/
 env.bak/
 venv.bak/
 
-node_modules/
+/node_modules
+firebase-debug.log
 
 # Fichier de config personnel
 config.ini
