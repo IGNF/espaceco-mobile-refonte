@@ -29,13 +29,74 @@ Lien vers la documentation pour les développeurs, à la fois pour maintenir le 
 
 ## L'arborescence du projet
 
-Exemple d'arborescence de projet :
+Espaceco est une application mobile IGN construite avec React 19, TypeScript et Capacitor 8. Le projet suit une **architecture en couches** avec des règles de dépendances strictes :
 
-* `.github/` : dossier contenant les modèles d'issues et github actions ;
-* `.vscode/` : dossier contenant une configuration vscode pour le projet;
-* `doc/` : dossier contenant des fichiers .md de documentation (ex: install.md) ;
-* `tests/`: scripts et explications pour lancer les tests ;
+### Racine du projet
+
+* `src/` : code source de l'application (voir détail ci-dessous)
+* `android/` : projet natif Android généré par Capacitor
+* `ios/` : projet natif iOS généré par Capacitor
+* `public/` : fichiers statiques servis par Vite
+* `docs/` : documentation du projet (conventions de commit, etc.)
+* `tests/` : scripts et explications pour lancer les tests
+* `package.json` : dépendances et scripts npm
+* `capacitor.config.ts` : configuration Capacitor
+* `vite.config.ts` : configuration du bundler Vite
+* `eslint.config.js` : configuration ESLint
 * `README.md` : ce fichier
+
+### Architecture du dossier `src/`
+
+L'application suit le pattern suivant :
+
+* **`app/`** : shell de l'application
+  * `App.tsx` : composant racine
+  * `providers/` : providers React (Auth, i18n, Query, Theme)
+  * `router/` : configuration du routage et guards d'authentification
+
+* **`domain/`** : logique métier pure (sans dépendances externes)
+  * `auth/` : modèles d'authentification
+  * `contribution/` : modèles de contributions géographiques
+  * `map/` : modèles cartographiques
+  * `user/` : modèles utilisateur
+  * Principe : cette couche ne dépend d'aucune autre couche
+
+* **`infra/`** : implémentations concrètes et adaptateurs
+  * `auth/` : API et stockage de session d'authentification
+  * `contribution/` : API, repository et queue de contributions
+  * `http/` : client HTTP et API IGN
+  * `map/openlayers/` : implémentation cartographique avec OpenLayers
+  * `persistence/` : stockage local (SQLite, Preferences, Settings)
+  * `sync/` : gestion de la synchronisation réseau
+  * Principe : implémente les ports définis dans `domain/`
+
+* **`platform/`** : wrappers des APIs natives Capacitor
+  * `app/` : lifecycle de l'application
+  * `device/` : APIs appareil (caméra, fichiers, géolocalisation, permissions, partage)
+  * Principe : abstraction des capacités natives sans logique métier
+
+* **`features/`** : modules fonctionnels (UI + orchestration)
+  * Chaque feature suit la structure : `pages/`, `components/`, `hooks/`, `state/`
+  * `auth/` : authentification et login
+  * `contribution/` : création et gestion des contributions
+  * `map/` : visualisation cartographique
+  * `onboarding/` : parcours d'introduction
+  * `settings/` : paramètres de l'application
+  * `welcome/` : écran d'accueil
+  * `about/` : à propos de l'application
+  * Principe : orchestre les couches domain/infra/platform
+
+* **`shared/`** : éléments transverses réutilisables
+  * `ui/` : composants UI génériques (Button, Loading, Sheet, Toast)
+  * `hooks/` : hooks React partagés
+  * `utils/` : utilitaires (date, assertions)
+
+* **`styles/`** : styles globaux et tokens de design
+  * `global.css` : styles CSS globaux
+
+* **`assets/`** : ressources statiques (images, icônes)
+
+* **`main.tsx`** : point d'entrée de l'application React
 
 ## Contacts du projets
 
