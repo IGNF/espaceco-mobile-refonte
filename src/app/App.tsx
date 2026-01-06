@@ -1,12 +1,11 @@
-import { I18nProvider } from "./providers/I18nProvider";
+import { RouterProvider } from 'react-router-dom';
+import { I18nProvider } from './providers/I18nProvider';
+import { router } from './router/routes';
 
 export function App() {
-	return (
-		<div id="app-root">
-			<I18nProvider>
-				{/* Providers + Router go here */}
-				<></>
-			</I18nProvider>
-		</div>
-	);
+  return (
+    <I18nProvider>
+      <RouterProvider router={router} />
+    </I18nProvider>
+  );
 }

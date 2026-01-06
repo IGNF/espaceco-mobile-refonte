@@ -5,6 +5,17 @@
     "description": "Voulez-vous participer à l'amélioration des données IGN ?<br />Signalez des évolutions ou des erreurs via cette<br />application et ensuite suivez le traitement de<br />votre signalement.<br />Vous pouvez également accéder à vos guichets et<br />faire évoluer vos bases de données métiers.",
     "cta": "Continuer"
   },
-  "auth": {
+  "login": {
+    "title": "Connexion",
+    "email": "Email",
+    "emailPlaceholder": "votre@email.com",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Votre mot de passe",
+    "submit": "Se connecter"
+  },
+  "home": {
+    "title": "Espace collaboratif",
+    "welcome": "Bienvenue sur l'application",
+    "logout": "Déconnexion"
   }
 }
