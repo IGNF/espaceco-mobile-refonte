@@ -1,8 +1,7 @@
 /*
   Retrieved from the cartes-ign-app project
-  We should create variables such as "primary", etc. from these variables
 */
-:root {
+/* :root {
   --light-grey: #E9ECEF;
   --grey-2: #DDE1E6;
   --grey: #B8BCC1;
@@ -20,16 +19,85 @@
   --event-main: #786af2;
   --event-dark: #2112a4;
   --event-light: #c6ccff66;
+} */
+
+/* 
+  Generated based on the previous variables
+  Via the Ionic theme generator: https://ionicframework.com/docs/theming/color-generator
+  And then edited to match all the palette colors
+ */
+:root {
+	--color-primary: #26A581;
+	--color-primary-rgb: 38,165,129;
+	--color-primary-contrast: #000000;
+	--color-primary-contrast-rgb: 0,0,0;
+	--color-primary-shade: #1C7B66;
+	--color-primary-tint: #3cae8e;
+  --color-primary-light: #E3F5EF;
+
+	--color-secondary: #786af2;
+	--color-secondary-rgb: 120,106,242;
+	--color-secondary-contrast: #000000;
+	--color-secondary-contrast-rgb: 0,0,0;
+	--color-secondary-shade: #2112a4;
+	--color-secondary-tint: #8679f3;
+  --color-secondary-light: #c6ccff66;
+
+	--color-tertiary: #6030ff;
+	--color-tertiary-rgb: 96,48,255;
+	--color-tertiary-contrast: #ffffff;
+	--color-tertiary-contrast-rgb: 255,255,255;
+	--color-tertiary-shade: #542ae0;
+	--color-tertiary-tint: #7045ff;
+
+	--color-success: #5CFF98;
+	--color-success-rgb: 92,255,152;
+	--color-success-contrast: #000000;
+	--color-success-contrast-rgb: 0,0,0;
+	--color-success-shade: #51e086;
+	--color-success-tint: #6cffa2;
+
+	--color-warning: #F18345;
+	--color-warning-rgb: 241,131,69;
+	--color-warning-contrast: #000000;
+	--color-warning-contrast-rgb: 0,0,0;
+	--color-warning-shade: #d4733d;
+	--color-warning-tint: #f28f58;
+  --color-warning-light: #FFEEE4;
+
+	--color-danger: #E86F4A;
+	--color-danger-rgb: 232,111,74;
+	--color-danger-contrast: #000000;
+	--color-danger-contrast-rgb: 0,0,0;
+	--color-danger-shade: #cc6241;
+	--color-danger-tint: #ea7d5c;
+
+	--color-light: #E9ECEF;
+	--color-light-rgb: 233,236,239;
+	--color-light-contrast: #000000;
+	--color-light-contrast-rgb: 0,0,0;
+	--color-light-shade: #cdd0d2;
+	--color-light-tint: #DDE1E6;
+  --color-light-light: #F4F6F8;
+
+	--color-medium: #788089;
+	--color-medium-rgb: 120,128,137;
+	--color-medium-contrast: #000000;
+	--color-medium-contrast-rgb: 0,0,0;
+	--color-medium-shade: #6A727A;
+	--color-medium-tint: #868d95;
+
+	--color-dark: #091625;
+	--color-dark-rgb: 9,22,37;
+	--color-dark-contrast: #ffffff;
+	--color-dark-contrast-rgb: 255,255,255;
+	--color-dark-shade: #081321;
+	--color-dark-tint: #222d3b;
+
 }
 
 
 :root {
-  --color-primary: #0050a0;
-  --color-bg: #ffffff;
-  --radius-md: 8px;
-  --space-sm: 8px;
-  --space-md: 16px;
-
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
 }
@@ -37,5 +105,4 @@
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--color-bg);
 }
