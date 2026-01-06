@@ -1,7 +1,7 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import { storageKey } from '@/shared/constants/storage';
 import { AuthContext } from './AuthContext';
-import type { User } from '@/domain/auth/models';
+import type { User } from '@/domain/user/models';
 
 const AUTH_STORAGE_KEY = storageKey('auth_user');
 

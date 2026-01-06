@@ -3,10 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { App } from './app/App'
 
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
+import { initAppLifecycleListener } from './platform/app/lifecycle';
 
 import './styles/global.css'
 
 defineCustomElements(window);
+initAppLifecycleListener();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

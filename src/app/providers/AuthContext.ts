@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { User } from '@/domain/auth/models';
+import type { User } from '@/domain/user/models';
 
 export interface AuthContextType {
   user: User | null;
