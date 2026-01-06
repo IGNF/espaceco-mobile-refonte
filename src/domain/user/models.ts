@@ -3,7 +3,7 @@
  * 
  * Have something maybe like:
  * 
- * export AppUser extends User {} // in case we need more property than what the module offers
+ * export EspaceCo_User extends User {} // in case we need more property than what the module offers
  */
 
 export interface User {
