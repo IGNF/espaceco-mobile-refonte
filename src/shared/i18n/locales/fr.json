@@ -6,12 +6,16 @@
     "cta": "Continuer"
   },
   "login": {
-    "title": "Connexion",
-    "email": "Email",
-    "emailPlaceholder": "votre@email.com",
+    "title": "Connectez-vous",
+    "subtitle": "à votre Espace collaboratif IGN",
+    "register": "Vous n'avez pas encore de compte ? Inscrivez-vous sur <a>Espace collaboratif</a> pour accéder à tous les fonctionnalités.",
+    "login": "Login",
+    "loginPlaceholder": "Nom d'utilisateur ou e-mail",
     "password": "Mot de passe",
     "passwordPlaceholder": "Votre mot de passe",
-    "submit": "Se connecter"
+    "forgotPassword": "Mot de passe oublié ?",
+    "submit": "Se connecter",
+    "continueWithoutAccount": "Continuer sans compte"
   },
   "home": {
     "title": "Espace collaboratif",

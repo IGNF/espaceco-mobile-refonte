@@ -1,3 +1,9 @@
+/* Classic styles for typography */
+.italic {
+  font-style: italic;
+}
+
+/* Titles */
 .title {
   font-size: 2.8rem;
   font-weight: 600;
@@ -7,7 +13,7 @@
 }
 
 .subtitle {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-style: italic;
   font-weight: 600;
   color: var(--color-dark);
@@ -15,11 +21,13 @@
   margin-top: 0;
 }
 
+/* Paragraphs */
 .paragraph {
   font-size: 1rem;
   line-height: 1.9;
 }
 
+/* Headings */
 .heading1 {
   font-size: 2rem;
   font-weight: 700;
@@ -34,13 +42,22 @@
   margin: 0;
 }
 
+/* Body */
 .body {
   font-size: 1rem;
   line-height: 1.6;
   color: var(--color-dark);
 }
 
+/* Captions */
 .caption {
   font-size: 0.875rem;
   color: var(--color-medium);
+}
+
+/* Links */
+a {
+  color: var(--color-primary);
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 0.5rem;
 }

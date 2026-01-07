@@ -24,8 +24,8 @@ export function WelcomePage() {
   }
 
   const handleContinue = () => {
-    // markAsSeen();
-    // navigate('/login');
+    markAsSeen();
+    navigate('/login');
   };
 
   return (
