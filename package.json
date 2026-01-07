@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ign/mobile-core": "git+ssh://git@github.com/IGNF/mobile-core.git#main",
+    "@ign/mobile-device": "git+ssh://git@github.com/IGNF/mobile-device.git#main",
     "@capacitor-community/keep-awake": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/app": "^8.0.0",
