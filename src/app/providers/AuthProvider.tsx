@@ -1,11 +1,11 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import { storageKey } from '@/shared/constants/storage';
 import { AuthContext } from './AuthContext';
-import type { User } from '@/domain/user/models';
+import type { AppUser } from '@/domain/user/models';
 
 const AUTH_STORAGE_KEY = storageKey('auth_user');
 
-function getStoredUser(): User | null {
+function getStoredUser(): AppUser | null {
   const stored = localStorage.getItem(AUTH_STORAGE_KEY);
   if (stored) {
     try {
@@ -27,15 +27,18 @@ interface AuthProviderProps {
  * @returns The AuthProvider component.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(getStoredUser);
+  const [user, setUser] = useState<AppUser | null>(getStoredUser);
 
   const login = useCallback(async (email: string, password: string) => {
     console.log('login', email, password);
     // TODO: Replace with actual API call
-    const mockUser: User = {
-      id: '1',
+    const mockUser: AppUser = {
+      id: 1,
       email,
-      name: 'John Doe',
+      firstName: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      communities: [],
     };
 
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
