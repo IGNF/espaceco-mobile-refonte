@@ -1,41 +1,48 @@
-import { useNavigate } from "react-router-dom";
-import { useFirstRun } from "../hooks/useFirstRun";
-import styles from "./WelcomePage.module.css";
-import { useTranslation } from "react-i18next";
-import { Trans } from "react-i18next";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useFirstRun } from '../hooks/useFirstRun';
+import { useTranslation } from 'react-i18next';
+import { Trans } from 'react-i18next';
+import { Button } from '@/shared/ui/Button';
+import typography from '@/shared/styles/typography.module.css';
+import styles from './WelcomePage.module.css';
+import welcomeIllustration from '../assets/welcome-illustration.svg';
 
 export function WelcomePage() {
-	const { t } = useTranslation();
-	const navigate = useNavigate();
-	const { isFirstRun, markAsSeen } = useFirstRun();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { isFirstRun, markAsSeen } = useFirstRun();
 
-	if (isFirstRun === null) {
-		return null; // or a loader
-	}
+  useEffect(() => {
+    if (isFirstRun === false) {
+      navigate('/login', { replace: true });
+    }
+  }, [isFirstRun, navigate]);
 
-	if (!isFirstRun) {
-		navigate("/login");
-		return null;
-	}
+  if (isFirstRun === null || isFirstRun === false) {
+    return null;
+  }
 
-	const handleContinue = () => {
-		markAsSeen();
-		navigate("/login");
-	};
+  const handleContinue = () => {
+    // markAsSeen();
+    // navigate('/login');
+  };
 
-	return (
-		<div className={styles.container}>
-			<div className={styles.content}>
-				<h1 className={styles.title}>{t("welcome.title")}</h1>
+  return (
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <img src={welcomeIllustration} alt="welcome illustration" className={styles.illustration} />
+        <h1 className={typography.title}>{t('welcome.title')}</h1>
+        <h2 className={typography.subtitle}>{t('welcome.subtitle')}</h2>
 
-				<p className={styles.description}>
-					<Trans i18nKey="welcome.description" components={{ br: <br /> }} />
-				</p>
+        <p className={typography.paragraph}>
+          <Trans i18nKey="welcome.description" components={{ br: <br /> }} />
+        </p>
 
-				<button className={styles.button} onClick={handleContinue}>
-					{t("welcome.cta")}
-				</button>
-			</div>
-		</div>
-	);
+        <Button onClick={handleContinue} fullWidth>
+          {t('welcome.cta')}
+        </Button>
+      </div>
+    </div>
+  );
 }

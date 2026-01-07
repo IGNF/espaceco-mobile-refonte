@@ -1,0 +1,14 @@
+.container {
+  padding: 25px;
+}
+
+.content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.illustration {
+  width: 100%;
+  height: auto;
+  margin-bottom: 20px;
+}

@@ -1,0 +1,40 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-light-light);
+}
+
+.header {
+  padding: 1rem;
+  padding-top: calc(var(--safe-top, 0px) + 1rem);
+  background-color: var(--color-primary);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary-contrast);
+  margin: 0;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.welcome {
+  font-size: 1.125rem;
+  color: var(--color-dark);
+  text-align: center;
+}
+
+.footer {
+  padding: 1rem;
+  padding-bottom: calc(var(--safe-bottom, 0px) + 1rem);
+  display: flex;
+  justify-content: center;
+}
