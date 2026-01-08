@@ -4,6 +4,8 @@ import { useFirstRun } from '../hooks/useFirstRun';
 import { useTranslation } from 'react-i18next';
 import { Trans } from 'react-i18next';
 import { Button } from '@/shared/ui/Button';
+
+import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './WelcomePage.module.css';
 import welcomeIllustration from '../assets/welcome-illustration.svg';
@@ -29,7 +31,7 @@ export function WelcomePage() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container + ' ' + screen.screenContainer}>
       <div className={styles.content}>
         <img src={welcomeIllustration} alt="welcome illustration" className={styles.illustration} />
         <h1 className={typography.title}>{t('welcome.title')}</h1>
