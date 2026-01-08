@@ -61,3 +61,10 @@ a {
   text-decoration-thickness: 2.5px;
   text-underline-offset: 0.5rem;
 }
+
+/* Error text */
+.error {
+  color: var(--color-danger);
+  text-align: center;
+  font-size: 0.9rem;
+}

@@ -17,6 +17,7 @@ export function LoginPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
@@ -31,22 +32,24 @@ export function LoginPage() {
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setError(null);
 		setIsLoading(true);
 		// Simulate API call delay
 		await new Promise((resolve) => setTimeout(resolve, 2000));
 		const loginResponse = await login(email, password);
 		setIsLoading(false);
 		if (!loginResponse.success) {
-			// show error to user
+			setError(loginResponse.error ?? t("login.error"));
 		}
 	};
 
 	const handleContinueWithoutAccount = async () => {
+		setError(null);
 		setIsLoading(true);
 		const anonymousConnectionResponse = await continueWithoutAccount();
 		setIsLoading(false);
 		if (!anonymousConnectionResponse.success) {
-			// show error to user
+			setError(anonymousConnectionResponse.error ?? t("login.error"));
 		}
 	};
 
@@ -108,6 +111,8 @@ export function LoginPage() {
 							{t("login.forgotPassword")}
 						</ExternalLink>
 					</div>
+
+					{error && <p className={typography.error}>{error}</p>}
 
 					<Button
 						type="submit"
