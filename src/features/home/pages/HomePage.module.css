@@ -59,8 +59,28 @@
 
 /* Dev logout button */
 .logoutButton {
+	margin: 0.5rem auto;
+}
+
+/* Geolocation floating button */
+.geolocationButton {
 	position: absolute;
-	bottom: 80px;
+	bottom: 90px;
 	right: 1rem;
 	z-index: 100;
+	width: 48px;
+	height: 48px;
+	background-color: var(--color-dark-contrast);
+	border: none;
+	border-radius: 100px;
+	box-shadow: 0px 0px 8px 0px #00000029;
+}
+
+.geolocationIcon {
+	width: 24px;
+	height: 24px;
+}
+
+.geolocationIcon path {
+	fill: var(--color-dark);
 }

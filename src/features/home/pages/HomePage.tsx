@@ -7,6 +7,7 @@ import styles from "./HomePage.module.css";
 
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
+import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 
 
 export function HomePage() {
@@ -33,6 +34,11 @@ export function HomePage() {
 		navigate("/login");
 	};
 
+	const centerMap = () => {
+		// TODO: Center map on user's position
+		console.log("Center map on user position");
+	};
+
 	return (
 		<div className={styles.container}>
 			<header className={styles.header}>
@@ -53,10 +59,6 @@ export function HomePage() {
 				</button>
 			</header>
 
-			<main className={styles.main}>
-				{/* OpenLayers map will be rendered here */}
-			</main>
-
 			<Button
 				className={styles.logoutButton}
 				color="danger"
@@ -65,6 +67,17 @@ export function HomePage() {
 			>
 				{t("home.logout")}
 			</Button>
+
+			<main className={styles.main}>
+			</main>
+
+			<button
+				className={styles.geolocationButton}
+				onClick={centerMap}
+				aria-label="Center on my position"
+			>
+				<IconGeolocation className={styles.geolocationIcon} />
+			</button>
 
 			<BottomTabbar onTabClick={handleTabClick} />
 		</div>
