@@ -3,6 +3,7 @@ import { WelcomePage } from '@/features/welcome/pages/WelcomePage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { HomePage } from '@/features/home/pages/HomePage';
 import { AuthGuard } from './AuthGuard';
+import { CommunitySelectionPage } from '@/features/community/pages/CommunitySelectionPage';
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
         path: '/home',
         element: <HomePage />,
       },
+      {
+        path: '/community-selection',
+        element: <CommunitySelectionPage />,
+      }
     ],
   },
 ]);

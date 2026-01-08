@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
 
+import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
 import inputs from "@/shared/styles/inputs.module.css";
 import styles from "./LoginPage.module.css";
@@ -12,14 +13,15 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { login, isAuthenticated } = useAuth();
+	const { login, continueWithoutAccount, isAuthenticated } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
+		console.log("isAuthenticated", isAuthenticated);
 		if (isAuthenticated) {
-			navigate("/home", { replace: true });
+			navigate("/community-selection", { replace: true });
 		}
 	}, [isAuthenticated, navigate]);
 
@@ -32,18 +34,24 @@ export function LoginPage() {
 		setIsLoading(true);
 		// Simulate API call delay
 		await new Promise((resolve) => setTimeout(resolve, 2000));
-		await login(email, password);
+		const loginResponse = await login(email, password);
 		setIsLoading(false);
-		navigate("/home");
+		if (!loginResponse.success) {
+			// show error to user
+		}
 	};
 
-	const continueWithoutAccount = () => {
-		// add some anonymous flag here?
-		navigate("/home");
+	const handleContinueWithoutAccount = async () => {
+		setIsLoading(true);
+		const anonymousConnectionResponse = await continueWithoutAccount();
+		setIsLoading(false);
+		if (!anonymousConnectionResponse.success) {
+			// show error to user
+		}
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={styles.container + " " + screen.screenContainer}>
 			<div className={styles.content}>
 				<h1 className={typography.title}>{t("login.title")}</h1>
 				<h2 className={typography.subtitle}>{t("login.subtitle")}</h2>
@@ -101,14 +109,18 @@ export function LoginPage() {
 						</ExternalLink>
 					</div>
 
-					<Button type="submit" className={styles.submitButton} loading={isLoading}>
+					<Button
+						type="submit"
+						className={styles.submitButton}
+						loading={isLoading}
+					>
 						{t("login.submit")}
 					</Button>
 					<Button
 						className={styles.continueWithoutAccountButton}
 						type="button"
 						variant="outline"
-						onClick={continueWithoutAccount}
+						onClick={handleContinueWithoutAccount}
 						disabled={isLoading}
 					>
 						{t("login.continueWithoutAccount")}

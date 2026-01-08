@@ -1,24 +1,24 @@
-import { useState, useCallback, type ReactNode } from 'react';
-import { storageKey } from '@/shared/constants/storage';
-import { AuthContext } from './AuthContext';
-import type { AppUser } from '@/domain/user/models';
+import { useState, useCallback, type ReactNode } from "react";
+import { storageKey } from "@/shared/constants/storage";
+import { AuthContext } from "./AuthContext";
+import type { AppUser } from "@/domain/user/models";
 
-const AUTH_STORAGE_KEY = storageKey('auth_user');
+const AUTH_STORAGE_KEY = storageKey("auth_user");
 
 function getStoredUser(): AppUser | null {
-  const stored = localStorage.getItem(AUTH_STORAGE_KEY);
-  if (stored) {
-    try {
-      return JSON.parse(stored);
-    } catch {
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-    }
-  }
-  return null;
+	const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+	if (stored) {
+		try {
+			return JSON.parse(stored);
+		} catch {
+			localStorage.removeItem(AUTH_STORAGE_KEY);
+		}
+	}
+	return null;
 }
 
 interface AuthProviderProps {
-  children: ReactNode;
+	children: ReactNode;
 }
 
 /**
@@ -27,41 +27,68 @@ interface AuthProviderProps {
  * @returns The AuthProvider component.
  */
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AppUser | null>(getStoredUser);
+	const [user, setUser] = useState<AppUser | null>(getStoredUser);
 
-  const login = useCallback(async (email: string, password: string) => {
-    console.log('login', email, password);
-    // TODO: Replace with actual API call
-    const mockUser: AppUser = {
-      id: 1,
-      email,
-      firstName: 'John',
-      lastName: 'Doe',
-      username: 'johndoe',
-      communities: [],
-    };
+	const login = useCallback(async (email: string, password: string) => {
+		console.log("login", email, password);
 
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
-    setUser(mockUser);
-  }, []);
+		try {
+			// TODO: Replace with actual API call
+			const mockUser: AppUser = {
+				id: 1,
+				email,
+				firstName: "John",
+				lastName: "Doe",
+				username: "johndoe",
+				communities: [],
+			};
 
-  const logout = useCallback(() => {
-    localStorage.removeItem(AUTH_STORAGE_KEY);
-    // call API to logout here
-    setUser(null);
-  }, []);
+			localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+			setUser(mockUser);
+			return { success: true, user: mockUser };
+		} catch (error) {
+			return { success: false, user: null, error: error as Error };
+		}
+	}, []);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        isLoading: false,
-        login,
-        logout,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+	const continueWithoutAccount = useCallback(async () => {
+		try {
+			const mockUser: AppUser = {
+				id: 1,
+				email: "",
+				firstName: "",
+				lastName: "",
+				username: "",
+				isAnonymous: true, // added anonymous flag to the user
+				communities: [],
+			};
+
+			localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(mockUser));
+			setUser(mockUser);
+			return { success: true, user: mockUser };
+		} catch (error) {
+			return { success: false, user: null, error: error as Error };
+		}
+	}, []);
+
+	const logout = useCallback(() => {
+		localStorage.removeItem(AUTH_STORAGE_KEY);
+		// call API to logout here
+		setUser(null);
+	}, []);
+
+	return (
+		<AuthContext.Provider
+			value={{
+				user,
+				isAuthenticated: !!user,
+				isLoading: false,
+				login,
+				logout,
+				continueWithoutAccount,
+			}}
+		>
+			{children}
+		</AuthContext.Provider>
+	);
 }
