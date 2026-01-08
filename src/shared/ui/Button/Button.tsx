@@ -19,6 +19,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   color?: ButtonColor;
   variant?: ButtonVariant;
   fullWidth?: boolean;
+  loading?: boolean;
 }
 
 export function Button({
@@ -26,6 +27,7 @@ export function Button({
   color = 'primary',
   variant = 'solid',
   fullWidth = false,
+  loading = false,
   className,
   disabled,
   ...rest
@@ -41,8 +43,8 @@ export function Button({
     .join(' ');
 
   return (
-    <button className={classNames} disabled={disabled} {...rest}>
-      {children}
+    <button className={classNames} disabled={disabled || loading} {...rest}>
+      {loading ? <span className={styles.loading} /> : children}
     </button>
   );
 }

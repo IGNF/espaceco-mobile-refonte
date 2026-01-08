@@ -15,6 +15,7 @@ export function LoginPage() {
 	const { login, isAuthenticated } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [isLoading, setIsLoading] = useState(false);
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -28,7 +29,11 @@ export function LoginPage() {
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setIsLoading(true);
+		// Simulate API call delay
+		await new Promise((resolve) => setTimeout(resolve, 2000));
 		await login(email, password);
+		setIsLoading(false);
 		navigate("/home");
 	};
 
@@ -96,7 +101,7 @@ export function LoginPage() {
 						</ExternalLink>
 					</div>
 
-					<Button type="submit" className={styles.submitButton}>
+					<Button type="submit" className={styles.submitButton} loading={isLoading}>
 						{t("login.submit")}
 					</Button>
 					<Button
@@ -104,6 +109,7 @@ export function LoginPage() {
 						type="button"
 						variant="outline"
 						onClick={continueWithoutAccount}
+						disabled={isLoading}
 					>
 						{t("login.continueWithoutAccount")}
 					</Button>
