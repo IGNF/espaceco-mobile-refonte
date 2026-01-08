@@ -3,7 +3,7 @@ import { WelcomePage } from '@/features/welcome/pages/WelcomePage';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { HomePage } from '@/features/home/pages/HomePage';
 import { AuthGuard } from './AuthGuard';
-import { CommunitySelectionPage } from '@/features/community/pages/CommunitySelectionPage';
+import { CommunityFirstSelectionPage } from '@/features/community/pages/CommunityFirstSelection/CommunityFirstSelectionPage';
 
 export const router = createBrowserRouter([
   {
@@ -28,7 +28,7 @@ export const router = createBrowserRouter([
       },
       {
         path: '/community-selection',
-        element: <CommunitySelectionPage />,
+        element: <CommunityFirstSelectionPage />,
       }
     ],
   },
