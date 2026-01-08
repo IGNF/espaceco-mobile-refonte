@@ -1,40 +1,66 @@
 .container {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-light-light);
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--color-light-light);
 }
 
+/* Header */
 .header {
-  padding: 1rem;
-  padding-top: calc(var(--safe-top, 0px) + 1rem);
-  background-color: var(--color-primary);
+  background-color: var(--color-dark-contrast);
+	display: flex;
+	align-items: stretch;
+	padding-top: var(--safe-top, 0px);
+}
+
+.burgerButton {
+	background-color: var(--color-primary);
+	border: none;
+	cursor: pointer;
+	padding: 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.searchButton {
+	background-color: var(--color-dark-contrast);
+	border: none;
+	cursor: pointer;
+	padding: 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.burgerIcon {
+	width: 24px;
+	height: 24px;
+}
+
+.burgerIcon path {
+	fill: var(--color-primary-contrast);
 }
 
 .title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--color-primary-contrast);
-  margin: 0;
+	flex: 1;
+	text-align: center;
+  align-self:center;
+	font-size: 1.25rem;
+	font-weight: 500;
+	color: var(--color-dark);
 }
 
+/* Main content (map area) */
 .main {
-  flex: 1;
-  padding: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+	flex: 1;
+	position: relative;
 }
 
-.welcome {
-  font-size: 1.125rem;
-  color: var(--color-dark);
-  text-align: center;
-}
-
-.footer {
-  padding: 1rem;
-  padding-bottom: calc(var(--safe-bottom, 0px) + 1rem);
-  display: flex;
-  justify-content: center;
+/* Dev logout button */
+.logoutButton {
+	position: absolute;
+	bottom: 80px;
+	right: 1rem;
+	z-index: 100;
 }

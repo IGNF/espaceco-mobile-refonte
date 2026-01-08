@@ -1,0 +1,35 @@
+.tabbar {
+	display: flex;
+	background-color: var(--color-light);
+	border-top: 1px solid var(--color-light-shade);
+	padding-bottom: var(--safe-bottom, 0px);
+}
+
+.tab {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.25rem;
+	padding: 0.75rem 0.5rem;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-weight: 500;
+	transition: color 0.2s;
+}
+
+.tab:hover,
+.tab:focus {
+	color: var(--color-primary);
+}
+
+.tabIcon {
+	width: 32px;
+	height: 32px;
+}
+
+.tabIcon path {
+	fill: currentColor;
+}

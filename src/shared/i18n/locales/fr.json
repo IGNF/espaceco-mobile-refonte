@@ -26,6 +26,11 @@
 	"home": {
 		"title": "Espace collaboratif",
 		"welcome": "Bienvenue sur l'application",
-		"logout": "Déconnexion"
+		"logout": "Déconnexion",
+		"tabs": {
+			"signalement": "Signalement",
+			"guichet": "Guichet",
+			"couches": "Couches"
+		}
 	}
 }
