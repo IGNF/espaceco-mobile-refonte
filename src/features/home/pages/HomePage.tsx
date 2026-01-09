@@ -1,5 +1,14 @@
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import Map from "ol/Map";
+import View from "ol/View";
+import { defaults as defaultControls } from "ol/control";
+import ScaleLine from "ol/control/ScaleLine";
+import TileLayer from "ol/layer/Tile";
+import OSM from "ol/source/OSM";
+import { fromLonLat } from "ol/proj";
+import "ol/ol.css";
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
@@ -8,12 +17,20 @@ import styles from "./HomePage.module.css";
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
+import {
+	DEFAULT_MAP_CENTER_LON_LAT,
+	DEFAULT_MAP_FOCUS_ZOOM,
+	DEFAULT_MAP_SHOW_SCALELINE,
+	DEFAULT_MAP_ZOOM,
+} from "@/shared/constants/map";
 
 
 export function HomePage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { logout } = useAuth();
+	const mapElementRef = useRef<HTMLDivElement | null>(null);
+	const mapRef = useRef<Map | null>(null);
 
 	const handleBurgerClick = () => {
 		// TODO: Open side menu
@@ -35,9 +52,41 @@ export function HomePage() {
 	};
 
 	const centerMap = () => {
-		// TODO: Center map on user's position
-		console.log("Center map on user position");
+		const map = mapRef.current;
+		if (!map) {
+			return;
+		}
+
+		map.getView().setCenter(fromLonLat(DEFAULT_MAP_CENTER_LON_LAT));
+		map.getView().setZoom(DEFAULT_MAP_FOCUS_ZOOM);
 	};
+
+	useEffect(() => {
+		if (!mapElementRef.current || mapRef.current) {
+			return;
+		}
+
+		mapRef.current = new Map({
+			target: mapElementRef.current,
+			layers: [
+				new TileLayer({
+					source: new OSM(),
+				}),
+			],
+			controls: defaultControls({ zoom: false }).extend(
+				DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []
+			),
+			view: new View({
+				center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
+				zoom: DEFAULT_MAP_ZOOM,
+			}),
+		});
+
+		return () => {
+			mapRef.current?.setTarget(undefined);
+			mapRef.current = null;
+		};
+	}, []);
 
 	return (
 		<div className={styles.container}>
@@ -69,7 +118,12 @@ export function HomePage() {
 			</Button>
 
 			<main className={styles.main}>
+				<div className={styles.map} ref={mapElementRef} />
 			</main>
+
+      <p className={styles.copyright}>
+        {t("home.copyright")}
+      </p>
 
 			<button
 				className={styles.geolocationButton}

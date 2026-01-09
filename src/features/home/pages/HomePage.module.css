@@ -53,13 +53,34 @@
 
 /* Main content (map area) */
 .main {
-	flex: 1;
+	flex: 1 1 auto;
 	position: relative;
+	display: flex;
+	min-height: 0;
 }
 
-/* Dev logout button */
-.logoutButton {
+/* Map area */
+.map {
+	flex: 1;
+	min-height: 0;
+}
+
+.map :global(.ol-scale-line) {
+	bottom: 38px;
+}
+
+/* Copyright floating text */
+.copyright {
+  position: absolute;
+	font-size: 0.55rem;
+  padding: 0.25rem;
+  bottom: 78px;
+	left: 0.5rem;
+	color: var(--color-medium);
+	background: var(--color-dark-contrast);
+	text-align: center;
 	margin: 0.5rem auto;
+  border-radius: 0.25rem;
 }
 
 /* Geolocation floating button */
@@ -77,10 +98,16 @@
 }
 
 .geolocationIcon {
-	width: 24px;
-	height: 24px;
+	width: 30px;
+	height: 30px;
 }
 
 .geolocationIcon path {
 	fill: var(--color-dark);
+}
+
+
+/* Dev logout button - To remove once the logout feature is implemented */
+.logoutButton {
+	margin: 0.5rem auto;
 }
