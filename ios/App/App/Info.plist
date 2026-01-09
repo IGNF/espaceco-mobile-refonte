@@ -45,5 +45,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+  <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+  <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
+  <key>NSLocationWhenInUseUsageDescription</key>
+  <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
 </dict>
 </plist>
