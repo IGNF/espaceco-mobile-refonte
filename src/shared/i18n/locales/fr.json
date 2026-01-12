@@ -25,6 +25,7 @@
 	},
 	"home": {
 		"title": "Espace collaboratif",
+		"subtitle": "Profil actif",
 		"welcome": "Bienvenue sur l'application",
 		"logout": "Déconnexion",
 		"tabs": {
@@ -33,5 +34,28 @@
 			"couches": "Couches"
 		},
 		"copyright": "Géoportail © IGN-France IGN"
+	},
+	"leftMenu": {
+		"signalements": {
+			"title": "Signalements",
+			"signalementsGroupe": "Signalements du groupe",
+			"mesSignalements": "Mes signalements",
+			"nouveauSignalement": "Nouveau signalement",
+			"aPropos": "A propos des signalements"
+		},
+		"guichet": {
+			"title": "Guichet",
+			"guichet": "Guichet",
+			"aPropos": "A propos du guichet"
+		},
+		"monCompte": {
+			"title": "Mon compte",
+			"mesInformations": "Mes informations",
+			"mesGroupes": "Mes groupes",
+			"deconnexion": "Déconnexion"
+		},
+		"parametres": "Paramètres",
+		"aide": "Aide",
+		"aPropos": "A propos"
 	}
 }

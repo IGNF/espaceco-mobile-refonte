@@ -105,9 +105,3 @@
 .geolocationIcon path {
 	fill: var(--color-dark);
 }
-
-
-/* Dev logout button - To remove once the logout feature is implemented */
-.logoutButton {
-	margin: 0.5rem auto;
-}

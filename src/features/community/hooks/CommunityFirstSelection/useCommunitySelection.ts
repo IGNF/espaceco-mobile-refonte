@@ -1,14 +1,17 @@
 /**
  * useCommunitySelection Hook
  *
- * Provides community selection functionality:
- * - Fetch communities from API or use cached from user context
- * - Select and persist active community
+ * Provides community selection functionality for the first-time selection flow.
+ * Uses the CommunityContext for state management and persistence.
+ *
+ * - Fetches communities from API (or uses mock data for now)
+ * - Manages local selection state before confirmation
+ * - Persists selection via CommunityContext
  */
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Community } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { fetchCommunities } from '@/infra/community/communityApi';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { UserStorageAdapter } from '@/infra/storage';
 
 interface UseCommunitySelectionResult {
@@ -21,12 +24,20 @@ interface UseCommunitySelectionResult {
   isConfirming: boolean;
 }
 
-// Singleton instance of the storage adapter
+// Storage adapter for saving communities (until they're loaded via API at login)
 const userStorage = new UserStorageAdapter();
 
 export function useCommunitySelection(): UseCommunitySelectionResult {
   const { user } = useAuth();
+  const {
+    communities: contextCommunities,
+    activeCommunity,
+    setActiveCommunity,
+    refreshCommunities,
+    isLoading: contextLoading
+  } = useCommunity();
 
+  // Local state for the selection flow
   const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,10 +51,17 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
       setError(null);
 
       try {
+        // First check if communities are already in context (loaded from storage)
+        if (contextCommunities.length > 0) {
+          setCommunities(contextCommunities);
+          // Pre-select the active community if exists, otherwise first one
+          setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
+          setIsLoading(false);
+          return;
+        }
 
-        /**
-         * Plug API instead of mock data
-         */
+        // TODO: Replace mock data with actual API call
+        // const fetchedCommunities = await fetchCommunities({ userId: user?.id });
         const mockCommunities: Community[] = [
           {
             id: 1,
@@ -57,23 +75,12 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
           },
         ];
 
+        // Save communities to storage so CommunityContext can access them
+        await userStorage.saveCommunities(mockCommunities);
+        await refreshCommunities();
+
         setCommunities(mockCommunities);
         setSelectedCommunityId(mockCommunities[0].id);
-
-        // First, try to get communities from user context (already loaded at login)
-        // if (user?.communities && user.communities.length > 0) {
-        //   setCommunities(user.communities);
-        // } else if (user?.id) {
-        //   // Fallback: fetch from API if not in user context
-        //   const fetchedCommunities = await fetchCommunities({ userId: user.id });
-        //   setCommunities(fetchedCommunities);
-        // }
-
-        // // Load previously selected community
-        // const activeCommunityId = await userStorage.getActiveCommunity();
-        // if (activeCommunityId !== null) {
-        //   setSelectedCommunityId(activeCommunityId);
-        // }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load communities');
       } finally {
@@ -81,15 +88,18 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
       }
     }
 
-    loadCommunities();
-  }, [user]);
+    // Wait for context to finish loading before deciding what to do
+    if (!contextLoading) {
+      loadCommunities();
+    }
+  }, [user, contextCommunities, contextLoading, activeCommunity, refreshCommunities]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
     setSelectedCommunityId(communityId);
   }, []);
 
-  // Confirm and persist the selection
+  // Confirm and persist the selection via context
   const confirmSelection = useCallback(async () => {
     if (selectedCommunityId === null) {
       throw new Error('No community selected');
@@ -99,25 +109,19 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
     setError(null);
 
     try {
-      await userStorage.setActiveCommunity(selectedCommunityId);
+      await setActiveCommunity(selectedCommunityId);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save community selection');
       throw err;
     } finally {
       setIsConfirming(false);
     }
-  }, [selectedCommunityId]);
-
-  // Get the selected community object
-  // const selectedCommunity = useMemo(() => {
-  //   if (selectedCommunityId === null) return null;
-  //   return communities.find(c => c.id === selectedCommunityId) ?? null;
-  // }, [communities, selectedCommunityId]);
+  }, [selectedCommunityId, setActiveCommunity]);
 
   return {
     communities,
     selectedCommunityId,
-    isLoading,
+    isLoading: isLoading || contextLoading,
     error,
     selectCommunity,
     confirmSelection,
