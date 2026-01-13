@@ -106,9 +106,9 @@ export function HomePage() {
 				<div className={styles.map} ref={mapElementRef} />
 			</main>
 
-			<p className={styles.copyright}>
+			{/* <p className={styles.copyright}>
 				{t("home.copyright")}
-			</p>
+			</p> */}
 
 			<button
 				className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}

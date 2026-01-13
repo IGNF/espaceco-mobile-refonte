@@ -78,6 +78,12 @@
 	bottom: 38px;
 }
 
+.map :global(.ol-attribution) {
+	bottom: 0;
+	right: auto;
+	left: 0;
+}
+
 /* Copyright floating text */
 .copyright {
   position: absolute;
