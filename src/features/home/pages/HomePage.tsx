@@ -5,7 +5,8 @@ import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
-import { Button } from "@/shared/ui/Button";
+import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
+import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import styles from "./HomePage.module.css";
 
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
@@ -19,6 +20,31 @@ export function HomePage() {
 	const { user, logout } = useAuth();
 	const { mapElementRef, centerOnUserLocation, isLocating } = useMap();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+	const {
+		showModal: showOnboarding,
+		isTourMode,
+		currentStep,
+		currentStepIndex,
+		totalSteps,
+		startTour,
+		skipOnboarding,
+		nextStep,
+		previousStep,
+		closeOnboarding,
+	} = useOnboarding();
+
+	const getHighlightedTab = (): TabId | null => {
+		if (!isTourMode || !currentStep) return null;
+		if (currentStep === "signalement" || currentStep === "guichet" || currentStep === "couches") {
+			return currentStep;
+		}
+		return null;
+	};
+
+	const isHighlighted = (target: OnboardingStep): boolean => {
+		return isTourMode && currentStep === target;
+	};
 
 	const handleBurgerClick = () => {
 		setIsMenuOpen(true);
@@ -58,17 +84,19 @@ export function HomePage() {
 			/>
 			<header className={styles.header}>
 				<button
-					className={styles.burgerButton}
+					className={`${styles.burgerButton} ${isHighlighted("menu") ? styles.highlighted : ""}`}
 					onClick={handleBurgerClick}
 					aria-label="Menu"
+					data-onboarding-target="menu"
 				>
 					<IconBurger className={styles.burgerIcon} />
 				</button>
 				<h1 className={styles.title}>{t("home.title")}</h1>
 				<button
-					className={styles.searchButton}
+					className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
 					onClick={handleSearchClick}
 					aria-label="Search"
+					data-onboarding-target="search"
 				>
 					<IconSearch className={styles.searchIcon} />
 				</button>
@@ -78,20 +106,34 @@ export function HomePage() {
 				<div className={styles.map} ref={mapElementRef} />
 			</main>
 
-      <p className={styles.copyright}>
-        {t("home.copyright")}
-      </p>
+			<p className={styles.copyright}>
+				{t("home.copyright")}
+			</p>
 
 			<button
-				className={styles.geolocationButton}
+				className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}
 				onClick={centerOnUserLocation}
 				disabled={isLocating}
 				aria-label="Center on my position"
+				data-onboarding-target="geolocation"
 			>
 				<IconGeolocation className={styles.geolocationIcon} />
 			</button>
 
-			<BottomTabbar onTabClick={handleTabClick} />
+			<BottomTabbar onTabClick={handleTabClick} highlightedTab={getHighlightedTab()} />
+
+			<OnboardingModal
+				isOpen={showOnboarding}
+				isTourMode={isTourMode}
+				currentStep={currentStep}
+				currentStepIndex={currentStepIndex}
+				totalSteps={totalSteps}
+				onStartTour={startTour}
+				onSkip={skipOnboarding}
+				onNext={nextStep}
+				onPrevious={previousStep}
+				onClose={closeOnboarding}
+			/>
 		</div>
 	);
 }

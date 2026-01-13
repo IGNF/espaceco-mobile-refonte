@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "./LeftMenu.module.css";
+import screen from "@/shared/styles/screen.module.css";
 
 import IconLocation from "@/shared/assets/icons/icon-location.svg?react";
 import IconGuichet from "@/shared/assets/icons/icon-guichet.svg?react";
@@ -118,7 +119,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMe
 	return (
 		<>
 			<div
-				className={`${styles.overlay} ${isOpen ? styles.overlayVisible : ""}`}
+				className={`${screen.overlay} ${styles.overlay} ${isOpen ? styles.overlayVisible : ""}`}
 				onClick={handleOverlayClick}
 				aria-hidden="true"
 			/>

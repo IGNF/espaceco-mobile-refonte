@@ -35,6 +35,40 @@
 		},
 		"copyright": "Géoportail © IGN-France IGN"
 	},
+	"onboarding": {
+		"welcome": {
+			"title": "Découvrir l'application",
+			"subtitle": "Souhaitez-vous faire une visite guidée pour découvrir l'application et ses fonctions ?",
+			"startTour": "Faire la visite",
+			"skipTour": "Commencer sans visite"
+		},
+		"steps": {
+			"signalement": {
+				"title": "Signalement",
+				"subtitle": "Utilisez ce bouton pour faire un nouveau signalement."
+			},
+			"guichet": {
+				"title": "Guichet",
+				"subtitle": "Utilisez ce bouton pour accéder à votre guichet et ajouter ou modifier des objets."
+			},
+			"couches": {
+				"title": "Couches",
+				"subtitle": "Dans cet onglet, vous pourrez gérer les couches que vous souhaitez afficher ou non sur la carte."
+			},
+			"geolocation": {
+				"title": "Géolocalisation",
+				"subtitle": "Recentrez votre localisation sur la carte pour vous repérer."
+			},
+			"menu": {
+				"title": "Menu",
+				"subtitle": "Le menu vous permet d'accéder à toutes les fonctions : signalements, guichet, votre compte et paramètres."
+			},
+			"search": {
+				"title": "Rechercher",
+				"subtitle": "Utilisez ce bouton pour ouvrir le menu de recherche. Vous pouvez rechercher des adresses ou des parcelles."
+			}
+		}
+	},
 	"leftMenu": {
 		"signalements": {
 			"title": "Signalements",

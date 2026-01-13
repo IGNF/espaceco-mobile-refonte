@@ -9,34 +9,46 @@ export type TabId = "signalement" | "guichet" | "couches";
 
 export interface BottomTabbarProps {
 	onTabClick?: (tab: TabId) => void;
+	highlightedTab?: TabId | null;
 }
 
-export function BottomTabbar({ onTabClick }: BottomTabbarProps) {
+export function BottomTabbar({ onTabClick, highlightedTab }: BottomTabbarProps) {
 	const { t } = useTranslation();
 
 	const handleTabClick = (tab: TabId) => {
 		onTabClick?.(tab);
 	};
 
+	const getTabClassName = (tab: TabId) => {
+		const classes = [styles.tab];
+		if (highlightedTab === tab) {
+			classes.push(styles.highlighted);
+		}
+		return classes.join(" ");
+	};
+
 	return (
 		<nav className={styles.tabbar}>
 			<button
-				className={styles.tab}
+				className={getTabClassName("signalement")}
 				onClick={() => handleTabClick("signalement")}
+				data-onboarding-target="signalement"
 			>
 				<IconLocation className={styles.tabIcon} />
 				{t("home.tabs.signalement")}
 			</button>
 			<button
-				className={styles.tab}
+				className={getTabClassName("guichet")}
 				onClick={() => handleTabClick("guichet")}
+				data-onboarding-target="guichet"
 			>
 				<IconGuichet className={styles.tabIcon} />
 				{t("home.tabs.guichet")}
 			</button>
 			<button
-				className={styles.tab}
+				className={getTabClassName("couches")}
 				onClick={() => handleTabClick("couches")}
+				data-onboarding-target="couches"
 			>
 				<IconLayers className={styles.tabIcon} />
 				{t("home.tabs.couches")}

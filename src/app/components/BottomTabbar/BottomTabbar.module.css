@@ -32,3 +32,9 @@
 .tabIcon path {
 	fill: currentColor;
 }
+
+.highlighted {
+	z-index: 1001;
+	background-color: var(--color-dark-contrast);
+	border-radius: 8px;
+}

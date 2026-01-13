@@ -42,6 +42,15 @@
 	fill: var(--color-primary-contrast);
 }
 
+.searchIcon {
+	width: 24px;
+	height: 24px;
+}
+
+.searchIcon path {
+	fill: var(--color-dark);
+}
+
 .title {
 	flex: 1;
 	text-align: center;
@@ -104,4 +113,9 @@
 
 .geolocationIcon path {
 	fill: var(--color-dark);
+}
+
+/* Onboarding highlight styles */
+.highlighted {
+	z-index: 1001;
 }
