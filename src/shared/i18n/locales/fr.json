@@ -69,6 +69,19 @@
 			}
 		}
 	},
+	"myInformations": {
+		"title": "Mes informations",
+		"subtitle": "sur l'Espace collaboratif IGN",
+		"description": "Vous pouvez modifier vos informations sur",
+		"espaceCo": "Espace collaboratif",
+		"username": "Nom d'utilisateur :",
+		"fullName": "Nom complet :",
+		"email": "Adresse e-mail :",
+		"userId": "Identifiant d'utilisateur :",
+		"userDescription": "Description :",
+		"notProvided": "Non renseignée",
+		"activeProfile": "Profil actif"
+	},
 	"leftMenu": {
 		"signalements": {
 			"title": "Signalements",

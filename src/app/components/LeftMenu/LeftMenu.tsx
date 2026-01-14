@@ -102,14 +102,17 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMe
 	};
 
 	const handleItemClick = (route: string) => {
+		// Close the menu first
+		onClose();
+
 		if (route === "logout") {
 			onLogout?.();
 		} else {
-      // for now, simply navigate to the route
-      // then, depending on the route, we might want to open a modal or a drawer
-			onNavigate?.(route);
+			// Wait for menu close animation before navigating
+			setTimeout(() => {
+				onNavigate?.(route);
+			}, 300);
 		}
-		onClose();
 	};
 
 	const handleOverlayClick = () => {

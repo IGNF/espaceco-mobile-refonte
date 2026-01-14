@@ -1,0 +1,33 @@
+.content {
+	flex: 1;
+	padding: 25px;
+}
+
+.descriptionSection {
+	margin: 20px 0 30px;
+}
+
+.infoTable {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.infoRow {
+	display: flex;
+	gap: 16px;
+}
+
+.infoLabel {
+	flex: 1;
+	font-weight: 600;
+	color: var(--color-dark);
+	min-width: 140px;
+	flex-shrink: 0;
+}
+
+.infoValue {
+	flex: 1;
+	color: var(--color-dark);
+	word-break: break-word;
+}

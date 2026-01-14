@@ -7,12 +7,20 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
+import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import styles from "./HomePage.module.css";
 
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 
+// Routes that should open as slide-up overlays instead of navigating
+const OVERLAY_ROUTES = ['/my-informations'] as const;
+type OverlayRoute = typeof OVERLAY_ROUTES[number];
+
+function isOverlayRoute(route: string): route is OverlayRoute {
+	return OVERLAY_ROUTES.includes(route as OverlayRoute);
+}
 
 export function HomePage() {
 	const { t } = useTranslation();
@@ -20,6 +28,7 @@ export function HomePage() {
 	const { user, logout } = useAuth();
 	const { mapElementRef, centerOnUserLocation, isLocating } = useMap();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
 
 	const {
 		showModal: showOnboarding,
@@ -55,7 +64,15 @@ export function HomePage() {
 	};
 
 	const handleMenuNavigate = (route: string) => {
-		navigate(route);
+		if (isOverlayRoute(route)) {
+			setActiveOverlay(route);
+		} else {
+			navigate(route);
+		}
+	};
+
+	const handleCloseOverlay = () => {
+		setActiveOverlay(null);
 	};
 
 	const handleSearchClick = () => {
@@ -133,6 +150,12 @@ export function HomePage() {
 				onNext={nextStep}
 				onPrevious={previousStep}
 				onClose={closeOnboarding}
+			/>
+
+			{/* Overlay pages */}
+			<MyInformationsPage
+				isOpen={activeOverlay === '/my-informations'}
+				onClose={handleCloseOverlay}
 			/>
 		</div>
 	);
