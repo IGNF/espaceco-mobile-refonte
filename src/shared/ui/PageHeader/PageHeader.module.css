@@ -1,0 +1,50 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 16px;
+	border-bottom: 0.1px solid var(--color-light-tint);
+}
+
+.headerTitle {
+	flex: 1;
+	text-align: center;
+}
+
+.headerMainTitle {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--color-dark);
+	margin: 0;
+}
+
+.headerSubtitle {
+	font-size: 0.875rem;
+	color: var(--color-medium);
+	margin: 0;
+}
+
+/* Spacer to balance the header layout */
+.headerSpacer {
+	width: 40px;
+}
+
+/* Shared button styles for back and close buttons */
+.headerButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	background: none;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 50%;
+	cursor: pointer;
+}
+
+.headerIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-dark);
+}
