@@ -69,19 +69,6 @@
 			}
 		}
 	},
-	"myInformations": {
-		"title": "Mes informations",
-		"subtitle": "sur l'Espace collaboratif IGN",
-		"description": "Vous pouvez modifier vos informations sur",
-		"espaceCo": "Espace collaboratif",
-		"username": "Nom d'utilisateur :",
-		"fullName": "Nom complet :",
-		"email": "Adresse e-mail :",
-		"userId": "Identifiant d'utilisateur :",
-		"userDescription": "Description :",
-		"notProvided": "Non renseignée",
-		"activeProfile": "Profil actif"
-	},
 	"leftMenu": {
 		"signalements": {
 			"title": "Signalements",
@@ -104,5 +91,26 @@
 		"parametres": "Paramètres",
 		"aide": "Aide",
 		"aPropos": "A propos"
-	}
+	},
+  "myInformations": {
+		"title": "Mes informations",
+		"subtitle": "sur l'Espace collaboratif IGN",
+		"description": "Vous pouvez modifier vos informations sur",
+		"espaceCo": "Espace collaboratif",
+		"username": "Nom d'utilisateur :",
+		"fullName": "Nom complet :",
+		"email": "Adresse e-mail :",
+		"userId": "Identifiant d'utilisateur :",
+		"userDescription": "Description :",
+		"notProvided": "Non renseignée",
+		"activeProfile": "Profil actif"
+	},
+  "logout": {
+    "headerTitle": "Déconnexion",
+    "title": "Déconnectez-vous",
+    "subtitle": "De votre Espace collaboratif IGN",
+    "description": "Êtes-vous certain de vouloir vous déconnecter ?",
+    "confirm": "Se déconnecter",
+    "cancel": "Annuler"
+  }
 }

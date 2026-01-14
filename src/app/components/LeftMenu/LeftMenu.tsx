@@ -64,7 +64,7 @@ const menuGroups: MenuGroup[] = [
 		items: [
 			{ id: "mesInformations", labelKey: "leftMenu.monCompte.mesInformations", route: "/my-informations" },
 			{ id: "mesGroupes", labelKey: "leftMenu.monCompte.mesGroupes", route: "/my-communities" },
-			{ id: "deconnexion", labelKey: "leftMenu.monCompte.deconnexion", route: "logout" },
+			{ id: "deconnexion", labelKey: "leftMenu.monCompte.deconnexion", route: "/logout-verification" },
 		],
 	},
 ];

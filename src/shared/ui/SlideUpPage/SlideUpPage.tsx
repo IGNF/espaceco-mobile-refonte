@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import styles from './SlideUpPage.module.css';
 
-const ANIMATION_DURATION = 300; // ms - matches CSS transition duration
+const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
 
 export interface SlideUpPageProps {
 	children: ReactNode;
@@ -11,20 +11,23 @@ export interface SlideUpPageProps {
 }
 
 export function SlideUpPage({ children, isOpen, onClose, className }: SlideUpPageProps) {
-	const [isVisible, setIsVisible] = useState(false);
-	const [shouldRender, setShouldRender] = useState(false);
+	const [isVisible, setIsVisible] = useState(isOpen);
+	const [shouldRender, setShouldRender] = useState(isOpen);
+
+	if (isOpen && !shouldRender) {
+		setShouldRender(true);
+	}
+	if (!isOpen && isVisible) {
+		setIsVisible(false);
+	}
 
 	useEffect(() => {
 		if (isOpen) {
-			// Mount the component, then trigger animation
-			setShouldRender(true);
 			const timer = setTimeout(() => {
 				setIsVisible(true);
 			}, 20);
 			return () => clearTimeout(timer);
 		} else {
-			// Trigger exit animation, then unmount
-			setIsVisible(false);
 			const timer = setTimeout(() => {
 				setShouldRender(false);
 			}, ANIMATION_DURATION);
@@ -48,5 +51,3 @@ export function SlideUpPage({ children, isOpen, onClose, className }: SlideUpPag
 		</div>
 	);
 }
-
-export { ANIMATION_DURATION as SLIDE_ANIMATION_DURATION };

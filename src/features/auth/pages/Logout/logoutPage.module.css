@@ -1,0 +1,8 @@
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 80%;
+  margin: 0 auto;
+  padding-top: 2rem;
+}

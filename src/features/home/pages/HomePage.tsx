@@ -10,16 +10,18 @@ import { OnboardingModal } from "@/features/onboarding/components/OnboardingModa
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import styles from "./HomePage.module.css";
 
+import { overlayRoutes } from "@/app/router/routes";
+
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
+import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 
 // Routes that should open as slide-up overlays instead of navigating
-const OVERLAY_ROUTES = ['/my-informations'] as const;
-type OverlayRoute = typeof OVERLAY_ROUTES[number];
+type OverlayRoute = typeof overlayRoutes[number];
 
 function isOverlayRoute(route: string): route is OverlayRoute {
-	return OVERLAY_ROUTES.includes(route as OverlayRoute);
+	return overlayRoutes.includes(route as OverlayRoute);
 }
 
 export function HomePage() {
@@ -156,6 +158,11 @@ export function HomePage() {
 			<MyInformationsPage
 				isOpen={activeOverlay === '/my-informations'}
 				onClose={handleCloseOverlay}
+			/>
+			<LogoutPage
+				isOpen={activeOverlay === '/logout-verification'}
+				onClose={handleCloseOverlay}
+				handleLogout={handleLogout}
 			/>
 		</div>
 	);
