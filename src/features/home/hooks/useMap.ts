@@ -1,10 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
-import { defaults as defaultControls } from "ol/control";
+import { Attribution, defaults as defaultControls } from "ol/control";
 import ScaleLine from "ol/control/ScaleLine";
-import TileLayer from "ol/layer/Tile";
-import OSM from "ol/source/OSM";
+import LayerGroup from "ol/layer/Group";
 import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
 import { EspaceCo_Geolocation } from "@/platform/device/geolocation";
@@ -14,6 +13,10 @@ import {
 	DEFAULT_MAP_SHOW_SCALELINE,
 	DEFAULT_MAP_ZOOM,
 } from "@/shared/constants/map";
+import {
+	initGeoportailCapabilities,
+	createGeoportailLayerGroup,
+} from "@/infra/map/openlayers/geoportailLayers";
 
 interface UseMapOptions {
 	centerOnUserLocation?: boolean;
@@ -79,23 +82,78 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			return;
 		}
 
+		let mounted = true;
+
+		async function initMap() {
+			if (!mapElementRef.current || !mounted) return;
+
+			// Load Geoportail capabilities before creating layers
+			try {
+				await initGeoportailCapabilities();
+			} catch (error) {
+				console.error("Failed to load Geoportail capabilities:", error);
+			}
+
+			if (!mounted || !mapElementRef.current) return;
+
+			const layerCache = new LayerGroup({
+				properties: {
+					title: 'Cartes hors-ligne',
+					name: 'cache',
+					openInLayerSwitcher: false,
+					displayInLayerSwitcher: true,
+				},
+			});
+
+			layerCache.on('change', function () {
+				if (layerCache.getLayers().getLength()) {
+					layerCache.set('displayInLayerSwitcher', true);
+				}
+			});
+
+			const geoportailLayer = createGeoportailLayerGroup();
+
+			const layers = [
+				geoportailLayer,
+				layerCache,
+				new LayerGroup({
+					properties: {
+						title: 'Mes couches',
+						name: 'groupe',
+						displayInLayerSwitcher: false,
+						openInLayerSwitcher: true,
+					},
+				}),
+				new LayerGroup({
+					properties: {
+						title: 'Mon guichet',
+						name: 'guichet',
+						visible: true,
+					},
+				}),
+			];
+
 		mapRef.current = new Map({
 			target: mapElementRef.current,
-			layers: [
-				new TileLayer({
-					source: new OSM(),
+			layers: layers,
+			controls: defaultControls({ zoom: false, attribution: false }).extend([
+				...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
+				new Attribution({
+					collapsible: false,
+					collapsed: false,
 				}),
-			],
-			controls: defaultControls({ zoom: false }).extend(
-				DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []
-			),
-			view: new View({
-				center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
-				zoom: DEFAULT_MAP_ZOOM,
-			}),
-		});
+			]),
+				view: new View({
+					center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
+					zoom: DEFAULT_MAP_ZOOM,
+				}),
+			});
+		}
+
+		initMap();
 
 		return () => {
+			mounted = false;
 			mapRef.current?.setTarget(undefined);
 			mapRef.current = null;
 		};
