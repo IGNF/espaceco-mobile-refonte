@@ -34,7 +34,7 @@ async function request<T>(
 	};
 
 	if (!skipAuth) {
-		const token = authSessionStore.getAccessToken();
+		const token = await authSessionStore.getAccessToken();
 		if (token) {
 			requestHeaders["Authorization"] = `Bearer ${token}`;
 		}
@@ -64,7 +64,7 @@ async function request<T>(
 
 		// Handle 401 - token might be expired
 		if (response.status === 401 && !skipAuth) {
-			authSessionStore.clear();
+			await authSessionStore.clear();
       // should display a message to the user and redirect them to the login again?
 		}
 

@@ -25,7 +25,7 @@ export const authApi = {
 				refreshToken: data.refreshToken,
 				expiresIn: data.expiresIn,
 			};
-			authSessionStore.setTokens(tokens);
+			await authSessionStore.setTokens(tokens);
 
 			// Map and return user
 			const user = mapApiUserToAppUser(data.user);
@@ -50,7 +50,7 @@ export const authApi = {
 	 * Refresh the access token using the refresh token
 	 */
 	async refreshToken(): Promise<boolean> {
-		const refreshToken = authSessionStore.getRefreshToken();
+		const refreshToken = await authSessionStore.getRefreshToken();
 		if (!refreshToken) {
       // should display a message to the user and redirect them to the login again?
 			return false;
@@ -65,14 +65,14 @@ export const authApi = {
 
 			const tokens: AuthTokens = {
 				accessToken: data.accessToken,
-				refreshToken: data.refreshToken || refreshToken,
+				refreshToken: data.refreshToken || (await refreshToken),
 				expiresIn: data.expiresIn,
 			};
-			authSessionStore.setTokens(tokens);
+			await authSessionStore.setTokens(tokens);
 			return true;
 		} catch {
 			// Refresh failed, clear session
-			authSessionStore.clear();
+			await authSessionStore.clear();
 			return false;
 		}
 	},
@@ -87,7 +87,7 @@ export const authApi = {
 		} catch {
       console.log("Logout error");
 		} finally {
-			authSessionStore.clear();
+			await authSessionStore.clear();
 		}
 	},
 
@@ -119,11 +119,11 @@ export const authApi = {
 	 * Check if there is a valid session and refresh if needed
 	 */
 	async ensureValidSession(): Promise<boolean> {
-		if (!authSessionStore.getAccessToken()) {
+		if (!(await authSessionStore.getAccessToken())) {
 			return false;
 		}
 
-		if (authSessionStore.isTokenExpired()) {
+		if (await authSessionStore.isTokenExpired()) {
 			return await this.refreshToken();
 		}
 
