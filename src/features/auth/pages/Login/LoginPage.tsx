@@ -13,7 +13,7 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { login, continueWithoutAccount, isAuthenticated } = useAuth();
+	const { loginWithPassword, continueWithoutAccount, isAuthenticated } = useAuth();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +34,7 @@ export function LoginPage() {
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);
-		const loginResponse = await login(email, password);
+		const loginResponse = await loginWithPassword(email, password);
 		setIsLoading(false);
 		if (!loginResponse.success) {
 			setError(loginResponse.error?.message ?? t("login.error"));

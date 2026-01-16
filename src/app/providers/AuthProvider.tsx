@@ -49,10 +49,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		restoreSession();
 	}, []);
 
-	const login = useCallback(async (email: string, password: string) => {
+	const loginWithPassword = useCallback(async (email: string, password: string) => {
 		setIsLoading(true);
 		try {
-			const result = await authService.login(email, password);
+			const result = await authService.loginWithPassword(email, password);
 			if (result.success && result.user) {
 				await Storage.set(AUTH_USER_KEY, result.user, "object");
 				setUser(result.user);
@@ -62,6 +62,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			setIsLoading(false);
 		}
 	}, []);
+
+  const loginWithOAuth = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await authService.loginWithOAuth();
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
 	const continueWithoutAccount = useCallback(async () => {
 		setIsLoading(true);
@@ -106,7 +116,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				user,
 				isAuthenticated: !!user,
 				isLoading,
-				login,
+				loginWithPassword,
+        loginWithOAuth,
 				logout,
 				continueWithoutAccount,
 			}}

@@ -15,7 +15,7 @@ export interface AuthResult {
  * Login with email and password.
  * Uses OAuth2 password grant via Keycloak.
  */
-export async function login(email: string, password: string): Promise<AuthResult> {
+export async function loginWithPassword(email: string, password: string): Promise<AuthResult> {
 	try {
 		collabApiClient.setCredentials(email, password);
 		const response = await collabApiClient.getUser("me");
@@ -33,6 +33,14 @@ export async function login(email: string, password: string): Promise<AuthResult
 
 		return { success: false, user: null, error: new Error(message) };
 	}
+}
+
+/**
+ * to be implemented
+ * @returns 
+ */
+export async function loginWithOAuth(): Promise<AuthResult> {
+	return { success: true, user: null };
 }
 
 /**
