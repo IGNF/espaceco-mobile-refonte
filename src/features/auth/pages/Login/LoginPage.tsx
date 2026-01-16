@@ -34,12 +34,12 @@ export function LoginPage() {
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);
-    // await loginWithOAuth();
-		const loginResponse = await loginWithPassword(email, password);
+    await loginWithOAuth();
+		// const loginResponse = await loginWithPassword(email, password);
 		setIsLoading(false);
-		if (!loginResponse.success) {
-			setError(loginResponse.error?.message ?? t("login.error"));
-		}
+		// if (!loginResponse.success) {
+		// 	setError(loginResponse.error?.message ?? t("login.error"));
+		// }
 	};
 
 	const handleContinueWithoutAccount = async () => {
