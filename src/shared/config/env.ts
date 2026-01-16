@@ -13,6 +13,13 @@ interface AuthConfig {
 	baseUrl: string;
 }
 
+interface OAuthConfig {
+	clientId: string;
+  baseUrl: string;
+	androidRedirectUri: string;
+  iosRedirectUri: string;
+}
+
 interface ApiConfig {
 	baseUrl: string;
 }
@@ -28,6 +35,7 @@ interface Config {
 	environment: Environment;
 	api: ApiConfig;
 	auth: AuthConfig;
+	oAuth: OAuthConfig;
 	app: AppConfig;
 	isQualification: boolean;
 	isProduction: boolean;
@@ -49,6 +57,13 @@ const qualificationAuth: AuthConfig = {
 	baseUrl: env.VITE_QLF_BASE_AUTH_URL || "",
 };
 
+const oAuthConfig: OAuthConfig = {
+	clientId: env.VITE_OAUTH_CLIENT_ID || "",
+	baseUrl: env.VITE_OAUTH_BASE_URL || "",
+	androidRedirectUri: env.VITE_OAUTH_ANDROID_REDIRECT_URI || "",
+	iosRedirectUri: env.VITE_OAUTH_IOS_REDIRECT_URI || "",
+};
+
 // Main configuration object
 export const config: Config = {
 	environment: useQualification ? "qualification" : "production",
@@ -60,7 +75,7 @@ export const config: Config = {
 	},
 
 	auth: useQualification ? qualificationAuth : productionAuth,
-
+	oAuth: oAuthConfig,
 	app: {
 		name: env.VITE_APPLI_NAME || "Espace collaboratif IGN",
 		id: env.VITE_APPLI_ID || "fr.ign.guichet",

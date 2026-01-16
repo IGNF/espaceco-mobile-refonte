@@ -1,5 +1,7 @@
 # Environments
 .env
+espaceco.env
+naviforest.env
 .venv
 env/
 venv/
