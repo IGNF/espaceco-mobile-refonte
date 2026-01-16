@@ -34,12 +34,10 @@ export function LoginPage() {
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);
-		// Simulate API call delay
-		await new Promise((resolve) => setTimeout(resolve, 2000));
 		const loginResponse = await login(email, password);
 		setIsLoading(false);
 		if (!loginResponse.success) {
-			setError(loginResponse.error ?? t("login.error"));
+			setError(loginResponse.error?.message ?? t("login.error"));
 		}
 	};
 
@@ -49,7 +47,7 @@ export function LoginPage() {
 		const anonymousConnectionResponse = await continueWithoutAccount();
 		setIsLoading(false);
 		if (!anonymousConnectionResponse.success) {
-			setError(anonymousConnectionResponse.error ?? t("login.error"));
+			setError(anonymousConnectionResponse.error?.message ?? t("login.error"));
 		}
 	};
 

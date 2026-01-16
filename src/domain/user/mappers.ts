@@ -6,7 +6,7 @@ export interface ApiUserResponse {
 	firstName: string;
 	lastName: string;
 	username: string;
-	avatarUrl?: string;
+	avatar?: string; // API field name
 	description?: string;
 	communities?: Array<{ id: number; name: string }>;
 }
@@ -18,7 +18,7 @@ export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
 		firstName: apiUser.firstName,
 		lastName: apiUser.lastName,
 		username: apiUser.username,
-		avatarUrl: apiUser.avatarUrl,
+		avatarUrl: apiUser.avatar,
 		description: apiUser.description,
 		communities: apiUser.communities || [],
 	};
