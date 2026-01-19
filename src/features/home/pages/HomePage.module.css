@@ -1,5 +1,5 @@
 .container {
-	min-height: 100vh;
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	background-color: var(--color-light-light);
@@ -10,7 +10,7 @@
   background-color: var(--color-dark-contrast);
 	display: flex;
 	align-items: stretch;
-	padding-top: var(--safe-top, 0px);
+	/* padding-top: var(--safe-top, 0px); */
 }
 
 .burgerButton {

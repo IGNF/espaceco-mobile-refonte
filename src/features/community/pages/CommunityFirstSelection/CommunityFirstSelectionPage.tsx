@@ -15,7 +15,7 @@ export function CommunityFirstSelectionPage() {
 		communities,
 		selectedCommunityId,
 		isLoading,
-		error,
+		// error,
 		selectCommunity,
 		confirmSelection,
 		isConfirming,

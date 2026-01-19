@@ -30,10 +30,11 @@ export function SlideUpPage({ children, isOpen, onClose, className }: SlideUpPag
 		} else {
 			const timer = setTimeout(() => {
 				setShouldRender(false);
+        onClose();
 			}, ANIMATION_DURATION);
 			return () => clearTimeout(timer);
 		}
-	}, [isOpen]);
+	}, [isOpen, onClose]);
 
 	if (!shouldRender) return null;
 

@@ -55,6 +55,7 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     console.log('appUrlOpen', url);
   });
 
+  // create another function: generateAuthURL
   const codeVerifier = generateCodeVerifier();
   await Storage.set(storageKey('temp_code_verifier'), codeVerifier);
 

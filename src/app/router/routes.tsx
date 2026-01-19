@@ -5,7 +5,7 @@ import { AuthGuard } from "./AuthGuard";
 
 /** Login/logout routes **/
 import { LoginPage } from "@/features/auth/pages/Login/LoginPage";
-import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
+// import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 
 /** Community routes **/
 import { CommunityFirstSelectionPage } from "@/features/community/pages/CommunityFirstSelection/CommunityFirstSelectionPage";
@@ -42,10 +42,10 @@ export const router = createBrowserRouter([
 		// Protected routes: only authenticated users can access these routes, otherwise redirect to login page
 		element: <AuthGuard />,
 		children: [
-			{
-				path: "/logout",
-				element: <LogoutPage />,
-			},
+			// {
+			// 	path: "/logout",
+			// 	element: <LogoutPage />,
+			// },
 			{
 				path: "/home",
 				element: <HomePage />,

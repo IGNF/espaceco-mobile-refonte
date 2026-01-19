@@ -1,3 +1,28 @@
+:root {
+  --safe-top: env(safe-area-inset-top);
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-left: env(safe-area-inset-left);
+  --safe-right: env(safe-area-inset-right);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--safe-top);
+  /* padding-bottom: var(--safe-bottom); */
+  /* padding-left: var(--safe-left); */
+  /* padding-right: var(--safe-right); */
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+
 /*
   Retrieved from the cartes-ign-app project
 */
@@ -94,15 +119,4 @@
 	--color-dark-shade: #081321;
 	--color-dark-tint: #222d3b;
 
-}
-
-
-:root {
-  --safe-top: env(safe-area-inset-top);
-  --safe-bottom: env(safe-area-inset-bottom);
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }

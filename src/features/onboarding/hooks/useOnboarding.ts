@@ -1,6 +1,7 @@
+import { storageKey } from "@/shared/constants/storage";
 import { useState, useCallback } from "react";
 
-const ONBOARDING_STORAGE_KEY = "espaceco_onboarding_completed";
+const ONBOARDING_STORAGE_KEY = storageKey("onboarding_completed");
 
 export type OnboardingStep =
 	| "signalement"

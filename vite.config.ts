@@ -7,7 +7,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [
     react(),
-    svgr()
+    svgr(),
   ],
   resolve: {
     alias: {
@@ -21,13 +21,14 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    // Include the package so Vite transforms CommonJS ("require") to ESM
-    include: ['collaboratif-client-api'],
+    // Force Vite to pre-bundle these CommonJS packages
+    include: ['collaboratif-client-api', 'axios', 'crypto-js'],
   },
   build: {
     commonjsOptions: {
-      // Transform CommonJS modules to ESM
+      // Transform CommonJS modules to ESM, including mixed ES/CJS modules
       include: [/collaboratif-client-api/, /node_modules/],
+      transformMixedEsModules: true,
     },
   },
 })

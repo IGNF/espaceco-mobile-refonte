@@ -7,7 +7,12 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "capacitor-build": "npm run build && npx cap sync",
+    "capacitor-run-ios": "npm run capacitor-build && npx cap run ios",
+    "capacitor-run-android": "npm run capacitor-build && npx cap run android",
+    "open-xcode": "npx cap open ios",
+    "open-android": "npx cap open android"
   },
   "dependencies": {
     "@capacitor-community/keep-awake": "^8.0.0",
