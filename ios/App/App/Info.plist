@@ -45,6 +45,41 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>fr.ign.espaceco</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fr.ign.espaceco</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>fr.ign.guichet</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fr.ign.guichet</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>fr.ign.navi-forest</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fr.ign.navi-forest</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>fr.ign.naviforest</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fr.ign.naviforest</string>
+			</array>
+		</dict>
+	</array>
   <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
   <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
   <key>NSLocationWhenInUseUsageDescription</key>

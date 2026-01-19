@@ -10,7 +10,7 @@ export interface SlideUpPageProps {
 	className?: string;
 }
 
-export function SlideUpPage({ children, isOpen, onClose, className }: SlideUpPageProps) {
+export function SlideUpPage({ children, isOpen, className }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -30,11 +30,11 @@ export function SlideUpPage({ children, isOpen, onClose, className }: SlideUpPag
 		} else {
 			const timer = setTimeout(() => {
 				setShouldRender(false);
-        onClose();
+        // onClose();
 			}, ANIMATION_DURATION);
 			return () => clearTimeout(timer);
 		}
-	}, [isOpen, onClose]);
+	}, [isOpen]);
 
 	if (!shouldRender) return null;
 
