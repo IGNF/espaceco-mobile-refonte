@@ -9,18 +9,13 @@ import { storageKey } from '@/shared/constants/storage';
 import { collabApiClient } from "@/infra/api/collabApiClient";
 import { mapApiUserToAppUser, type ApiUserResponse } from "@/domain/user/mappers";
 import type { AppUser } from "@/domain/user/models";
+import type { AuthResult, RefreshResult } from "@/domain/auth/models";
 import { config } from "@/shared/config/env";
 
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "@/shared/utils/auth";
 
-/**
- * Result of an authentication operation
- */
-export interface AuthResult {
-  success: boolean;
-  user: AppUser | null;
-  error?: Error;
-}
+// Re-export domain types for convenience
+export type { AuthResult, RefreshResult } from "@/domain/auth/models";
 
 /**
  * Login with email and password.
@@ -102,8 +97,21 @@ export async function loginWithOAuth(): Promise<AuthResult> {
         }
 
         // Exchange code for tokens
-        const result = await exchangeCodeForTokens(code, redirectUri);
-        resolve(result);
+        const tokenResult = await exchangeCodeForTokens(code, redirectUri);
+        if (!tokenResult.success) {
+          resolve({ success: false, user: null, error: tokenResult.error });
+          return;
+        }
+
+        // Fetch user info
+        const accessToken = await getStoredAccessToken();
+        if (!accessToken) {
+          resolve({ success: false, user: null, error: new Error('No access token after exchange') });
+          return;
+        }
+
+        const user = await fetchUserInfo(accessToken);
+        resolve({ success: true, user });
       } catch (err) {
         await Storage.remove(storageKey('temp_code_verifier'));
         const message = err instanceof Error ? err.message : 'OAuth callback failed';
@@ -119,19 +127,25 @@ export async function loginWithOAuth(): Promise<AuthResult> {
 }
 
 /**
+ * Result of token exchange operation
+ */
+interface TokenExchangeResult {
+  success: boolean;
+  error?: Error;
+}
+
+/**
  * Exchange authorization code for tokens
  */
-async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<AuthResult> {
+async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<TokenExchangeResult> {
   const codeVerifier = await Storage.get(storageKey('temp_code_verifier'));
-  console.log('exchangeCodeForTokens => codeVerifier', codeVerifier);
 
   if (!codeVerifier) {
-    return { success: false, user: null, error: new Error('Code verifier not found') };
+    return { success: false, error: new Error('Code verifier not found') };
   }
 
   try {
     const tokenUrl = `${config.oAuth.baseUrl}/token`;
-    console.log('exchangeCodeForTokens => tokenUrl', tokenUrl);
 
     // Use CapacitorHttp to bypass CORS restrictions
     const response = await CapacitorHttp.post({
@@ -152,25 +166,17 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
       throw new Error(`Token exchange failed: ${JSON.stringify(response.data)}`);
     }
 
-    const tokens = response.data;
-    console.log('exchangeCodeForTokens => tokens', tokens);
-
     // Store tokens
-    await storeTokens(tokens);
+    await storeTokens(response.data);
 
     // Clean up temporary storage
     await Storage.remove(storageKey('temp_code_verifier'));
 
-    // Fetch user info
-    const user = await fetchUserInfo(tokens.access_token);
-
-    console.log('exchangeCodeForTokens => user', user);
-
-    return { success: true, user };
+    return { success: true };
   } catch (err) {
     await Storage.remove(storageKey('temp_code_verifier'));
     const message = err instanceof Error ? err.message : 'Token exchange failed';
-    return { success: false, user: null, error: new Error(message) };
+    return { success: false, error: new Error(message) };
   }
 }
 
@@ -234,14 +240,6 @@ async function storeTokens(tokens: TokenResponse): Promise<void> {
   if (tokens.id_token) {
     await Storage.set(storageKey('id_token'), tokens.id_token);
   }
-}
-
-/**
- * Result of a token refresh operation
- */
-export interface RefreshResult {
-  success: boolean;
-  error?: Error;
 }
 
 /**
@@ -347,6 +345,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
 
 /**
  * Check if there's a valid session
+ * TODO: Check if the access token is expired
  */
 export async function isSessionValid(): Promise<boolean> {
   if (collabApiClient.isConnected() === false) return false;

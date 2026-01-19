@@ -1,2 +1,12 @@
-export { loginWithPassword, loginWithOAuth, logout, getCurrentUser, isSessionValid } from "./authService";
-export type { AuthResult } from "./authService";
+export {
+  loginWithPassword,
+  loginWithOAuth,
+  logout,
+  getCurrentUser,
+  isSessionValid,
+  refreshAccessToken,
+  isAccessTokenExpired,
+  getStoredAccessToken,
+} from "./authService";
+
+export type { AuthResult, RefreshResult } from "./authService";

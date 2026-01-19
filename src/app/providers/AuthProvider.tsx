@@ -67,6 +67,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     try {
       const result = await authService.loginWithOAuth();
+      if (result.success && result.user) {
+        await Storage.set(AUTH_USER_KEY, result.user, "object");
+        setUser(result.user);
+      }
       return result;
     } finally {
       setIsLoading(false);

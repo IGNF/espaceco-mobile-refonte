@@ -25,3 +25,11 @@ export interface PKCEState {
 	codeVerifier: string;
 	state: string;
 }
+
+/**
+ * Result of a token refresh operation
+ */
+export interface RefreshResult {
+	success: boolean;
+	error?: Error;
+}
