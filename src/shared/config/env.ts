@@ -18,6 +18,7 @@ interface OAuthConfig {
   baseUrl: string;
 	androidRedirectUri: string;
   iosRedirectUri: string;
+  webRedirectUri: string;
 }
 
 interface ApiConfig {
@@ -62,6 +63,7 @@ const oAuthConfig: OAuthConfig = {
 	baseUrl: env.VITE_OAUTH_BASE_URL || "",
 	androidRedirectUri: env.VITE_OAUTH_ANDROID_REDIRECT_URI || "",
 	iosRedirectUri: env.VITE_OAUTH_IOS_REDIRECT_URI || "",
+  webRedirectUri: env.VITE_OAUTH_WEB_REDIRECT_URI || "",
 };
 
 // Main configuration object

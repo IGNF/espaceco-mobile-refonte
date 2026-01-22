@@ -7,6 +7,7 @@ export interface AuthContextType {
   isLoading: boolean;
   loginWithPassword: (email: string, password: string) => Promise<{ success: boolean; user: AppUser | null; error?: Error | null }>;
   loginWithOAuth: () => Promise<{ success: boolean; user: AppUser | null; error?: Error | null }>;
+  setUserFromOAuthCallback: (user: AppUser) => Promise<void>;
   continueWithoutAccount: () => Promise<{ success: boolean; user: AppUser | null; error?: Error | null }>;
   logout: () => Promise<void>;
 }

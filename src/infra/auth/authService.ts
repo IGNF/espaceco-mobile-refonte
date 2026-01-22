@@ -1,7 +1,8 @@
-import { Device } from '@capacitor/device';
+
 import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { CapacitorHttp } from '@capacitor/core';
+import { Device } from '@capacitor/device';
 
 import { Storage } from '@ign/mobile-device'
 import { storageKey } from '@/shared/constants/storage';
@@ -12,7 +13,7 @@ import type { AppUser } from "@/domain/user/models";
 import type { AuthResult, AuthTokens, RefreshResult, TokenExchangeResult, TokenResponse } from "@/domain/auth/models";
 import { config } from "@/shared/config/env";
 
-import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "@/shared/utils/auth";
+import { generateCodeChallengeFromVerifier, generateCodeVerifier, getRedirectUri } from "@/shared/utils/auth";
 
 // Re-export domain types for convenience
 export type { AuthResult, RefreshResult } from "@/domain/auth/models";
@@ -42,7 +43,9 @@ export async function loginWithPassword(email: string, password: string): Promis
 }
 
 /**
- * Login with OAuth using PKCE flow
+ * Login with OAuth using PKCE flow.
+ * On mobile (iOS/Android), uses native app URL listeners.
+ * On web, redirects to the OAuth provider and handles callback via /auth/callback route.
  */
 export async function loginWithOAuth(): Promise<AuthResult> {
   // Generate PKCE values
@@ -52,10 +55,8 @@ export async function loginWithOAuth(): Promise<AuthResult> {
   // Store code verifier for later use in token exchange
   await Storage.set(storageKey('temp_code_verifier'), codeVerifier);
 
-  const operatingSystem = (await Device.getInfo()).platform;
-  const redirectUri = operatingSystem === 'android'
-    ? config.oAuth.androidRedirectUri
-    : config.oAuth.iosRedirectUri;
+  const redirectUri = await getRedirectUri();
+  console.log('loginWithOAuth => redirectUri', redirectUri);
 
   const authUrl = `${config.oAuth.baseUrl}/auth?` + new URLSearchParams({
     client_id: config.oAuth.clientId,
@@ -66,6 +67,19 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     code_challenge_method: 'S256',
   }).toString();
 
+  // Check platform
+  const deviceInfo = await Device.getInfo();
+  const isWeb = deviceInfo.platform === 'web';
+
+  if (isWeb) {
+    // On web, redirect to OAuth provider directly
+    // The callback will be handled by the /auth/callback route
+    window.location.href = authUrl;
+    // Return a pending result - the actual auth will complete after redirect
+    return { success: false, user: null, error: new Error('Redirection vers le portail d\'authentification...') };
+  }
+
+  // Mobile flow: use native app URL listeners
   return new Promise((resolve) => {
     const handleCallback = async ({ url }: { url: string }) => {
       // Only handle our redirect URI
@@ -126,6 +140,46 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     // Open the browser for authentication
     Browser.open({ url: authUrl });
   });
+}
+
+/**
+ * Handle OAuth callback on web platform.
+ * Called by the /auth/callback route after redirect from OAuth provider.
+ */
+export async function handleOAuthCallback(code: string): Promise<AuthResult> {
+  try {
+    const redirectUri = await getRedirectUri();
+
+    // Exchange code for tokens
+    const tokenResult = await exchangeCodeForTokens(code, redirectUri);
+    if (!tokenResult.success || !tokenResult.tokens) {
+      return { success: false, user: null, error: tokenResult.error };
+    }
+
+    // Fetch user info
+    const accessToken = await getStoredAccessToken();
+    if (!accessToken) {
+      return { success: false, user: null, error: new Error('No access token after exchange') };
+    }
+
+    collabApiClient.setExternalToken(
+      tokenResult.tokens.accessToken,
+      tokenResult.tokens.refreshToken,
+      tokenResult.tokens.expiresIn,
+      tokenResult.tokens.refreshExpiresIn
+    );
+
+    const user = await fetchUserInfo();
+    if (!user) {
+      return { success: false, user: null, error: new Error('Failed to fetch user info') };
+    }
+
+    return { success: true, user };
+  } catch (err) {
+    await Storage.remove(storageKey('temp_code_verifier'));
+    const message = err instanceof Error ? err.message : 'OAuth callback failed';
+    return { success: false, user: null, error: new Error(message) };
+  }
 }
 
 /**

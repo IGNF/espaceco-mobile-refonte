@@ -1,5 +1,6 @@
 # Environments
 .env
+localhost.env
 espaceco.env
 naviforest.env
 .venv

@@ -7,7 +7,7 @@ import { ExternalLink } from "@/shared/ui/ExternalLink";
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
-import inputs from "@/shared/styles/inputs.module.css";
+// import inputs from "@/shared/styles/inputs.module.css";
 import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
@@ -15,8 +15,8 @@ export function LoginPage() {
 	const navigate = useNavigate();
   // @ts-expect-error both logins methods used for testing
 	const { loginWithPassword, loginWithOAuth, continueWithoutAccount, isAuthenticated } = useAuth();
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
+	// const [email, setEmail] = useState("");
+	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -83,7 +83,10 @@ export function LoginPage() {
 				</p>
 
 				<form className={styles.form} onSubmit={handleLogin}>
-					<div className={styles.field}>
+
+          {/* inputs commented out because we're now using SSO and not credentials */}
+
+					{/* <div className={styles.field}>
 						<input
 							id="email"
 							type="email"
@@ -102,7 +105,7 @@ export function LoginPage() {
 							onChange={(e) => setPassword(e.target.value)}
 							placeholder={t("login.passwordPlaceholder")}
 						/>
-					</div>
+					</div> */}
 					<div className={styles.forgotPasswordLinkContainer}>
 						<ExternalLink
 							href={t("login.forgotPassword")}

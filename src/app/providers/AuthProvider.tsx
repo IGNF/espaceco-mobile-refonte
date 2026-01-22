@@ -77,6 +77,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const setUserFromOAuthCallback = useCallback(async (user: AppUser) => {
+    await Storage.set(AUTH_USER_KEY, user, "object");
+    setUser(user);
+  }, []);
+
 	const continueWithoutAccount = useCallback(async () => {
 		setIsLoading(true);
 		try {
@@ -122,6 +127,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				isLoading,
 				loginWithPassword,
         loginWithOAuth,
+        setUserFromOAuthCallback,
 				logout,
 				continueWithoutAccount,
 			}}

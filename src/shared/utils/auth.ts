@@ -2,6 +2,9 @@
  * Utility functions for PKCE (Proof Key for Code Exchange)
  */
 
+import { Device } from "@capacitor/device";
+import { config } from "../config/env";
+
 /**
  * Generate a random code verifier for PKCE
  */
@@ -49,4 +52,21 @@ export async function generateCodeChallengeFromVerifier(codeVerifier: string): P
 export async function generateCodeChallenge(): Promise<string> {
   const codeVerifier = generateCodeVerifier();
   return generateCodeChallengeFromVerifier(codeVerifier);
+}
+
+export async function getRedirectUri(): Promise<string> {
+  const operatingSystem = (await Device.getInfo()).platform;
+  console.log("whole config", config.oAuth);
+  console.log('getRedirectUri => operatingSystem', operatingSystem);
+
+  switch (operatingSystem) {
+    case 'android':
+      return config.oAuth.androidRedirectUri;
+    case 'ios':
+      return config.oAuth.iosRedirectUri;
+    case 'web':
+      return config.oAuth.webRedirectUri;
+    default:
+      return config.oAuth.webRedirectUri; // default to web redirect URI
+  }
 }

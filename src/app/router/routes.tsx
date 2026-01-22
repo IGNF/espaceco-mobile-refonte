@@ -5,6 +5,7 @@ import { AuthGuard } from "./AuthGuard";
 
 /** Login/logout routes **/
 import { LoginPage } from "@/features/auth/pages/Login/LoginPage";
+import { AuthCallbackPage } from "@/features/auth/pages/AuthCallback/AuthCallbackPage";
 // import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 
 /** Community routes **/
@@ -37,6 +38,10 @@ export const router = createBrowserRouter([
 	{
 		path: "/login",
 		element: <LoginPage />,
+	},
+	{
+		path: "/auth/callback",
+		element: <AuthCallbackPage />,
 	},
 	{
 		// Protected routes: only authenticated users can access these routes, otherwise redirect to login page

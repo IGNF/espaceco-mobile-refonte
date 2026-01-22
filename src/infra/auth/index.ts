@@ -1,6 +1,7 @@
 export {
   loginWithPassword,
   loginWithOAuth,
+  handleOAuthCallback,
   logout,
   getCurrentUser,
   isSessionValid,
