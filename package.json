@@ -32,7 +32,7 @@
     "@ign/mobile-core": "git+ssh://git@github.com/IGNF/mobile-core.git#main",
     "@ign/mobile-device": "git+ssh://git@github.com/IGNF/mobile-device.git#main",
     "@ionic/pwa-elements": "^3.3.0",
-    "collaboratif-client-api": "git@github.com/IGNF/collaboratif-client-api#main",
+    "collaboratif-client-api": "github:IGNF/collaboratif-client-api#2.0",
     "i18next": "^25.7.3",
     "install": "^0.13.0",
     "npm": "^11.7.0",

@@ -166,6 +166,8 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
       throw new Error(`Token exchange failed: ${JSON.stringify(response.data)}`);
     }
 
+    console.log('exchangeCodeForTokens => response.data', response.data);
+
     // Store tokens
     await storeTokens(response.data);
 
