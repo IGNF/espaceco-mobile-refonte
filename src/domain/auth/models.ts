@@ -10,12 +10,35 @@ export interface AuthResult {
 }
 
 /**
- * OAuth tokens
+ * Token response from OAuth server
+ */
+export interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  id_token?: string;
+  expires_in: number;
+  refresh_expires_in?: number;
+  token_type: string;
+  scope?: string;
+}
+
+/**
+ * Result of token exchange operation
+ */
+export interface TokenExchangeResult {
+  success: boolean;
+  tokens?: AuthTokens;
+  error?: Error;
+}
+
+/**
+ * OAuth tokens expected by the collaboratif API
  */
 export interface AuthTokens {
 	accessToken: string;
 	refreshToken?: string;
 	expiresIn?: number;
+	refreshExpiresIn?: number;
 }
 
 /**
@@ -31,5 +54,6 @@ export interface PKCEState {
  */
 export interface RefreshResult {
 	success: boolean;
+	tokens?: AuthTokens;
 	error?: Error;
 }

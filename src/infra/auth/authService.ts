@@ -9,7 +9,7 @@ import { storageKey } from '@/shared/constants/storage';
 import { collabApiClient } from "@/infra/api/collabApiClient";
 import { mapApiUserToAppUser, type ApiUserResponse } from "@/domain/user/mappers";
 import type { AppUser } from "@/domain/user/models";
-import type { AuthResult, RefreshResult } from "@/domain/auth/models";
+import type { AuthResult, AuthTokens, RefreshResult, TokenExchangeResult, TokenResponse } from "@/domain/auth/models";
 import { config } from "@/shared/config/env";
 
 import { generateCodeChallengeFromVerifier, generateCodeVerifier } from "@/shared/utils/auth";
@@ -98,7 +98,7 @@ export async function loginWithOAuth(): Promise<AuthResult> {
 
         // Exchange code for tokens
         const tokenResult = await exchangeCodeForTokens(code, redirectUri);
-        if (!tokenResult.success) {
+        if (!tokenResult.success || !tokenResult.tokens) {
           resolve({ success: false, user: null, error: tokenResult.error });
           return;
         }
@@ -110,7 +110,9 @@ export async function loginWithOAuth(): Promise<AuthResult> {
           return;
         }
 
-        const user = await fetchUserInfo(accessToken);
+        collabApiClient.setExternalToken(tokenResult.tokens?.accessToken, tokenResult.tokens?.refreshToken, tokenResult.tokens?.expiresIn, tokenResult.tokens?.refreshExpiresIn);
+
+        const user = await fetchUserInfo();
         resolve({ success: true, user });
       } catch (err) {
         await Storage.remove(storageKey('temp_code_verifier'));
@@ -124,14 +126,6 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     // Open the browser for authentication
     Browser.open({ url: authUrl });
   });
-}
-
-/**
- * Result of token exchange operation
- */
-interface TokenExchangeResult {
-  success: boolean;
-  error?: Error;
 }
 
 /**
@@ -169,12 +163,19 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
     console.log('exchangeCodeForTokens => response.data', response.data);
 
     // Store tokens
-    await storeTokens(response.data);
+    await storeTokens(response.data as TokenResponse);
 
     // Clean up temporary storage
     await Storage.remove(storageKey('temp_code_verifier'));
 
-    return { success: true };
+    const authTokens: AuthTokens = {
+      accessToken: response.data.access_token,
+      refreshToken: response.data.refresh_token,
+      expiresIn: response.data.expires_in,
+      refreshExpiresIn: response.data.refresh_expires_in,
+    };
+
+    return { success: true, tokens: authTokens };
   } catch (err) {
     await Storage.remove(storageKey('temp_code_verifier'));
     const message = err instanceof Error ? err.message : 'Token exchange failed';
@@ -185,14 +186,10 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
 /**
  * Fetch user info from the collab API using the OAuth access token
  */
-async function fetchUserInfo(accessToken: string): Promise<AppUser | null> {
+async function fetchUserInfo(): Promise<AppUser | null> {
   try {
-    const response = await CapacitorHttp.get({
-      url: `${config.api.baseUrl}/users/me`,
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    });
+    const response = await collabApiClient.user.get("me");
+    console.log('fetchUserInfo => response', response);
 
     if (response.status >= 400) {
       return null;
@@ -203,19 +200,6 @@ async function fetchUserInfo(accessToken: string): Promise<AppUser | null> {
   } catch {
     return null;
   }
-}
-
-/**
- * Token response from OAuth server
- */
-interface TokenResponse {
-  access_token: string;
-  refresh_token?: string;
-  id_token?: string;
-  expires_in: number;
-  refresh_expires_in?: number;
-  token_type: string;
-  scope?: string;
 }
 
 /**
@@ -282,7 +266,14 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
     const tokens = response.data as TokenResponse;
     await storeTokens(tokens);
 
-    return { success: true };
+    const authTokens: AuthTokens = {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresIn: tokens.expires_in,
+      refreshExpiresIn: tokens.refresh_expires_in,
+    };
+
+    return { success: true, tokens: authTokens };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Token refresh failed';
     return { success: false, error: new Error(message) };

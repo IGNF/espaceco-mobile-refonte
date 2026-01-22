@@ -8,5 +8,4 @@ export const collabApiClient = new ApiClient(
 	config.api.baseUrl,
 	config.auth.baseUrl,
 	config.auth.clientId,
-	config.auth.clientSecret
 );
