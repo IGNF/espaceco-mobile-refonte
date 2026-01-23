@@ -3,10 +3,6 @@
  *
  * Provides community selection functionality for the first-time selection flow.
  * Uses the CommunityContext for state management and persistence.
- *
- * - Fetches communities from API (or uses mock data for now)
- * - Manages local selection state before confirmation
- * - Persists selection via CommunityContext
  */
 import { useState, useEffect, useCallback } from 'react';
 import type { Community } from '@ign/mobile-core';
@@ -58,16 +54,13 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
         if (contextCommunities.length > 0) {
           setCommunities(contextCommunities);
           // Pre-select the active community if exists, otherwise first one
-
-          // if ('community_id' in contextCommunities[0]) {
-          //   setSelectedCommunityId(contextCommunities[0].community_id);
-          // } else {
           setSelectedCommunityId(contextCommunities[0].id);
-          // }
           setIsLoading(false);
           return;
         }
 
+        // if there are no communities in context, fetch them from the API
+        // no community in context means the get user API didn't retrieve any community linked to the user
         const allCommunities = (await collabApiClient.community.getAll()).data as Community[];
         console.log('allCommunities', allCommunities);
 
