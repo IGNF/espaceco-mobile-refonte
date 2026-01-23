@@ -59,35 +59,27 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
         if (contextCommunities.length > 0) {
           setCommunities(contextCommunities);
           // Pre-select the active community if exists, otherwise first one
-          setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
+
+          if ('community_id' in contextCommunities[0]) {
+            setSelectedCommunityId(contextCommunities[0].community_id);
+          } else {
+            setSelectedCommunityId(contextCommunities[0].id);
+          }
           setIsLoading(false);
           return;
         }
 
-        const fetchedCommunities = await collabApiClient.community.getAll();
-        console.log('fetchedCommunities', fetchedCommunities);
+        const allCommunities = (await collabApiClient.community.getAll()).data as Community[];
+        console.log('allCommunities', allCommunities);
 
-        // TODO: Replace mock data with actual API call
-        // const fetchedCommunities = await fetchCommunities({ userId: user?.id });
-        const mockCommunities: Community[] = [
-          {
-            id: 1,
-            name: 'Groupe 1',
-            description: 'Description 1',
-          },
-          {
-            id: 2,
-            name: 'Groupe 2',
-            description: 'Description 2',
-          },
-        ];
+
 
         // Save communities to storage so CommunityContext can access them
-        await userStorage.saveCommunities(mockCommunities);
+        await userStorage.saveCommunities(allCommunities || []);
         await refreshCommunities();
 
-        setCommunities(mockCommunities);
-        setSelectedCommunityId(mockCommunities[0].id);
+        setCommunities(allCommunities || []);
+        setSelectedCommunityId(allCommunities?.[0]?.id || null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load communities');
       } finally {
@@ -99,11 +91,12 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
     if (!contextLoading) {
       loadCommunities();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextLoading]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
+    console.log('selectCommunity => communityId', communityId);
     setSelectedCommunityId(communityId);
   }, []);
 

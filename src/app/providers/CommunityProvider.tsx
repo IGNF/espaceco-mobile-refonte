@@ -45,6 +45,7 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
 
 	// Set active community
 	const setActiveCommunity = useCallback(async (communityId: number) => {
+    console.log('setActiveCommunity => communityId', communityId);
 		try {
 			await userStorage.setActiveCommunity(communityId);
 			const community = await userStorage.getCommunityById(communityId);

@@ -85,6 +85,7 @@ const standaloneItems: StandaloneItem[] = [
 export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMenuProps) {
 	const { t } = useTranslation();
 	const { activeCommunity } = useCommunity();
+	console.log('from left menu => activeCommunity', activeCommunity);
 	const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
 		new Set([])
 	);
