@@ -36,6 +36,8 @@ export function LoginPage() {
 		setError(null);
 		setIsLoading(true);
     const loginResponse = await loginWithOAuth();
+    console.log('loginResponse', loginResponse);
+    
 		// const loginResponse = await loginWithPassword(email, password);
 		setIsLoading(false);
 		if (!loginResponse.success) {

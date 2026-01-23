@@ -20,19 +20,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 	// Try to restore session on app start
 	useEffect(() => {
-		async function restoreSession() {
+		async function tryRestoreSession() {
 			try {
 				const storedUser = await Storage.get(AUTH_USER_KEY, "object") as AppUser | null;
 
 				if (storedUser?.isAnonymous) {
 					// Anonymous users don't need API validation
 					setUser(storedUser);
-				} else if (storedUser && await authService.isSessionValid()) {
-					// Refresh user data from API
-					const result = await authService.getCurrentUser();
-					if (result.success && result.user) {
-						await Storage.set(AUTH_USER_KEY, result.user, "object");
-						setUser(result.user);
+				} else if (storedUser) {
+					// Re-hydrate tokens into collabApiClient from storage
+					const sessionRestored = await authService.restoreSession();
+
+					if (sessionRestored) {
+						// Refresh user data from API
+						const result = await authService.getCurrentUser();
+						if (result.success && result.user) {
+							await Storage.set(AUTH_USER_KEY, result.user, "object");
+							setUser(result.user);
+						} else {
+							await Storage.remove(AUTH_USER_KEY);
+						}
 					} else {
 						await Storage.remove(AUTH_USER_KEY);
 					}
@@ -46,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			}
 		}
 
-		restoreSession();
+		tryRestoreSession();
 	}, []);
 
 	const loginWithPassword = useCallback(async (email: string, password: string) => {

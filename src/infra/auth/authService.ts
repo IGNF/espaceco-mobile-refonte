@@ -391,8 +391,54 @@ export async function getCurrentUser(): Promise<AuthResult> {
 }
 
 /**
+ * Restore tokens from storage into the collabApiClient.
+ * Should be called on app startup to re-hydrate the client after a page refresh.
+ * Handles token expiry: if access token is expired, attempts refresh.
+ * Returns true if a valid session was restored.
+ */
+export async function restoreSession(): Promise<boolean> {
+  const accessToken = await Storage.get(storageKey('access_token'));
+  const refreshToken = await Storage.get(storageKey('refresh_token'));
+
+  if (!accessToken && !refreshToken) {
+    return false;
+  }
+
+  const expired = await isAccessTokenExpired();
+
+  if (!expired && accessToken) {
+    // Access token is still valid, restore it
+    const expiresAt = await Storage.get(storageKey('access_token_expires_at'));
+    const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
+    const now = Date.now();
+
+    const expiresIn = expiresAt ? Math.floor((parseInt(expiresAt, 10) - now) / 1000) : 0;
+    const refreshExpiresIn = refreshExpiresAt ? Math.floor((parseInt(refreshExpiresAt, 10) - now) / 1000) : 0;
+
+    collabApiClient.setExternalToken(accessToken, refreshToken || '', expiresIn, refreshExpiresIn);
+    return true;
+  }
+
+  // Access token expired, try to refresh
+  if (refreshToken) {
+    const refreshResult = await refreshAccessToken();
+    if (refreshResult.success && refreshResult.tokens) {
+      collabApiClient.setExternalToken(
+        refreshResult.tokens.accessToken,
+        refreshResult.tokens.refreshToken,
+        refreshResult.tokens.expiresIn,
+        refreshResult.tokens.refreshExpiresIn
+      );
+      return true;
+    }
+  }
+
+  // No valid session could be restored
+  return false;
+}
+
+/**
  * Check if there's a valid session
- * TODO: Check if the access token is expired
  */
 export async function isSessionValid(): Promise<boolean> {
   if (collabApiClient.isConnected() === false) return false;

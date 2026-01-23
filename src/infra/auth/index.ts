@@ -4,6 +4,7 @@ export {
   handleOAuthCallback,
   logout,
   getCurrentUser,
+  restoreSession,
   isSessionValid,
   refreshAccessToken,
   isAccessTokenExpired,

@@ -14,6 +14,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { UserStorageAdapter } from '@/infra/storage';
 
+import { collabApiClient } from "@/infra/api/collabApiClient";
+
 interface UseCommunitySelectionResult {
   communities: Community[];
   selectedCommunityId: number | null;
@@ -52,13 +54,16 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
 
       try {
         // First check if communities are already in context (loaded from storage)
-        if (contextCommunities.length > 0) {
-          setCommunities(contextCommunities);
-          // Pre-select the active community if exists, otherwise first one
-          setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
-          setIsLoading(false);
-          return;
-        }
+        // if (contextCommunities.length > 0) {
+        //   setCommunities(contextCommunities);
+        //   // Pre-select the active community if exists, otherwise first one
+        //   setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
+        //   setIsLoading(false);
+        //   return;
+        // }
+
+        const fetchedCommunities = await collabApiClient.community.getAll();
+        console.log('fetchedCommunities', fetchedCommunities);
 
         // TODO: Replace mock data with actual API call
         // const fetchedCommunities = await fetchCommunities({ userId: user?.id });
@@ -92,7 +97,8 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
     if (!contextLoading) {
       loadCommunities();
     }
-  }, [user, contextCommunities, contextLoading, activeCommunity, refreshCommunities]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextLoading]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
