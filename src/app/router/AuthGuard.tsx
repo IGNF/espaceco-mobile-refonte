@@ -6,13 +6,14 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
  * @returns The AuthGuard component.
  */
 export function AuthGuard() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
-  /**
-   * If the user is not authenticated, redirect to the login page.
-   * @returns The Navigate component.
-   */
+  // Wait for session restoration before deciding
+  if (isLoading) {
+    return null;
+  }
+
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

@@ -11,6 +11,7 @@
 import type { IUserStorage, User, Community, CommunityMember } from '@ign/mobile-core';
 import { Storage } from '@ign/mobile-device';
 import { storageKey } from '../../shared/constants/storage';
+import { collabApiClient } from '../api/collabApiClient';
 
 const USER_KEY = 'USER';
 const USER_PARAMS_KEY = 'USER_PARAMS';
@@ -24,12 +25,18 @@ export class UserStorageAdapter implements IUserStorage {
   async saveUser(user: User): Promise<void> {
     // Store communities separately for easy access
     if (user.communities_member && user.communities_member.length > 0) {
-      await this.saveCommunities(user.communities_member);
+
+      const userCommunities = await Promise.all(user.communities_member.map(async (communityMember) => {
+        const community = (await collabApiClient.community.get(communityMember.community_id)).data as Community;
+        return community;
+      }));
+      console.log('userCommunities', userCommunities);
+
+      // to test in real conditions
+      await this.saveCommunities(userCommunities);
     }
 
-    // Store user data without communities (they're stored separately)
-    const { ...userData } = user;
-    await Storage.set(storageKey(USER_KEY), userData, 'object');
+    await Storage.set(storageKey(USER_KEY), user, 'object');
   }
 
   async getUser(): Promise<User | null> {
@@ -64,16 +71,14 @@ export class UserStorageAdapter implements IUserStorage {
 
   // Community operations
 
-  // Here, I don't know if it's a Community[] or a CommunityMember[]
-  // to be fixed later
-  async saveCommunities(communities: Community[] | CommunityMember[]): Promise<void> {
+  async saveCommunities(communities: Community[]): Promise<void> {
     await Storage.set(storageKey(COMMUNITIES_KEY), communities, 'object');
   }
 
-  async getCommunities(): Promise<Community[] | CommunityMember[]> {
+  async getCommunities(): Promise<Community[]> {
     const data = await Storage.get(storageKey(COMMUNITIES_KEY), 'object');
     console.log('getCommunities => data', data);
-    return (data as Community[] | CommunityMember[]) ?? [];
+    return (data as Community[]) ?? [];
   }
 
   async setActiveCommunity(communityId: number): Promise<void> {

@@ -362,7 +362,7 @@ export async function getStoredAccessToken(): Promise<string | null> {
  * Logout and clear credentials
  */
 export async function logout(): Promise<void> {
-  collabApiClient.disconnect();
+  collabApiClient.disconnect(); // this seems to send a 401 error???
 
   // Clear OAuth tokens
   await Storage.remove(storageKey('access_token'));
