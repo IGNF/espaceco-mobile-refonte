@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
-import type { Community } from "@ign/mobile-core";
+import type { Community, CommunityMember } from "@ign/mobile-core";
 import { CommunityContext } from "./CommunityContext";
 import { UserStorageAdapter } from "@/infra/storage";
 
@@ -16,8 +16,8 @@ const userStorage = new UserStorageAdapter();
  * methods to change the active community.
  */
 export function CommunityProvider({ children }: CommunityProviderProps) {
-	const [activeCommunity, setActiveCommunityState] = useState<Community | null>(null);
-	const [communities, setCommunities] = useState<Community[]>([]);
+	const [activeCommunity, setActiveCommunityState] = useState<Community | CommunityMember | null>(null);
+	const [communities, setCommunities] = useState<Community[] | CommunityMember[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	// Load communities and active community from storage
@@ -28,6 +28,7 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
 				userStorage.getCommunities(),
 				userStorage.getActiveCommunityData(),
 			]);
+      console.log('loadCommunityData => storedCommunities', storedCommunities);
 			setCommunities(storedCommunities);
 			setActiveCommunityState(activeData);
 		} catch (error) {

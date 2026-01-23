@@ -1,11 +1,10 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
-import { Storage } from "@ign/mobile-device";
 import { AuthContext } from "./AuthContext";
 import * as authService from "@/infra/auth";
-import { storageKey } from "@/shared/constants/storage";
 import type { AppUser } from "@/domain/user/models";
+import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
 
-const AUTH_USER_KEY = storageKey("auth_user");
+const userStorage = new UserStorageAdapter();
 
 interface AuthProviderProps {
 	children: ReactNode;
@@ -22,10 +21,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	useEffect(() => {
 		async function tryRestoreSession() {
 			try {
-				const storedUser = await Storage.get(AUTH_USER_KEY, "object") as AppUser | null;
+				const storedUser = await userStorage.getUser() as AppUser | null;
 
 				if (storedUser?.isAnonymous) {
-					// Anonymous users don't need API validation
 					setUser(storedUser);
 				} else if (storedUser) {
 					// Re-hydrate tokens into collabApiClient from storage
@@ -35,19 +33,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						// Refresh user data from API
 						const result = await authService.getCurrentUser();
 						if (result.success && result.user) {
-							await Storage.set(AUTH_USER_KEY, result.user, "object");
+							await userStorage.saveUser(result.user);
 							setUser(result.user);
 						} else {
-							await Storage.remove(AUTH_USER_KEY);
+							await userStorage.clearUser();
 						}
 					} else {
-						await Storage.remove(AUTH_USER_KEY);
+						await userStorage.clearUser();
 					}
-				} else {
-					await Storage.remove(AUTH_USER_KEY);
 				}
 			} catch {
-				await Storage.remove(AUTH_USER_KEY);
+				await userStorage.clearUser();
 			} finally {
 				setIsLoading(false);
 			}
@@ -61,7 +57,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		try {
 			const result = await authService.loginWithPassword(email, password);
 			if (result.success && result.user) {
-				await Storage.set(AUTH_USER_KEY, result.user, "object");
+				await userStorage.saveUser(result.user);
 				setUser(result.user);
 			}
 			return result;
@@ -75,7 +71,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await authService.loginWithOAuth();
       if (result.success && result.user) {
-        await Storage.set(AUTH_USER_KEY, result.user, "object");
+        await userStorage.saveUser(result.user);
         setUser(result.user);
       }
       return result;
@@ -85,7 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const setUserFromOAuthCallback = useCallback(async (user: AppUser) => {
-    await Storage.set(AUTH_USER_KEY, user, "object");
+    await userStorage.saveUser(user);
     setUser(user);
   }, []);
 
@@ -101,7 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				isAnonymous: true,
 				communities: [],
 			};
-			await Storage.set(AUTH_USER_KEY, anonymousUser, "object");
+			await userStorage.saveUser(anonymousUser);
 			setUser(anonymousUser);
 			return { success: true, user: anonymousUser };
 		} catch (error) {
@@ -120,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		try {
 			await authService.logout();
 		} finally {
-			await Storage.remove(AUTH_USER_KEY);
+			await userStorage.clearAll();
 			setUser(null);
 			setIsLoading(false);
 		}

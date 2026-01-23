@@ -381,7 +381,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
   }
 
   try {
-    const response = await collabApiClient.getUser("me");
+    const response = await collabApiClient.user.get("me");
     const user = mapApiUserToAppUser(response.data as ApiUserResponse);
     return { success: true, user };
   } catch (error) {

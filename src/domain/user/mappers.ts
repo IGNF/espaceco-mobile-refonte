@@ -1,4 +1,5 @@
 import type { AppUser } from "./models";
+import type { Community, CommunityMember } from "@ign/mobile-core";
 
 export interface ApiUserResponse {
 	id: number;
@@ -8,7 +9,8 @@ export interface ApiUserResponse {
 	username: string;
 	avatar?: string; // API field name
 	description?: string;
-	communities?: Array<{ id: number; name: string }>;
+	communities?: Community[];
+	communities_member?: CommunityMember[];
 }
 
 export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
@@ -20,6 +22,7 @@ export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
 		username: apiUser.username,
 		avatarUrl: apiUser.avatar,
 		description: apiUser.description,
-		communities: apiUser.communities || [],
+    communities: apiUser.communities || [],
+		communities_member: apiUser.communities_member || [],
 	};
 }

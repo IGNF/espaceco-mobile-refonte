@@ -9,7 +9,7 @@
  * - Persists selection via CommunityContext
  */
 import { useState, useEffect, useCallback } from 'react';
-import type { Community } from '@ign/mobile-core';
+import type { Community, CommunityMember } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { UserStorageAdapter } from '@/infra/storage';
@@ -17,7 +17,7 @@ import { UserStorageAdapter } from '@/infra/storage';
 import { collabApiClient } from "@/infra/api/collabApiClient";
 
 interface UseCommunitySelectionResult {
-  communities: Community[];
+  communities: Community[] | CommunityMember[];
   selectedCommunityId: number | null;
   isLoading: boolean;
   error: string | null;
@@ -40,7 +40,7 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   } = useCommunity();
 
   // Local state for the selection flow
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [communities, setCommunities] = useState<Community[] | CommunityMember[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -49,18 +49,20 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   // Load communities on mount
   useEffect(() => {
     async function loadCommunities() {
+      console.log('loadCommunities', user);
+      console.log('contextCommunities', contextCommunities);
       setIsLoading(true);
       setError(null);
 
       try {
         // First check if communities are already in context (loaded from storage)
-        // if (contextCommunities.length > 0) {
-        //   setCommunities(contextCommunities);
-        //   // Pre-select the active community if exists, otherwise first one
-        //   setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
-        //   setIsLoading(false);
-        //   return;
-        // }
+        if (contextCommunities.length > 0) {
+          setCommunities(contextCommunities);
+          // Pre-select the active community if exists, otherwise first one
+          setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0].id);
+          setIsLoading(false);
+          return;
+        }
 
         const fetchedCommunities = await collabApiClient.community.getAll();
         console.log('fetchedCommunities', fetchedCommunities);

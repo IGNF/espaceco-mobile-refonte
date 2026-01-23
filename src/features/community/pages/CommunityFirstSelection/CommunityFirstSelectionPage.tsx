@@ -75,7 +75,7 @@ export function CommunityFirstSelectionPage() {
 							>
 								{communities.map((community) => (
 									<option key={community.id} value={community.id}>
-										{community.name}
+										{community.community_name}
 									</option>
 								))}
 							</select>
