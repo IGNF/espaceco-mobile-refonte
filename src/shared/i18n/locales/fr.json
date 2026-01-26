@@ -1,112 +1,112 @@
 {
-	"welcome": {
-		"title": "Bienvenue",
-		"subtitle": "sur l'Espace collaboratif IGN",
-		"description": "Voulez-vous participer à l'amélioration des données IGN ?<br />Signalez des évolutions ou des erreurs via cette<br />application et ensuite suivez le traitement de<br />votre signalement.<br />Vous pouvez également accéder à vos guichets et<br />faire évoluer vos bases de données métiers.",
-		"cta": "Continuer"
-	},
-	"login": {
-		"title": "Connectez-vous",
-		"subtitle": "à votre Espace collaboratif IGN",
-		"register": "Vous n'avez pas encore de compte ? Inscrivez-vous sur <a>Espace collaboratif</a> pour accéder à tous les fonctionnalités.",
-		"login": "Login",
-		"loginPlaceholder": "Nom d'utilisateur ou e-mail",
-		"password": "Mot de passe",
-		"passwordPlaceholder": "Votre mot de passe",
-		"forgotPassword": "Mot de passe oublié ?",
-		"submit": "Se connecter",
-		"continueWithoutAccount": "Continuer sans compte"
-	},
-	"communitySelection": {
-		"title": "Profil actif",
-		"subtitle": "de votre Espace collaboratif IGN",
-		"description": "Vous pouvez choisir un groupe pour faire des signalements dans ce groupe et de consulter son guichet. Vous pouvez changer de groupe à tout moment dans mes groupes.",
-		"validate": "Valider",
-		"noCommunitiesTitle": "Aucun groupe",
-		"noCommunities": "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer."
-	},
-	"home": {
-		"title": "Espace collaboratif",
-		"subtitle": "Profil actif",
-		"welcome": "Bienvenue sur l'application",
-		"logout": "Déconnexion",
-		"tabs": {
-			"signalement": "Signalement",
-			"guichet": "Guichet",
-			"couches": "Couches"
-		},
-		"copyright": "Géoportail © IGN-France IGN"
-	},
-	"onboarding": {
-		"welcome": {
-			"title": "Découvrir l'application",
-			"subtitle": "Souhaitez-vous faire une visite guidée pour découvrir l'application et ses fonctions ?",
-			"startTour": "Faire la visite",
-			"skipTour": "Commencer sans visite"
-		},
-		"steps": {
-			"signalement": {
-				"title": "Signalement",
-				"subtitle": "Utilisez ce bouton pour faire un nouveau signalement."
-			},
-			"guichet": {
-				"title": "Guichet",
-				"subtitle": "Utilisez ce bouton pour accéder à votre guichet et ajouter ou modifier des objets."
-			},
-			"couches": {
-				"title": "Couches",
-				"subtitle": "Dans cet onglet, vous pourrez gérer les couches que vous souhaitez afficher ou non sur la carte."
-			},
-			"geolocation": {
-				"title": "Géolocalisation",
-				"subtitle": "Recentrez votre localisation sur la carte pour vous repérer."
-			},
-			"menu": {
-				"title": "Menu",
-				"subtitle": "Le menu vous permet d'accéder à toutes les fonctions : signalements, guichet, votre compte et paramètres."
-			},
-			"search": {
-				"title": "Rechercher",
-				"subtitle": "Utilisez ce bouton pour ouvrir le menu de recherche. Vous pouvez rechercher des adresses ou des parcelles."
-			}
-		}
-	},
-	"leftMenu": {
-		"signalements": {
-			"title": "Signalements",
-			"signalementsGroupe": "Signalements du groupe",
-			"mesSignalements": "Mes signalements",
-			"nouveauSignalement": "Nouveau signalement",
-			"aPropos": "A propos des signalements"
-		},
-		"guichet": {
-			"title": "Guichet",
-			"guichet": "Guichet",
-			"aPropos": "A propos du guichet"
-		},
-		"monCompte": {
-			"title": "Mon compte",
-			"mesInformations": "Mes informations",
-			"mesGroupes": "Mes groupes",
-			"deconnexion": "Déconnexion"
-		},
-		"parametres": "Paramètres",
-		"aide": "Aide",
-		"aPropos": "A propos"
-	},
+  "welcome": {
+    "title": "Bienvenue",
+    "subtitle": "sur l'Espace collaboratif IGN",
+    "description": "Voulez-vous participer à l'amélioration des données IGN ?<br />Signalez des évolutions ou des erreurs via cette<br />application et ensuite suivez le traitement de<br />votre signalement.<br />Vous pouvez également accéder à vos guichets et<br />faire évoluer vos bases de données métiers.",
+    "cta": "Continuer"
+  },
+  "login": {
+    "title": "Connectez-vous",
+    "subtitle": "à votre Espace collaboratif IGN",
+    "register": "Vous n'avez pas encore de compte ? Inscrivez-vous sur <a>Espace collaboratif</a> pour accéder à tous les fonctionnalités.",
+    "login": "Login",
+    "loginPlaceholder": "Nom d'utilisateur ou e-mail",
+    "password": "Mot de passe",
+    "passwordPlaceholder": "Votre mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "submit": "Se connecter",
+    "continueWithoutAccount": "Continuer sans compte"
+  },
+  "communitySelection": {
+    "title": "Profil actif",
+    "subtitle": "de votre Espace collaboratif IGN",
+    "description": "Vous pouvez choisir un groupe pour faire des signalements dans ce groupe et de consulter son guichet. Vous pouvez changer de groupe à tout moment dans mes groupes.",
+    "validate": "Valider",
+    "noCommunitiesTitle": "Aucun groupe",
+    "noCommunities": "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer."
+  },
+  "home": {
+    "title": "Espace collaboratif",
+    "subtitle": "Profil actif",
+    "welcome": "Bienvenue sur l'application",
+    "logout": "Déconnexion",
+    "tabs": {
+      "signalement": "Signalement",
+      "guichet": "Guichet",
+      "couches": "Couches"
+    },
+    "copyright": "Géoportail © IGN-France IGN"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Découvrir l'application",
+      "subtitle": "Souhaitez-vous faire une visite guidée pour découvrir l'application et ses fonctions ?",
+      "startTour": "Faire la visite",
+      "skipTour": "Commencer sans visite"
+    },
+    "steps": {
+      "signalement": {
+        "title": "Signalement",
+        "subtitle": "Utilisez ce bouton pour faire un nouveau signalement."
+      },
+      "guichet": {
+        "title": "Guichet",
+        "subtitle": "Utilisez ce bouton pour accéder à votre guichet et ajouter ou modifier des objets."
+      },
+      "couches": {
+        "title": "Couches",
+        "subtitle": "Dans cet onglet, vous pourrez gérer les couches que vous souhaitez afficher ou non sur la carte."
+      },
+      "geolocation": {
+        "title": "Géolocalisation",
+        "subtitle": "Recentrez votre localisation sur la carte pour vous repérer."
+      },
+      "menu": {
+        "title": "Menu",
+        "subtitle": "Le menu vous permet d'accéder à toutes les fonctions : signalements, guichet, votre compte et paramètres."
+      },
+      "search": {
+        "title": "Rechercher",
+        "subtitle": "Utilisez ce bouton pour ouvrir le menu de recherche. Vous pouvez rechercher des adresses ou des parcelles."
+      }
+    }
+  },
+  "leftMenu": {
+    "signalements": {
+      "title": "Signalements",
+      "signalementsGroupe": "Signalements du groupe",
+      "mesSignalements": "Mes signalements",
+      "nouveauSignalement": "Nouveau signalement",
+      "aPropos": "A propos des signalements"
+    },
+    "guichet": {
+      "title": "Guichet",
+      "guichet": "Guichet",
+      "aPropos": "A propos du guichet"
+    },
+    "monCompte": {
+      "title": "Mon compte",
+      "mesInformations": "Mes informations",
+      "mesGroupes": "Mes groupes",
+      "deconnexion": "Déconnexion"
+    },
+    "parametres": "Paramètres",
+    "aide": "Aide",
+    "aPropos": "A propos"
+  },
   "myInformations": {
-		"title": "Mes informations",
-		"subtitle": "sur l'Espace collaboratif IGN",
-		"description": "Vous pouvez modifier vos informations sur",
-		"espaceCo": "Espace collaboratif",
-		"username": "Nom d'utilisateur :",
-		"fullName": "Nom complet :",
-		"email": "Adresse e-mail :",
-		"userId": "Identifiant d'utilisateur :",
-		"userDescription": "Description :",
-		"notProvided": "Non renseignée",
-		"activeProfile": "Profil actif"
-	},
+    "title": "Mes informations",
+    "subtitle": "sur l'Espace collaboratif IGN",
+    "description": "Vous pouvez modifier vos informations sur",
+    "espaceCo": "Espace collaboratif",
+    "username": "Nom d'utilisateur :",
+    "fullName": "Nom complet :",
+    "email": "Adresse e-mail :",
+    "userId": "Identifiant d'utilisateur :",
+    "userDescription": "Description :",
+    "notProvided": "Non renseignée",
+    "activeProfile": "Profil actif"
+  },
   "logout": {
     "headerTitle": "Déconnexion",
     "title": "Déconnectez-vous",
@@ -114,5 +114,17 @@
     "description": "Êtes-vous certain de vouloir vous déconnecter ?",
     "confirm": "Se déconnecter",
     "cancel": "Annuler"
+  },
+  "reports": {
+    "groupReports": {
+      "title": "Signalements",
+      "description": "du groupe",
+      "report_singular": "signalement",
+      "report_plural": "signalements"
+    },
+    "filters": {
+      "search": "Rechercher",
+      "filter": "Filtrer"
+    }
   }
 }
