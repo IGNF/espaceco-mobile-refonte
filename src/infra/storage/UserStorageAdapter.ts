@@ -25,6 +25,7 @@ export class UserStorageAdapter implements IUserStorage {
   async saveUser(user: User): Promise<void> {
     // Store communities separately for easy access
     if (user.communities_member && user.communities_member.length > 0) {
+      console.log('saveUser => user.communities_member', user.communities_member.length);
 
       const userCommunities = await Promise.all(user.communities_member.map(async (communityMember) => {
         const community = (await collabApiClient.community.get(communityMember.community_id)).data as Community;

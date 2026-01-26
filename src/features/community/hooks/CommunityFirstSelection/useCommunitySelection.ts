@@ -6,11 +6,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import type { Community } from '@ign/mobile-core';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { UserStorageAdapter } from '@/infra/storage';
-
-import { collabApiClient } from "@/infra/api/collabApiClient";
 
 interface UseCommunitySelectionResult {
   communities: Community[];
@@ -22,67 +18,22 @@ interface UseCommunitySelectionResult {
   isConfirming: boolean;
 }
 
-// Storage adapter for saving communities (until they're loaded via API at login)
-const userStorage = new UserStorageAdapter();
-
 export function useCommunitySelection(): UseCommunitySelectionResult {
-  const { user } = useAuth();
   const {
     communities: contextCommunities,
     setActiveCommunity,
-    refreshCommunities,
     isLoading: contextLoading
   } = useCommunity();
 
-  // Local state for the selection flow
-  const [communities, setCommunities] = useState<Community[]>([]);
   const [selectedCommunityId, setSelectedCommunityId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Load communities on mount
   useEffect(() => {
-    async function loadCommunities() {
-      console.log('loadCommunities', user);
-      console.log('contextCommunities', contextCommunities);
-      setIsLoading(true);
-      setError(null);
+    if (contextLoading) return;
 
-      try {
-        // First check if communities are already in context (loaded from storage)
-        if (contextCommunities.length > 0) {
-          setCommunities(contextCommunities);
-          // Pre-select the active community if exists, otherwise first one
-          setSelectedCommunityId(contextCommunities[0].id);
-          setIsLoading(false);
-          return;
-        }
-
-        // if there are no communities in context, fetch them from the API
-        // no community in context means the get user API didn't retrieve any community linked to the user
-        const allCommunities = (await collabApiClient.community.getAll()).data as Community[];
-        console.log('allCommunities', allCommunities);
-
-        // Save communities to storage so CommunityContext can access them
-        await userStorage.saveCommunities(allCommunities || []);
-        await refreshCommunities();
-
-        setCommunities(allCommunities || []);
-        setSelectedCommunityId(allCommunities?.[0]?.id || null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load communities');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    // Wait for context to finish loading before deciding what to do
-    if (!contextLoading) {
-      loadCommunities();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextLoading]);
+    setSelectedCommunityId(contextCommunities[0]?.id ?? null);
+  }, [contextLoading, contextCommunities]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
@@ -110,9 +61,9 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   }, [selectedCommunityId, setActiveCommunity]);
 
   return {
-    communities,
+    communities: contextCommunities,
     selectedCommunityId,
-    isLoading: isLoading || contextLoading,
+    isLoading: contextLoading,
     error,
     selectCommunity,
     confirmSelection,

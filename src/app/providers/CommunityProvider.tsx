@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, type ReactNode } from "react";
 import type { Community } from "@ign/mobile-core";
 import { CommunityContext } from "./CommunityContext";
 import { UserStorageAdapter } from "@/infra/storage";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 
 interface CommunityProviderProps {
   children: ReactNode;
@@ -16,6 +17,7 @@ const userStorage = new UserStorageAdapter();
  * methods to change the active community.
  */
 export function CommunityProvider({ children }: CommunityProviderProps) {
+  const { user } = useAuth();
   const [activeCommunity, setActiveCommunityState] = useState<Community | null>(null);
   const [communities, setCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,10 +40,10 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
     }
   }, []);
 
-  // Load data on mount
+  // Load data when user changes (login/logout)
   useEffect(() => {
     loadCommunityData();
-  }, [loadCommunityData]);
+  }, [loadCommunityData, user]);
 
   // Set active community
   const setActiveCommunity = useCallback(async (communityId: number) => {

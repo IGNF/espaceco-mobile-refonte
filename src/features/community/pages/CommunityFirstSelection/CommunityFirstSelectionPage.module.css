@@ -28,7 +28,31 @@
 	font-size: var(--font-size-sm);
 }
 
-.empty {
-	color: var(--color-text-secondary);
-	text-align: center;
+.warningCallout {
+	background-color: var(--color-warning-light);
+	border: 1px solid var(--color-warning);
+	border-radius: 8px;
+	padding: 16px;
+	margin-top: 24px;
+}
+
+.warningCalloutTitle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--color-warning-shade);
+	font-weight: 600;
+	margin-bottom: 8px;
+}
+
+.warningCalloutIcon {
+	width: 20px;
+	height: 20px;
+}
+
+.warningCalloutMessage {
+	color: var(--color-warning-shade);
+	font-size: 14px;
+	line-height: 1.4;
+	margin: 0;
 }
