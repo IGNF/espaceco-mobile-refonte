@@ -13,8 +13,7 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-  // @ts-expect-error both logins methods used for testing
-	const { loginWithPassword, loginWithOAuth, continueWithoutAccount, isAuthenticated } = useAuth();
+	const { loginWithOAuth, isAuthenticated } = useAuth();
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -42,16 +41,6 @@ export function LoginPage() {
 		setIsLoading(false);
 		if (!loginResponse.success) {
 			setError(loginResponse.error?.message ?? t("login.error"));
-		}
-	};
-
-	const handleContinueWithoutAccount = async () => {
-		setError(null);
-		setIsLoading(true);
-		const anonymousConnectionResponse = await continueWithoutAccount();
-		setIsLoading(false);
-		if (!anonymousConnectionResponse.success) {
-			setError(anonymousConnectionResponse.error?.message ?? t("login.error"));
 		}
 	};
 
@@ -125,15 +114,6 @@ export function LoginPage() {
 						loading={isLoading}
 					>
 						{t("login.submit")}
-					</Button>
-					<Button
-						className={styles.continueWithoutAccountButton}
-						type="button"
-						variant="outline"
-						onClick={handleContinueWithoutAccount}
-						disabled={isLoading}
-					>
-						{t("login.continueWithoutAccount")}
 					</Button>
 				</form>
 			</div>
