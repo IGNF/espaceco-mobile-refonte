@@ -260,6 +260,7 @@ async function fetchUserInfo(): Promise<AppUser | null> {
  * Store tokens and expiry dates in storage
  */
 async function storeTokens(tokens: TokenResponse): Promise<void> {
+  console.log('storeTokens => tokens', tokens);
   const now = Date.now();
 
   // Calculate expiry timestamps (expires_in is in seconds)
@@ -359,10 +360,30 @@ export async function getStoredAccessToken(): Promise<string | null> {
 }
 
 /**
- * Logout and clear credentials
+ * Logout and clear credentials.
+ * Uses CapacitorHttp directly to revoke the token to bypass CORS restrictions
+ * (the SSO backend doesn't allow capacitor://localhost origin).
  */
 export async function logout(): Promise<void> {
-  collabApiClient.disconnect(); // this seems to send a 401 error???
+  // Revoke token using CapacitorHttp to bypass CORS
+  const token = await Storage.get(storageKey('access_token'));
+  if (token) {
+    try {
+      await CapacitorHttp.post({
+        url: `${config.oAuth.baseUrl}/revoke`,
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        data: new URLSearchParams({
+          client_id: config.oAuth.clientId,
+          token: token,
+        }).toString(),
+      });
+    } catch {
+      console.log('logout => error');
+      // Revocation failure is non-critical, token will expire anyway
+    }
+  }
 
   // Clear OAuth tokens
   await Storage.remove(storageKey('access_token'));
