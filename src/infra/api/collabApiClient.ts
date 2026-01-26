@@ -6,6 +6,6 @@ import { config } from "@/shared/config/env";
  */
 export const collabApiClient = new ApiClient(
 	config.api.baseUrl,
-	config.auth.baseUrl,
-	config.auth.clientId,
+	config.oAuth.baseUrl,
+	config.oAuth.clientId,
 );
