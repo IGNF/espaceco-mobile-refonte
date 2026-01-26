@@ -13,12 +13,12 @@ import { CommunityFirstSelectionPage } from "@/features/community/pages/Communit
 import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
 
-/** Contribution routes **/
-import { AboutContributionsPage } from "@/features/contribution/pages/AboutContributions/AboutContributionsPage";
-import { ContributionDetailsPage } from "@/features/contribution/pages/ContributionDetails/ContributionDetailsPage";
-import { GroupContributionsPage } from "@/features/contribution/pages/GroupContributions/GroupContributionsPage";
-import { MyContributionsPage } from "@/features/contribution/pages/MyContributions/MyContributionsPage";
-import { NewContributionPage } from "@/features/contribution/pages/NewContribution/NewContributionPage";
+/** Report routes **/
+import { AboutReportsPage } from "@/features/report/pages/AboutReports/AboutReportsPage";
+import { ReportDetailsPage } from "@/features/report/pages/ReportDetails/ReportDetailsPage";
+import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
+import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
+import { NewReportPage } from "@/features/report/pages/NewReport/NewReportPage";
 
 /** Help, About, Settings routes **/
 import { HelpPage } from "@/features/help/pages/HelpPage";
@@ -68,26 +68,26 @@ export const router = createBrowserRouter([
 				path: "/my-communities",
 				element: <MyCommunitiesSelectionPage />,
 			},
-      /* Contribution routes */
+      /* Report routes */
 			{
-				path: "/about-contributions",
-				element: <AboutContributionsPage />,
+				path: "/about-reports",
+				element: <AboutReportsPage />,
 			},
 			{
-				path: "/contribution-details",
-				element: <ContributionDetailsPage />,
+				path: "/report-details",
+				element: <ReportDetailsPage />,
 			},
 			{
-				path: "/group-contributions",
-				element: <GroupContributionsPage />,
+				path: "/group-reports",
+				element: <GroupReportsPage />,
 			},
 			{
-				path: "/my-contributions",
-				element: <MyContributionsPage />,
+				path: "/my-reports",
+				element: <MyReportsPage />,
 			},
 			{
-				path: "/new-contribution",
-				element: <NewContributionPage />,
+				path: "/new-report",
+				element: <NewReportPage />,
 			},
       /* Help, About, Settings routes */
 			{
