@@ -104,20 +104,17 @@ export function mapApiReportToAppReport(apiReport: ApiReportResponse): AppReport
     userId: apiReport.author?.id,
     sketch: apiReport.sketch,
     // Extra data not in the core Report interface
-    extraData: {
-      author: apiReport.author,
-      validator: apiReport.validator,
-      closingDate: apiReport.closing_date ? new Date(apiReport.closing_date) : undefined,
-      commune: apiReport.commune,
-      departement: apiReport.departement,
-      territory: apiReport.territory,
-      deviceVersion: apiReport.device_version,
-      inputDevice: apiReport.input_device,
-      sketchXml: apiReport.sketch_xml,
-      replies: apiReport.replies,
-      attachments: apiReport.attachments,
-      themeName,
-    },
+    author: apiReport.author,
+    validator: apiReport.validator,
+    closingDate: apiReport.closing_date ? new Date(apiReport.closing_date) : undefined,
+    commune: apiReport.commune,
+    departement: apiReport.departement,
+    territory: apiReport.territory,
+    deviceVersion: apiReport.device_version,
+    inputDevice: apiReport.input_device,
+    sketchXml: apiReport.sketch_xml,
+    replies: apiReport.replies,
+    attachments: apiReport.attachments,
   };
 }
 
