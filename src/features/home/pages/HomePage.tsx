@@ -8,6 +8,7 @@ import { useMap } from "@/features/home/hooks/useMap";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
+import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import styles from "./HomePage.module.css";
 
 import { overlayRoutes } from "@/app/router/routes";
@@ -163,6 +164,10 @@ export function HomePage() {
 				isOpen={activeOverlay === '/logout-verification'}
 				onClose={handleCloseOverlay}
 				handleLogout={handleLogout}
+			/>
+			<GroupReportsPage
+				isOpen={activeOverlay === '/group-reports'}
+				onClose={handleCloseOverlay}
 			/>
 		</div>
 	);

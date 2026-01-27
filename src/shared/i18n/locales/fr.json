@@ -117,10 +117,18 @@
   },
   "reports": {
     "groupReports": {
+      "headerTitle": "Signalements du groupe",
+      "headerSubtitle": "Profil actif",
       "title": "Signalements",
       "description": "du groupe",
       "report_singular": "signalement",
-      "report_plural": "signalements"
+      "report_plural": "signalements",
+      "loading": "Chargement...",
+      "loadingReports": "Chargement des signalements...",
+      "noCommunitySelected": "Aucune communauté sélectionnée",
+      "error": "Erreur",
+      "defaultTheme": "Thème",
+      "reportNumber": "Signalement n°"
     },
     "filters": {
       "search": "Rechercher",
