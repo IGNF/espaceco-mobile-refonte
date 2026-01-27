@@ -63,7 +63,7 @@ export function ReportRow({ report, onClick }: ReportRowProps) {
 	};
 
 	const statusColor = getStatusColor(report.status);
-	const themeName = report.extraData?.themeName || report.attributes?.themeName || t('reports.groupReports.defaultTheme');
+	const themeName = report.attributes?.themeName || t('reports.groupReports.defaultTheme');
 
 	return (
 		<button className={styles.row} onClick={handleClick} type="button">

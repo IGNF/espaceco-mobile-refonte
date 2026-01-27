@@ -128,7 +128,9 @@
       "noCommunitySelected": "Aucune communauté sélectionnée",
       "error": "Erreur",
       "defaultTheme": "Thème",
-      "reportNumber": "Signalement n°"
+      "reportNumber": "Signalement n°",
+      "loadingMore": "Chargement...",
+      "noMoreReports": "Tous les signalements ont été chargés"
     },
     "filters": {
       "search": "Rechercher",

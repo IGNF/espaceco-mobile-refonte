@@ -59,7 +59,7 @@
 	align-items: center;
 	justify-content: center;
 	padding: 12px 16px;
-	background: var(--color-secondary);
+	background: var(--color-primary);
 	border: none;
 	cursor: pointer;
 	transition: background-color 0.2s ease;
@@ -131,4 +131,24 @@
 
 .error {
 	color: var(--color-danger);
+}
+
+.sentinel {
+	height: 1px;
+	width: 100%;
+}
+
+.loadingMore {
+	padding: 16px;
+	text-align: center;
+	color: var(--color-medium);
+	font-size: 14px;
+}
+
+.endOfList {
+	padding: 16px;
+	text-align: center;
+	color: var(--color-medium);
+	font-size: 14px;
+	font-style: italic;
 }
