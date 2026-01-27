@@ -135,6 +135,39 @@
     "filters": {
       "search": "Rechercher",
       "filter": "Filtrer"
+    },
+    "details": {
+      "headerTitle": "Fiche du signalement",
+      "headerSubtitle": "Profil actif",
+      "title": "Fiche",
+      "subtitle": "du signalement n°",
+      "identifier": "Identifiant",
+      "status": "Statut",
+      "group": "Groupe",
+      "author": "Auteur",
+      "theme": "Thème",
+      "attributes": "Attributs",
+      "date": "Date",
+      "position": "Position",
+      "commune": "Commune",
+      "department": "Département",
+      "comment": "Commentaire",
+      "responses": "Réponses",
+      "noResponses": "Aucune réponse",
+      "respondButton": "Répondre à ce signalement",
+      "notAvailable": "N/A"
+    },
+    "status": {
+      "cluster": "Groupé",
+      "submit": "Soumis",
+      "pending": "En cours de traitement",
+      "pending0": "En attente de qualification",
+      "pending1": "En attente de saisie",
+      "pending2": "En attente de validation",
+      "valid": "Validé",
+      "valid0": "Déjà traité",
+      "reject": "Rejeté",
+      "reject0": "Non pertinent"
     }
   }
 }

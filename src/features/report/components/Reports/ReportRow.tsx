@@ -1,58 +1,13 @@
 import { useTranslation } from 'react-i18next';
-import { ReportStatus } from '@ign/mobile-core';
 import type { AppReport } from '@/domain/report/models';
+import { getStatusColor } from '@/shared/utils/reportStatus';
+import { formatDate, formatTime } from '@/shared/utils/date';
 import IconAngleRight from '@/shared/assets/icons/icon-angle-right.svg?react';
 import styles from './ReportRow.module.css';
 
 export interface ReportRowProps {
 	report: AppReport;
 	onClick?: (report: AppReport) => void;
-}
-
-/**
- * Maps report status to CSS variable color names
- * Groups similar statuses to use the same color family
- */
-const STATUS_COLOR_MAP: Record<ReportStatus, string> = {
-	// Pending statuses - Warning/Orange
-	[ReportStatus.Pending]: 'var(--color-warning)',
-	[ReportStatus.Pending_Qualification]: 'var(--color-warning)',
-	[ReportStatus.Pending_Entry]: 'var(--color-warning-shade)',
-	[ReportStatus.Pending_Validation]: 'var(--color-warning-tint)',
-
-	// Valid statuses - Primary/Green
-	[ReportStatus.Valid]: 'var(--color-primary)',
-	[ReportStatus.Valid_Already_Treated]: 'var(--color-primary-shade)',
-
-	// Reject statuses - Danger/Red
-	[ReportStatus.Reject]: 'var(--color-danger)',
-	[ReportStatus.Reject_Irrelevant]: 'var(--color-danger-shade)',
-
-	// Submit - Secondary/Blue
-	[ReportStatus.Submit]: 'var(--color-secondary)',
-
-	// Cluster - Medium/Gray
-	[ReportStatus.Cluster]: 'var(--color-medium)',
-};
-
-function getStatusColor(status: ReportStatus): string {
-	return STATUS_COLOR_MAP[status] || 'var(--color-medium)';
-}
-
-function formatDate(date: Date): string {
-	return date.toLocaleDateString('fr-FR', {
-		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
-	});
-}
-
-function formatTime(date: Date): string {
-	return date.toLocaleTimeString('fr-FR', {
-		hour: '2-digit',
-		minute: '2-digit',
-		second: '2-digit',
-	});
 }
 
 export function ReportRow({ report, onClick }: ReportRowProps) {

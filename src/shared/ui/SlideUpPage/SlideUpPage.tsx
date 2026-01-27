@@ -1,16 +1,23 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
+const BASE_Z_INDEX = 100;
 
 export interface SlideUpPageProps {
 	children: ReactNode;
 	isOpen: boolean;
 	onClose: () => void;
 	className?: string;
+	/**
+	 * Stack level for nested modals. Higher levels appear on top.
+	 * Default is 1. Use 2 for modals opened from within another modal.
+	 */
+	level?: number;
 }
 
-export function SlideUpPage({ children, isOpen, className }: SlideUpPageProps) {
+export function SlideUpPage({ children, isOpen, className, level = 1 }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -30,7 +37,6 @@ export function SlideUpPage({ children, isOpen, className }: SlideUpPageProps) {
 		} else {
 			const timer = setTimeout(() => {
 				setShouldRender(false);
-        // onClose();
 			}, ANIMATION_DURATION);
 			return () => clearTimeout(timer);
 		}
@@ -44,11 +50,16 @@ export function SlideUpPage({ children, isOpen, className }: SlideUpPageProps) {
 		className ?? '',
 	].filter(Boolean).join(' ');
 
-	return (
-		<div className={classNames}>
+	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
+
+	const content = (
+		<div className={classNames} style={{ zIndex }}>
 			<div className={styles.slideUpPageInner}>
 				{children}
 			</div>
 		</div>
 	);
+
+	// Use portal to render at document body level for proper stacking
+	return createPortal(content, document.body);
 }

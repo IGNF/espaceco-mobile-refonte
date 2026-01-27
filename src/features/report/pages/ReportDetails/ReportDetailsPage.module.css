@@ -1,0 +1,46 @@
+.titleSection {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.detailsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.detailRow {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+.detailLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+  min-width: 110px;
+  flex-shrink: 0;
+}
+
+.detailValue {
+  font-size: 14px;
+  color: var(--color-dark);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  word-break: break-word;
+}
+
+.statusIndicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+}

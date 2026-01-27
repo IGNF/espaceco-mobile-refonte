@@ -5,10 +5,14 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
+import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import type { AppReport } from '@/domain/report/models';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
+
 import styles from './GroupReportsPage.module.css';
+import screen from '@/shared/styles/screen.module.css';
+import typography from "@/shared/styles/typography.module.css";
 
 export interface GroupReportsPageProps {
   isOpen: boolean;
@@ -20,6 +24,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports();
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
 
   // Ref for the sentinel element
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -52,10 +57,17 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   }, [isOpen, hasMore, isLoadingMore, isLoading, loadMore]);
 
   const handleReportClick = useCallback((report: AppReport) => {
-    console.log('Report clicked - Full object:', JSON.stringify(report, null, 2));
-    console.log('Report clicked - Raw:', report);
-    // TODO: Navigate to report details
+    setSelectedReport(report);
   }, []);
+
+  const handleDetailsBack = useCallback(() => {
+    setSelectedReport(null);
+  }, []);
+
+  const handleDetailsClose = useCallback(() => {
+    setSelectedReport(null);
+    onClose();
+  }, [onClose]);
 
   const handleSearch = () => {
     console.log('Search:', searchQuery);
@@ -127,10 +139,10 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         onClose={onClose}
       />
 
-      <main className={styles.content}>
+      <main className={screen.screenContainer + " " + styles.content}>
         <div className={styles.titleSection}>
-          <h1 className={styles.mainTitle}>{t('reports.groupReports.title')}</h1>
-          <p className={styles.subtitle}>
+          <h1 className={typography.title}>{t('reports.groupReports.title')}</h1>
+          <p className={typography.subtitle}>
             {t('reports.groupReports.description')} {activeCommunity?.name || ''}
           </p>
         </div>
@@ -164,6 +176,13 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
         {renderContent()}
       </main>
+
+      <ReportDetailsPage
+        isOpen={selectedReport !== null}
+        report={selectedReport}
+        onBack={handleDetailsBack}
+        onClose={handleDetailsClose}
+      />
     </SlideUpPage>
   );
 }
