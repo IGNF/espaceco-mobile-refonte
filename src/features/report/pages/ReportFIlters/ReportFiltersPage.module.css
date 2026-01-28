@@ -1,0 +1,57 @@
+.overlay {
+  z-index: 109;
+}
+
+.filtersPage {
+  top: 10% !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  border-radius: 20px 20px 0 0;
+  overflow: hidden;
+}
+
+.filtersContainer {
+  min-height: 100%;
+  background-color: white;
+  border-radius: 20px 20px 0 0;
+}
+
+.content {
+  background-color: var(--color-light-light);
+}
+
+.titleSection {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.filterOptions {
+  flex: 1;
+  padding: 16px 0;
+}
+
+.placeholder {
+  text-align: center;
+  color: var(--color-medium);
+  font-style: italic;
+}
+
+.eraseButton {
+  width: 100%;
+  padding: 16px;
+  margin-top: 24px;
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  border-radius: 8px;
+  color: var(--color-danger);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.eraseButton:hover {
+  background-color: var(--color-danger);
+  color: white;
+}

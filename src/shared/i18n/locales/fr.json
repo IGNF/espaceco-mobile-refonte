@@ -120,6 +120,8 @@
       "report_singular": "signalement",
       "report_plural": "signalements",
       "loading": "Chargement...",
+      "search": "Rechercher",
+      "filter": "Filtrer",
       "error": "Erreur"
     },
     "groupReports": {
@@ -145,8 +147,17 @@
       "noMoreReports": "Tous vos signalements ont été chargés"
     },
     "filters": {
-      "search": "Rechercher",
-      "filter": "Filtrer"
+      "headerTitle": "Filtrer",
+      "headerSubtitle": "Profil actif",
+      "title": "Filtrer",
+      "description": "les signalements",
+      "eraseFilters": "Effacer les filtres",
+      "group": "Groupe",
+      "theme": "Thème du signalement",
+      "status": "Statu",
+      "updatedAt": "Date de mise à jour",
+      "reportType": "Type de signalement",
+      "myReportsOnly": "Mes signalements"
     },
     "details": {
       "headerTitle": "Fiche du signalement",

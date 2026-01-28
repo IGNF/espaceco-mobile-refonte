@@ -6,6 +6,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
+import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
 import type { AppReport } from '@/domain/report/models';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
@@ -25,6 +26,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
+  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // Ref for the sentinel element
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -75,8 +77,12 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   };
 
   const handleFilter = () => {
-    console.log('Filter clicked');
-    // TODO: Open filter modal
+    console.log('handleFilter clicked, opening filters');
+    setIsFiltersOpen(true);
+  };
+
+  const handleFiltersClose = () => {
+    setIsFiltersOpen(false);
   };
 
   const renderContent = () => {
@@ -152,14 +158,14 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
             <input
               type="text"
               className={styles.searchInput}
-              placeholder={`${t('reports.filters.search')}...`}
+              placeholder={`${t('reports.general.search')}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             <button
               className={styles.searchButton}
               onClick={handleSearch}
-              aria-label={t('reports.filters.search')}
+              aria-label={t('reports.general.search')}
             >
               <IconSearch className={styles.searchIcon} />
             </button>
@@ -167,10 +173,10 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
           <button
             className={styles.filterButton}
             onClick={handleFilter}
-            aria-label={t('reports.filters.filter')}
+            aria-label={t('reports.general.filter')}
           >
             <IconFilter className={styles.filterIcon} />
-            <span className={styles.filterLabel}>{t('reports.filters.filter')}</span>
+            <span className={styles.filterLabel}>{t('reports.general.filter')}</span>
           </button>
         </div>
 
@@ -182,6 +188,11 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         report={selectedReport}
         onBack={handleDetailsBack}
         onClose={handleDetailsClose}
+      />
+
+      <ReportFiltersPage
+        isOpen={isFiltersOpen}
+        onClose={handleFiltersClose}
       />
     </SlideUpPage>
   );
