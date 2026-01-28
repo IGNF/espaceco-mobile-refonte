@@ -9,6 +9,7 @@ import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
+import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
 import styles from "./HomePage.module.css";
 
 import { overlayRoutes } from "@/app/router/routes";
@@ -167,6 +168,10 @@ export function HomePage() {
 			/>
 			<GroupReportsPage
 				isOpen={activeOverlay === '/group-reports'}
+				onClose={handleCloseOverlay}
+			/>
+			<MyReportsPage
+				isOpen={activeOverlay === '/my-reports'}
 				onClose={handleCloseOverlay}
 			/>
 		</div>

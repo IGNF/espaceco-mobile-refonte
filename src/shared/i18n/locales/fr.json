@@ -116,21 +116,33 @@
     "cancel": "Annuler"
   },
   "reports": {
+    "general": {
+      "report_singular": "signalement",
+      "report_plural": "signalements",
+      "loading": "Chargement...",
+      "error": "Erreur"
+    },
     "groupReports": {
       "headerTitle": "Signalements du groupe",
       "headerSubtitle": "Profil actif",
       "title": "Signalements",
       "description": "du groupe",
-      "report_singular": "signalement",
-      "report_plural": "signalements",
-      "loading": "Chargement...",
       "loadingReports": "Chargement des signalements...",
       "noCommunitySelected": "Aucune communauté sélectionnée",
-      "error": "Erreur",
+      
       "defaultTheme": "Thème",
       "reportNumber": "Signalement n°",
-      "loadingMore": "Chargement...",
       "noMoreReports": "Tous les signalements ont été chargés"
+    },
+    "myReports": {
+      "headerTitle": "Mes signalements",
+      "headerSubtitle": "Profil actif",
+      "title": "Mes signalements",
+      "description": "faits sur l'Espace collaboratif IGN mobile",
+      "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
+      "loadingReports": "Chargement de vos signalements...",
+      "notConnected": "Vous devez être connecté pour voir vos signalements",
+      "noMoreReports": "Tous vos signalements ont été chargés"
     },
     "filters": {
       "search": "Rechercher",

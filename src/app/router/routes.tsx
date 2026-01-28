@@ -106,4 +106,4 @@ export const router = createBrowserRouter([
 	},
 ]);
 
-export const overlayRoutes = ['/my-informations', '/logout-verification', '/group-reports'] as const;
+export const overlayRoutes = ['/my-informations', '/logout-verification', '/group-reports', '/my-reports'] as const;

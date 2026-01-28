@@ -43,6 +43,27 @@
   margin: 0;
 }
 
+/* Text size */
+.textSmall {
+  font-size: 0.8rem;
+}
+
+.textMedium {
+  font-size: 1rem;
+}
+
+.textLarge {
+  font-size: 1.2rem;
+}
+
+.textXLarge {
+  font-size: 1.4rem;
+}
+
+.textXXLarge {
+  font-size: 1.6rem;
+}
+
 /* Body */
 .body {
   font-size: 1rem;

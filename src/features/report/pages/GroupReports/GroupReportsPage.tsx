@@ -10,7 +10,7 @@ import type { AppReport } from '@/domain/report/models';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
-import styles from './GroupReportsPage.module.css';
+import styles from '../reportsListPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from "@/shared/styles/typography.module.css";
 
@@ -81,7 +81,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
   const renderContent = () => {
     if (isCommunityLoading) {
-      return <div className={styles.loading}>{t('reports.groupReports.loading')}</div>;
+      return <div className={styles.loading}>{t('reports.general.loading')}</div>;
     }
 
     if (!activeCommunity) {
@@ -93,7 +93,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     }
 
     if (error && reports.length === 0) {
-      return <div className={styles.error}>{t('reports.groupReports.error')}: {error.message}</div>;
+      return <div className={styles.error}>{t('reports.general.error')}: {error.message}</div>;
     }
 
     return (
