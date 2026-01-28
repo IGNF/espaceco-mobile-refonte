@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
@@ -22,7 +23,13 @@ export interface MyReportsPageProps {
 export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
+  const { communities } = useCommunity();
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports();
+
+  const getCommunityName = useCallback((communityId: number): string | undefined => {
+    const community = communities.find(c => c.id === communityId);
+    return community?.name;
+  }, [communities]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
 
@@ -106,6 +113,7 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
             <ReportRow
               key={report.id}
               report={report}
+              communityName={getCommunityName(report.communityId)}
               onClick={handleReportClick}
             />
           ))}

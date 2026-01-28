@@ -7,10 +7,11 @@ import styles from './ReportRow.module.css';
 
 export interface ReportRowProps {
 	report: AppReport;
+	communityName?: string;
 	onClick?: (report: AppReport) => void;
 }
 
-export function ReportRow({ report, onClick }: ReportRowProps) {
+export function ReportRow({ report, communityName, onClick }: ReportRowProps) {
 	const { t } = useTranslation();
 
 	const handleClick = () => {
@@ -31,6 +32,7 @@ export function ReportRow({ report, onClick }: ReportRowProps) {
 				<span className={styles.title}>
 					{t('reports.groupReports.reportNumber')}{report.id}
 				</span>
+				{communityName && <span className={styles.community}>{communityName}</span>}
 				<span className={styles.theme}>{themeName}</span>
 				<div className={styles.dateTime}>
 					<span className={styles.date}>{formatDate(report.createdAt)}</span>

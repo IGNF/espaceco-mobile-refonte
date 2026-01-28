@@ -46,6 +46,11 @@
 	color: var(--color-medium);
 }
 
+.community {
+	font-size: 14px;
+	color: var(--color-dark-shade);
+}
+
 .dateTime {
 	display: flex;
 	gap: 16px;
