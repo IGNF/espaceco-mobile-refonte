@@ -24,6 +24,9 @@ export const STATUS_COLOR_MAP: Record<ReportStatus, string> = {
 
 	// Cluster - Medium/Gray
 	[ReportStatus.Cluster]: 'var(--color-medium)',
+
+	// Draft - Medium/Gray
+	[ReportStatus.Draft]: 'var(--color-medium)',
 };
 
 /**

@@ -2,12 +2,17 @@ import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import type { AppReport } from '@/domain/report/models';
+import { ReportStatus } from '@ign/mobile-core';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 
 import { Button } from '@/shared/ui/Button';
+import IconEdit from '@/shared/assets/icons/icon-edit.svg?react';
+import IconSend from '@/shared/assets/icons/icon-send.svg?react';
+import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 
 import styles from './ReportDetailsPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
@@ -21,10 +26,31 @@ export interface ReportDetailsPageProps {
 
 export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDetailsPageProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { activeCommunity } = useCommunity();
 
+  // Check if the connected user is the author of the report
+  const isOwnReport = user && report?.author?.id === user.id;
+  const isDraft = report?.status === ReportStatus.Draft;
+
   const handleRespond = () => {
+    // TODO: Implement respond to report
     console.log('Respond to report:', report?.id);
+  };
+
+  const handleEditReport = () => {
+    // TODO: Implement edit report
+    console.log('Edit report:', report?.id);
+  };
+
+  const handleSendReport = () => {
+    // TODO: Implement send report
+    console.log('Send report:', report?.id);
+  };
+
+  const handleDeleteReport = () => {
+    // TODO: Implement delete report
+    console.log('Delete report:', report?.id);
   };
 
   if (!report) {
@@ -150,10 +176,30 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
         </div>
 
         <div className={styles.buttonContainer}>
-          <Button color="primary" onClick={handleRespond}>
-            {t('reports.details.respondButton')}
-          </Button>
-
+          {isOwnReport ? (
+            <>
+              {isDraft && (
+                <>
+                  <Button color="primary" onClick={handleEditReport}>
+                    <IconEdit className={styles.buttonIcon} />
+                    {t('reports.details.editButton')}
+                  </Button>
+                  <Button color="success" onClick={handleSendReport}>
+                    <IconSend className={styles.buttonIcon} />
+                    {t('reports.details.sendButton')}
+                  </Button>
+                </>
+              )}
+              <Button color="danger" onClick={handleDeleteReport}>
+                <IconDelete className={styles.buttonIcon} />
+                {t('reports.details.deleteButton')}
+              </Button>
+            </>
+          ) : (
+            <Button color="primary" onClick={handleRespond}>
+              {t('reports.details.respondButton')}
+            </Button>
+          )}
         </div>
       </main>
     </SlideUpPage>

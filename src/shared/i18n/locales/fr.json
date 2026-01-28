@@ -167,6 +167,9 @@
       "responses": "Réponses",
       "noResponses": "Aucune réponse",
       "respondButton": "Répondre à ce signalement",
+      "editButton": "Modifier",
+      "sendButton": "Envoyer",
+      "deleteButton": "Supprimer",
       "notAvailable": "N/A"
     },
     "status": {
