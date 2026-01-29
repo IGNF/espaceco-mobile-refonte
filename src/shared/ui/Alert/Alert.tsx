@@ -1,0 +1,91 @@
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Button } from '@/shared/ui/Button';
+import type { ButtonColor, ButtonVariant } from '@/shared/ui/Button';
+import IconClose from '@/shared/assets/icons/icon-close.svg?react';
+import typography from '@/shared/styles/typography.module.css';
+import styles from './Alert.module.css';
+
+const ANIMATION_DURATION = 200; // ms, matches CSS transition duration
+
+export interface AlertButton {
+	label: string;
+	onClick: () => void;
+	color?: ButtonColor;
+	variant?: ButtonVariant;
+}
+
+export interface AlertProps {
+	isOpen: boolean;
+	onClose: () => void;
+	title: string;
+	subtitle?: string;
+	buttons?: AlertButton[];
+}
+
+export function Alert({ isOpen, onClose, title, subtitle, buttons = [] }: AlertProps) {
+	const [isVisible, setIsVisible] = useState(isOpen);
+	const [shouldRender, setShouldRender] = useState(isOpen);
+
+	if (isOpen && !shouldRender) {
+		setShouldRender(true);
+	}
+	if (!isOpen && isVisible) {
+		setIsVisible(false);
+	}
+
+	useEffect(() => {
+		if (isOpen) {
+			const timer = setTimeout(() => {
+				setIsVisible(true);
+			}, 20);
+			return () => clearTimeout(timer);
+		} else {
+			const timer = setTimeout(() => {
+				setShouldRender(false);
+			}, ANIMATION_DURATION);
+			return () => clearTimeout(timer);
+		}
+	}, [isOpen]);
+
+	if (!shouldRender) return null;
+
+	const content = (
+		<div
+			className={`${styles.overlay} ${isVisible ? styles.overlayVisible : ''}`}
+			onClick={onClose}
+		>
+			<div className={styles.card} onClick={(e) => e.stopPropagation()}>
+				<button
+					className={styles.closeButton}
+					onClick={onClose}
+					aria-label="Close"
+				>
+					<IconClose className={styles.closeIcon} />
+				</button>
+
+				<div className={styles.content}>
+					<h2 className={typography.heading2}>{title}</h2>
+					{subtitle && <p className={typography.body}>{subtitle}</p>}
+
+					{buttons.length > 0 && (
+						<div className={styles.buttons}>
+							{buttons.map((btn) => (
+								<Button
+									key={btn.label}
+									color={btn.color}
+									variant={btn.variant}
+									onClick={btn.onClick}
+								>
+									{btn.label}
+								</Button>
+							))}
+						</div>
+					)}
+				</div>
+			</div>
+		</div>
+	);
+
+	return createPortal(content, document.body);
+}
