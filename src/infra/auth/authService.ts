@@ -3,9 +3,11 @@ import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { CapacitorHttp } from '@capacitor/core';
 import { Device } from '@capacitor/device';
+import { Toast } from '@capacitor/toast';
 
 import { Storage } from '@ign/mobile-device'
 import { storageKey } from '@/shared/constants/storage';
+import i18n from '@/shared/i18n';
 
 import { collabApiClient } from "@/infra/api/collabApiClient";
 import { mapApiUserToAppUser, type ApiUserResponse } from "@/domain/user/mappers";
@@ -296,6 +298,11 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
   // Check if refresh token is expired
   const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
   if (refreshExpiresAt && Date.now() >= parseInt(refreshExpiresAt, 10)) {
+    Toast.show({
+      text: i18n.t('login.sessionExpired'),
+      duration: "short",
+      position: "top"
+    });
     return { success: false, error: new Error('Refresh token expired') };
   }
 

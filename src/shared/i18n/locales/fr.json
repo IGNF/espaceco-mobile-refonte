@@ -15,7 +15,8 @@
     "passwordPlaceholder": "Votre mot de passe",
     "forgotPassword": "Mot de passe oublié ?",
     "submit": "Se connecter",
-    "continueWithoutAccount": "Continuer sans compte"
+    "continueWithoutAccount": "Continuer sans compte",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
   },
   "communitySelection": {
     "title": "Profil actif",
