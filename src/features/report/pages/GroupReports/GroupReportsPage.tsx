@@ -7,7 +7,9 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
+import { ActiveFilters } from '@/features/report/components/ActiveFilters/ActiveFilters';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
+import type { ReportStatus } from '@ign/mobile-core';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
@@ -89,6 +91,21 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     setFilters(newFilters);
   }, []);
 
+  const handleRemoveStatus = useCallback((status: ReportStatus) => {
+    setFilters(prev => {
+      const next = { ...prev, status: prev.status?.filter(s => s !== status) };
+      if (!next.status || next.status.length === 0) delete next.status;
+      return next;
+    });
+  }, []);
+
+  const handleRemoveDate = useCallback(() => {
+    setFilters(prev => {
+      const { updating_date: _, ...next } = prev;
+      return next;
+    });
+  }, []);
+
   const renderContent = () => {
     if (isCommunityLoading) {
       return <div className={styles.loading}>{t('reports.general.loading')}</div>;
@@ -111,6 +128,11 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         <p className={styles.count}>
           <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
         </p>
+        <ActiveFilters
+          filters={filters}
+          onRemoveStatus={handleRemoveStatus}
+          onRemoveDate={handleRemoveDate}
+        />
         <div className={styles.reportList}>
           {reports.map((report) => (
             <ReportRow
