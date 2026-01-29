@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { collabApiClient } from '@/infra/api';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import type { AppReport } from '@/domain/report/models';
+import type { AppReport, ReportFilters } from '@/domain/report/models';
 import { mapApiReportsToAppReports, type ApiReportResponse } from '@/domain/report/mappers';
 
 interface UseMyReportsOptions {
   limit?: number;
+  filters?: ReportFilters;
 }
 
 interface UseMyReportsResult {
@@ -19,7 +20,7 @@ interface UseMyReportsResult {
 }
 
 export function useMyReports(options: UseMyReportsOptions = {}): UseMyReportsResult {
-  const { limit = 10 } = options;
+  const { limit = 10, filters } = options;
   const { user } = useAuth();
 
   const [reports, setReports] = useState<AppReport[]>([]);
@@ -53,13 +54,22 @@ export function useMyReports(options: UseMyReportsOptions = {}): UseMyReportsRes
     setError(null);
 
     try {
-      console.log('fetchMyReports', { page, limit, userId: user.id });
-
-      const response = await collabApiClient.report.getAll({
+      const params: Record<string, any> = {
         author: user.id,
         page,
         limit,
-      });
+      };
+
+      if (filters?.status && filters.status.length > 0) {
+        params.status = filters.status.join(',');
+      }
+      if (filters?.updating_date) {
+        params.updating_date = filters.updating_date;
+      }
+
+      console.log('fetchMyReports', params);
+
+      const response = await collabApiClient.report.getAll(params);
 
       console.log('fetchMyReports => response', response);
 
@@ -91,15 +101,15 @@ export function useMyReports(options: UseMyReportsOptions = {}): UseMyReportsRes
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }
-  }, [user, limit]);
+  }, [user, limit, filters]);
 
-  // Initial fetch when user changes
+  // Initial fetch when user or filters change
   useEffect(() => {
     pageRef.current = 1;
     hasMoreRef.current = true;
     setHasMore(true);
     fetchReports(1, false);
-  }, [user, limit]);
+  }, [user, limit, filters]);
 
   const loadMore = useCallback(async () => {
     // Use refs for synchronous checks to prevent duplicate requests

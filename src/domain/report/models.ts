@@ -13,6 +13,12 @@ export interface ReportListRequestParams {
   themeIds?: number[];
 }
 
+// Filters that can be applied on report lists
+export interface ReportFilters {
+  status?: ReportStatus[];
+  updating_date?: string; // ISO date string (YYYY-MM-DD)
+}
+
 // Result from the API response
 export interface ReportListResult {
   reports: AppReport[];

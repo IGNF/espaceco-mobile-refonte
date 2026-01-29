@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { collabApiClient } from '@/infra/api';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import type { AppReport } from '@/domain/report/models';
+import type { AppReport, ReportFilters } from '@/domain/report/models';
 import { mapApiReportsToAppReports, type ApiReportResponse } from '@/domain/report/mappers';
 
 interface UseGroupReportsOptions {
   limit?: number;
+  filters?: ReportFilters;
 }
 
 interface UseGroupReportsResult {
@@ -19,7 +20,7 @@ interface UseGroupReportsResult {
 }
 
 export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupReportsResult {
-  const { limit = 10 } = options;
+  const { limit = 10, filters } = options;
   const { activeCommunity } = useCommunity();
 
   const [reports, setReports] = useState<AppReport[]>([]);
@@ -53,13 +54,22 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
     setError(null);
 
     try {
-      console.log('fetchReports', { page, limit, communityId: activeCommunity.id });
-
-      const response = await collabApiClient.report.getAll({
+      const params: Record<string, any> = {
         communities: activeCommunity.id,
         page,
         limit,
-      });
+      };
+
+      if (filters?.status && filters.status.length > 0) {
+        params.status = filters.status.join(',');
+      }
+      if (filters?.updating_date) {
+        params.updating_date = filters.updating_date;
+      }
+
+      console.log('fetchReports', params);
+
+      const response = await collabApiClient.report.getAll(params);
 
       console.log('fetchReports => response', response);
 
@@ -91,15 +101,15 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }
-  }, [activeCommunity, limit]);
+  }, [activeCommunity, limit, filters]);
 
-  // Initial fetch when community changes
+  // Initial fetch when community or filters change
   useEffect(() => {
     pageRef.current = 1;
     hasMoreRef.current = true;
     setHasMore(true);
     fetchReports(1, false);
-  }, [activeCommunity, limit]);
+  }, [activeCommunity, limit, filters]);
 
   const loadMore = useCallback(async () => {
     // Use refs for synchronous checks to prevent duplicate requests

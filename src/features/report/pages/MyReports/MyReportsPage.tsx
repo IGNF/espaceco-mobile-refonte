@@ -8,7 +8,7 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
-import type { AppReport } from '@/domain/report/models';
+import type { AppReport, ReportFilters } from '@/domain/report/models';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
@@ -25,7 +25,8 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities } = useCommunity();
-  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports();
+  const [filters, setFilters] = useState<ReportFilters>({});
+  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports({ filters });
 
   const getCommunityName = useCallback((communityId: number): string | undefined => {
     const community = communities.find(c => c.id === communityId);
@@ -90,6 +91,10 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
   const handleFiltersClose = () => {
     setIsFiltersOpen(false);
   };
+
+  const handleFiltersApply = useCallback((newFilters: ReportFilters) => {
+    setFilters(newFilters);
+  }, []);
 
   const renderContent = () => {
     if (isUserLoading) {
@@ -202,6 +207,8 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
 
       <ReportFiltersPage
         isOpen={isFiltersOpen}
+        filters={filters}
+        onApply={handleFiltersApply}
         onClose={handleFiltersClose}
       />
     </SlideUpPage>

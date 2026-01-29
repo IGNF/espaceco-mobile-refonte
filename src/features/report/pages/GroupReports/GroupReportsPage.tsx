@@ -7,7 +7,7 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
-import type { AppReport } from '@/domain/report/models';
+import type { AppReport, ReportFilters } from '@/domain/report/models';
 import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
@@ -23,7 +23,8 @@ export interface GroupReportsPageProps {
 export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   const { t } = useTranslation();
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
-  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports();
+  const [filters, setFilters] = useState<ReportFilters>({});
+  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports({ filters });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
@@ -77,13 +78,16 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   };
 
   const handleFilter = () => {
-    console.log('handleFilter clicked, opening filters');
     setIsFiltersOpen(true);
   };
 
   const handleFiltersClose = () => {
     setIsFiltersOpen(false);
   };
+
+  const handleFiltersApply = useCallback((newFilters: ReportFilters) => {
+    setFilters(newFilters);
+  }, []);
 
   const renderContent = () => {
     if (isCommunityLoading) {
@@ -105,7 +109,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     return (
       <>
         <p className={styles.count}>
-          <strong>{reports.length} {reports.length === 1 ? t('reports.groupReports.report_singular') : t('reports.groupReports.report_plural')}</strong>
+          <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
         </p>
         <div className={styles.reportList}>
           {reports.map((report) => (
@@ -192,6 +196,8 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
       <ReportFiltersPage
         isOpen={isFiltersOpen}
+        filters={filters}
+        onApply={handleFiltersApply}
         onClose={handleFiltersClose}
       />
     </SlideUpPage>

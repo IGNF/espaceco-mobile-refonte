@@ -152,12 +152,20 @@
       "title": "Filtrer",
       "description": "les signalements",
       "eraseFilters": "Effacer les filtres",
+      "applyFilters": "Appliquer les filtres",
       "group": "Groupe",
       "theme": "Thème du signalement",
-      "status": "Statu",
+      "status": "Statut",
       "updatedAt": "Date de mise à jour",
       "reportType": "Type de signalement",
-      "myReportsOnly": "Mes signalements"
+      "myReportsOnly": "Mes signalements",
+      "statusOptions": {
+        "valid": "Prise en compte",
+        "submit": "Reçu dans nos services",
+        "pending": "En cours de traitement",
+        "reject": "Rejeté"
+      },
+      "datePlaceholder": "jj/mm/aaaa"
     },
     "details": {
       "headerTitle": "Fiche du signalement",
