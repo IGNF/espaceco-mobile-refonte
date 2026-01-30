@@ -18,6 +18,7 @@ import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
+import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -173,6 +174,11 @@ export function HomePage() {
 			<MyReportsPage
 				isOpen={activeOverlay === '/my-reports'}
 				onClose={handleCloseOverlay}
+			/>
+			<CreateOrEditReportPage
+				isOpen={activeOverlay === '/create-or-edit-report'}
+				onClose={handleCloseOverlay}
+				mode="create"
 			/>
 		</div>
 	);

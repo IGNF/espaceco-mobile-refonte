@@ -168,6 +168,27 @@
       },
       "datePlaceholder": "jj/mm/aaaa"
     },
+    "createOrEdit": {
+      "headerTitleCreate": "Nouveau signalement",
+      "headerTitleEdit": "Modifier le signalement",
+      "headerSubtitle": "Profil actif",
+      "titleCreate": "Nouveau",
+      "titleEdit": "Modifier",
+      "subtitleCreate": "signalement sur l'Espace collaboratif IGN",
+      "subtitleEdit": "le signalement",
+      "geolocation": {
+        "locating": "Localisation en cours...",
+        "located": "Position obtenue",
+        "error": "Impossible d'obtenir la position",
+        "permissionDenied": "Permission de localisation refusée",
+        "retry": "Réessayer"
+      },
+      "actions": {
+        "saveDraft": "Enregistrer le brouillon",
+        "send": "Envoyer",
+        "cancel": "Annuler"
+      }
+    },
     "details": {
       "headerTitle": "Fiche du signalement",
       "headerSubtitle": "Profil actif",

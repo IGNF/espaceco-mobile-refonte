@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -8,6 +9,7 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
+import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
 
 import { Button } from '@/shared/ui/Button';
 import IconEdit from '@/shared/assets/icons/icon-edit.svg?react';
@@ -29,6 +31,8 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
 
+  const [isEditOpen, setIsEditOpen] = useState(false);
+
   // Check if the connected user is the author of the report
   const isOwnReport = user && report?.author?.id === user.id;
   const isDraft = report?.status === ReportStatus.Draft;
@@ -39,8 +43,16 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
   };
 
   const handleEditReport = () => {
-    // TODO: Implement edit report
-    console.log('Edit report:', report?.id);
+    setIsEditOpen(true);
+  };
+
+  const handleEditBack = () => {
+    setIsEditOpen(false);
+  };
+
+  const handleEditClose = () => {
+    setIsEditOpen(false);
+    onClose();
   };
 
   const handleSendReport = () => {
@@ -202,6 +214,15 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
           )}
         </div>
       </main>
+
+      <CreateOrEditReportPage
+        isOpen={isEditOpen}
+        mode="edit"
+        report={report}
+        level={3}
+        onBack={handleEditBack}
+        onClose={handleEditClose}
+      />
     </SlideUpPage>
   );
 }

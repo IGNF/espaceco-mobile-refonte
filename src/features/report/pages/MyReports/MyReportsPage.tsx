@@ -108,6 +108,7 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
 
   const handleRemoveDate = useCallback(() => {
     setFilters(prev => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { updating_date: _, ...next } = prev;
       return next;
     });

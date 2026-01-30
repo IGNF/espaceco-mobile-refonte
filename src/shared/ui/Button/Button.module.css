@@ -1,4 +1,6 @@
 .button {
+  width: 80%;
+  margin: 0 auto;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -18,7 +20,7 @@
 }
 
 .fullWidth {
-	width: 100%;
+	width: 100% !important;
 }
 
 /* Color mappings - set CSS variables per color */
