@@ -44,7 +44,7 @@ const menuGroups: MenuGroup[] = [
 		items: [
 			{ id: "signalementsGroupe", labelKey: "leftMenu.signalements.signalementsGroupe", route: "/group-reports" },
 			{ id: "mesSignalements", labelKey: "leftMenu.signalements.mesSignalements", route: "/my-reports" },
-			{ id: "nouveauSignalement", labelKey: "leftMenu.signalements.nouveauSignalement", route: "/new-report" },
+			{ id: "nouveauSignalement", labelKey: "leftMenu.signalements.nouveauSignalement", route: "/create-or-edit-report" },
 			{ id: "aProposSignalements", labelKey: "leftMenu.signalements.aPropos", route: "/about-reports" },
 		],
 	},
