@@ -8,6 +8,7 @@ import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
 import { ActiveFilters } from '@/features/report/components/ActiveFilters/ActiveFilters';
+import { Loading } from '@/shared/ui/Loading';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import type { ReportStatus } from '@ign/mobile-core';
 // import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
@@ -122,15 +123,15 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
   const renderContent = () => {
     if (isCommunityLoading) {
-      return <div className={styles.loading}>{t('reports.general.loading')}</div>;
+      return <Loading label={t('reports.general.loading')} />;
     }
 
     if (!activeCommunity) {
       return <div className={styles.empty}>{t('reports.groupReports.noCommunitySelected')}</div>;
     }
 
-    if (isLoading && reports.length === 0) {
-      return <div className={styles.loading}>{t('reports.groupReports.loadingReports')}</div>;
+    if (isLoading) {
+      return <Loading label={t('reports.groupReports.loadingReports')} />;
     }
 
     if (error && reports.length === 0) {
@@ -173,9 +174,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
           {/* Loading more indicator */}
           {isLoadingMore && (
-            <div className={styles.loadingMore}>
-              {t('reports.groupReports.loadingMore')}
-            </div>
+            <Loading size="small" />
           )}
 
           {/* End of list message */}
