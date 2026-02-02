@@ -6,6 +6,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/Checkbox';
+import { Toggle } from '@/shared/ui/Toggle';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type { ReportFilters, ThemeFilter } from '@/domain/report/models';
@@ -191,13 +192,12 @@ export function ReportFiltersPage({ isOpen, filters, onApply, onClose }: ReportF
               {/* Report type filter */}
               <div className={styles.filterGroup}>
                 <h2 className={styles.filterLabel}>{t('reports.filters.reportType')}</h2>
-                <div className={styles.checkboxList}>
-                  <Checkbox
-                    label={t('reports.filters.myReportsOnly')}
-                    checked={myReportsOnly}
-                    onChange={setMyReportsOnly}
-                  />
-                </div>
+                <Toggle
+                  label={t('reports.filters.myReportsOnly')}
+                  checked={myReportsOnly}
+                  onChange={setMyReportsOnly}
+                  color="primary"
+                />
               </div>
 
               {/* Theme filter */}
