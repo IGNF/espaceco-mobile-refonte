@@ -180,7 +180,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         </div>
 
         <div className={styles.searchSection}>
-          <div className={styles.searchBar}>
+          {/* <div className={styles.searchBar}>
             <input
               type="text"
               className={styles.searchInput}
@@ -195,7 +195,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
             >
               <IconSearch className={styles.searchIcon} />
             </button>
-          </div>
+          </div> */}
           <button
             className={styles.filterButton}
             onClick={handleFilter}

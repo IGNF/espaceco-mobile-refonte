@@ -192,7 +192,7 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         </p>
 
         <div className={styles.searchSection}>
-          <div className={styles.searchBar}>
+          {/* <div className={styles.searchBar}>
             <input
               type="text"
               className={styles.searchInput}
@@ -207,7 +207,7 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
             >
               <IconSearch className={styles.searchIcon} />
             </button>
-          </div>
+          </div> */}
           <button
             className={styles.filterButton}
             onClick={handleFilter}

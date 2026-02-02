@@ -76,7 +76,7 @@
     "signalements": {
       "title": "Signalements",
       "signalementsGroupe": "Signalements du groupe",
-      "mesSignalements": "Mes signalements",
+      "mesSignalements": "Mes signalements en cours",
       "nouveauSignalement": "Nouveau signalement",
       "aPropos": "A propos des signalements"
     },
@@ -138,9 +138,9 @@
       "noMoreReports": "Tous les signalements ont été chargés"
     },
     "myReports": {
-      "headerTitle": "Mes signalements",
+      "headerTitle": "Mes signalements en cours",
       "headerSubtitle": "Profil actif",
-      "title": "Mes signalements",
+      "title": "Mes signalements en cours",
       "description": "faits sur l'Espace collaboratif IGN mobile",
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
       "loadingReports": "Chargement de vos signalements...",
