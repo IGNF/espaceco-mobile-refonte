@@ -15,9 +15,15 @@ export interface SlideUpPageProps {
 	 * Default is 1. Use 2 for modals opened from within another modal.
 	 */
 	level?: number;
+	/**
+	 * Whether this is a full-page overlay that needs safe area padding.
+	 * Set to false for partial overlays (e.g., with top: 10%) that already have spacing.
+	 * Default is true.
+	 */
+	fullPage?: boolean;
 }
 
-export function SlideUpPage({ children, isOpen, className, level = 1 }: SlideUpPageProps) {
+export function SlideUpPage({ children, isOpen, className, level = 1, fullPage = true }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -50,11 +56,16 @@ export function SlideUpPage({ children, isOpen, className, level = 1 }: SlideUpP
 		className ?? '',
 	].filter(Boolean).join(' ');
 
+	const innerClassNames = [
+		styles.slideUpPageInner,
+		fullPage ? styles.slideUpPageInnerFullPage : '',
+	].filter(Boolean).join(' ');
+
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
 
 	const content = (
 		<div className={classNames} style={{ zIndex }}>
-			<div className={styles.slideUpPageInner}>
+			<div className={innerClassNames}>
 				{children}
 			</div>
 		</div>

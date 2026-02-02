@@ -96,6 +96,7 @@ export function ReportFiltersPage({ isOpen, filters, onApply, onClose }: ReportF
         onClose={onClose}
         level={2}
         className={styles.filtersPage}
+        fullPage={false}
       >
         <div className={styles.filtersContainer}>
           <PageHeader
