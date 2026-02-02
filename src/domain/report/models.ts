@@ -13,10 +13,17 @@ export interface ReportListRequestParams {
   themeIds?: number[];
 }
 
+export interface ThemeFilter {
+  community: number;
+  theme: string;
+}
+
 // Filters that can be applied on report lists
 export interface ReportFilters {
   status?: ReportStatus[];
   updating_date?: string; // ISO date string (YYYY-MM-DD)
+  myReportsOnly?: boolean;
+  themes?: ThemeFilter[];
 }
 
 // Result from the API response

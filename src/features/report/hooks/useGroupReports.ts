@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { collabApiClient } from '@/infra/api';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import { mapApiReportsToAppReports, type ApiReportResponse } from '@/domain/report/mappers';
 
@@ -22,6 +23,7 @@ interface UseGroupReportsResult {
 export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupReportsResult {
   const { limit = 10, filters } = options;
   const { activeCommunity } = useCommunity();
+  const { user } = useAuth();
 
   const [reports, setReports] = useState<AppReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +68,12 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
       if (filters?.updating_date) {
         params.updating_date = filters.updating_date;
       }
+      if (filters?.myReportsOnly && user) {
+        params.author = user.id;
+      }
+      if (filters?.themes && filters.themes.length > 0) {
+        params.attributes = JSON.stringify(filters.themes);
+      }
 
       console.log('fetchReports', params);
 
@@ -101,7 +109,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
       setIsLoadingMore(false);
       isLoadingRef.current = false;
     }
-  }, [activeCommunity, limit, filters]);
+  }, [activeCommunity, user, limit, filters]);
 
   // Initial fetch when community or filters change
   useEffect(() => {
@@ -109,7 +117,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
     hasMoreRef.current = true;
     setHasMore(true);
     fetchReports(1, false);
-  }, [activeCommunity, limit, filters]);
+  }, [activeCommunity, user, limit, filters]);
 
   const loadMore = useCallback(async () => {
     // Use refs for synchronous checks to prevent duplicate requests

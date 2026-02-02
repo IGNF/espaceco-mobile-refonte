@@ -8,7 +8,6 @@
   left: 0 !important;
   right: 0 !important;
   border-radius: 20px 20px 0 0;
-  overflow: hidden;
 }
 
 .filtersContainer {
@@ -19,7 +18,6 @@
 
 .content {
   background-color: var(--color-light-light);
-  height: 100vh;
 }
 
 .titleSection {
@@ -91,6 +89,13 @@
   background-color: white !important;
 }
 
+/* Checkbox list */
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Date input */
 .dateInput {
   padding: 12px 14px;
@@ -113,8 +118,12 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 32px;
+  padding-top: 16px;
   padding-bottom: 24px;
+  position: sticky;
+  bottom: 0;
+  background-color: var(--color-light-light);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .eraseButton {

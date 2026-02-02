@@ -10,7 +10,7 @@ import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportF
 import { ActiveFilters } from '@/features/report/components/ActiveFilters/ActiveFilters';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import type { ReportStatus } from '@ign/mobile-core';
-import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
+// import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
 import styles from '../reportsListPage.module.css';
@@ -27,7 +27,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
   const [filters, setFilters] = useState<ReportFilters>({});
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports({ filters });
-  const [searchQuery, setSearchQuery] = useState('');
+  // const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
@@ -74,10 +74,9 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     onClose();
   }, [onClose]);
 
-  const handleSearch = () => {
-    console.log('Search:', searchQuery);
-    // TODO: Implement search
-  };
+  // const handleSearch = () => {
+  //   console.log('Search:', searchQuery);
+  // };
 
   const handleFilter = () => {
     setIsFiltersOpen(true);
@@ -106,6 +105,21 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     });
   }, []);
 
+  const handleRemoveMyReportsOnly = useCallback(() => {
+    setFilters(prev => {
+      const { myReportsOnly: _, ...next } = prev;
+      return next;
+    });
+  }, []);
+
+  const handleRemoveTheme = useCallback((theme: { community: number; theme: string }) => {
+    setFilters(prev => {
+      const next = { ...prev, themes: prev.themes?.filter(t => !(t.community === theme.community && t.theme === theme.theme)) };
+      if (!next.themes || next.themes.length === 0) delete next.themes;
+      return next;
+    });
+  }, []);
+
   const renderContent = () => {
     if (isCommunityLoading) {
       return <div className={styles.loading}>{t('reports.general.loading')}</div>;
@@ -125,13 +139,25 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
     return (
       <>
-        <p className={styles.count}>
-          <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
-        </p>
+        <div className={styles.countAndActionsWrapper}>
+          <p className={styles.count}>
+            <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
+          </p>
+          <button
+            className={styles.filterButton}
+            onClick={handleFilter}
+            aria-label={t('reports.general.filter')}
+          >
+            <IconFilter className={styles.filterIcon} />
+            <span className={styles.filterLabel}>{t('reports.general.filter')}</span>
+          </button>
+        </div>
         <ActiveFilters
           filters={filters}
           onRemoveStatus={handleRemoveStatus}
           onRemoveDate={handleRemoveDate}
+          onRemoveMyReportsOnly={handleRemoveMyReportsOnly}
+          onRemoveTheme={handleRemoveTheme}
         />
         <div className={styles.reportList}>
           {reports.map((report) => (
@@ -196,14 +222,6 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
               <IconSearch className={styles.searchIcon} />
             </button>
           </div> */}
-          <button
-            className={styles.filterButton}
-            onClick={handleFilter}
-            aria-label={t('reports.general.filter')}
-          >
-            <IconFilter className={styles.filterIcon} />
-            <span className={styles.filterLabel}>{t('reports.general.filter')}</span>
-          </button>
         </div>
 
         {renderContent()}

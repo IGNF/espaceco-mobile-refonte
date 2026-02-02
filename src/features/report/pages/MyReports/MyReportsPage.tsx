@@ -7,12 +7,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
-import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
-import { ActiveFilters } from '@/features/report/components/ActiveFilters/ActiveFilters';
-import type { AppReport, ReportFilters } from '@/domain/report/models';
-import type { ReportStatus } from '@ign/mobile-core';
-import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
-import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
+import type { AppReport } from '@/domain/report/models';
 
 import styles from '../reportsListPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
@@ -27,16 +22,13 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities } = useCommunity();
-  const [filters, setFilters] = useState<ReportFilters>({});
-  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports({ filters });
+  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports();
 
   const getCommunityName = useCallback((communityId: number): string | undefined => {
     const community = communities.find(c => c.id === communityId);
     return community?.name;
   }, [communities]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
   // Ref for the sentinel element
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -81,39 +73,6 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
     onClose();
   }, [onClose]);
 
-  const handleSearch = () => {
-    console.log('Search:', searchQuery);
-    // TODO: Implement search
-  };
-
-  const handleFilter = () => {
-    setIsFiltersOpen(true);
-  };
-
-  const handleFiltersClose = () => {
-    setIsFiltersOpen(false);
-  };
-
-  const handleFiltersApply = useCallback((newFilters: ReportFilters) => {
-    setFilters(newFilters);
-  }, []);
-
-  const handleRemoveStatus = useCallback((status: ReportStatus) => {
-    setFilters(prev => {
-      const next = { ...prev, status: prev.status?.filter(s => s !== status) };
-      if (!next.status || next.status.length === 0) delete next.status;
-      return next;
-    });
-  }, []);
-
-  const handleRemoveDate = useCallback(() => {
-    setFilters(prev => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { updating_date: _, ...next } = prev;
-      return next;
-    });
-  }, []);
-
   const renderContent = () => {
     if (isUserLoading) {
       return <div className={styles.loading}>{t('reports.general.loading')}</div>;
@@ -136,11 +95,6 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         <p className={styles.count}>
           <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
         </p>
-        <ActiveFilters
-          filters={filters}
-          onRemoveStatus={handleRemoveStatus}
-          onRemoveDate={handleRemoveDate}
-        />
         <div className={styles.reportList}>
           {reports.map((report) => (
             <ReportRow
@@ -191,33 +145,6 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
           <span className={typography.italic}>{t('reports.myReports.description2')}</span>
         </p>
 
-        <div className={styles.searchSection}>
-          {/* <div className={styles.searchBar}>
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder={`${t('reports.general.search')}...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              className={styles.searchButton}
-              onClick={handleSearch}
-              aria-label={t('reports.general.search')}
-            >
-              <IconSearch className={styles.searchIcon} />
-            </button>
-          </div> */}
-          <button
-            className={styles.filterButton}
-            onClick={handleFilter}
-            aria-label={t('reports.general.filter')}
-          >
-            <IconFilter className={styles.filterIcon} />
-            <span className={styles.filterLabel}>{t('reports.general.filter')}</span>
-          </button>
-        </div>
-
         {renderContent()}
       </main>
 
@@ -228,12 +155,6 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         onClose={handleDetailsClose}
       />
 
-      <ReportFiltersPage
-        isOpen={isFiltersOpen}
-        filters={filters}
-        onApply={handleFiltersApply}
-        onClose={handleFiltersClose}
-      />
     </SlideUpPage>
   );
 }

@@ -54,41 +54,12 @@ export function useMyReports(options: UseMyReportsOptions = {}): UseMyReportsRes
     setError(null);
 
     try {
-      const params: Record<string, any> = {
-        author: user.id,
-        page,
-        limit,
-      };
-
-      if (filters?.status && filters.status.length > 0) {
-        params.status = filters.status.join(',');
-      }
-      if (filters?.updating_date) {
-        params.updating_date = filters.updating_date;
-      }
-
-      console.log('fetchMyReports', params);
-
-      const response = await collabApiClient.report.getAll(params);
-
-      console.log('fetchMyReports => response', response);
-
-      const apiReports = response.data as ApiReportResponse[];
-      const appReports = mapApiReportsToAppReports(apiReports);
-
-      // Check if we received fewer reports than requested (means no more data)
-      const receivedLessThanLimit = appReports.length < limit;
-      setHasMore(!receivedLessThanLimit);
-      hasMoreRef.current = !receivedLessThanLimit;
-
-      if (append) {
-        setReports(prev => [...prev, ...appReports]);
-      } else {
-        setReports(appReports);
-      }
-
-      // Update page for next request
-      pageRef.current = page + 1;
+      /**
+       * TODO
+       * Here it should retrieve only draft reports
+       * Then we can remove all references to filters and limit
+       */
+      return [];
 
     } catch (err) {
       console.error('fetchMyReports => error', err);
