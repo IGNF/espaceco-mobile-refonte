@@ -6,7 +6,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
-import { ReportFiltersPage } from '@/features/report/pages/ReportFIlters/ReportFiltersPage';
+import { ReportFiltersPage } from '@/features/report/pages/ReportFilters/ReportFiltersPage';
 import { ActiveFilters } from '@/features/report/components/ActiveFilters/ActiveFilters';
 import { Loading } from '@/shared/ui/Loading';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
