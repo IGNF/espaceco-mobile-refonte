@@ -211,19 +211,31 @@
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
-      "notAvailable": "N/A"
+      "notAvailable": "N/A",
+      "reply": {
+        "dialogTitle": "Répondre au signalement",
+        "textareaLabel": "Votre réponse",
+        "textareaPlaceholder": "Saisissez votre réponse...",
+        "statusLabel": "Nouveau statut",
+        "submitButton": "Envoyer la réponse",
+        "cancelButton": "Annuler",
+        "permissionDenied": "Vous n'êtes pas membre du groupe de ce signalement. Vous ne pouvez pas y répondre.",
+        "errorMessage": "Erreur lors de l'envoi de la réponse",
+        "validationError": "Veuillez saisir une réponse ou modifier le statut du signalement."
+      }
     },
     "status": {
+      "draft": "Brouillon",
       "cluster": "Groupé",
-      "submit": "Soumis",
+      "submit": "Reçu dans nos services",
       "pending": "En cours de traitement",
       "pending0": "En attente de qualification",
       "pending1": "En attente de saisie",
       "pending2": "En attente de validation",
-      "valid": "Validé",
-      "valid0": "Déjà traité",
-      "reject": "Rejeté",
-      "reject0": "Non pertinent"
+      "valid": "Pris en compte",
+      "valid0": "Déjà pris en compte",
+      "reject": "Rejeté (hors spéc.)",
+      "reject0": "Rejeté (hors propos)"
     }
   }
 }

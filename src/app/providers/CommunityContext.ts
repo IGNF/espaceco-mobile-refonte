@@ -1,9 +1,9 @@
 import { createContext } from 'react';
-import type { Community } from '@ign/mobile-core';
+import type { AppCommunity } from '@/domain/community/models';
 
 export interface CommunityContextType {
-  activeCommunity: Community | null;
-  communities: Community[];
+  activeCommunity: AppCommunity | null;
+  communities: AppCommunity[];
   isLoading: boolean;
   setActiveCommunity: (communityId: number) => Promise<void>;
   refreshCommunities: () => Promise<void>;

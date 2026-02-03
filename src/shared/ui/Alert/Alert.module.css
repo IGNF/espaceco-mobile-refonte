@@ -57,6 +57,10 @@
 	padding-top: 20px;
 }
 
+.childrenContainer {
+	margin-top: 16px;
+}
+
 .buttons {
 	display: flex;
 	flex-wrap: wrap;

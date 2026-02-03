@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui/Button';
 import type { ButtonColor, ButtonVariant } from '@/shared/ui/Button';
@@ -20,10 +20,11 @@ export interface AlertProps {
 	onClose: () => void;
 	title: string;
 	subtitle?: string;
+	children?: ReactNode;
 	buttons?: AlertButton[];
 }
 
-export function Alert({ isOpen, onClose, title, subtitle, buttons = [] }: AlertProps) {
+export function Alert({ isOpen, onClose, title, subtitle, children, buttons = [] }: AlertProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -67,6 +68,8 @@ export function Alert({ isOpen, onClose, title, subtitle, buttons = [] }: AlertP
 				<div className={styles.content}>
 					<h2 className={typography.heading2}>{title}</h2>
 					{subtitle && <p className={typography.body}>{subtitle}</p>}
+
+					{children && <div className={styles.childrenContainer}>{children}</div>}
 
 					{buttons.length > 0 && (
 						<div className={styles.buttons}>

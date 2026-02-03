@@ -8,10 +8,12 @@
  * - All data stored in Capacitor Preferences (key-value storage)
  * - Credentials stored with obfuscation (not true encryption for simplicity)
  */
-import type { IUserStorage, User, Community, CommunityMember } from '@ign/mobile-core';
+import type { IUserStorage, User } from '@ign/mobile-core';
 import { Storage } from '@ign/mobile-device';
 import { storageKey } from '../../shared/constants/storage';
 import { collabApiClient } from '../api/collabApiClient';
+import { mapApiCommunityToAppCommunity } from '@/domain/community/mappers';
+import type { AppCommunity } from '@/domain/community/models';
 
 const USER_KEY = 'USER';
 const USER_PARAMS_KEY = 'USER_PARAMS';
@@ -28,8 +30,8 @@ export class UserStorageAdapter implements IUserStorage {
       console.log('saveUser => user.communities_member', user.communities_member.length);
 
       const userCommunities = await Promise.all(user.communities_member.map(async (communityMember) => {
-        const community = (await collabApiClient.community.get(communityMember.community_id)).data as Community;
-        return community;
+        const community = (await collabApiClient.community.get(communityMember.community_id)).data;
+        return mapApiCommunityToAppCommunity(community);
       }));
       console.log('userCommunities', userCommunities);
 
@@ -72,14 +74,14 @@ export class UserStorageAdapter implements IUserStorage {
 
   // Community operations
 
-  async saveCommunities(communities: Community[]): Promise<void> {
+  async saveCommunities(communities: AppCommunity[]): Promise<void> {
     await Storage.set(storageKey(COMMUNITIES_KEY), communities, 'object');
   }
 
-  async getCommunities(): Promise<Community[]> {
+  async getCommunities(): Promise<AppCommunity[]> {
     const data = await Storage.get(storageKey(COMMUNITIES_KEY), 'object');
     console.log('getCommunities => data', data);
-    return (data as Community[]) ?? [];
+    return (data as AppCommunity[]) ?? [];
   }
 
   async setActiveCommunity(communityId: number): Promise<void> {
@@ -125,7 +127,7 @@ export class UserStorageAdapter implements IUserStorage {
   /**
    * Get a specific community by ID
    */
-  async getCommunityById(communityId: number): Promise<Community | CommunityMember | null> {
+  async getCommunityById(communityId: number): Promise<AppCommunity | null> {
     const communities = await this.getCommunities();
     return communities.find(c => c.id === communityId) ?? null;
   }
@@ -133,7 +135,7 @@ export class UserStorageAdapter implements IUserStorage {
   /**
    * Get the currently active community object
    */
-  async getActiveCommunityData(): Promise<Community | CommunityMember | null> {
+  async getActiveCommunityData(): Promise<AppCommunity | null> {
     const activeId = await this.getActiveCommunity();
     if (activeId === null) return null;
     return this.getCommunityById(activeId);

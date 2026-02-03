@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { Alert } from '@/shared/ui/Alert';
 import type { AppReport } from '@/domain/report/models';
-import { ReportStatus } from '@ign/mobile-core';
+import { ReportStatus, ClosedReportStatus } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useReportReply } from '@/features/report/hooks/useReportReply';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -17,29 +19,89 @@ import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 
 import styles from './ReportDetailsPage.module.css';
+import replyFormStyles from './ReplyForm.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+
+const CLOSED_STATUSES = Object.values(ClosedReportStatus) as string[];
+
+const ALL_REPLY_STATUS_OPTIONS: ReportStatus[] = [
+  ReportStatus.Submit,
+  ReportStatus.Pending,
+  ReportStatus.Pending_Qualification,
+  ReportStatus.Pending_Entry,
+  ReportStatus.Pending_Validation,
+  ReportStatus.Valid,
+  ReportStatus.Valid_Already_Treated,
+  ReportStatus.Reject,
+  ReportStatus.Reject_Irrelevant,
+];
+
 export interface ReportDetailsPageProps {
   isOpen: boolean;
   report: AppReport | null;
   onClose: () => void;
   onBack: () => void;
+  onReplySuccess?: (updatedReport: AppReport) => void;
 }
 
-export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDetailsPageProps) {
+export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySuccess }: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
+  const { submitReply, isSubmitting, error: replyError } = useReportReply();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [replyTitle, setReplyTitle] = useState('');
+  const [replyText, setReplyText] = useState('');
+  const [replyStatus, setReplyStatus] = useState(ReportStatus.Submit);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Check if the connected user is the author of the report
-  const isOwnReport = user && report?.author?.id === user.id;
   const isDraft = report?.status === ReportStatus.Draft;
 
+  // Check if user is a member of the report's community
+  const reportCommunityId = report?.attributes?.raw?.[0]?.community ?? report?.communityId;
+  const canReply = user?.communities_member?.some(
+    (m: { community_id: number }) => m.community_id === reportCommunityId
+  ) ?? false;
+
+  // Determine if user can set closing statuses (valid, valid0, reject, reject0)
+  const canUseClosingStatus =
+    activeCommunity?.allMembersCanValid === true ||
+    (report?.validator?.id != null && report.validator.id === user?.id);
+
+  const replyStatusOptions = canUseClosingStatus
+    ? ALL_REPLY_STATUS_OPTIONS
+    : ALL_REPLY_STATUS_OPTIONS.filter((s) => !CLOSED_STATUSES.includes(s));
+
   const handleRespond = () => {
-    // TODO: Implement respond to report
-    console.log('Respond to report:', report?.id);
+    setReplyTitle('');
+    setReplyText('');
+    setReplyStatus(report?.status ?? ReportStatus.Submit);
+    setValidationError(null);
+    setIsReplyOpen(true);
+  };
+
+  const handleReplyClose = () => {
+    setIsReplyOpen(false);
+  };
+
+  const handleReplySubmit = async () => {
+    if (!report) return;
+
+    // Check if the reply is empty and the status is the same as the report status
+    if (replyText.trim().length === 0 && replyStatus === report.status) {
+      setValidationError(t('reports.details.reply.validationError'));
+      return;
+    }
+
+    setValidationError(null);
+    const updatedReport = await submitReply(report.id, replyTitle, replyText.trim(), replyStatus);
+    if (updatedReport) {
+      setIsReplyOpen(false);
+      onReplySuccess?.(updatedReport);
+    }
   };
 
   const handleEditReport = () => {
@@ -69,8 +131,6 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
     return null;
   }
 
-  console.log('ReportDetailsPage => report', report);
-
   const statusColor = getStatusColor(report.status);
   const statusLabel = t(`reports.status.${report.status}`, report.status);
   const position = parsePointGeometry(report.geometry);
@@ -84,11 +144,6 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
   // TODO: Implement this - look at how it's done in the previous app
   const formatAttributes = (): string | null => {
     return '';
-    // if (!report.attributes?.raw || !Array.isArray(report.attributes.raw)) return null;
-    // const attrs = report.attributes.raw[0]?.attributes;
-    // console.log('formatAttributes => attrs', attrs);
-    // if (!attrs || attrs.length === 0) return null;
-    // return attrs.map((attr: any) => `${attr.name}: ${attr.value}`).join(', ');
   };
 
   const attributesText = formatAttributes();
@@ -188,32 +243,94 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack }: ReportDet
         </div>
 
         <div className={styles.buttonContainer}>
-          {isOwnReport ? (
-            <>
-              {isDraft && (
-                <>
-                  <Button color="primary" onClick={handleEditReport}>
-                    <IconEdit className={styles.buttonIcon} />
-                    {t('reports.details.editButton')}
-                  </Button>
-                  <Button color="success" onClick={handleSendReport}>
-                    <IconSend className={styles.buttonIcon} />
-                    {t('reports.details.sendButton')}
-                  </Button>
-                </>
-              )}
-              <Button color="danger" onClick={handleDeleteReport}>
-                <IconDelete className={styles.buttonIcon} />
-                {t('reports.details.deleteButton')}
-              </Button>
-            </>
-          ) : (
-            <Button color="primary" onClick={handleRespond}>
-              {t('reports.details.respondButton')}
-            </Button>
-          )}
+          <>
+            {isDraft ? (
+              <>
+                <Button color="primary" onClick={handleEditReport}>
+                  <IconEdit className={styles.buttonIcon} />
+                  {t('reports.details.editButton')}
+                </Button>
+                <Button color="success" onClick={handleSendReport}>
+                  <IconSend className={styles.buttonIcon} />
+                  {t('reports.details.sendButton')}
+                </Button>
+                <Button color="danger" onClick={handleDeleteReport}>
+                  <IconDelete className={styles.buttonIcon} />
+                  {t('reports.details.deleteButton')}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button color="primary" onClick={handleRespond} disabled={!canReply}>
+                  {t('reports.details.respondButton')}
+                </Button>
+                {!canReply && (
+                  <p className={styles.permissionMessage}>
+                    {t('reports.details.reply.permissionDenied')}
+                  </p>
+                )}
+              </>
+            )}
+          </>
         </div>
       </main>
+
+      <Alert
+        isOpen={isReplyOpen}
+        onClose={handleReplyClose}
+        title={t('reports.details.reply.dialogTitle')}
+        buttons={[
+          {
+            label: t('reports.details.reply.cancelButton'),
+            onClick: handleReplyClose,
+            variant: 'outline',
+          },
+          {
+            label: isSubmitting
+              ? t('reports.general.loading')
+              : t('reports.details.reply.submitButton'),
+            onClick: handleReplySubmit,
+            color: 'primary',
+          },
+        ]}
+      >
+        <div className={replyFormStyles.replyForm}>
+          <label className={replyFormStyles.replyLabel}>
+            {t('reports.details.reply.textareaLabel')}
+          </label>
+          <textarea
+            className={replyFormStyles.replyTextarea}
+            placeholder={t('reports.details.reply.textareaPlaceholder')}
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            rows={4}
+          />
+
+          <label className={replyFormStyles.replyLabel}>
+            {t('reports.details.reply.statusLabel')}
+          </label>
+          <select
+            className={replyFormStyles.replySelect}
+            value={replyStatus}
+            onChange={(e) => setReplyStatus(e.target.value as ReportStatus)}
+          >
+            {replyStatusOptions.map((status) => (
+              <option key={status} value={status}>
+                {t(`reports.status.${status}`, status)}
+              </option>
+            ))}
+          </select>
+
+          {validationError && (
+            <p className={replyFormStyles.replyError}>{validationError}</p>
+          )}
+          {replyError && (
+            <p className={replyFormStyles.replyError}>
+              {t('reports.details.reply.errorMessage')}
+            </p>
+          )}
+        </div>
+      </Alert>
 
       <CreateOrEditReportPage
         isOpen={isEditOpen}

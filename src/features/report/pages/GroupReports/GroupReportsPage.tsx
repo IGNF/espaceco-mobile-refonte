@@ -231,6 +231,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         report={selectedReport}
         onBack={handleDetailsBack}
         onClose={handleDetailsClose}
+        onReplySuccess={(updatedReport) => setSelectedReport(updatedReport)}
       />
 
       <ReportFiltersPage

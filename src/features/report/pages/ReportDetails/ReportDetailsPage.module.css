@@ -51,3 +51,10 @@
   height: 18px;
   margin-right: 8px;
 }
+
+.permissionMessage {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--color-danger, #d32f2f);
+  margin-top: 4px;
+}

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
-import type { Community } from "@ign/mobile-core";
+import type { AppCommunity } from "@/domain/community/models";
 import { CommunityContext } from "./CommunityContext";
 import { UserStorageAdapter } from "@/infra/storage";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -18,8 +18,8 @@ const userStorage = new UserStorageAdapter();
  */
 export function CommunityProvider({ children }: CommunityProviderProps) {
   const { user } = useAuth();
-  const [activeCommunity, setActiveCommunityState] = useState<Community | null>(null);
-  const [communities, setCommunities] = useState<Community[]>([]);
+  const [activeCommunity, setActiveCommunityState] = useState<AppCommunity | null>(null);
+  const [communities, setCommunities] = useState<AppCommunity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Load communities and active community from storage
@@ -32,7 +32,7 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
       ]);
       console.log('loadCommunityData => storedCommunities', storedCommunities);
       setCommunities(storedCommunities);
-      setActiveCommunityState(activeData as Community | null);
+      setActiveCommunityState(activeData as AppCommunity | null);
     } catch (error) {
       console.error("Failed to load community data:", error);
     } finally {
@@ -51,7 +51,7 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
     try {
       await userStorage.setActiveCommunity(communityId);
       const community = await userStorage.getCommunityById(communityId);
-      setActiveCommunityState(community as Community | null);
+      setActiveCommunityState(community as AppCommunity | null);
     } catch (error) {
       console.error("Failed to set active community:", error);
       throw error;

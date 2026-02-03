@@ -153,6 +153,7 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         report={selectedReport}
         onBack={handleDetailsBack}
         onClose={handleDetailsClose}
+        onReplySuccess={(updatedReport) => setSelectedReport(updatedReport)}
       />
 
     </SlideUpPage>
