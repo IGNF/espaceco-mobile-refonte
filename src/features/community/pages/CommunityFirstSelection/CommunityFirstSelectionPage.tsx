@@ -5,6 +5,7 @@ import { Button } from "@/shared/ui/Button";
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
+import inputs from "@/shared/styles/inputs.module.css";
 import styles from "./CommunityFirstSelectionPage.module.css";
 
 export function CommunityFirstSelectionPage() {
@@ -87,7 +88,7 @@ export function CommunityFirstSelectionPage() {
 						<div className={styles.selectWrapper}>
 							<select
 								id="community-select"
-								className={styles.select}
+								className={inputs.select}
 								value={selectedCommunityId ?? ""}
 								onChange={handleSelectChange}
 							>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -6,7 +6,7 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
-import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
+import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
 import type { AppReport } from '@/domain/report/models';
 
 import styles from '../reportsListPage.module.css';
@@ -18,64 +18,33 @@ export interface MyReportsPageProps {
   onClose?: () => void;
 }
 
-/**
- * TODO
- * Should use ReportStorageAdapter to save and retrieve user reports
- */
 export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities } = useCommunity();
-  const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useMyReports();
+  const { reports, isLoading, error, refetch } = useMyReports();
 
   const getCommunityName = useCallback((communityId: number): string | undefined => {
     const community = communities.find(c => c.id === communityId);
     return community?.name;
   }, [communities]);
+
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
-
-  // Ref for the sentinel element
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  // Set up scroll-based infinite loading
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleScroll = () => {
-      const sentinel = sentinelRef.current;
-      if (!sentinel || !hasMore || isLoadingMore || isLoading) return;
-
-      const rect = sentinel.getBoundingClientRect();
-      const isVisible = rect.top <= window.innerHeight + 200;
-
-      if (isVisible) {
-        loadMore();
-      }
-    };
-
-    // Listen on window since SlideUpPage handles scroll at its level
-    window.addEventListener('scroll', handleScroll, true);
-
-    // Check immediately in case content is already scrolled or short
-    handleScroll();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, [isOpen, hasMore, isLoadingMore, isLoading, loadMore]);
 
   const handleReportClick = useCallback((report: AppReport) => {
     setSelectedReport(report);
   }, []);
 
-  const handleDetailsBack = useCallback(() => {
+  const handleEditBack = useCallback(() => {
     setSelectedReport(null);
-  }, []);
+    refetch();
+  }, [refetch]);
 
-  const handleDetailsClose = useCallback(() => {
+  const handleEditClose = useCallback(() => {
     setSelectedReport(null);
+    refetch();
     onClose();
-  }, [onClose]);
+  }, [onClose, refetch]);
 
   const renderContent = () => {
     if (isUserLoading) {
@@ -86,12 +55,16 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
       return <div className={styles.empty}>{t('reports.myReports.notConnected')}</div>;
     }
 
-    if (isLoading && reports.length === 0) {
+    if (isLoading) {
       return <div className={styles.loading}>{t('reports.myReports.loadingReports')}</div>;
     }
 
-    if (error && reports.length === 0) {
+    if (error) {
       return <div className={styles.error}>{t('reports.general.error')}: {error.message}</div>;
+    }
+
+    if (reports.length === 0) {
+      return <div className={styles.empty}>{t('reports.myReports.noReports')}</div>;
     }
 
     return (
@@ -108,23 +81,6 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
               onClick={handleReportClick}
             />
           ))}
-
-          {/* Sentinel element for infinite scroll */}
-          <div ref={sentinelRef} className={styles.sentinel} />
-
-          {/* Loading more indicator */}
-          {isLoadingMore && (
-            <div className={styles.loadingMore}>
-              {t('reports.general.loading')}
-            </div>
-          )}
-
-          {/* End of list message */}
-          {!hasMore && reports.length > 0 && (
-            <div className={styles.endOfList}>
-              {t('reports.general.noMoreReports')}
-            </div>
-          )}
         </div>
       </>
     );
@@ -152,14 +108,14 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         {renderContent()}
       </main>
 
-      <ReportDetailsPage
+      <CreateOrEditReportPage
         isOpen={selectedReport !== null}
+        mode="edit"
         report={selectedReport}
-        onBack={handleDetailsBack}
-        onClose={handleDetailsClose}
-        onReplySuccess={(updatedReport) => setSelectedReport(updatedReport)}
+        onBack={handleEditBack}
+        onClose={handleEditClose}
+        level={2}
       />
-
     </SlideUpPage>
   );
 }

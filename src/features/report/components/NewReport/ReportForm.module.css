@@ -1,0 +1,109 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionLabel {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-dark);
+  margin: 0;
+}
+
+/* Position card */
+.positionCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--color-light);
+  border-radius: 10px;
+}
+
+.positionIcon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.positionIcon path {
+  fill: currentColor;
+}
+
+.positionText {
+  font-size: 14px;
+  color: var(--color-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Attribute fields */
+.attributeFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.checkboxField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Attachment placeholders */
+.attachmentPlaceholder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px dashed var(--color-light-shade);
+  border-radius: 10px;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.attachmentIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: var(--color-medium);
+}
+
+.attachmentIcon path {
+  fill: currentColor;
+}
+
+.attachmentInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.attachmentLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.attachmentHint {
+  font-size: 12px;
+  color: var(--color-medium);
+}
+
+.comingSoon {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-medium);
+  background: var(--color-light);
+  padding: 3px 8px;
+  border-radius: 100px;
+  white-space: nowrap;
+}

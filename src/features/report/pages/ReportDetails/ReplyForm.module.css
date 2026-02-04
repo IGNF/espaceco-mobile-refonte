@@ -4,46 +4,8 @@
   gap: 8px;
 }
 
-.replyLabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-dark);
-}
-
-.replyTextarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--color-light-tint, #ccc);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.replyTextarea:focus {
-  outline: none;
-  border-color: var(--color-primary, #1976d2);
-}
-
-.replySelect {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--color-light-tint, #ccc);
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  background-color: white;
-  box-sizing: border-box;
-}
-
-.replySelect:focus {
-  outline: none;
-  border-color: var(--color-primary, #1976d2);
-}
-
 .replyError {
   font-size: 13px;
-  color: var(--color-danger, #d32f2f);
+  color: var(--color-danger);
   margin-top: 4px;
 }

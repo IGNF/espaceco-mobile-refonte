@@ -145,6 +145,7 @@
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
       "loadingReports": "Chargement de vos signalements...",
       "notConnected": "Vous devez être connecté pour voir vos signalements",
+      "noReports": "Aucun brouillon enregistré",
       "noMoreReports": "Tous vos signalements ont été chargés"
     },
     "filters": {
@@ -196,6 +197,29 @@
         "saveDraft": "Enregistrer le brouillon",
         "send": "Envoyer",
         "cancel": "Annuler"
+      },
+      "form": {
+        "theme": "Theme",
+        "themePlaceholder": "Choisir un theme",
+        "attributes": "Attributs",
+        "comment": "Commentaire",
+        "commentPlaceholder": "Decrivez votre signalement...",
+        "position": "Position",
+        "positionLocating": "Localisation en cours...",
+        "positionUnavailable": "Position non disponible",
+        "photo": "Photo",
+        "photoAdd": "Ajouter une photo",
+        "object": "Objet",
+        "objectAdd": "Ajouter un objet",
+        "sketch": "Croquis",
+        "sketchAdd": "Ajouter un croquis",
+        "comingSoon": "bientot disponible",
+        "validation": {
+          "themeRequired": "Veuillez choisir un theme",
+          "fieldRequired": "Ce champ est obligatoire",
+          "invalidInteger": "Veuillez saisir un nombre entier",
+          "invalidDecimal": "Veuillez saisir un nombre decimal"
+        }
       }
     },
     "details": {

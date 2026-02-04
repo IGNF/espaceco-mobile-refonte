@@ -1,9 +1,14 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useReportForm } from '@/features/report/hooks/useReportForm';
+import { ReportForm } from '@/features/report/components/NewReport/ReportForm';
 import type { AppReport } from '@/domain/report/models';
+import type { Position } from '@/platform/device/geolocation';
 
 import IconSave from '@/shared/assets/icons/icon-save.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
@@ -24,10 +29,6 @@ export interface CreateOrEditReportPageProps {
   level?: number;
 }
 
-/**
- * TODO
- * Should use ReportStorageAdapter to save and retrieve user reports
- */
 export function CreateOrEditReportPage({
   isOpen,
   onClose,
@@ -37,11 +38,28 @@ export function CreateOrEditReportPage({
   level = 2,
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
+  const { activeCommunity } = useCommunity();
   const isEditMode = mode === 'edit';
 
-  const { position, isLocating, error, fetchPosition } = useGeolocation({
+  const { position: geoPosition, isLocating, error, fetchPosition } = useGeolocation({
     fetchOnMount: !isEditMode, // fetch position only on create mode
   });
+
+  // In edit mode, reconstruct position from saved geometry ("POINT(lon lat)")
+  const reportGeometry = report?.geometry;
+  const editPosition = useMemo<Position | null>(() => {
+    if (!reportGeometry) return null;
+    const match = reportGeometry.match(/POINT\(\s*([^\s]+)\s+([^\s]+)\s*\)/);
+    if (!match) return null;
+    const lon = parseFloat(match[1]);
+    const lat = parseFloat(match[2]);
+    if (isNaN(lon) || isNaN(lat)) return null;
+    return { coords: { longitude: lon, latitude: lat, accuracy: 0, altitude: null, altitudeAccuracy: null, heading: null, speed: null }, timestamp: 0 };
+  }, [reportGeometry]);
+
+  const position = isEditMode ? editPosition : geoPosition;
+
+  const form = useReportForm({ mode, report, position });
 
   const headerTitle = isEditMode
     ? t('reports.createOrEdit.headerTitleEdit')
@@ -53,18 +71,22 @@ export function CreateOrEditReportPage({
 
   const pageSubtitle = isEditMode
     ? `${t('reports.createOrEdit.subtitleEdit')} n°${report?.id ?? ''}`
-    : t('reports.createOrEdit.subtitleCreate');
+    : activeCommunity
+      ? `${t('reports.createOrEdit.subtitleCreate')} - ${activeCommunity.name}`
+      : t('reports.createOrEdit.subtitleCreate');
 
-  const handleSaveDraft = () => {
-    console.log('Save draft', { mode, report, position });
+  const handleSaveDraft = async () => {
+    await form.saveDraft();
+    onClose();
   };
 
-  const handleSend = () => {
-    console.log('Send report', { mode, report, position });
+  const handleSend = async () => {
+    if (!form.validate()) return;
+    await form.submit();
+    onClose();
   };
 
   const handleCancel = () => {
-    console.log('Cancel', { mode });
     if (onBack) {
       onBack();
     } else {
@@ -124,18 +146,37 @@ export function CreateOrEditReportPage({
 
         {renderGeolocationStatus()}
 
-        {/* TODO: Form fields will be added here */}
+        <ReportForm
+          form={form}
+          position={position}
+          isLocating={isLocating}
+        />
 
         <div className={styles.buttonContainer}>
-          <Button color="primary" onClick={handleSaveDraft}>
+          <Button
+            color="primary"
+            fullWidth
+            loading={form.isSaving}
+            onClick={handleSaveDraft}
+          >
             <IconSave className={styles.buttonIcon} />
             {t('reports.createOrEdit.actions.saveDraft')}
           </Button>
-          <Button color="tertiary" onClick={handleSend}>
+          <Button
+            color="tertiary"
+            fullWidth
+            loading={form.isSaving}
+            onClick={handleSend}
+          >
             <IconSend className={styles.buttonIcon}/>
             {t('reports.createOrEdit.actions.send')}
           </Button>
-          <Button color="medium" variant="outline" onClick={handleCancel}>
+          <Button
+            color="medium"
+            variant="outline"
+            fullWidth
+            onClick={handleCancel}
+          >
             <IconClose className={styles.buttonIcon} />
             {t('reports.createOrEdit.actions.cancel')}
           </Button>

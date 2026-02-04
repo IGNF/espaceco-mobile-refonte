@@ -22,6 +22,7 @@ import styles from './ReportDetailsPage.module.css';
 import replyFormStyles from './ReplyForm.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+import inputs from '@/shared/styles/inputs.module.css';
 
 const CLOSED_STATUSES = Object.values(ClosedReportStatus) as string[];
 
@@ -295,22 +296,22 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
         ]}
       >
         <div className={replyFormStyles.replyForm}>
-          <label className={replyFormStyles.replyLabel}>
+          <label className={inputs.label}>
             {t('reports.details.reply.textareaLabel')}
           </label>
           <textarea
-            className={replyFormStyles.replyTextarea}
+            className={inputs.textarea}
             placeholder={t('reports.details.reply.textareaPlaceholder')}
             value={replyText}
             onChange={(e) => setReplyText(e.target.value)}
             rows={4}
           />
 
-          <label className={replyFormStyles.replyLabel}>
+          <label className={inputs.label}>
             {t('reports.details.reply.statusLabel')}
           </label>
           <select
-            className={replyFormStyles.replySelect}
+            className={inputs.select}
             value={replyStatus}
             onChange={(e) => setReplyStatus(e.target.value as ReportStatus)}
           >

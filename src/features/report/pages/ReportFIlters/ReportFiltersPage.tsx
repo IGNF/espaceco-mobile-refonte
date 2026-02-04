@@ -15,6 +15,7 @@ import { getStatusColor } from '@/shared/utils/reportStatus';
 import styles from './ReportFiltersPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+import inputs from '@/shared/styles/inputs.module.css';
 
 const FILTER_STATUSES = [
   ReportStatus.Valid,
@@ -246,7 +247,7 @@ export function ReportFiltersPage({ isOpen, filters, onApply, onClose }: ReportF
                 <h2 className={styles.filterLabel}>{t('reports.filters.updatedAt')}</h2>
                 <input
                   type="date"
-                  className={styles.dateInput}
+                  className={inputs.input}
                   value={updatingDate}
                   onChange={e => setUpdatingDate(e.target.value)}
                   placeholder={t('reports.filters.datePlaceholder')}
