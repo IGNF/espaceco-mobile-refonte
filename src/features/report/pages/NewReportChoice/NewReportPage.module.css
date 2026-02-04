@@ -1,0 +1,25 @@
+.titleSection {
+  margin-bottom: 10px;
+}
+
+.description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--color-medium);
+  font-style: italic;
+  margin-bottom: 20px;
+}
+
+.question {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  margin-bottom: 30px;
+}
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}

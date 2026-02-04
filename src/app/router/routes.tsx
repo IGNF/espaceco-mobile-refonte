@@ -79,9 +79,10 @@ export const overlayRoutes = [
   '/my-informations', 
   '/logout-verification', 
   /* Report routes */
-  '/group-reports', 
+  '/group-reports',
   '/my-reports',
   '/report-details',
+  '/new-report-choice',
   '/create-or-edit-report',
   '/about-reports'
 ] as const;

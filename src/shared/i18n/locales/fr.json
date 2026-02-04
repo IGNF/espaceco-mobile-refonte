@@ -168,6 +168,15 @@
       },
       "datePlaceholder": "jj/mm/aaaa"
     },
+    "newReportChoice": {
+      "headerTitle": "Nouveau signalement",
+      "title": "Nouveau signalement",
+      "subtitle": "dans le groupe \"{{communityName}}\"",
+      "description": "Pensez que lorsque vous faites un signalement celui-ci est public et peut être vu par d'autres utilisateurs. Veillez donc à la qualité des échanges et gardez à l'esprit que vous restez responsable de vos propos.",
+      "question": "Quel type de signalement souhaitez-vous faire ?",
+      "standardReport": "Signalement standard",
+      "traceReport": "Signalement avec une trace"
+    },
     "createOrEdit": {
       "headerTitleCreate": "Nouveau signalement",
       "headerTitleEdit": "Modifier le signalement",

@@ -19,6 +19,7 @@ import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
+import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -78,6 +79,18 @@ export function HomePage() {
 
 	const handleCloseOverlay = () => {
 		setActiveOverlay(null);
+	};
+
+	const handleNewReportStandard = () => {
+		setActiveOverlay(null);
+		setTimeout(() => {
+			setActiveOverlay('/create-or-edit-report');
+		}, 300);
+	};
+
+	const handleNewReportTrace = () => {
+		// TODO: Handle trace report
+		console.log("Trace report selected");
 	};
 
 	const handleSearchClick = () => {
@@ -174,6 +187,12 @@ export function HomePage() {
 			<MyReportsPage
 				isOpen={activeOverlay === '/my-reports'}
 				onClose={handleCloseOverlay}
+			/>
+			<NewReportPage
+				isOpen={activeOverlay === '/new-report-choice'}
+				onClose={handleCloseOverlay}
+				onSelectStandard={handleNewReportStandard}
+				onSelectTrace={handleNewReportTrace}
 			/>
 			<CreateOrEditReportPage
 				isOpen={activeOverlay === '/create-or-edit-report'}

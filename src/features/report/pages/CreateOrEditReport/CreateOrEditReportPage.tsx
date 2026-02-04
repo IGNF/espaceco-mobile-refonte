@@ -24,6 +24,10 @@ export interface CreateOrEditReportPageProps {
   level?: number;
 }
 
+/**
+ * TODO
+ * Should use ReportStorageAdapter to save and retrieve user reports
+ */
 export function CreateOrEditReportPage({
   isOpen,
   onClose,

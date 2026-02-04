@@ -18,6 +18,10 @@ export interface MyReportsPageProps {
   onClose?: () => void;
 }
 
+/**
+ * TODO
+ * Should use ReportStorageAdapter to save and retrieve user reports
+ */
 export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
