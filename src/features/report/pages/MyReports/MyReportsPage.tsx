@@ -6,7 +6,7 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
-import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
+import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 import type { AppReport } from '@/domain/report/models';
 
 import styles from '../reportsListPage.module.css';
@@ -108,13 +108,11 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         {renderContent()}
       </main>
 
-      <CreateOrEditReportPage
+      <ReportDetailsPage
         isOpen={selectedReport !== null}
-        mode="edit"
         report={selectedReport}
         onBack={handleEditBack}
         onClose={handleEditClose}
-        level={2}
       />
     </SlideUpPage>
   );

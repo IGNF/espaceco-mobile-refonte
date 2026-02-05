@@ -14,7 +14,7 @@ import { parsePointGeometry } from '@/shared/utils/geometry';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
 
 import { Button } from '@/shared/ui/Button';
-import IconEdit from '@/shared/assets/icons/icon-edit.svg?react';
+import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 
@@ -23,6 +23,7 @@ import replyFormStyles from './ReplyForm.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
+import buttonStyles from '@/shared/ui/Button/Button.module.css';
 
 const CLOSED_STATUSES = Object.values(ClosedReportStatus) as string[];
 
@@ -248,15 +249,15 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
             {isDraft ? (
               <>
                 <Button color="primary" onClick={handleEditReport}>
-                  <IconEdit className={styles.buttonIcon} />
+                  <IconPencil className={buttonStyles.icon} />
                   {t('reports.details.editButton')}
                 </Button>
-                <Button color="success" onClick={handleSendReport}>
-                  <IconSend className={styles.buttonIcon} />
+                <Button color="tertiary" onClick={handleSendReport}>
+                  <IconSend className={buttonStyles.icon} />
                   {t('reports.details.sendButton')}
                 </Button>
                 <Button color="danger" onClick={handleDeleteReport}>
-                  <IconDelete className={styles.buttonIcon} />
+                  <IconDelete className={buttonStyles.icon} />
                   {t('reports.details.deleteButton')}
                 </Button>
               </>

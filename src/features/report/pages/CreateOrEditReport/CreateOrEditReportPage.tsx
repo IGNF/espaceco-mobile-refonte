@@ -15,6 +15,7 @@ import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import styles from './CreateOrEditReportPage.module.css';
+import buttonStyles from '@/shared/ui/Button/Button.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
@@ -159,7 +160,7 @@ export function CreateOrEditReportPage({
             loading={form.isSaving}
             onClick={handleSaveDraft}
           >
-            <IconSave className={styles.buttonIcon} />
+            <IconSave className={buttonStyles.icon} />
             {t('reports.createOrEdit.actions.saveDraft')}
           </Button>
           <Button
@@ -168,7 +169,7 @@ export function CreateOrEditReportPage({
             loading={form.isSaving}
             onClick={handleSend}
           >
-            <IconSend className={styles.buttonIcon}/>
+            <IconSend className={buttonStyles.icon}/>
             {t('reports.createOrEdit.actions.send')}
           </Button>
           <Button
@@ -177,7 +178,7 @@ export function CreateOrEditReportPage({
             fullWidth
             onClick={handleCancel}
           >
-            <IconClose className={styles.buttonIcon} />
+            <IconClose className={buttonStyles.icon} />
             {t('reports.createOrEdit.actions.cancel')}
           </Button>
         </div>
