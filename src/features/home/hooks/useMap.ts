@@ -24,6 +24,7 @@ interface UseMapOptions {
 
 interface UseMapReturn {
 	mapElementRef: React.RefObject<HTMLDivElement | null>;
+	mapRef: React.RefObject<Map | null>;
 	centerOnUserLocation: () => Promise<void>;
 	isLocating: boolean;
 }
@@ -168,6 +169,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 	return {
 		mapElementRef,
+		mapRef,
 		centerOnUserLocation,
 		isLocating,
 	};

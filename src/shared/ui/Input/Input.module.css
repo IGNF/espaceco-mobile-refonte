@@ -1,1 +1,52 @@
+/* Shared form component styles — import as `inputStyles` and use classes */
 
+/* Radio — hidden native input */
+.radioInput {
+	position: absolute;
+	opacity: 0;
+	width: 0;
+	height: 0;
+	pointer-events: none;
+}
+
+/* Radio — custom circle indicator */
+.radioCircle {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	border: 2px solid var(--color-light-shade);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: border-color 0.2s;
+	flex-shrink: 0;
+	box-sizing: border-box;
+}
+
+.radioCircle::after {
+	content: "";
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: transparent;
+	transition: background 0.2s;
+}
+
+.radioInput:checked + .radioCircle {
+	border-color: var(--color-secondary);
+}
+
+.radioInput:checked + .radioCircle::after {
+	background: var(--color-secondary);
+}
+
+/* Radio — label wrapping input + circle + text */
+.radioLabel {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	color: var(--color-dark);
+}

@@ -38,6 +38,11 @@
     },
     "copyright": "Géoportail © IGN-France IGN"
   },
+  "search": {
+    "modeAddress": "Adresse",
+    "modeParcelle": "Parcelle",
+    "close": "Fermer la recherche"
+  },
   "onboarding": {
     "welcome": {
       "title": "Découvrir l'application",

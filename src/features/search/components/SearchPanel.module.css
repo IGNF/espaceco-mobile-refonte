@@ -1,0 +1,228 @@
+/* Search panel - absolutely positioned over the map */
+.panel {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 50;
+	background: white;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	padding: 16px;
+}
+
+/* Header with radio group and close button */
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 12px;
+}
+
+/* Radio group layout (radio element styles in shared/ui/Input/Input.module.css) */
+.radioGroup {
+	display: flex;
+	gap: 20px;
+}
+
+/* Close button */
+.closeButton {
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.closeIcon {
+	width: 20px;
+	height: 20px;
+}
+
+.closeIcon path {
+	fill: var(--color-medium);
+}
+
+/* ol-ext search container */
+.searchContainer {
+	min-height: 0;
+}
+
+/* ----- ol-ext CSS overrides ----- */
+
+/* Remove absolute positioning - render inline */
+.searchContainer :global(.ol-search) {
+	position: relative;
+	top: auto;
+	left: auto;
+	background: transparent;
+	padding: 0;
+	max-width: 100%;
+}
+
+/* Hide the default ol-ext search button */
+.searchContainer :global(.ol-search > button:first-child) {
+	display: none;
+}
+
+/* Style the main search input to match the app design */
+.searchContainer :global(.ol-search input.search) {
+	width: 100%;
+	padding: 12px 14px;
+	border-radius: 8px;
+	border: 1.5px solid var(--color-light-shade);
+	font-size: 1rem;
+	font-family: inherit;
+	background: white;
+	transition: border-color 0.2s;
+	box-sizing: border-box;
+	margin: 0;
+	height: auto;
+}
+
+.searchContainer :global(.ol-search input.search:focus) {
+	outline: none;
+	border-color: var(--color-primary);
+}
+
+.searchContainer :global(.ol-search input.search::placeholder) {
+	color: var(--color-medium);
+}
+
+/* Hide reverse geocoding button */
+.searchContainer :global(.ol-search button.ol-revers) {
+	display: none;
+}
+
+/* Autocomplete dropdown */
+.searchContainer :global(.ol-search ul) {
+	max-width: 100%;
+	border: 1px solid var(--color-light-shade);
+	border-top: none;
+	border-radius: 0 0 8px 8px;
+	overflow: hidden;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.searchContainer :global(.ol-search ul li) {
+	padding: 10px 14px;
+	font-size: 14px;
+}
+
+.searchContainer :global(.ol-search ul li.select),
+.searchContainer :global(.ol-search ul li:hover) {
+	background-color: var(--color-secondary-light);
+	color: var(--color-dark);
+}
+
+.searchContainer :global(.ol-search li.copy) {
+	background: var(--color-light);
+	color: var(--color-medium);
+	font-size: 11px;
+	padding: 6px 14px;
+}
+
+.searchContainer :global(.ol-search li.copy a) {
+	color: var(--color-medium);
+}
+
+/* Searching indicator */
+.searchContainer :global(.ol-search.searching:before) {
+	background: var(--color-primary);
+	top: auto;
+	bottom: 0;
+}
+
+/* ----- Parcelle-specific overrides ----- */
+
+.searchContainer :global(.ol-search.IGNF-parcelle) {
+	background: transparent;
+	padding-bottom: 0;
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle input) {
+	width: 100%;
+	padding: 10px 12px;
+	border-radius: 8px;
+	border: 1.5px solid var(--color-light-shade);
+	font-size: 0.9rem;
+	font-family: inherit;
+	background: white;
+	transition: border-color 0.2s;
+	box-sizing: border-box;
+	margin: 2px 0;
+	height: auto;
+	text-align: left;
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle input:focus) {
+	outline: none;
+	border-color: var(--color-primary);
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle input:read-only) {
+	background: var(--color-light-light);
+	opacity: 1;
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle > div label) {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--color-medium-shade);
+	width: auto;
+	margin-right: 4px;
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle > div input) {
+	width: 5em;
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle label) {
+	margin-top: 4px;
+}
+
+/* Parcelle pagination */
+.searchContainer :global(.ol-search.IGNF-parcelle ul.autocomplete-page li) {
+	background: var(--color-secondary);
+}
+
+.searchContainer :global(.ol-search.IGNF-parcelle ul.autocomplete-page li.selected) {
+	background: var(--color-secondary-shade);
+}
+
+/* ----- Pulsing marker ----- */
+
+:global(.search-marker-pulse) {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: var(--color-secondary);
+	position: relative;
+	box-shadow: 0 0 0 0 rgba(120, 106, 242, 0.6);
+	animation: pulse 1.5s ease-out infinite;
+}
+
+:global(.search-marker-pulse)::after {
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 8px;
+	height: 8px;
+	background: white;
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+}
+
+@keyframes pulse {
+	0% {
+		box-shadow: 0 0 0 0 rgba(120, 106, 242, 0.6);
+	}
+	70% {
+		box-shadow: 0 0 0 20px rgba(120, 106, 242, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(120, 106, 242, 0);
+	}
+}

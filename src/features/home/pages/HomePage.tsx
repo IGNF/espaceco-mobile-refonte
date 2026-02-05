@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
+import { SearchPanel } from "@/features/search/components/SearchPanel";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
@@ -32,8 +33,9 @@ export function HomePage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { user, logout } = useAuth();
-	const { mapElementRef, centerOnUserLocation, isLocating } = useMap();
+	const { mapElementRef, mapRef, centerOnUserLocation, isLocating } = useMap();
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
+	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
 
 	const {
@@ -94,8 +96,7 @@ export function HomePage() {
 	};
 
 	const handleSearchClick = () => {
-		// TODO: Handle search action
-		console.log("Search clicked");
+		setIsSearchOpen((prev) => !prev);
 	};
 
 	const handleTabClick = (tab: TabId) => {
@@ -139,6 +140,11 @@ export function HomePage() {
 
 			<main className={styles.main}>
 				<div className={styles.map} ref={mapElementRef} />
+				<SearchPanel
+					isOpen={isSearchOpen}
+					onClose={() => setIsSearchOpen(false)}
+					map={mapRef.current}
+				/>
 			</main>
 
 			{/* <p className={styles.copyright}>
