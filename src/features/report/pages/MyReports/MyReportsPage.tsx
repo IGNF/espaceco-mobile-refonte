@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -23,6 +23,12 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities } = useCommunity();
   const { reports, isLoading, error, refetch } = useMyReports();
+
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
 
   const getCommunityName = useCallback((communityId: number): string | undefined => {
     const community = communities.find(c => c.id === communityId);

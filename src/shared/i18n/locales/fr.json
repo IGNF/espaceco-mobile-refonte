@@ -250,6 +250,12 @@
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
       "notAvailable": "N/A",
+      "delete": {
+        "dialogTitle": "Supprimer le signalement n°{{id}}",
+        "dialogMessage": "Vous êtes sur le point de supprimer votre signalement de votre espace mobile. Le signalement reste dans notre système et est accessible via notre site web. Voulez-vous vraiment supprimer ce signalement ?",
+        "confirmButton": "Supprimer",
+        "cancelButton": "Annuler"
+      },
       "reply": {
         "dialogTitle": "Répondre au signalement",
         "textareaLabel": "Votre réponse",

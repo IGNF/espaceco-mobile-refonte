@@ -60,7 +60,7 @@ export function CreateOrEditReportPage({
 
   const position = isEditMode ? editPosition : geoPosition;
 
-  const form = useReportForm({ mode, report, position });
+  const form = useReportForm({ mode, report, position, isOpen });
 
   const headerTitle = isEditMode
     ? t('reports.createOrEdit.headerTitleEdit')

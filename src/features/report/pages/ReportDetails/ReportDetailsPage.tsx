@@ -12,6 +12,7 @@ import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
+import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 
 import { Button } from '@/shared/ui/Button';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
@@ -24,6 +25,8 @@ import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import buttonStyles from '@/shared/ui/Button/Button.module.css';
+
+const reportStorage = new ReportStorageAdapter();
 
 const CLOSED_STATUSES = Object.values(ClosedReportStatus) as string[];
 
@@ -54,6 +57,8 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
   const { submitReply, isSubmitting, error: replyError } = useReportReply();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [replyTitle, setReplyTitle] = useState('');
   const [replyText, setReplyText] = useState('');
@@ -125,8 +130,23 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
   };
 
   const handleDeleteReport = () => {
-    // TODO: Implement delete report
-    console.log('Delete report:', report?.id);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteClose = () => {
+    setIsDeleteOpen(false);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!report) return;
+    setIsDeleting(true);
+    try {
+      await reportStorage.deleteReport(report.id);
+      setIsDeleteOpen(false);
+      onBack();
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   if (!report) {
@@ -333,6 +353,27 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
           )}
         </div>
       </Alert>
+
+      <Alert
+        isOpen={isDeleteOpen}
+        onClose={handleDeleteClose}
+        title={t('reports.details.delete.dialogTitle', { id: report.id })}
+        subtitle={t('reports.details.delete.dialogMessage')}
+        buttons={[
+          {
+            label: isDeleting
+              ? t('reports.general.loading')
+              : t('reports.details.delete.confirmButton'),
+            onClick: handleDeleteConfirm,
+            color: 'danger',
+          },
+          {
+            label: t('reports.details.delete.cancelButton'),
+            onClick: handleDeleteClose,
+            variant: 'outline',
+          },
+        ]}
+      />
 
       <CreateOrEditReportPage
         isOpen={isEditOpen}

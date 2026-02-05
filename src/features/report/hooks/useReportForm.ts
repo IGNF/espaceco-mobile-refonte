@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReportStatus } from '@ign/mobile-core';
 import type { Report } from '@ign/mobile-core';
@@ -15,6 +15,7 @@ export interface UseReportFormOptions {
   mode: ReportFormMode;
   report?: AppReport | null;
   position: Position | null;
+  isOpen?: boolean;
 }
 
 export interface UseReportFormReturn {
@@ -86,7 +87,7 @@ function buildDefaultValues(attributes: CommunityThemeAttribute[]): Record<strin
 
 const reportStorage = new ReportStorageAdapter();
 
-export function useReportForm({ mode, report, position }: UseReportFormOptions): UseReportFormReturn {
+export function useReportForm({ mode, report, position, isOpen }: UseReportFormOptions): UseReportFormReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
@@ -125,6 +126,33 @@ export function useReportForm({ mode, report, position }: UseReportFormOptions):
     }
     setErrors({});
     setIsDirty(false);
+  }
+
+  // Initialize form when page opens (component stays mounted between sessions)
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (isOpen && !wasOpen) {
+    setWasOpen(true);
+    if (mode === 'edit' && report) {
+      setSelectedThemeRaw(report.attributes?.themeName ? String(report.attributes.themeName) : '');
+      const attrs = report.attributes
+        ? Object.fromEntries(
+            Object.entries(report.attributes)
+              .filter(([k]) => k !== 'themeName')
+              .map(([k, v]) => [k, String(v ?? '')])
+          )
+        : {};
+      setAttributeValues(attrs);
+      setComment(report.comment ?? '');
+    } else {
+      setSelectedThemeRaw('');
+      setAttributeValues({});
+      setComment('');
+    }
+    setErrors({});
+    setIsDirty(false);
+  }
+  if (!isOpen && wasOpen) {
+    setWasOpen(false);
   }
 
   const currentThemeConfig = useMemo(
@@ -215,28 +243,34 @@ export function useReportForm({ mode, report, position }: UseReportFormOptions):
     };
   }, [position, report, activeCommunity, comment, attributeValues, selectedTheme]);
 
+  // Use refs to guarantee data stability
+  const buildReportRef = useRef(buildReport);
+  buildReportRef.current = buildReport;
+  const validateRef = useRef(validate);
+  validateRef.current = validate;
+
   const saveDraft = useCallback(async () => {
     setIsSaving(true);
     try {
-      const draft = buildReport(ReportStatus.Draft);
+      const draft = buildReportRef.current(ReportStatus.Draft);
       await reportStorage.saveReport(draft);
       setIsDirty(false);
     } finally {
       setIsSaving(false);
     }
-  }, [buildReport]);
+  }, []);
 
   const submitReport = useCallback(async () => {
-    if (!validate()) return;
+    if (!validateRef.current()) return;
     setIsSaving(true);
     try {
-      const submitted = buildReport(ReportStatus.Submit);
+      const submitted = buildReportRef.current(ReportStatus.Submit);
       await reportStorage.saveReport(submitted);
       setIsDirty(false);
     } finally {
       setIsSaving(false);
     }
-  }, [validate, buildReport]);
+  }, []);
 
   return {
     themes,
