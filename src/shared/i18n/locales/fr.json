@@ -200,6 +200,7 @@
       },
       "actions": {
         "saveDraft": "Enregistrer le brouillon",
+        "draftSaved": "Signalement enregistré dans les brouillons",
         "send": "Envoyer",
         "cancel": "Annuler",
         "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé."

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Toast } from '@capacitor/toast';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
@@ -78,7 +79,14 @@ export function CreateOrEditReportPage({
 
   const handleSaveDraft = async () => {
     await form.saveDraft();
-    onClose();
+    setTimeout(async () => {
+      onClose();
+      await Toast.show({
+        text: t('reports.createOrEdit.actions.draftSaved'),
+        duration: 'short',
+        position: 'top',
+      });
+    }, 300);
   };
 
   const handleSend = async () => {
@@ -171,7 +179,7 @@ export function CreateOrEditReportPage({
             loading={form.isSaving}
             onClick={handleSend}
           >
-            <IconSend className={buttonStyles.icon}/>
+            <IconSend className={buttonStyles.icon} />
             {t('reports.createOrEdit.actions.send')}
           </Button>
           <Button
