@@ -8,6 +8,7 @@ import { ReportStorageAdapter } from '@/infra/storage';
 import type { CommunityThemeConfig, CommunityThemeAttribute } from '@/domain/community/models';
 import type { AppReport } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
+import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
 
@@ -27,12 +28,13 @@ export interface UseReportFormReturn {
   errors: Record<string, string | undefined>;
   isDirty: boolean;
   isSaving: boolean;
+  submitError: Error | null;
   setSelectedTheme: (theme: string) => void;
   setComment: (comment: string) => void;
   setAttributeValue: (name: string, value: string) => void;
   validate: () => boolean;
   saveDraft: () => Promise<void>;
-  submit: () => Promise<void>;
+  submit: () => Promise<boolean>;
 }
 
 /**
@@ -243,6 +245,8 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     };
   }, [position, report, activeCommunity, comment, attributeValues, selectedTheme]);
 
+  const { submitReport: apiSubmit, isSubmitting, error: submitError, clearError } = useSubmitReport();
+
   // Use refs to guarantee data stability
   const buildReportRef = useRef(buildReport);
   buildReportRef.current = buildReport;
@@ -260,17 +264,27 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     }
   }, []);
 
-  const submitReport = useCallback(async () => {
-    if (!validateRef.current()) return;
+  const submitForm = useCallback(async (): Promise<boolean> => {
+    if (!validateRef.current()) return false;
+    clearError();
     setIsSaving(true);
     try {
       const submitted = buildReportRef.current(ReportStatus.Submit);
+      // Save locally as fallback in case the API call fails
       await reportStorage.saveReport(submitted);
-      setIsDirty(false);
+
+      const result = await apiSubmit(submitted);
+      if (result) {
+        // API succeeded — draft was already deleted by useSubmitReport
+        setIsDirty(false);
+        return true;
+      }
+      // API failed — draft is preserved in local storage
+      return false;
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [apiSubmit, clearError]);
 
   return {
     themes,
@@ -280,12 +294,13 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     attributeValues,
     errors,
     isDirty,
-    isSaving,
+    isSaving: isSaving || isSubmitting,
+    submitError,
     setSelectedTheme,
     setComment: handleSetComment,
     setAttributeValue,
     validate,
     saveDraft,
-    submit: submitReport,
+    submit: submitForm,
   };
 }

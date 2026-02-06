@@ -83,8 +83,10 @@ export function CreateOrEditReportPage({
 
   const handleSend = async () => {
     if (!form.validate()) return;
-    await form.submit();
-    onClose();
+    const success = await form.submit();
+    if (success) {
+      onClose();
+    }
   };
 
   const handleCancel = () => {
@@ -182,6 +184,12 @@ export function CreateOrEditReportPage({
             {t('reports.createOrEdit.actions.cancel')}
           </Button>
         </div>
+
+        {form.submitError && (
+          <p className={styles.submitError}>
+            {t('reports.createOrEdit.actions.submitError')}
+          </p>
+        )}
       </main>
     </SlideUpPage>
   );

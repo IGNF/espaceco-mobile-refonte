@@ -1,4 +1,4 @@
-import type { ReportStatus } from '@ign/mobile-core';
+import type { Report, ReportStatus } from '@ign/mobile-core';
 import type { AppReport } from './models';
 
 /**
@@ -120,4 +120,34 @@ export function mapApiReportToAppReport(apiReport: ApiReportResponse): AppReport
 
 export function mapApiReportsToAppReports(apiReports: ApiReportResponse[]): AppReport[] {
   return apiReports.map(mapApiReportToAppReport);
+}
+
+/**
+ * Convert a local Report to the API request body format.
+ */
+export function mapAppReportToApiBody(report: Report): Record<string, any> {
+  const body: Record<string, any> = {
+    geometry: report.geometry,
+    community: report.communityId,
+    comment: report.comment,
+    status: report.status,
+    sketch: report.sketch,
+    input_device: report.inputDevice,
+    device_version: report.deviceVersion,
+  };
+
+  // Build flat attributes object for the API
+  if (report.attributes) {
+    const { themeName, ...rest } = report.attributes as Record<string, any>;
+    const apiAttributes: Record<string, any> = { ...rest };
+    if (report.communityId) {
+      apiAttributes.community = report.communityId;
+    }
+    if (themeName) {
+      apiAttributes.theme = themeName;
+    }
+    body.attributes = JSON.stringify(apiAttributes);
+  }
+
+  return body;
 }

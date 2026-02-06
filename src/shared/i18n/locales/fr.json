@@ -201,7 +201,8 @@
       "actions": {
         "saveDraft": "Enregistrer le brouillon",
         "send": "Envoyer",
-        "cancel": "Annuler"
+        "cancel": "Annuler",
+        "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé."
       },
       "form": {
         "theme": "Theme",
@@ -249,6 +250,7 @@
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
+      "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
       "notAvailable": "N/A",
       "delete": {
         "dialogTitle": "Supprimer le signalement n°{{id}}",

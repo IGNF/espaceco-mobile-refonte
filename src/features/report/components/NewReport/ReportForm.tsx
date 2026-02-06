@@ -202,7 +202,6 @@ export function ReportForm({ form, position, isLocating }: ReportFormProps) {
             <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.photo')}</span>
             <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.photoAdd')}</span>
           </div>
-          <span className={styles.comingSoon}>{t('reports.createOrEdit.form.comingSoon')}</span>
         </div>
 
         <div className={styles.attachmentPlaceholder}>
@@ -211,7 +210,6 @@ export function ReportForm({ form, position, isLocating }: ReportFormProps) {
             <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.object')}</span>
             <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.objectAdd')}</span>
           </div>
-          <span className={styles.comingSoon}>{t('reports.createOrEdit.form.comingSoon')}</span>
         </div>
 
         <div className={styles.attachmentPlaceholder}>
@@ -220,7 +218,6 @@ export function ReportForm({ form, position, isLocating }: ReportFormProps) {
             <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.sketch')}</span>
             <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.sketchAdd')}</span>
           </div>
-          <span className={styles.comingSoon}>{t('reports.createOrEdit.form.comingSoon')}</span>
         </div>
       </div>
     </div>

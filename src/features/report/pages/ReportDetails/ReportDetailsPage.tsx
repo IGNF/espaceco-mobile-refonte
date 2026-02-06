@@ -8,6 +8,7 @@ import { ReportStatus, ClosedReportStatus } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
+import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -55,6 +56,7 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
   const { submitReply, isSubmitting, error: replyError } = useReportReply();
+  const { submitReport, isSubmitting: isSending, error: sendError } = useSubmitReport();
 
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -127,9 +129,12 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
     onClose();
   };
 
-  const handleSendReport = () => {
-    // TODO: Implement send report
-    console.log('Send report:', report?.id);
+  const handleSendReport = async () => {
+    if (!report) return;
+    const result = await submitReport(report);
+    if (result) {
+      onBack();
+    }
   };
 
   const handleDeleteReport = () => {
@@ -275,7 +280,7 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
                   <IconPencil className={buttonStyles.icon} />
                   {t('reports.details.editButton')}
                 </Button>
-                <Button color="tertiary" onClick={handleSendReport}>
+                <Button color="tertiary" onClick={handleSendReport} loading={isSending}>
                   <IconSend className={buttonStyles.icon} />
                   {t('reports.details.sendButton')}
                 </Button>
@@ -283,6 +288,11 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
                   <IconDelete className={buttonStyles.icon} />
                   {t('reports.details.deleteButton')}
                 </Button>
+                {sendError && (
+                  <p className={styles.permissionMessage}>
+                    {t('reports.details.sendError')}
+                  </p>
+                )}
               </>
             ) : (
               <>

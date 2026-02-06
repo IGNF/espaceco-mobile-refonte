@@ -28,6 +28,13 @@
   padding: 0;
 }
 
+.submitError {
+  font-size: 13px;
+  color: var(--color-danger, #d32f2f);
+  text-align: center;
+  margin-top: 12px;
+}
+
 .buttonContainer {
   display: flex;
   flex-direction: column;
