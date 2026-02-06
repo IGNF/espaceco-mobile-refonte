@@ -74,9 +74,12 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
   ) ?? false;
 
   // Determine if user can set closing statuses (valid, valid0, reject, reject0)
-  const canUseClosingStatus =
-    activeCommunity?.allMembersCanValid === true ||
-    (report?.validator?.id != null && report.validator.id === user?.id);
+  // here is the implementation with the attribute allMembersCanValid and the validator - will be used this way in the future
+  // const canUseClosingStatus =
+  //   activeCommunity?.allMembersCanValid === true ||
+  //   (report?.validator?.id != null && report.validator.id === user?.id);
+  // in the meantime, we'll use a simple boolean
+  const canUseClosingStatus = true;
 
   const replyStatusOptions = canUseClosingStatus
     ? ALL_REPLY_STATUS_OPTIONS
