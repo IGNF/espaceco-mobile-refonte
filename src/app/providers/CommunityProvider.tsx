@@ -40,10 +40,12 @@ export function CommunityProvider({ children }: CommunityProviderProps) {
     }
   }, []);
 
-  // Load data when user changes (login/logout)
+  // Load data when the user identity changes (login/logout)
+  // Using user?.id as dependency instead of the user object to avoid re-fetching on every object reference change
+  const userId = user?.id ?? null;
   useEffect(() => {
     loadCommunityData();
-  }, [loadCommunityData, user]);
+  }, [loadCommunityData, userId]);
 
   // Set active community
   const setActiveCommunity = useCallback(async (communityId: number) => {

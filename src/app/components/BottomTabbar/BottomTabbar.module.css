@@ -32,6 +32,10 @@
 	fill: currentColor;
 }
 
+.active {
+	color: var(--color-secondary) !important;
+}
+
 .highlighted {
 	z-index: 1001;
 	background-color: var(--color-dark-contrast);

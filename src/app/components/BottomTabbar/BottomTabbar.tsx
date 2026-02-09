@@ -10,9 +10,10 @@ export type TabId = "signalement" | "guichet" | "couches";
 export interface BottomTabbarProps {
 	onTabClick?: (tab: TabId) => void;
 	highlightedTab?: TabId | null;
+	activeTab?: TabId | null;
 }
 
-export function BottomTabbar({ onTabClick, highlightedTab }: BottomTabbarProps) {
+export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTabbarProps) {
 	const { t } = useTranslation();
 
 	const handleTabClick = (tab: TabId) => {
@@ -23,6 +24,9 @@ export function BottomTabbar({ onTabClick, highlightedTab }: BottomTabbarProps) 
 		const classes = [styles.tab];
 		if (highlightedTab === tab) {
 			classes.push(styles.highlighted);
+		}
+		if (activeTab === tab) {
+			classes.push(styles.active);
 		}
 		return classes.join(" ");
 	};
