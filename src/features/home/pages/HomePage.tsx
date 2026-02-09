@@ -11,6 +11,9 @@ import { SearchPanel } from "@/features/search/components/SearchPanel";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
+import { LayersPanel } from "@/features/map/components/LayersPanel";
+import { useLayers } from "@/features/map/hooks/useLayers";
+import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
 import styles from "./HomePage.module.css";
 
 import { overlayRoutes } from "@/app/router/routes";
@@ -34,8 +37,11 @@ export function HomePage() {
 	const navigate = useNavigate();
 	const { user, logout } = useAuth();
 	const { mapElementRef, mapRef, centerOnUserLocation, isLocating } = useMap();
+	const { layers, geoportailLayers, vectorLayers, isLoading: isLayersLoading } = useLayers();
+	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
+	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
 	const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
 
 	const {
@@ -100,8 +106,9 @@ export function HomePage() {
 	};
 
 	const handleTabClick = (tab: TabId) => {
-		// TODO: Handle tab action
-		console.log("Tab clicked:", tab);
+		if (tab === "couches") {
+			setIsLayersPanelOpen((prev) => !prev);
+		}
 	};
 
 	const handleLogout = () => {
@@ -161,7 +168,18 @@ export function HomePage() {
 				<IconGeolocation className={styles.geolocationIcon} />
 			</button>
 
-			<BottomTabbar onTabClick={handleTabClick} highlightedTab={getHighlightedTab()} />
+				<BottomTabbar
+				onTabClick={handleTabClick}
+				highlightedTab={getHighlightedTab()}
+				activeTab={isLayersPanelOpen ? "couches" : null}
+			/>
+
+			<LayersPanel
+				isOpen={isLayersPanelOpen}
+				onClose={() => setIsLayersPanelOpen(false)}
+				layers={layers}
+				isLoading={isLayersLoading}
+			/>
 
 			<OnboardingModal
 				isOpen={showOnboarding}

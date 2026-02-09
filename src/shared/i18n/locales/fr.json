@@ -121,6 +121,11 @@
     "confirm": "Se déconnecter",
     "cancel": "Annuler"
   },
+  "layers": {
+    "title": "Couches",
+    "loading": "Chargement des couches...",
+    "empty": "Aucune couche disponible"
+  },
   "reports": {
     "general": {
       "report_singular": "signalement",
