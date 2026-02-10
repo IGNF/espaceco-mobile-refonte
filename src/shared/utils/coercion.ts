@@ -2,42 +2,42 @@ export type RawObject = Record<string, unknown>
 
 export function toRawObject(value: unknown): RawObject | null {
 	if (value && typeof value === 'object') {
-		return value as RawObject
+		return value as RawObject;
 	}
-	return null
+	return null;
 }
 
 export function toNumber(value: unknown): number | undefined {
 	if (typeof value === 'number' && Number.isFinite(value)) {
-		return value
+		return value;
 	}
 
 	if (typeof value === 'string' && value.trim() !== '') {
-		const parsed = Number(value)
+		const parsed = Number(value);
 		if (Number.isFinite(parsed)) {
-			return parsed
+			return parsed;
 		}
 	}
 
-	return undefined
+	return undefined;
 }
 
 export function toBoolean(value: unknown): boolean | undefined {
 	if (typeof value === 'boolean') {
-		return value
+		return value;
 	}
 
 	if (value === 1 || value === '1' || value === 'true') {
-		return true
+		return true;
 	}
 
 	if (value === 0 || value === '0' || value === 'false') {
-		return false
+		return false;
 	}
 
-	return undefined
+	return undefined;
 }
 
 export function toStringValue(value: unknown): string | undefined {
-	return typeof value === 'string' ? value : undefined
+	return typeof value === 'string' ? value : undefined;
 }

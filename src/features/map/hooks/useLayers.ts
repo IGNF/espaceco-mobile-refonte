@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
-import type { CommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@ign/mobile-core";
 import {
 	fetchCommunityLayers,
 	filterGeoportailLayers,

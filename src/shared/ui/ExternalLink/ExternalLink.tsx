@@ -1,6 +1,6 @@
-import type { AnchorHTMLAttributes, ReactNode } from 'react'
-import styles from './ExternalLink.module.css'
-import ExternalLinkIcon from '@/shared/assets/icons/icon-external-link.svg'
+import type { AnchorHTMLAttributes, ReactNode } from 'react';
+import styles from './ExternalLink.module.css';
+import ExternalLinkIcon from '@/shared/assets/icons/icon-external-link.svg';
 
 export interface ExternalLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   children: ReactNode
@@ -22,7 +22,7 @@ export function ExternalLink({
     className ?? '',
   ]
     .filter(Boolean)
-    .join(' ')
+    .join(' ');
 
   return (
     <a
@@ -41,6 +41,6 @@ export function ExternalLink({
         />
       )}
     </a>
-  )
+  );
 }
 

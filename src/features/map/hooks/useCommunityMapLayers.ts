@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { RefObject } from "react";
 import type Map from "ol/Map";
 import type LayerGroup from "ol/layer/Group";
-import type { CommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@ign/mobile-core";
 import { createCommunityGeoportailLayers } from "@/infra/map/openlayers/geoportailLayers";
 import { createCommunityVectorLayers } from "@/infra/map/openlayers/vectorLayers";
 import { collabApiClient } from "@/infra/api/collabApiClient";

@@ -1,5 +1,5 @@
-import type { Community } from '@ign/mobile-core'
-import type { AppCommunity } from './models'
+import type { Community } from '@ign/mobile-core';
+import type { AppCommunity } from './models';
 
 interface ApiCommunityResponse extends Community {
   // this attribute is not present in the API response, so we're not using it
@@ -13,5 +13,5 @@ export function mapApiCommunityToAppCommunity(apiCommunity: ApiCommunityResponse
     ...apiCommunity,
     allMembersCanValid: apiCommunity.all_members_can_valid ?? false,
     appData: {},
-  }
+  };
 }

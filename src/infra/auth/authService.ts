@@ -5,7 +5,7 @@ import { CapacitorHttp } from '@capacitor/core';
 import { Device } from '@capacitor/device';
 import { Toast } from '@capacitor/toast';
 
-import { Storage } from '@ign/mobile-device'
+import { Storage } from '@ign/mobile-device';
 import { storageKey } from '@/shared/constants/storage';
 import i18n from '@/shared/i18n';
 

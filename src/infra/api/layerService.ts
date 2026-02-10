@@ -1,5 +1,5 @@
 import { collabApiClient } from "./collabApiClient";
-import type { CommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@ign/mobile-core";
 import {
 	mapApiGeoservice,
 	mapApiLayerToCommunityLayer,

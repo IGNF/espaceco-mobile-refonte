@@ -13,7 +13,7 @@ import {
   type Position,
   type PositionOptions,
   type WatchPositionCallback,
-} from '@capacitor/geolocation'
+} from '@capacitor/geolocation';
 
 export type {
   CallbackID,
@@ -21,7 +21,7 @@ export type {
   Position,
   PositionOptions,
   WatchPositionCallback,
-}
+};
 
 export class EspaceCo_Geolocation {
   static async checkPermissions(): Promise<PermissionStatus> {
@@ -34,9 +34,9 @@ export class EspaceCo_Geolocation {
 
   static async getUsersLocation(options?: PositionOptions): Promise<Position | null> {
     try {
-      const permissions = await this.checkPermissions()
+      const permissions = await this.checkPermissions();
       if (permissions.location !== 'granted') {
-        const newPermissions = await this.requestPermissions()
+        const newPermissions = await this.requestPermissions();
         if (newPermissions.location !== 'granted') {
           return null;
         }
@@ -53,9 +53,9 @@ export class EspaceCo_Geolocation {
     options?: PositionOptions
   ): Promise<CallbackID | null> {
     try {
-      const permissions = await this.checkPermissions()
+      const permissions = await this.checkPermissions();
       if (permissions.location !== 'granted') {
-        const newPermissions = await this.requestPermissions()
+        const newPermissions = await this.requestPermissions();
         if (newPermissions.location !== 'granted') {
           return null;
         }

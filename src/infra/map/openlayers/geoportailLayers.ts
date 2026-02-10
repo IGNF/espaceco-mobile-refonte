@@ -1,10 +1,10 @@
-import LayerGroup from 'ol/layer/Group'
-import ol_layer_Geoportail from 'ol-ext/layer/Geoportail'
+import LayerGroup from 'ol/layer/Group';
+import ol_layer_Geoportail from 'ol-ext/layer/Geoportail';
 import {
   DEFAULT_GEOPORTAIL_LAYERS,
   GEOPORTAIL_SERVER,
-} from '@/shared/constants/map'
-import type { CommunityLayer } from '@/domain/community/models'
+} from '@/shared/constants/map';
+import type { CommunityLayer } from '@ign/mobile-core';
 
 export interface GeoportailLayerConfig {
   name: string
@@ -15,7 +15,7 @@ export interface GeoportailLayerConfig {
 // Type augmentation for missing static property in type definitions
 const GeoportailClass = ol_layer_Geoportail as typeof ol_layer_Geoportail & {
   capabilities: Record<string, unknown>
-}
+};
 
 /**
  * Initialize Geoportail capabilities by loading them from the server.
@@ -31,14 +31,14 @@ export async function initGeoportailCapabilities(): Promise<void> {
  * Create a single Geoportail layer.
  */
 function createGeoportailLayer(config: GeoportailLayerConfig): ol_layer_Geoportail {
-  const { name, visible = false, opacity = 1 } = config
+  const { name, visible = false, opacity = 1 } = config;
 
   return new ol_layer_Geoportail(name, {
     visible,
     opacity,
   }, {
     server: GEOPORTAIL_SERVER,
-  })
+  });
 }
 
 /**
@@ -68,14 +68,14 @@ export function createCommunityGeoportailLayers(
       return true;
     })
     .map((layer) => {
-      const visibility = (layer as CommunityLayer & { visibility?: boolean }).visibility
+      const visibility = (layer as CommunityLayer & { visibility?: boolean }).visibility;
       console.log('createGeoportailLayer', layer);
       return createGeoportailLayer({
         name: layer.geoservice?.layers ?? '',
         visible: layer.visible ?? visibility ?? false,
         opacity: layer.opacity ?? 1,
       });
-    })
+    });
 }
 
 export function createGeoportailLayerGroup(
@@ -97,5 +97,5 @@ export function createGeoportailLayerGroup(
       openInLayerSwitcher: false,
     },
     layers,
-  })
+  });
 }
