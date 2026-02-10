@@ -1,6 +1,6 @@
 import type BaseLayer from "ol/layer/Base";
 import type { ApiClient } from "collaboratif-client-api";
-import type { EnrichedCommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@/domain/community/models";
 import { createLocalCollabVectorLayer } from "./localCollabVectorLayer";
 import { createLocalWFSLayer } from "./localWFSLayer";
 import { stripQueryParams } from "@/shared/utils/query";
@@ -10,7 +10,7 @@ import { stripQueryParams } from "@/shared/utils/query";
  * Handles WFS geoservice layers and table-based collaborative layers.
  */
 export function createCommunityVectorLayers(
-	layers: EnrichedCommunityLayer[],
+	layers: CommunityLayer[],
 	apiClient: ApiClient
 ): BaseLayer[] {
 	const olLayers: BaseLayer[] = [];
@@ -38,7 +38,7 @@ export function createCommunityVectorLayers(
 }
 
 function createVectorLayer(
-	layer: EnrichedCommunityLayer,
+	layer: CommunityLayer,
 	apiClient: ApiClient
 ): BaseLayer | null {
 	const geoservice = layer.geoservice;
@@ -74,16 +74,16 @@ function createVectorLayer(
 	return null;
 }
 
-function getLayerVisibility(layer: EnrichedCommunityLayer): boolean | undefined {
-	const visibility = (layer as EnrichedCommunityLayer & { visibility?: boolean }).visibility;
+function getLayerVisibility(layer: CommunityLayer): boolean | undefined {
+	const visibility = (layer as CommunityLayer & { visibility?: boolean }).visibility;
 	return layer.visible ?? visibility;
 }
 
-function getLayerOpacity(layer: EnrichedCommunityLayer): number | undefined {
+function getLayerOpacity(layer: CommunityLayer): number | undefined {
 	return typeof layer.opacity === "number" ? layer.opacity : undefined;
 }
 
-function getTableWfsUrl(layer: EnrichedCommunityLayer): string | undefined {
+function getTableWfsUrl(layer: CommunityLayer): string | undefined {
 	const tableAny = layer.table as { wfs?: unknown; wfs_url?: unknown } | undefined;
 	if (!tableAny) return undefined;
 
@@ -98,7 +98,7 @@ function getTableWfsUrl(layer: EnrichedCommunityLayer): string | undefined {
 	return undefined;
 }
 
-function getTableTileZoom(layer: EnrichedCommunityLayer): number {
+function getTableTileZoom(layer: CommunityLayer): number {
 	const tableAny = layer.table as {
 		tileZoomLevel?: unknown;
 		tile_zoom_level?: unknown;

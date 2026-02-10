@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import type { RefObject } from "react";
 import type Map from "ol/Map";
 import type LayerGroup from "ol/layer/Group";
-import type { EnrichedCommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@/domain/community/models";
 import { createCommunityGeoportailLayers } from "@/infra/map/openlayers/geoportailLayers";
 import { createCommunityVectorLayers } from "@/infra/map/openlayers/vectorLayers";
 import { collabApiClient } from "@/infra/api/collabApiClient";
@@ -26,8 +26,8 @@ function findLayerGroup(map: Map, name: string): LayerGroup | undefined {
  */
 export function useCommunityMapLayers(
 	mapRef: RefObject<Map | null>,
-	geoportailLayers: EnrichedCommunityLayer[],
-	vectorLayers: EnrichedCommunityLayer[],
+	geoportailLayers: CommunityLayer[],
+	vectorLayers: CommunityLayer[],
 	isMapReady: boolean
 ) {
 	// Sync Geoportail WMTS layers to "groupe" group

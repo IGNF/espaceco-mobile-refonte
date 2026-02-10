@@ -1,8 +1,8 @@
 import { collabApiClient } from "./collabApiClient";
-import type { EnrichedCommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@/domain/community/models";
 import {
 	mapApiGeoservice,
-	mapApiLayerToEnrichedCommunityLayer,
+	mapApiLayerToCommunityLayer,
 	mapApiTable,
 } from "@/domain/community/layerMappers";
 
@@ -10,14 +10,14 @@ import {
  * Fetch community layers and enrich them with full geoservice data, table data, and database extents.
  * TODO: this needs to be cached
  */
-export async function fetchEnrichedCommunityLayers(
+export async function fetchCommunityLayers(
 	communityId: number
-): Promise<EnrichedCommunityLayer[]> {
+): Promise<CommunityLayer[]> {
 	const response = await collabApiClient.layer.getAll(communityId, {
 		limit: 100,
 	});
-	const layers: EnrichedCommunityLayer[] = (response.data ?? []).map(
-		(layer: unknown) => mapApiLayerToEnrichedCommunityLayer(layer)
+	const layers: CommunityLayer[] = (response.data ?? []).map(
+		(layer: unknown) => mapApiLayerToCommunityLayer(layer)
 	);
 
 	// Parallel fetch: geoservice or table data for each layer
@@ -41,7 +41,7 @@ export async function fetchEnrichedCommunityLayers(
 /**
  * Fetch geoservice or table data for a single layer.
  */
-async function fetchLayerData(layer: EnrichedCommunityLayer): Promise<any> {
+async function fetchLayerData(layer: CommunityLayer): Promise<any> {
 	const geoserviceId = getLayerGeoserviceId(layer);
 	if (geoserviceId !== null) {
 		try {
@@ -71,7 +71,7 @@ async function fetchLayerData(layer: EnrichedCommunityLayer): Promise<any> {
 /**
  * Extract unique database IDs from layers that have table data.
  */
-function getUniqueDatabaseIds(layers: EnrichedCommunityLayer[]): number[] {
+function getUniqueDatabaseIds(layers: CommunityLayer[]): number[] {
 	const databaseIds = new Set<number>();
 	for (const layer of layers) {
 		const tableId = getLayerTableId(layer);
@@ -110,7 +110,7 @@ async function fetchDatabaseExtents(databaseIds: number[]): Promise<Record<numbe
  * Enrich layers with fetched geoservice/table data and database extents.
  */
 function enrichLayers(
-	layers: EnrichedCommunityLayer[],
+	layers: CommunityLayer[],
 	enrichedData: any[],
 	databaseExtentsMap: Record<number, string>
 ): void {
@@ -131,7 +131,7 @@ function enrichLayers(
 	}
 }
 
-function getLayerGeoserviceId(layer: EnrichedCommunityLayer): number | null {
+function getLayerGeoserviceId(layer: CommunityLayer): number | null {
 	const geoserviceAny = layer.geoservice as unknown;
 	if (typeof geoserviceAny === "number") {
 		return geoserviceAny;
@@ -145,7 +145,7 @@ function getLayerGeoserviceId(layer: EnrichedCommunityLayer): number | null {
 	return null;
 }
 
-function getLayerTableId(layer: EnrichedCommunityLayer): number | null {
+function getLayerTableId(layer: CommunityLayer): number | null {
 	const tableAny = layer.table as unknown;
 	if (typeof tableAny === "number") {
 		return tableAny;
@@ -159,7 +159,7 @@ function getLayerTableId(layer: EnrichedCommunityLayer): number | null {
 	return null;
 }
 
-function getLayerDatabaseId(layer: EnrichedCommunityLayer): number | null {
+function getLayerDatabaseId(layer: CommunityLayer): number | null {
 	const databaseId = Number(layer.database);
 	return Number.isFinite(databaseId) ? databaseId : null;
 }
@@ -168,8 +168,8 @@ function getLayerDatabaseId(layer: EnrichedCommunityLayer): number | null {
  * Filter enriched layers to only keep Geoportail WMTS layers.
  */
 export function filterGeoportailLayers(
-	layers: EnrichedCommunityLayer[]
-): EnrichedCommunityLayer[] {
+	layers: CommunityLayer[]
+): CommunityLayer[] {
 	const filtered = layers.filter((layer) => {
 		const gs = layer.geoservice;
 		if (!gs) return false;
@@ -191,8 +191,8 @@ export function filterGeoportailLayers(
  * Filter enriched layers to only keep vector layers (WFS geoservices or table-based with WFS endpoint).
  */
 export function filterVectorLayers(
-	layers: EnrichedCommunityLayer[]
-): EnrichedCommunityLayer[] {
+	layers: CommunityLayer[]
+): CommunityLayer[] {
 	const filtered = layers.filter((layer) => {
 		if (layer.geoservice?.type === "WFS") return true;
 		if (layer.table && layer.table.wfs) return true;

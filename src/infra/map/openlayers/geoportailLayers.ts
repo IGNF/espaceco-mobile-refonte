@@ -4,7 +4,7 @@ import {
   DEFAULT_GEOPORTAIL_LAYERS,
   GEOPORTAIL_SERVER,
 } from '@/shared/constants/map'
-import type { EnrichedCommunityLayer } from '@/domain/community/models'
+import type { CommunityLayer } from '@/domain/community/models'
 
 export interface GeoportailLayerConfig {
   name: string
@@ -53,7 +53,7 @@ function hasCapability(layerName: string): boolean {
  * Only creates layers whose names exist in the loaded capabilities.
  */
 export function createCommunityGeoportailLayers(
-  layers: EnrichedCommunityLayer[]
+  layers: CommunityLayer[]
 ): ol_layer_Geoportail[] {
   console.log('createCommunityGeoportailLayers', layers);
   return layers
@@ -68,7 +68,7 @@ export function createCommunityGeoportailLayers(
       return true;
     })
     .map((layer) => {
-      const visibility = (layer as EnrichedCommunityLayer & { visibility?: boolean }).visibility
+      const visibility = (layer as CommunityLayer & { visibility?: boolean }).visibility
       console.log('createGeoportailLayer', layer);
       return createGeoportailLayer({
         name: layer.geoservice?.layers ?? '',

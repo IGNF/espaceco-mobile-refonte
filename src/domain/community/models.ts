@@ -1,12 +1,4 @@
-import type { Community, CommunityLayer, CommunityMember, Geoservice, Table } from "@ign/mobile-core";
-
-// We will have to add the missing properties from the CommunityLayer interface directly, to get rid of the EnrichedCommunityLayer interface
-export interface EnrichedCommunityLayer extends CommunityLayer {
-	geoservice?: Geoservice;
-	table?: Table;
-	database?: number;
-	extent?: string[];
-}
+import type { Community, CommunityLayer, CommunityMember } from "@ign/mobile-core";
 
 export type CommunityAttributeType = 'list' | 'checkbox' | 'date' | 'integer' | 'double';
 

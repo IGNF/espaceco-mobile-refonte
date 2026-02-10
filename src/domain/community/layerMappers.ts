@@ -1,5 +1,5 @@
 import type { Geoservice, Table, TableColumn } from '@ign/mobile-core'
-import type { EnrichedCommunityLayer } from './models'
+import type { CommunityLayer } from './models'
 import {
 	toBoolean,
 	toNumber,
@@ -133,10 +133,10 @@ export function mapApiTable(apiTable: unknown): Table {
 	return mapped
 }
 
-export function mapApiLayerToEnrichedCommunityLayer(apiLayer: unknown): EnrichedCommunityLayer {
+export function mapApiLayerToCommunityLayer(apiLayer: unknown): CommunityLayer {
 	const raw = toRawObject(apiLayer) ?? {}
-	const mapped: EnrichedCommunityLayer = {
-		...(raw as unknown as EnrichedCommunityLayer),
+	const mapped: CommunityLayer = {
+		...(raw as unknown as CommunityLayer),
 		id: toNumber(raw.id) ?? 0,
 		title: toStringValue(raw.title) ?? '',
 	}

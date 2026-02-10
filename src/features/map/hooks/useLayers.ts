@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
-import type { EnrichedCommunityLayer } from "@/domain/community/models";
+import type { CommunityLayer } from "@/domain/community/models";
 import {
-	fetchEnrichedCommunityLayers,
+	fetchCommunityLayers,
 	filterGeoportailLayers,
 	filterVectorLayers,
 } from "@/infra/api/layerService";
 
 export function useLayers() {
 	const { activeCommunity } = useCommunity();
-	const [layers, setLayers] = useState<EnrichedCommunityLayer[]>([]);
-	const [geoportailLayers, setGeoportailLayers] = useState<EnrichedCommunityLayer[]>([]);
-	const [vectorLayers, setVectorLayers] = useState<EnrichedCommunityLayer[]>([]);
+	const [layers, setLayers] = useState<CommunityLayer[]>([]);
+	const [geoportailLayers, setGeoportailLayers] = useState<CommunityLayer[]>([]);
+	const [vectorLayers, setVectorLayers] = useState<CommunityLayer[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ export function useLayers() {
 		setError(null);
 
 		try {
-			const enrichedLayers = await fetchEnrichedCommunityLayers(activeCommunity.id);
+			const enrichedLayers = await fetchCommunityLayers(activeCommunity.id);
 			const communityGeoportailLayers = filterGeoportailLayers(enrichedLayers);
 			const communityVectorLayers = filterVectorLayers(enrichedLayers);
 
