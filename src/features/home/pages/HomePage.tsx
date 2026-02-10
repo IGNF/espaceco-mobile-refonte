@@ -36,9 +36,9 @@ export function HomePage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { user, logout } = useAuth();
-	const { mapElementRef, mapRef, centerOnUserLocation, isLocating } = useMap();
+	const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady } = useMap();
 	const { layers, geoportailLayers, vectorLayers, isLoading: isLayersLoading } = useLayers();
-	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers);
+	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -150,7 +150,7 @@ export function HomePage() {
 				<SearchPanel
 					isOpen={isSearchOpen}
 					onClose={() => setIsSearchOpen(false)}
-					map={mapRef.current}
+					map={map}
 				/>
 			</main>
 
@@ -168,7 +168,7 @@ export function HomePage() {
 				<IconGeolocation className={styles.geolocationIcon} />
 			</button>
 
-				<BottomTabbar
+			<BottomTabbar
 				onTabClick={handleTabClick}
 				highlightedTab={getHighlightedTab()}
 				activeTab={isLayersPanelOpen ? "couches" : null}

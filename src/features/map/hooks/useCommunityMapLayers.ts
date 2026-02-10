@@ -27,17 +27,25 @@ function findLayerGroup(map: Map, name: string): LayerGroup | undefined {
 export function useCommunityMapLayers(
 	mapRef: RefObject<Map | null>,
 	geoportailLayers: EnrichedCommunityLayer[],
-	vectorLayers: EnrichedCommunityLayer[]
+	vectorLayers: EnrichedCommunityLayer[],
+	isMapReady: boolean
 ) {
 	// Sync Geoportail WMTS layers to "groupe" group
 	useEffect(() => {
+		if (!isMapReady) return;
+
 		const map = mapRef.current;
-		if (!map || geoportailLayers.length === 0) return;
+		if (!map) return;
 
 		const groupe = findLayerGroup(map, "groupe");
 		if (!groupe) return;
 
 		groupe.getLayers().clear();
+
+		if (geoportailLayers.length === 0) {
+			console.log('[Layers] Cleared "groupe" layers (no Geoportail layers for active community)');
+			return;
+		}
 
 		const olLayers = createCommunityGeoportailLayers(geoportailLayers);
 		console.log(`[Layers] Adding ${olLayers.length} OL layers to "groupe" group:`,
@@ -46,17 +54,24 @@ export function useCommunityMapLayers(
 		for (const layer of olLayers) {
 			groupe.getLayers().push(layer);
 		}
-	}, [mapRef, geoportailLayers]);
+	}, [mapRef, geoportailLayers, isMapReady]);
 
 	// Sync vector layers to "guichet" group
 	useEffect(() => {
+		if (!isMapReady) return;
+
 		const map = mapRef.current;
-		if (!map || vectorLayers.length === 0) return;
+		if (!map) return;
 
 		const guichet = findLayerGroup(map, "guichet");
 		if (!guichet) return;
 
 		guichet.getLayers().clear();
+
+		if (vectorLayers.length === 0) {
+			console.log('[Layers] Cleared "guichet" layers (no vector layers for active community)');
+			return;
+		}
 
 		const olLayers = createCommunityVectorLayers(vectorLayers, collabApiClient);
 		console.log(`[Layers] Adding ${olLayers.length} vector OL layers to "guichet" group:`,
@@ -65,5 +80,5 @@ export function useCommunityMapLayers(
 		for (const layer of olLayers) {
 			guichet.getLayers().push(layer);
 		}
-	}, [mapRef, vectorLayers]);
+	}, [mapRef, vectorLayers, isMapReady]);
 }

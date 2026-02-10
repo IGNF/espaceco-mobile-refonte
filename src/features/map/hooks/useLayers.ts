@@ -28,9 +28,12 @@ export function useLayers() {
 
 		try {
 			const enrichedLayers = await fetchEnrichedCommunityLayers(activeCommunity.id);
-			// setLayers(enrichedLayers); // commented out because what's displayed in the layers panel is the filtered layers
-			setGeoportailLayers(filterGeoportailLayers(enrichedLayers));
-			setVectorLayers(filterVectorLayers(enrichedLayers));
+			const communityGeoportailLayers = filterGeoportailLayers(enrichedLayers);
+			const communityVectorLayers = filterVectorLayers(enrichedLayers);
+
+			setLayers([...communityGeoportailLayers, ...communityVectorLayers]);
+			setGeoportailLayers(communityGeoportailLayers);
+			setVectorLayers(communityVectorLayers);
 		} catch (err) {
 			console.error("Failed to fetch layers:", err);
 			setError("Failed to fetch layers");

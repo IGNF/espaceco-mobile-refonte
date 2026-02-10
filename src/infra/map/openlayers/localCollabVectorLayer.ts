@@ -31,6 +31,11 @@ import {
 } from "@ign/mobile-core";
 import type { ApiClient } from "collaboratif-client-api";
 
+type LocalCollabVectorLayerOptions = CollabVectorLayerOptions & {
+	visibility?: boolean;
+	opacity?: number;
+};
+
 // Register French projections so OL can transform from Lambert 93, etc.
 if (!proj4.defs("EPSG:2154"))
 	proj4.defs("EPSG:2154", "+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
@@ -64,16 +69,18 @@ async function getAuthHeaders(
  * but includes a working WFS feature loader.
  */
 export function createLocalCollabVectorLayer(
-	options: CollabVectorLayerOptions,
+	options: LocalCollabVectorLayerOptions,
 	sourceOptions: Partial<CollabVectorSourceOptions> = {}
 ): VectorLayer {
 	const table = options.table;
+	const visibility = options.visibility ?? true;
+	const opacity = options.opacity ?? 1;
 	const tileZoom = sourceOptions.tileZoom || 13;
 	const maxFeatures =
 		sourceOptions.maxFeatures || COLLAB_VECTOR_DEFAULT_VALUES.MAX_FEATURES;
 
 	// Detect native CRS from the geometry column metadata, fall back to Lambert 93
-	const geometryName = table.geometryName || "geometrie";
+	const geometryName = table.geometryName || (table as Table & { geometry_name?: string }).geometry_name || "geometrie";
 	const nativeCrs = table.columns[geometryName]?.crs || "IGNF:LAMB93";
 	// Use native CRS for WFS requests to avoid WFS 1.1.0 axis order issues with EPSG:4326
 	// (WFS 1.1.0 expects lat/lon for EPSG:4326, but OL gives lon/lat)
@@ -172,6 +179,8 @@ export function createLocalCollabVectorLayer(
 
 	const layer = new VectorLayer({
 		source,
+		visible: visibility,
+		opacity,
 		properties: {
 			name: options.database + ":" + table.name,
 			title: table.title,

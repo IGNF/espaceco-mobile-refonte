@@ -68,10 +68,11 @@ export function createCommunityGeoportailLayers(
       return true;
     })
     .map((layer) => {
+      const visibility = (layer as EnrichedCommunityLayer & { visibility?: boolean }).visibility
       console.log('createGeoportailLayer', layer);
       return createGeoportailLayer({
         name: layer.geoservice?.layers ?? '',
-        visible: layer.visible ?? false,
+        visible: layer.visible ?? visibility ?? false,
         opacity: layer.opacity ?? 1,
       });
     })

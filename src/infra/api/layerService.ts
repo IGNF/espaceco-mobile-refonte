@@ -1,6 +1,10 @@
-import type { TableColumn } from "@ign/mobile-core";
 import { collabApiClient } from "./collabApiClient";
 import type { EnrichedCommunityLayer } from "@/domain/community/models";
+import {
+	mapApiGeoservice,
+	mapApiLayerToEnrichedCommunityLayer,
+	mapApiTable,
+} from "@/domain/community/layerMappers";
 
 /**
  * Fetch community layers and enrich them with full geoservice data, table data, and database extents.
@@ -12,7 +16,9 @@ export async function fetchEnrichedCommunityLayers(
 	const response = await collabApiClient.layer.getAll(communityId, {
 		limit: 100,
 	});
-	const layers: EnrichedCommunityLayer[] = response.data ?? [];
+	const layers: EnrichedCommunityLayer[] = (response.data ?? []).map(
+		(layer: unknown) => mapApiLayerToEnrichedCommunityLayer(layer)
+	);
 
 	// Parallel fetch: geoservice or table data for each layer
 	const enrichmentPromises = layers.map((layer) => fetchLayerData(layer));
@@ -36,24 +42,29 @@ export async function fetchEnrichedCommunityLayers(
  * Fetch geoservice or table data for a single layer.
  */
 async function fetchLayerData(layer: EnrichedCommunityLayer): Promise<any> {
-	const layerAny = layer as any;
-	if (layerAny.geoservice && typeof layerAny.geoservice === "object" && "id" in layerAny.geoservice) {
+	const geoserviceId = getLayerGeoserviceId(layer);
+	if (geoserviceId !== null) {
 		try {
 			const geoserviceResponse = await collabApiClient.geoservice.get(
-				(layerAny.geoservice as { id: number }).id
+				geoserviceId
 			);
-			return { type: "geoservice", data: geoserviceResponse.data };
-		} catch {
-			return null;
-		}
-	} else if (layerAny.table && layerAny.database) {
-		try {
-			const tableResponse = await collabApiClient.table.get(layerAny.database, layerAny.table);
-			return { type: "table", data: tableResponse.data };
+			return { type: "geoservice", data: mapApiGeoservice(geoserviceResponse.data) };
 		} catch {
 			return null;
 		}
 	}
+
+	const tableId = getLayerTableId(layer);
+	const databaseId = getLayerDatabaseId(layer);
+	if (tableId !== null && databaseId !== null) {
+		try {
+			const tableResponse = await collabApiClient.table.get(databaseId, tableId);
+			return { type: "table", data: mapApiTable(tableResponse.data) };
+		} catch {
+			return null;
+		}
+	}
+
 	return null;
 }
 
@@ -63,9 +74,10 @@ async function fetchLayerData(layer: EnrichedCommunityLayer): Promise<any> {
 function getUniqueDatabaseIds(layers: EnrichedCommunityLayer[]): number[] {
 	const databaseIds = new Set<number>();
 	for (const layer of layers) {
-		const layerAny = layer as any;
-		if (layerAny.table && layerAny.database) {
-			databaseIds.add(layerAny.database);
+		const tableId = getLayerTableId(layer);
+		const databaseId = getLayerDatabaseId(layer);
+		if (tableId !== null && databaseId !== null) {
+			databaseIds.add(databaseId);
 		}
 	}
 	return Array.from(databaseIds);
@@ -86,8 +98,9 @@ async function fetchDatabaseExtents(databaseIds: number[]): Promise<Record<numbe
 
 	const extentsMap: Record<number, string> = {};
 	for (const response of databaseResponses) {
-		if (response.data?.extent) {
-			extentsMap[response.data.id] = response.data.extent;
+		const databaseId = Number(response.data?.id);
+		if (Number.isFinite(databaseId) && typeof response.data?.extent === "string") {
+			extentsMap[databaseId] = response.data.extent;
 		}
 	}
 	return extentsMap;
@@ -108,18 +121,7 @@ function enrichLayers(
 		if (data.type === "geoservice") {
 			layers[i].geoservice = data.data;
 		} else if (data.type === "table") {
-			const table = data.data;
-			if (table.columns && typeof table.columns === "object") {
-				const rawValues = Object.values(table.columns) as TableColumn[];
-				const columnsRecord: Record<string, TableColumn> = {};
-				for (const col of rawValues) {
-					if (col.name) {
-						columnsRecord[col.name] = col;
-					}
-				}
-				table.columns = columnsRecord;
-			}
-			layers[i].table = table;
+			layers[i].table = data.data;
 
 			const dbId = layers[i].database;
 			if (dbId && databaseExtentsMap[dbId]) {
@@ -127,6 +129,39 @@ function enrichLayers(
 			}
 		}
 	}
+}
+
+function getLayerGeoserviceId(layer: EnrichedCommunityLayer): number | null {
+	const geoserviceAny = layer.geoservice as unknown;
+	if (typeof geoserviceAny === "number") {
+		return geoserviceAny;
+	}
+	if (geoserviceAny && typeof geoserviceAny === "object") {
+		const id = Number((geoserviceAny as { id?: unknown }).id);
+		if (Number.isFinite(id)) {
+			return id;
+		}
+	}
+	return null;
+}
+
+function getLayerTableId(layer: EnrichedCommunityLayer): number | null {
+	const tableAny = layer.table as unknown;
+	if (typeof tableAny === "number") {
+		return tableAny;
+	}
+	if (tableAny && typeof tableAny === "object") {
+		const id = Number((tableAny as { id?: unknown }).id);
+		if (Number.isFinite(id)) {
+			return id;
+		}
+	}
+	return null;
+}
+
+function getLayerDatabaseId(layer: EnrichedCommunityLayer): number | null {
+	const databaseId = Number(layer.database);
+	return Number.isFinite(databaseId) ? databaseId : null;
 }
 
 /**

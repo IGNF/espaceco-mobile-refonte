@@ -25,8 +25,10 @@ interface UseMapOptions {
 interface UseMapReturn {
 	mapElementRef: React.RefObject<HTMLDivElement | null>;
 	mapRef: React.RefObject<Map | null>;
+	map: Map | null;
 	centerOnUserLocation: () => Promise<void>;
 	isLocating: boolean;
+	isMapReady: boolean;
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
@@ -34,7 +36,9 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 	const mapElementRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<Map | null>(null);
+	const [map, setMap] = useState<Map | null>(null);
 	const [isLocating, setIsLocating] = useState(false);
+	const [isMapReady, setIsMapReady] = useState(false);
 
 	const centerOnUserLocation = useCallback(async () => {
 		const map = mapRef.current;
@@ -134,21 +138,25 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				}),
 			];
 
-		mapRef.current = new Map({
-			target: mapElementRef.current,
-			layers: layers,
-			controls: defaultControls({ zoom: false, attribution: false }).extend([
-				...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
-				new Attribution({
-					collapsible: false,
-					collapsed: false,
-				}),
-			]),
+			const initializedMap = new Map({
+				target: mapElementRef.current,
+				layers: layers,
+				controls: defaultControls({ zoom: false, attribution: false }).extend([
+					...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
+					new Attribution({
+						collapsible: false,
+						collapsed: false,
+					}),
+				]),
 				view: new View({
 					center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
 					zoom: DEFAULT_MAP_ZOOM,
 				}),
 			});
+
+			mapRef.current = initializedMap;
+			setMap(initializedMap);
+			setIsMapReady(true);
 		}
 
 		initMap();
@@ -157,20 +165,24 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			mounted = false;
 			mapRef.current?.setTarget(undefined);
 			mapRef.current = null;
+			setMap(null);
+			setIsMapReady(false);
 		};
 	}, []);
 
 	// Center on user location on mount
 	useEffect(() => {
-		if (shouldCenterOnMount && mapRef.current) {
+		if (shouldCenterOnMount && isMapReady) {
 			centerOnUserLocation();
 		}
-	}, [shouldCenterOnMount, centerOnUserLocation]);
+	}, [shouldCenterOnMount, isMapReady, centerOnUserLocation]);
 
 	return {
 		mapElementRef,
 		mapRef,
+		map,
 		centerOnUserLocation,
 		isLocating,
+		isMapReady,
 	};
 }
