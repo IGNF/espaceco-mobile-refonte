@@ -11,7 +11,7 @@ import { SearchPanel } from "@/features/search/components/SearchPanel";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
-import { LayersPanel } from "@/features/map/components/LayersPanel";
+import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
 import styles from "./HomePage.module.css";
@@ -37,7 +37,13 @@ export function HomePage() {
 	const navigate = useNavigate();
 	const { user, logout } = useAuth();
 	const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady } = useMap();
-	const { layers, geoportailLayers, vectorLayers, isLoading: isLayersLoading } = useLayers();
+	const {
+		layers,
+		geoportailLayers,
+		vectorLayers,
+		isLoading: isLayersLoading,
+		setLayerVisibility,
+	} = useLayers();
 	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -106,8 +112,8 @@ export function HomePage() {
 	};
 
 	const handleTabClick = (tab: TabId) => {
-		if (tab === "couches") {
-			setIsLayersPanelOpen((prev) => !prev);
+		if (tab === "couches" && !isLayersPanelOpen) {
+			setIsLayersPanelOpen(true);
 		}
 	};
 
@@ -174,11 +180,14 @@ export function HomePage() {
 				activeTab={isLayersPanelOpen ? "couches" : null}
 			/>
 
-			<LayersPanel
+			<LayersPanelFlow
 				isOpen={isLayersPanelOpen}
 				onClose={() => setIsLayersPanelOpen(false)}
 				layers={layers}
+				geoportailLayers={geoportailLayers}
+				vectorLayers={vectorLayers}
 				isLoading={isLayersLoading}
+				onSetLayerVisibility={setLayerVisibility}
 			/>
 
 			<OnboardingModal

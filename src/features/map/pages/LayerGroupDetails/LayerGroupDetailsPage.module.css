@@ -1,0 +1,81 @@
+.content {
+	padding-top: 1rem;
+	padding-bottom: 2rem;
+}
+
+.titleSection {
+	margin-bottom: 1rem;
+}
+
+.layerList {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.layerItem {
+	border: 1px solid var(--color-light-tint);
+	border-radius: 10px;
+	background: white;
+	padding: 1rem;
+}
+
+.layerItemHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.layerActionButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.layerActionButton:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.layerItemIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-medium);
+	flex-shrink: 0;
+}
+
+.layerActionIcon {
+	width: 18px;
+	height: 18px;
+	color: var(--color-medium);
+}
+
+.layerItemTitle {
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--color-dark);
+	flex: 1;
+}
+
+.loading {
+	text-align: center;
+	padding: 2rem 0;
+	color: var(--color-medium);
+}
+
+.empty {
+	text-align: center;
+	padding: 2rem 0;
+	color: var(--color-medium);
+	font-style: italic;
+}

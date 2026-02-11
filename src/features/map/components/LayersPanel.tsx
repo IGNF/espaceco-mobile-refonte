@@ -1,21 +1,29 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createPortal } from "react-dom";
-import type { CommunityLayer } from "@ign/mobile-core";
+import type { LayerGroupId, LayerGroupSummary } from "@/features/map/types/layerGroups";
 import styles from "./LayersPanel.module.css";
 
 import IconClose from "@/shared/assets/icons/icon-close.svg?react";
+import IconArrowRight from "@/shared/assets/icons/icon-angle-right.svg?react";
 
 const ANIMATION_DURATION = 300;
 
 export interface LayersPanelProps {
 	isOpen: boolean;
 	onClose: () => void;
-	layers: CommunityLayer[];
+	groups: LayerGroupSummary[];
 	isLoading: boolean;
+	onOpenGroup: (groupId: LayerGroupId) => void;
 }
 
-export function LayersPanel({ isOpen, onClose, layers, isLoading }: LayersPanelProps) {
+export function LayersPanel({
+	isOpen,
+	onClose,
+	groups,
+	isLoading,
+	onOpenGroup,
+}: LayersPanelProps) {
 	const { t } = useTranslation();
 	const [isVisible, setIsVisible] = useState(false);
 	const [shouldRender, setShouldRender] = useState(false);
@@ -64,15 +72,23 @@ export function LayersPanel({ isOpen, onClose, layers, isLoading }: LayersPanelP
 				<div className={styles.content}>
 					{isLoading ? (
 						<p className={styles.loading}>{t("layers.loading")}</p>
-					) : layers.length === 0 ? (
+					) : groups.length === 0 ? (
 						<p className={styles.empty}>{t("layers.empty")}</p>
 					) : (
-						<ul className={styles.layerList}>
-							{layers.map((layer) => (
-								<li key={layer.id} className={styles.layerItem}>
-									<span className={styles.layerTitle}>{layer.title}</span>
-									<button className={styles.layerAction} aria-label={`Toggle ${layer.title}`}>
-										+
+						<ul className={styles.groupList}>
+							{groups.map((group) => (
+								<li key={group.id} className={styles.groupItem}>
+									<button
+										type="button"
+										className={styles.groupButton}
+										onClick={() => onOpenGroup(group.id)}
+										aria-label={group.title}
+									>
+										<span className={styles.groupTitle}>{group.title}</span>
+										<span className={styles.groupMeta}>
+											<span className={styles.groupCount}>{group.count}</span>
+											<IconArrowRight className={styles.groupArrowIcon} />
+										</span>
 									</button>
 								</li>
 							))}

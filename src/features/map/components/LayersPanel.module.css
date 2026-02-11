@@ -14,11 +14,11 @@
 }
 
 .panel {
+  z-index: 100;
 	position: fixed;
 	bottom: 0;
 	left: 0;
 	right: 0;
-	z-index: 91;
 	background-color: white;
 	border-radius: 16px 16px 0 0;
 	box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
@@ -72,44 +72,59 @@
 	padding: 0.5rem 1.25rem 1.25rem;
 }
 
-.layerList {
+.groupList {
 	list-style: none;
 	margin: 0;
 	padding: 0;
-	border: 1px solid var(--color-light);
-	border-radius: 8px;
-	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
 }
 
-.layerItem {
+.groupItem {
+	margin: 0;
+}
+
+.groupButton {
+	width: 100%;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	padding: 1rem 1.25rem;
-	border-bottom: 1px solid var(--color-light);
+	border: 1px solid var(--color-light-tint);
+	border-radius: 10px;
+	background: white;
+	padding: 1rem 1rem;
+	text-align: left;
+	cursor: pointer;
 }
 
-.layerItem:last-child {
-	border-bottom: none;
-}
-
-.layerTitle {
+.groupTitle {
 	font-size: 1rem;
 	font-weight: 500;
 	color: var(--color-dark);
 }
 
-.layerAction {
-	background: none;
-	border: none;
-	cursor: pointer;
-	padding: 0.25rem;
+.groupMeta {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	color: var(--color-dark);
-	font-size: 1.25rem;
-	font-weight: 300;
+	gap: 0.5rem;
+	color: var(--color-medium);
+}
+
+.groupCount {
+	min-width: 1.5rem;
+	text-align: right;
+	font-size: 0.95rem;
+	font-weight: 600;
+}
+
+.groupArrowIcon {
+	width: 16px;
+	height: 16px;
+}
+
+.groupArrowIcon path {
+	fill: currentColor;
 }
 
 .loading {

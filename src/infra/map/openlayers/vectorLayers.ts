@@ -87,8 +87,7 @@ function createVectorLayer(
 }
 
 function getLayerVisibility(layer: CommunityLayer): boolean | undefined {
-  const visibility = (layer as CommunityLayer & { visibility?: boolean }).visibility;
-  return layer.visible ?? visibility;
+  return layer.visible;
 }
 
 function getLayerOpacity(layer: CommunityLayer): number | undefined {

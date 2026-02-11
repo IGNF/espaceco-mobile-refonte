@@ -122,9 +122,32 @@
     "cancel": "Annuler"
   },
   "layers": {
-    "title": "Couches",
+    "title": "Mes couches",
     "loading": "Chargement des couches...",
-    "empty": "Aucune couche disponible"
+    "empty": "Aucune couche disponible",
+    "groups": {
+      "signalements": "Signalements",
+      "guichet": "Guichet",
+      "mesCartes": "Mes cartes",
+      "geoservices": "Géoservices"
+    },
+    "defaults": {
+      "mesSignalements": "Mes signalements",
+      "croquis": "Croquis",
+      "signalements": "Signalements"
+    },
+    "groupDetails": {
+      "subtitle": "Couches du groupe",
+      "loading": "Chargement des couches du groupe...",
+      "empty": "Aucune couche dans ce groupe",
+      "showLayer": "Afficher la couche",
+      "hideLayer": "Masquer la couche",
+      "layerInfo": "Informations sur la couche"
+    },
+    "info": {
+      "untitled": "Couche sans nom",
+      "noDescription": "Pas d'information disponible sur cette couche"
+    }
   },
   "reports": {
     "general": {
