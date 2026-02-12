@@ -51,7 +51,7 @@ export function LayerGroupDetailsPage({
 
   return (
     <>
-      <SlideUpPage isOpen={isOpen} onClose={handleClose}>
+      <SlideUpPage isOpen={isOpen} onClose={handleClose} level={2}>
         <PageHeader
           title={title}
           showBackButton

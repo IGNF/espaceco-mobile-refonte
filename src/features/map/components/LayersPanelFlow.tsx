@@ -35,15 +35,15 @@ export function LayersPanelFlow({
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
-  const effectiveActiveLayerGroup = isOpen ? null : activeLayerGroup;
+  const isLayerGroupOpen = isOpen && activeLayerGroup !== null;
+  const isPanelOpen = isOpen && !isLayerGroupOpen;
 
   const selectedLayerGroup = useMemo(
-    () => layerGroups.find((group) => group.id === effectiveActiveLayerGroup) ?? null,
-    [effectiveActiveLayerGroup, layerGroups]
+    () => layerGroups.find((group) => group.id === activeLayerGroup) ?? null,
+    [activeLayerGroup, layerGroups]
   );
 
   const handleOpenLayerGroup = (groupId: LayerGroupId) => {
-    onClose();
     setActiveLayerGroup(groupId);
   };
 
@@ -78,7 +78,7 @@ export function LayersPanelFlow({
   return (
     <>
       <LayersPanel
-        isOpen={isOpen}
+        isOpen={isPanelOpen}
         onClose={handleClosePanel}
         groups={layerGroupSummaries}
         isLoading={isLoading}
@@ -86,8 +86,7 @@ export function LayersPanelFlow({
         onToggleGroupVisibility={handleToggleGroupVisibility}
       />
       <LayerGroupDetailsPage
-        key={selectedLayerGroup?.id ?? 'no-layer-group'}
-        isOpen={effectiveActiveLayerGroup !== null && selectedLayerGroup !== null}
+        isOpen={isLayerGroupOpen && selectedLayerGroup !== null}
         onClose={handleCloseLayerGroup}
         group={selectedLayerGroup}
         isLoading={isLoading}
