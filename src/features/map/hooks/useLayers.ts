@@ -7,6 +7,11 @@ import {
 	filterVectorLayers,
 } from '@/infra/api/layerService';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import {
+	type SignalementLayerKey,
+	type SignalementLayerVisibility,
+	DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
+} from '@/features/map/types/signalementLayers';
 
 function applyLayerVisibility(layer: CommunityLayer, visible: boolean): CommunityLayer {
 	return {
@@ -30,6 +35,8 @@ function updateLayerVisibility(
 export function useLayers() {
 	const { activeCommunity } = useCommunity();
 	const [layers, setLayers] = useState<CommunityLayer[]>([]);
+	const [signalementLayerVisibility, setSignalementLayerVisibility] =
+		useState<SignalementLayerVisibility>(() => ({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY }));
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -37,6 +44,17 @@ export function useLayers() {
 	const vectorLayers = useMemo(() => filterVectorLayers(layers), [layers]);
 
 	const setLayerVisibility = useCallback((layerKey: string, visible: boolean) => {
+		const isSignalementLayer =
+			Object.prototype.hasOwnProperty.call(DEFAULT_SIGNALEMENT_LAYER_VISIBILITY, layerKey);
+		if (isSignalementLayer) {
+			const signalementKey = layerKey as SignalementLayerKey;
+			setSignalementLayerVisibility((previous) => ({
+				...previous,
+				[signalementKey]: visible,
+			}));
+			return;
+		}
+
 		setLayers((previous) => updateLayerVisibility(previous, layerKey, visible));
 	}, []);
 
@@ -70,6 +88,7 @@ export function useLayers() {
 		layers,
 		geoportailLayers,
 		vectorLayers,
+		signalementLayerVisibility,
 		isLoading,
 		error,
 		refetch: fetchLayers,

@@ -8,21 +8,26 @@ import type {
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
 import {
-  isSignalementLayer,
   mapLayerGroupsToSummaries,
   mapLayersToGroupItems,
 } from '@/features/map/mappers/layerGroupMappers';
+import {
+  SIGNALEMENT_LAYER_DEFINITIONS,
+  type SignalementLayerVisibility,
+} from '@/features/map/types/signalementLayers';
 
 interface UseLayerGroupsParams {
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
+  signalementLayerVisibility: SignalementLayerVisibility;
 }
 
 export function useLayerGroups({
   layers,
   geoportailLayers,
   vectorLayers,
+  signalementLayerVisibility,
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -31,31 +36,17 @@ export function useLayerGroups({
     const vectorLayerSet = new Set(vectorLayers);
     const geoportailLayerSet = new Set(geoportailLayers);
 
-    const signalementLayers = layers.filter(isSignalementLayer);
-    const signalementItems: LayerGroupItem[] =
-      signalementLayers.length > 0
-        ? mapLayersToGroupItems(signalementLayers)
-        : [
-            {
-              id: 'default-mes-signalements',
-              title: t('layers.defaults.mesSignalements'),
-              visible: true,
-            },
-            {
-              id: 'default-croquis',
-              title: t('layers.defaults.croquis'),
-              visible: true,
-            },
-            {
-              id: 'default-signalements',
-              title: t('layers.defaults.signalements'),
-              visible: true,
-            },
-          ];
+    const signalementItems: LayerGroupItem[] = SIGNALEMENT_LAYER_DEFINITIONS.map(
+      (layerDefinition) => ({
+        id: layerDefinition.key,
+        layerKey: layerDefinition.key,
+        title: t(layerDefinition.titleKey),
+        visible: signalementLayerVisibility[layerDefinition.key],
+      })
+    );
 
-    const guichetLayers = vectorLayers.filter((layer) => !isSignalementLayer(layer));
+    const guichetLayers = vectorLayers;
     const mesCartesLayers = layers.filter((layer) => {
-      if (isSignalementLayer(layer)) return false;
       if (vectorLayerSet.has(layer)) return false;
       if (geoportailLayerSet.has(layer)) return false;
       return true;
@@ -87,7 +78,14 @@ export function useLayerGroups({
         items: mapLayersToGroupItems(geoportailLayers),
       },
     ];
-  }, [activeCommunity, geoportailLayers, layers, t, vectorLayers]);
+  }, [
+    activeCommunity,
+    geoportailLayers,
+    layers,
+    signalementLayerVisibility,
+    t,
+    vectorLayers,
+  ]);
 
   const layerGroupSummaries = useMemo<LayerGroupSummary[]>(
     () => mapLayerGroupsToSummaries(layerGroups),

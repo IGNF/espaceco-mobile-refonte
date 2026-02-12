@@ -83,10 +83,37 @@
 
 .groupItem {
 	margin: 0;
+	display: flex;
+	align-items: stretch;
+	gap: 0.5rem;
+}
+
+.groupVisibilityButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 10px;
+	background: white;
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+.groupVisibilityButton:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.groupVisibilityIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-medium);
 }
 
 .groupButton {
-	width: 100%;
+	flex: 1;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;

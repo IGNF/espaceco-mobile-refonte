@@ -5,6 +5,8 @@ import type { LayerGroupId, LayerGroupSummary } from "@/features/map/types/layer
 import styles from "./LayersPanel.module.css";
 
 import IconClose from "@/shared/assets/icons/icon-close.svg?react";
+import IconEye from "@/shared/assets/icons/icon-eye.svg?react";
+import IconEyeOff from "@/shared/assets/icons/icon-access.svg?react";
 import IconArrowRight from "@/shared/assets/icons/icon-angle-right.svg?react";
 
 const ANIMATION_DURATION = 300;
@@ -15,6 +17,7 @@ export interface LayersPanelProps {
 	groups: LayerGroupSummary[];
 	isLoading: boolean;
 	onOpenGroup: (groupId: LayerGroupId) => void;
+	onToggleGroupVisibility: (groupId: LayerGroupId) => void;
 }
 
 export function LayersPanel({
@@ -23,6 +26,7 @@ export function LayersPanel({
 	groups,
 	isLoading,
 	onOpenGroup,
+	onToggleGroupVisibility,
 }: LayersPanelProps) {
 	const { t } = useTranslation();
 	const [isVisible, setIsVisible] = useState(false);
@@ -78,6 +82,23 @@ export function LayersPanel({
 						<ul className={styles.groupList}>
 							{groups.map((group) => (
 								<li key={group.id} className={styles.groupItem}>
+									<button
+										type="button"
+										className={styles.groupVisibilityButton}
+										onClick={() => onToggleGroupVisibility(group.id)}
+										disabled={!group.canToggle}
+										aria-label={
+											group.visible
+												? t("layers.groups.hideGroup")
+												: t("layers.groups.showGroup")
+										}
+									>
+										{group.visible ? (
+											<IconEye className={styles.groupVisibilityIcon} />
+										) : (
+											<IconEyeOff className={styles.groupVisibilityIcon} />
+										)}
+									</button>
 									<button
 										type="button"
 										className={styles.groupButton}

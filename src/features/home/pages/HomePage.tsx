@@ -14,6 +14,7 @@ import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
+import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import styles from "./HomePage.module.css";
 
 import { overlayRoutes } from "@/app/router/routes";
@@ -41,10 +42,12 @@ export function HomePage() {
 		layers,
 		geoportailLayers,
 		vectorLayers,
+		signalementLayerVisibility,
 		isLoading: isLayersLoading,
 		setLayerVisibility,
 	} = useLayers();
 	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
+	useSignalementMapLayers(mapRef, signalementLayerVisibility, isMapReady);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -186,6 +189,7 @@ export function HomePage() {
 				layers={layers}
 				geoportailLayers={geoportailLayers}
 				vectorLayers={vectorLayers}
+				signalementLayerVisibility={signalementLayerVisibility}
 				isLoading={isLayersLoading}
 				onSetLayerVisibility={setLayerVisibility}
 			/>

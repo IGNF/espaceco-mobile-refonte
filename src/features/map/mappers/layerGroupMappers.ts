@@ -6,8 +6,6 @@ import type {
 } from '@/features/map/types/layerGroups';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
-const SIGNAL_LAYER_KEYWORDS = ['signalement', 'croquis'];
-
 function getLayerTextParts(layer: CommunityLayer): string[] {
   const tableAny = layer.table as { title?: unknown; name?: unknown } | undefined;
   const geoserviceAny = layer.geoservice as {
@@ -52,11 +50,6 @@ function getLayerVisibility(layer: CommunityLayer): boolean {
   return layer.visible ?? true;
 }
 
-export function isSignalementLayer(layer: CommunityLayer): boolean {
-  const layerText = getLayerTextParts(layer).join(' ').toLowerCase();
-  return SIGNAL_LAYER_KEYWORDS.some((keyword) => layerText.includes(keyword));
-}
-
 function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
   const layerKey = getCommunityLayerKey(layer);
 
@@ -76,9 +69,20 @@ export function mapLayersToGroupItems(layers: CommunityLayer[]): LayerGroupItem[
 export function mapLayerGroupsToSummaries(
   layerGroups: LayerGroupDetails[]
 ): LayerGroupSummary[] {
-  return layerGroups.map((group) => ({
-    id: group.id,
-    title: group.title,
-    count: group.items.length,
-  }));
+  return layerGroups.map((group) => {
+    const toggleableItems = group.items.filter(
+      (item): item is LayerGroupItem & { layerKey: string } =>
+        typeof item.layerKey === 'string' && item.layerKey.length > 0
+    );
+    const visibleItems = toggleableItems.length > 0 ? toggleableItems : group.items;
+    const visible = visibleItems.some((item) => item.visible ?? true);
+
+    return {
+      id: group.id,
+      title: group.title,
+      count: group.items.length,
+      visible,
+      canToggle: toggleableItems.length > 0,
+    };
+  });
 }

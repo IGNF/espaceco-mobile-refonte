@@ -129,7 +129,9 @@
       "signalements": "Signalements",
       "guichet": "Guichet",
       "mesCartes": "Mes cartes",
-      "geoservices": "Géoservices"
+      "geoservices": "Géoservices",
+      "showGroup": "Afficher toutes les couches du groupe",
+      "hideGroup": "Masquer toutes les couches du groupe"
     },
     "defaults": {
       "mesSignalements": "Mes signalements",

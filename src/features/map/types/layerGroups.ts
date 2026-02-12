@@ -12,6 +12,8 @@ export interface LayerGroupSummary {
   id: LayerGroupId;
   title: string;
   count: number;
+  visible: boolean;
+  canToggle: boolean;
 }
 
 export interface LayerGroupDetails {
