@@ -58,7 +58,7 @@ export function useLayers() {
 		setLayers((previous) => updateLayerVisibility(previous, layerKey, visible));
 	}, []);
 
-	const fetchLayers = useCallback(async () => {
+	const fetchLayers = useCallback(async (forceRefresh = false) => {
 		if (!activeCommunity) {
 			setLayers([]);
 			return;
@@ -68,7 +68,9 @@ export function useLayers() {
 		setError(null);
 
 		try {
-			const enrichedLayers = await fetchCommunityLayers(activeCommunity.id);
+			const enrichedLayers = await fetchCommunityLayers(activeCommunity.id, {
+				forceRefresh,
+			});
 
 			setLayers(enrichedLayers);
 		} catch (err) {
@@ -84,6 +86,10 @@ export function useLayers() {
 		fetchLayers();
 	}, [fetchLayers]);
 
+	const refetchLayers = useCallback(async () => {
+		await fetchLayers(true);
+	}, [fetchLayers]);
+
 	return {
 		layers,
 		geoportailLayers,
@@ -91,7 +97,7 @@ export function useLayers() {
 		signalementLayerVisibility,
 		isLoading,
 		error,
-		refetch: fetchLayers,
+		refetch: refetchLayers,
 		setLayerVisibility,
 	};
 }

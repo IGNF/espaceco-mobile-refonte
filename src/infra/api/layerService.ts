@@ -1,210 +1,226 @@
-import { collabApiClient } from "./collabApiClient";
-import type { CommunityLayer } from "@ign/mobile-core";
+import type { CommunityLayer } from '@ign/mobile-core';
 import {
-	mapApiGeoservice,
-	mapApiLayerToCommunityLayer,
-	mapApiTable,
-} from "@/domain/community/layerMappers";
+  mapApiGeoservice,
+  mapApiLayerToCommunityLayer,
+  mapApiTable,
+} from '@/domain/community/layerMappers';
+import {
+  getLayerCacheEntry,
+  isLayerCacheFresh,
+  saveLayerCacheEntry,
+} from '@/infra/api/layerCache';
+import { collabApiClient } from './collabApiClient';
+
+interface FetchCommunityLayersOptions {
+  forceRefresh?: boolean;
+}
+
+type LayerEnrichment =
+  | { type: 'geoservice'; data: CommunityLayer['geoservice'] }
+  | { type: 'table'; data: CommunityLayer['table'] }
+  | null;
 
 /**
- * Fetch community layers and enrich them with full geoservice data, table data, and database extents.
- * TODO: this needs to be cached
+ * Fetch community layers and enrich them with geoservice data, table data and database extents.
  */
 export async function fetchCommunityLayers(
-	communityId: number
+  communityId: number,
+  options: FetchCommunityLayersOptions = {}
 ): Promise<CommunityLayer[]> {
-	const response = await collabApiClient.layer.getAll(communityId, {
-		limit: 100,
-	});
-	const layers: CommunityLayer[] = (response.data ?? []).map(
-		(layer: unknown) => mapApiLayerToCommunityLayer(layer)
-	);
+  const { forceRefresh = false } = options;
+  const cachedEntry = await getLayerCacheEntry(communityId);
 
-	// Parallel fetch: geoservice or table data for each layer
-	const enrichmentPromises = layers.map((layer) => fetchLayerData(layer));
+  if (!forceRefresh && cachedEntry && isLayerCacheFresh(cachedEntry.cachedAt)) {
+    return cachedEntry.layers;
+  }
 
-	// Fetch database extents in parallel for table-based layers
-	const uniqueDatabaseIds = getUniqueDatabaseIds(layers);
-	const databaseExtentsMap = await fetchDatabaseExtents(uniqueDatabaseIds);
+  try {
+    const layers = await fetchAndEnrichCommunityLayers(communityId);
+    await saveLayerCacheEntry(communityId, layers);
+    return layers;
+  } catch (error) {
+    if (cachedEntry) {
+      console.warn(
+        `[Layers] Failed to refresh community ${communityId}, using cached data instead.`
+      );
+      return cachedEntry.layers;
+    }
+    throw error;
+  }
+}
 
-	// Merge fetched data back into layers
-	const enrichedData = await Promise.all(enrichmentPromises);
-	enrichLayers(layers, enrichedData, databaseExtentsMap);
+async function fetchAndEnrichCommunityLayers(
+  communityId: number
+): Promise<CommunityLayer[]> {
+  const response = await collabApiClient.layer.getAll(communityId, {
+    limit: 100,
+  });
+  const layers: CommunityLayer[] = (response.data ?? []).map((layer: unknown) =>
+    mapApiLayerToCommunityLayer(layer)
+  );
 
-	console.log(`[Layers] Fetched ${layers.length} layers for community ${communityId}:`,
-		layers.map(l => ({ id: l.id, title: l.title, geoserviceType: l.geoservice?.type, hasTable: !!l.table }))
-	);
+  const uniqueDatabaseIds = getUniqueDatabaseIds(layers);
+  const [databaseExtentsMap, enrichedData] = await Promise.all([
+    fetchDatabaseExtents(uniqueDatabaseIds),
+    Promise.all(layers.map((layer) => fetchLayerData(layer))),
+  ]);
 
-	return layers;
+  enrichLayers(layers, enrichedData, databaseExtentsMap);
+  return layers;
 }
 
 /**
  * Fetch geoservice or table data for a single layer.
  */
-async function fetchLayerData(layer: CommunityLayer): Promise<any> {
-	const geoserviceId = getLayerGeoserviceId(layer);
-	if (geoserviceId !== null) {
-		try {
-			const geoserviceResponse = await collabApiClient.geoservice.get(
-				geoserviceId
-			);
-			return { type: "geoservice", data: mapApiGeoservice(geoserviceResponse.data) };
-		} catch {
-			return null;
-		}
-	}
+async function fetchLayerData(layer: CommunityLayer): Promise<LayerEnrichment> {
+  const geoserviceId = getLayerGeoserviceId(layer);
+  if (geoserviceId !== null) {
+    try {
+      const geoserviceResponse = await collabApiClient.geoservice.get(geoserviceId);
+      return {
+        type: 'geoservice',
+        data: mapApiGeoservice(geoserviceResponse.data),
+      };
+    } catch {
+      return null;
+    }
+  }
 
-	const tableId = getLayerTableId(layer);
-	const databaseId = getLayerDatabaseId(layer);
-	if (tableId !== null && databaseId !== null) {
-		try {
-			const tableResponse = await collabApiClient.table.get(databaseId, tableId);
-			return { type: "table", data: mapApiTable(tableResponse.data) };
-		} catch {
-			return null;
-		}
-	}
+  const tableId = getLayerTableId(layer);
+  const databaseId = getLayerDatabaseId(layer);
+  if (tableId !== null && databaseId !== null) {
+    try {
+      const tableResponse = await collabApiClient.table.get(databaseId, tableId);
+      return { type: 'table', data: mapApiTable(tableResponse.data) };
+    } catch {
+      return null;
+    }
+  }
 
-	return null;
+  return null;
 }
 
 /**
  * Extract unique database IDs from layers that have table data.
  */
 function getUniqueDatabaseIds(layers: CommunityLayer[]): number[] {
-	const databaseIds = new Set<number>();
-	for (const layer of layers) {
-		const tableId = getLayerTableId(layer);
-		const databaseId = getLayerDatabaseId(layer);
-		if (tableId !== null && databaseId !== null) {
-			databaseIds.add(databaseId);
-		}
-	}
-	return Array.from(databaseIds);
+  const databaseIds = new Set<number>();
+
+  for (const layer of layers) {
+    const tableId = getLayerTableId(layer);
+    const databaseId = getLayerDatabaseId(layer);
+    if (tableId !== null && databaseId !== null) {
+      databaseIds.add(databaseId);
+    }
+  }
+
+  return Array.from(databaseIds);
 }
 
 /**
  * Fetch database extents for all database IDs.
  */
-async function fetchDatabaseExtents(databaseIds: number[]): Promise<Record<number, string>> {
-	if (databaseIds.length === 0) {
-		return {};
-	}
+async function fetchDatabaseExtents(
+  databaseIds: number[]
+): Promise<Record<number, string>> {
+  if (databaseIds.length === 0) {
+    return {};
+  }
 
-	const databasePromises = databaseIds.map(dbId =>
-		collabApiClient.database.get(dbId, { fields: "extent,id" })
-	);
-	const databaseResponses = await Promise.all(databasePromises);
+  const databasePromises = databaseIds.map((databaseId) =>
+    collabApiClient.database.get(databaseId, { fields: 'extent,id' })
+  );
+  const databaseResponses = await Promise.all(databasePromises);
 
-	const extentsMap: Record<number, string> = {};
-	for (const response of databaseResponses) {
-		const databaseId = Number(response.data?.id);
-		if (Number.isFinite(databaseId) && typeof response.data?.extent === "string") {
-			extentsMap[databaseId] = response.data.extent;
-		}
-	}
-	return extentsMap;
+  const extentsMap: Record<number, string> = {};
+  for (const response of databaseResponses) {
+    const databaseId = Number(response.data?.id);
+    if (Number.isFinite(databaseId) && typeof response.data?.extent === 'string') {
+      extentsMap[databaseId] = response.data.extent;
+    }
+  }
+
+  return extentsMap;
 }
 
 /**
  * Enrich layers with fetched geoservice/table data and database extents.
  */
 function enrichLayers(
-	layers: CommunityLayer[],
-	enrichedData: any[],
-	databaseExtentsMap: Record<number, string>
+  layers: CommunityLayer[],
+  enrichedData: LayerEnrichment[],
+  databaseExtentsMap: Record<number, string>
 ): void {
-	for (let i = 0; i < layers.length; i++) {
-		const data = enrichedData[i];
-		if (!data) continue;
+  for (let index = 0; index < layers.length; index++) {
+    const layer = layers[index];
+    const data = enrichedData[index];
+    if (!data) continue;
 
-		if (data.type === "geoservice") {
-			layers[i].geoservice = data.data;
-		} else if (data.type === "table") {
-			layers[i].table = data.data;
+    if (data.type === 'geoservice') {
+      layer.geoservice = data.data;
+      continue;
+    }
 
-			const dbId = layers[i].database;
-			if (dbId && databaseExtentsMap[dbId]) {
-				layers[i].extent = databaseExtentsMap[dbId].split(',');
-			}
-		}
-	}
+    layer.table = data.data;
+    const databaseId = getLayerDatabaseId(layer);
+    if (databaseId !== null && databaseExtentsMap[databaseId]) {
+      layer.extent = databaseExtentsMap[databaseId].split(',');
+    }
+  }
+}
+
+function getLayerReferenceId(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (value && typeof value === 'object') {
+    const id = Number((value as { id?: unknown }).id);
+    if (Number.isFinite(id)) {
+      return id;
+    }
+  }
+
+  return null;
 }
 
 function getLayerGeoserviceId(layer: CommunityLayer): number | null {
-	const geoserviceAny = layer.geoservice as unknown;
-	if (typeof geoserviceAny === "number") {
-		return geoserviceAny;
-	}
-	if (geoserviceAny && typeof geoserviceAny === "object") {
-		const id = Number((geoserviceAny as { id?: unknown }).id);
-		if (Number.isFinite(id)) {
-			return id;
-		}
-	}
-	return null;
+  return getLayerReferenceId((layer as { geoservice?: unknown }).geoservice);
 }
 
 function getLayerTableId(layer: CommunityLayer): number | null {
-	const tableAny = layer.table as unknown;
-	if (typeof tableAny === "number") {
-		return tableAny;
-	}
-	if (tableAny && typeof tableAny === "object") {
-		const id = Number((tableAny as { id?: unknown }).id);
-		if (Number.isFinite(id)) {
-			return id;
-		}
-	}
-	return null;
+  return getLayerReferenceId((layer as { table?: unknown }).table);
 }
 
 function getLayerDatabaseId(layer: CommunityLayer): number | null {
-	const databaseId = Number(layer.database);
-	return Number.isFinite(databaseId) ? databaseId : null;
+  const databaseId = Number(layer.database);
+  return Number.isFinite(databaseId) ? databaseId : null;
 }
 
 /**
  * Filter enriched layers to only keep Geoportail WMTS layers.
  */
-export function filterGeoportailLayers(
-	layers: CommunityLayer[]
-): CommunityLayer[] {
-	const filtered = layers.filter((layer) => {
-		const gs = layer.geoservice;
-		if (!gs) return false;
-		// API can return 'WMTS' even though the library type only declares 'WFS' | 'WMS'
-		const isWMTS = (gs.type as string) === "WMTS";
-		const isGeoportail =
-			gs.url?.includes("geoportail") || gs.url?.includes("data.geopf");
-		return isWMTS && isGeoportail;
-	});
+export function filterGeoportailLayers(layers: CommunityLayer[]): CommunityLayer[] {
+  return layers.filter((layer) => {
+    const geoservice = layer.geoservice;
+    if (!geoservice) return false;
 
-	console.log(`[Layers] Filtered ${filtered.length}/${layers.length} Geoportail WMTS layers:`,
-		filtered.map(l => ({ title: l.title, wmtsLayer: l.geoservice?.layers, visible: l.visible }))
-	);
+    // API can return 'WMTS' even though the library type only declares 'WFS' | 'WMS'
+    const isWmts = (geoservice.type as string) === 'WMTS';
+    const isGeoportail =
+      geoservice.url?.includes('geoportail') || geoservice.url?.includes('data.geopf');
 
-	return filtered;
+    return isWmts && isGeoportail;
+  });
 }
 
 /**
- * Filter enriched layers to only keep vector layers (WFS geoservices or table-based with WFS endpoint).
+ * Filter enriched layers to only keep vector layers
+ * (WFS geoservices or table-based with WFS endpoint).
  */
-export function filterVectorLayers(
-	layers: CommunityLayer[]
-): CommunityLayer[] {
-	const filtered = layers.filter((layer) => {
-		if (layer.geoservice?.type === "WFS") return true;
-		if (layer.table && layer.table.wfs) return true;
-		return false;
-	});
-
-	console.log(`[Layers] Filtered ${filtered.length}/${layers.length} vector layers:`,
-		filtered.map(l => ({
-			title: l.title,
-			type: l.geoservice?.type === "WFS" ? "WFS geoservice" : "table-based",
-		}))
-	);
-
-	return filtered;
+export function filterVectorLayers(layers: CommunityLayer[]): CommunityLayer[] {
+  return layers.filter((layer) => {
+    if (layer.geoservice?.type === 'WFS') return true;
+    return Boolean(layer.table?.wfs);
+  });
 }

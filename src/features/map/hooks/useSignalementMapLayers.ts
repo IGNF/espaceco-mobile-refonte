@@ -17,6 +17,7 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type { SignalementLayerVisibility } from '@/features/map/types/signalementLayers';
 import { SIGNAL_LAYER_KEYS } from '@/features/map/types/signalementLayers';
 import { collabApiClient } from '@/infra/api/collabApiClient';
+import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 
@@ -137,6 +138,7 @@ export function useSignalementMapLayers(
       client: collabApiClient,
       communityId: activeCommunity?.id,
       loadClosed: false,
+      cache: cacheStorage,
     });
 
     const myReportsSource = new VectorSource();

@@ -6,6 +6,8 @@ import {
   type CommunityLayer
 } from '@ign/mobile-core';
 import { stripQueryParams } from '@/shared/utils/query';
+import { USE_LAYER_FEATURE_CACHE_WHEN_ONLINE } from '@/shared/constants/map';
+import { cacheStorage } from '@/infra/storage/cacheStorage';
 
 /**
  * Create OpenLayers vector layers from enriched community layer data.
@@ -31,11 +33,6 @@ export function createCommunityVectorLayers(
     }
   }
 
-  console.log(
-    `[VectorLayers] Created ${olLayers.length} vector OL layers:`,
-    olLayers.map((l) => ({ name: l.get('name'), title: l.get('title') }))
-  );
-
   return olLayers;
 }
 
@@ -49,12 +46,17 @@ function createVectorLayer(
       geoservice,
       visibility: getLayerVisibility(layer),
       opacity: getLayerOpacity(layer),
-    });
+      useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
+    } as any, cacheStorage as any);
   }
 
   const wfsUrl = getTableWfsUrl(layer);
   if (layer.table && wfsUrl) {
     const table = layer.table;
+    const cacheUrl = `${layer.database ?? table.database ?? ''}:${table.name}`;
+    const online =
+      typeof navigator === 'undefined' ? true : navigator.onLine;
+
     const collabLayer = new CollabVectorLayer(
       {
         database: String(layer.database ?? table.database ?? ''),
@@ -62,12 +64,15 @@ function createVectorLayer(
         url: stripQueryParams(wfsUrl),
         client: apiClient,
         table,
+        cacheUrl,
       },
       {
         tileZoom: getTableTileZoom(layer),
         maxFeatures: 5000,
-        online: true,
-      }
+        online,
+        useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
+        cache: cacheStorage,
+      } as any
     );
 
     const visibility = getLayerVisibility(layer);

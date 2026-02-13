@@ -30,3 +30,20 @@ export const DEFAULT_GEOPORTAIL_LAYERS = [
  * Geoportail server configuration
  */
 export const GEOPORTAIL_SERVER = 'https://data.geopf.fr/wmts';
+
+/**
+ * Layer metadata cache freshness duration (in ms).
+ * Used to decide when community layers should be refreshed from API.
+ */
+export const LAYER_CACHE_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Layer metadata cache key prefix
+ */
+export const LAYER_CACHE_KEY_PREFIX = 'community-layers:';
+
+/**
+ * Enable feature-cache reads even while online for collaborative vector layers.
+ * Set to false to keep legacy offline-only cache reads.
+ */
+export const USE_LAYER_FEATURE_CACHE_WHEN_ONLINE = true;
