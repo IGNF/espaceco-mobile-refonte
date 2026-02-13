@@ -5,6 +5,7 @@ import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
+import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { SearchPanel } from "@/features/search/components/SearchPanel";
@@ -25,6 +26,7 @@ import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
 import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
+import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -37,7 +39,7 @@ export function HomePage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { user, logout } = useAuth();
-	const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady } = useMap();
+	const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady, isMapLoading } = useMap();
 	const {
 		layers,
 		geoportailLayers,
@@ -124,6 +126,12 @@ export function HomePage() {
 		logout();
 		navigate("/login");
 	};
+
+	const { showInitialLoadingOverlay } = useInitialAppLoading({
+		isMapReady,
+		isMapLoading,
+		isLayersLoading,
+	});
 
 	return (
 		<div className={styles.container}>
@@ -236,6 +244,8 @@ export function HomePage() {
 				onClose={handleCloseOverlay}
 				mode="create"
 			/>
+
+			<HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
 		</div>
 	);
 }

@@ -1,0 +1,13 @@
+.loadingOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.75);
+}
+
+.loadingOverlaySpinner {
+  padding: 0;
+}

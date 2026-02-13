@@ -36,6 +36,10 @@
       "guichet": "Guichet",
       "couches": "Couches"
     },
+    "loading": {
+      "message": "Chargement de l'application...",
+      "timeoutError": "Une erreur est survenue lors du chargement de l'application."
+    },
     "copyright": "Géoportail © IGN-France IGN"
   },
   "search": {

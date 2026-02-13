@@ -29,6 +29,7 @@ interface UseMapReturn {
 	centerOnUserLocation: () => Promise<void>;
 	isLocating: boolean;
 	isMapReady: boolean;
+	isMapLoading: boolean;
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
@@ -39,6 +40,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 	const [map, setMap] = useState<Map | null>(null);
 	const [isLocating, setIsLocating] = useState(false);
 	const [isMapReady, setIsMapReady] = useState(false);
+	const [pendingLoadCount, setPendingLoadCount] = useState(0);
 
 	const centerOnUserLocation = useCallback(async () => {
 		const map = mapRef.current;
@@ -88,6 +90,9 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 		}
 
 		let mounted = true;
+		let initializedMap: Map | null = null;
+		let loadStartHandler: (() => void) | null = null;
+		let loadEndHandler: (() => void) | null = null;
 
 		async function initMap() {
 			if (!mapElementRef.current || !mounted) return;
@@ -138,7 +143,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				}),
 			];
 
-			const initializedMap = new Map({
+			initializedMap = new Map({
 				target: mapElementRef.current,
 				layers: layers,
 				controls: defaultControls({ zoom: false, attribution: false }).extend([
@@ -154,6 +159,19 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				}),
 			});
 
+			loadStartHandler = () => {
+				if (!mounted) return;
+				setPendingLoadCount((current) => current + 1);
+			};
+
+			loadEndHandler = () => {
+				if (!mounted) return;
+				setPendingLoadCount((current) => Math.max(0, current - 1));
+			};
+
+			initializedMap.on('loadstart', loadStartHandler);
+			initializedMap.on('loadend', loadEndHandler);
+
 			mapRef.current = initializedMap;
 			setMap(initializedMap);
 			setIsMapReady(true);
@@ -163,10 +181,15 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 		return () => {
 			mounted = false;
+			if (initializedMap && loadStartHandler && loadEndHandler) {
+				initializedMap.un('loadstart', loadStartHandler);
+				initializedMap.un('loadend', loadEndHandler);
+			}
 			mapRef.current?.setTarget(undefined);
 			mapRef.current = null;
 			setMap(null);
 			setIsMapReady(false);
+			setPendingLoadCount(0);
 		};
 	}, []);
 
@@ -184,5 +207,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 		centerOnUserLocation,
 		isLocating,
 		isMapReady,
+		isMapLoading: pendingLoadCount > 0,
 	};
 }

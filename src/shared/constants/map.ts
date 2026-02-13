@@ -47,3 +47,8 @@ export const LAYER_CACHE_KEY_PREFIX = 'community-layers:';
  * Set to false to keep legacy offline-only cache reads.
  */
 export const USE_LAYER_FEATURE_CACHE_WHEN_ONLINE = true;
+
+/**
+ * Maximum duration for initial app/map loading before showing an error toast.
+ */
+export const APP_LOADING_TIMEOUT_MS = 20 * 1000;
