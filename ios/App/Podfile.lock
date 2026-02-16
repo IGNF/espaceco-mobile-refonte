@@ -81,19 +81,19 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/toast"
 
 SPEC CHECKSUMS:
-  Capacitor: 341ff7cf652ec695d1a8ebf604db448ac7b6d635
-  CapacitorApp: 3963a84197280757b84f126afd1520a85ae3b092
-  CapacitorBrowser: b7d7f05f840fe042e46f6528bb8db853e3058fb2
-  CapacitorCamera: 592acb7ab9fb748e2d8571eb03af30ec4e1ace12
-  CapacitorCommunityKeepAwake: 332bf035bbdf0b1c244fd492b35a8a06c8802111
+  Capacitor: 79e40e5e76f852965dce30406c65253fa154e24a
+  CapacitorApp: cfa0120a1f3a6f69d4d37d3041782aa5c5167d0b
+  CapacitorBrowser: 7452c73a202716d9c9035e5dbe5c5d8d07737f22
+  CapacitorCamera: 05ac5bd4499ed4b8cf5358d1b4a874b385de7b4d
+  CapacitorCommunityKeepAwake: 2dffdfe2c56a49b15bef37da2e1a7bf5a8675989
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
-  CapacitorDevice: 9a16fb36a19ff391bf75afbe3cf16f883b3b3aa0
-  CapacitorFilesystem: 2cb7c29536024668f333266a2177f8c10bbd9c98
-  CapacitorGeolocation: 8a405e707de9aff6ac9eca7f408966a370f7ca33
-  CapacitorInappbrowser: 66fc8cc3ff414c2393fe5dcfd52815cf8b6a046f
-  CapacitorNetwork: 156f8096cbbce5337eb1769fcc0d6adc4b85d3f3
-  CapacitorPreferences: 443fabe9670226200e595658a87ef0b1566716d4
-  CapacitorToast: aefebcd4cead9f44a04ace80c66a7eb4031751e7
+  CapacitorDevice: 56baac70d6493c42756676d521e99eea5cc83e71
+  CapacitorFilesystem: 608bca984a5b6b2cba85a2972ea22974a37659d8
+  CapacitorGeolocation: a8381371f7b460e6be569576557285e70f0c9d6c
+  CapacitorInappbrowser: 419fca64e69be39249eee70958ebfd0dc0ff2490
+  CapacitorNetwork: e03b0c02b4a9d76e58c19e15e9e0c200929529b9
+  CapacitorPreferences: 83f13cc19660ca9649a4769ec255be93f8c2ff68
+  CapacitorToast: 6275c84283ac9c424a20554e71b8a6263f44554c
   IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
