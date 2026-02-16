@@ -45,11 +45,18 @@ export function HomePage() {
 		geoportailLayers,
 		vectorLayers,
 		signalementLayerVisibility,
+		signalementLayerOpacity,
 		isLoading: isLayersLoading,
 		setLayerVisibility,
+		setLayerOpacity,
 	} = useLayers();
 	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
-	useSignalementMapLayers(mapRef, signalementLayerVisibility, isMapReady);
+	useSignalementMapLayers(
+		mapRef,
+		signalementLayerVisibility,
+		signalementLayerOpacity,
+		isMapReady
+	);
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -198,8 +205,10 @@ export function HomePage() {
 				geoportailLayers={geoportailLayers}
 				vectorLayers={vectorLayers}
 				signalementLayerVisibility={signalementLayerVisibility}
+				signalementLayerOpacity={signalementLayerOpacity}
 				isLoading={isLayersLoading}
 				onSetLayerVisibility={setLayerVisibility}
+				onSetLayerOpacity={setLayerOpacity}
 			/>
 
 			<OnboardingModal

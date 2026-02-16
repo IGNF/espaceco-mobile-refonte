@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import type { CommunityLayer } from '@ign/mobile-core';
-import type { LayerGroupId, LayerGroupItem } from '@/features/map/types/layerGroups';
+import type { LayerGroupId } from '@/features/map/types/layerGroups';
 import { useLayerGroups } from '@/features/map/hooks/useLayerGroups';
 import { LayersPanel } from '@/features/map/components/LayersPanel';
 import { LayerGroupDetailsPage } from '@/features/map/pages/LayerGroupDetails/LayerGroupDetailsPage';
-import type { SignalementLayerVisibility } from '@/features/map/types/signalementLayers';
+import type {
+  SignalementLayerOpacity,
+  SignalementLayerVisibility
+} from '@/features/map/types/signalementLayers';
 
 export interface LayersPanelFlowProps {
   isOpen: boolean;
@@ -13,8 +16,10 @@ export interface LayersPanelFlowProps {
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
+  signalementLayerOpacity: SignalementLayerOpacity;
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
+  onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
 }
 
 export function LayersPanelFlow({
@@ -24,14 +29,17 @@ export function LayersPanelFlow({
   geoportailLayers,
   vectorLayers,
   signalementLayerVisibility,
+  signalementLayerOpacity,
   isLoading,
   onSetLayerVisibility,
+  onSetLayerOpacity,
 }: LayersPanelFlowProps) {
   const { layerGroups, layerGroupSummaries } = useLayerGroups({
     layers,
     geoportailLayers,
     vectorLayers,
     signalementLayerVisibility,
+    signalementLayerOpacity,
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
@@ -53,16 +61,22 @@ export function LayersPanelFlow({
     const group = layerGroups.find((candidate) => candidate.id === groupId);
     if (!group) return;
 
-    const toggleableItems = group.items.filter(
-      (item): item is LayerGroupItem & { layerKey: string } =>
-        typeof item.layerKey === 'string' && item.layerKey.length > 0
-    );
-    if (toggleableItems.length === 0) return;
+    const layerKeys: string[] = [];
+    let hasVisibleLayer = false;
 
-    const hasVisibleLayer = toggleableItems.some((item) => item.visible ?? true);
+    for (const item of group.items) {
+      if (!item.layerKey) continue;
+      layerKeys.push(item.layerKey);
+      if (item.visible ?? true) {
+        hasVisibleLayer = true;
+      }
+    }
+
+    if (layerKeys.length === 0) return;
+
     const nextVisibility = !hasVisibleLayer;
-    for (const item of toggleableItems) {
-      onSetLayerVisibility(item.layerKey, nextVisibility);
+    for (const layerKey of layerKeys) {
+      onSetLayerVisibility(layerKey, nextVisibility);
     }
   };
 
@@ -91,6 +105,7 @@ export function LayersPanelFlow({
         group={selectedLayerGroup}
         isLoading={isLoading}
         onSetLayerVisibility={onSetLayerVisibility}
+        onSetLayerOpacity={onSetLayerOpacity}
       />
     </>
   );

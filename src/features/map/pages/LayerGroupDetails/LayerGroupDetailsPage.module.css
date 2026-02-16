@@ -67,6 +67,10 @@
 	flex: 1;
 }
 
+.layerSlider {
+	margin-top: 0.75rem;
+}
+
 .loading {
 	text-align: center;
 	padding: 2rem 0;

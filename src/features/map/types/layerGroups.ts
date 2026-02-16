@@ -5,6 +5,7 @@ export interface LayerGroupItem {
   title: string;
   layerKey?: string;
   visible?: boolean;
+  opacity?: number;
   description?: string;
 }
 

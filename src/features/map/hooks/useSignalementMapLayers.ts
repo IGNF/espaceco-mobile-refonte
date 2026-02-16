@@ -14,12 +14,16 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 import { Style, Stroke } from 'ol/style';
 import { ReportSource, type Report } from '@ign/mobile-core';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import type { SignalementLayerVisibility } from '@/features/map/types/signalementLayers';
+import type {
+  SignalementLayerOpacity,
+  SignalementLayerVisibility
+} from '@/features/map/types/signalementLayers';
 import { SIGNAL_LAYER_KEYS } from '@/features/map/types/signalementLayers';
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
 import { parsePointGeometry } from '@/shared/utils/geometry';
+import { clampNumber } from '@/shared/utils/number';
 
 const SIGNAL_GROUP_NAME = 'signalementGroup';
 const LAYER_NAME_MES_SIGNALEMENTS = 'MesSignalements';
@@ -121,6 +125,7 @@ function deduplicateFeatures(features: Feature[]): Feature[] {
 export function useSignalementMapLayers(
   mapRef: RefObject<OlMap | null>,
   signalementLayerVisibility: SignalementLayerVisibility,
+  signalementLayerOpacity: SignalementLayerOpacity,
   isMapReady: boolean
 ) {
   const { activeCommunity } = useCommunity();
@@ -298,6 +303,17 @@ export function useSignalementMapLayers(
         signalementLayerVisibility[SIGNAL_LAYER_KEYS.signalements],
       ],
     ]);
+    const opacityByLayerName = new Map<string, number>([
+      [
+        LAYER_NAME_MES_SIGNALEMENTS,
+        signalementLayerOpacity[SIGNAL_LAYER_KEYS.mesSignalements],
+      ],
+      [LAYER_NAME_CROQUIS, signalementLayerOpacity[SIGNAL_LAYER_KEYS.croquis]],
+      [
+        LAYER_NAME_SIGNALEMENTS,
+        signalementLayerOpacity[SIGNAL_LAYER_KEYS.signalements],
+      ],
+    ]);
 
     for (const layer of signalementGroup.getLayers().getArray()) {
       const layerName = layer.get('name');
@@ -307,10 +323,15 @@ export function useSignalementMapLayers(
       if (typeof visible === 'boolean') {
         layer.setVisible(visible);
       }
+
+      const opacity = opacityByLayerName.get(layerName);
+      if (typeof opacity === 'number' && Number.isFinite(opacity)) {
+        layer.setOpacity(clampNumber(opacity, 0, 1));
+      }
     }
 
     signalementGroup.setVisible(
       Array.from(visibilityByLayerName.values()).some(Boolean)
     );
-  }, [isMapReady, mapRef, signalementLayerVisibility]);
+  }, [isMapReady, mapRef, signalementLayerOpacity, signalementLayerVisibility]);
 }

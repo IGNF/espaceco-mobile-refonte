@@ -8,6 +8,7 @@ export type SignalementLayerKey =
   (typeof SIGNAL_LAYER_KEYS)[keyof typeof SIGNAL_LAYER_KEYS];
 
 export type SignalementLayerVisibility = Record<SignalementLayerKey, boolean>;
+export type SignalementLayerOpacity = Record<SignalementLayerKey, number>;
 
 export interface SignalementLayerDefinition {
   key: SignalementLayerKey;

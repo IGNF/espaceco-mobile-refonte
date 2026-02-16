@@ -13,6 +13,7 @@ import {
 } from '@/features/map/mappers/layerGroupMappers';
 import {
   SIGNALEMENT_LAYER_DEFINITIONS,
+  type SignalementLayerOpacity,
   type SignalementLayerVisibility,
 } from '@/features/map/types/signalementLayers';
 
@@ -21,6 +22,7 @@ interface UseLayerGroupsParams {
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
+  signalementLayerOpacity: SignalementLayerOpacity;
 }
 
 export function useLayerGroups({
@@ -28,6 +30,7 @@ export function useLayerGroups({
   geoportailLayers,
   vectorLayers,
   signalementLayerVisibility,
+  signalementLayerOpacity,
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -42,15 +45,14 @@ export function useLayerGroups({
         layerKey: layerDefinition.key,
         title: t(layerDefinition.titleKey),
         visible: signalementLayerVisibility[layerDefinition.key],
+        opacity: signalementLayerOpacity[layerDefinition.key],
       })
     );
 
     const guichetLayers = vectorLayers;
-    const mesCartesLayers = layers.filter((layer) => {
-      if (vectorLayerSet.has(layer)) return false;
-      if (geoportailLayerSet.has(layer)) return false;
-      return true;
-    });
+    const mesCartesLayers = layers.filter(
+      (layer) => !vectorLayerSet.has(layer) && !geoportailLayerSet.has(layer)
+    );
 
     const guichetTitle = activeCommunity?.name
       ? `${t('layers.groups.guichet')} ${activeCommunity.name}`
@@ -83,6 +85,7 @@ export function useLayerGroups({
     geoportailLayers,
     layers,
     signalementLayerVisibility,
+    signalementLayerOpacity,
     t,
     vectorLayers,
   ]);

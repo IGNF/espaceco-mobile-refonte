@@ -5,6 +5,7 @@ import type {
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { clampNumber } from '@/shared/utils/number';
 
 function getLayerTextParts(layer: CommunityLayer): string[] {
   const tableAny = layer.table as { title?: unknown; name?: unknown } | undefined;
@@ -50,6 +51,14 @@ function getLayerVisibility(layer: CommunityLayer): boolean {
   return layer.visible ?? true;
 }
 
+function getLayerOpacity(layer: CommunityLayer): number {
+  const opacity = layer.opacity;
+  if (typeof opacity !== 'number' || Number.isNaN(opacity)) {
+    return 1;
+  }
+  return clampNumber(opacity, 0, 1);
+}
+
 function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
   const layerKey = getCommunityLayerKey(layer);
 
@@ -58,31 +67,46 @@ function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
     title: getLayerDisplayName(layer),
     layerKey,
     visible: getLayerVisibility(layer),
+    opacity: getLayerOpacity(layer),
     description: getLayerDescription(layer),
   };
 }
 
 export function mapLayersToGroupItems(layers: CommunityLayer[]): LayerGroupItem[] {
-  return layers.map((layer) => mapLayerToGroupItem(layer));
+  return layers.map(mapLayerToGroupItem);
 }
 
 export function mapLayerGroupsToSummaries(
   layerGroups: LayerGroupDetails[]
 ): LayerGroupSummary[] {
   return layerGroups.map((group) => {
-    const toggleableItems = group.items.filter(
-      (item): item is LayerGroupItem & { layerKey: string } =>
-        typeof item.layerKey === 'string' && item.layerKey.length > 0
-    );
-    const visibleItems = toggleableItems.length > 0 ? toggleableItems : group.items;
-    const visible = visibleItems.some((item) => item.visible ?? true);
+    let hasToggleableItems = false;
+    let hasVisibleToggleableItem = false;
+    let hasVisibleItem = false;
+
+    for (const item of group.items) {
+      if (item.visible ?? true) {
+        hasVisibleItem = true;
+      }
+
+      if (!item.layerKey) {
+        continue;
+      }
+
+      hasToggleableItems = true;
+      if (item.visible ?? true) {
+        hasVisibleToggleableItem = true;
+      }
+    }
+
+    const visible = hasToggleableItems ? hasVisibleToggleableItem : hasVisibleItem;
 
     return {
       id: group.id,
       title: group.title,
       count: group.items.length,
       visible,
-      canToggle: toggleableItems.length > 0,
+      canToggle: hasToggleableItems,
     };
   });
 }

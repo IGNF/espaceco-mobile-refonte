@@ -8,28 +8,16 @@ import {
 } from '@/infra/api/layerService';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import {
+	type SignalementLayerOpacity,
 	type SignalementLayerKey,
 	type SignalementLayerVisibility,
+	SIGNAL_LAYER_KEYS,
 	DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
 } from '@/features/map/types/signalementLayers';
+import { clampNumber } from '@/shared/utils/number';
 
-function applyLayerVisibility(layer: CommunityLayer, visible: boolean): CommunityLayer {
-	return {
-		...layer,
-		visible,
-	} as CommunityLayer;
-}
-
-function updateLayerVisibility(
-	collection: CommunityLayer[],
-	layerKey: string,
-	visible: boolean
-): CommunityLayer[] {
-	return collection.map((layer) =>
-		getCommunityLayerKey(layer) === layerKey
-			? applyLayerVisibility(layer, visible)
-			: layer
-	);
+function isSignalementLayerKey(layerKey: string): layerKey is SignalementLayerKey {
+	return layerKey in DEFAULT_SIGNALEMENT_LAYER_VISIBILITY;
 }
 
 export function useLayers() {
@@ -37,6 +25,12 @@ export function useLayers() {
 	const [layers, setLayers] = useState<CommunityLayer[]>([]);
 	const [signalementLayerVisibility, setSignalementLayerVisibility] =
 		useState<SignalementLayerVisibility>(() => ({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY }));
+	const [signalementLayerOpacity, setSignalementLayerOpacity] =
+		useState<SignalementLayerOpacity>(() => ({
+			[SIGNAL_LAYER_KEYS.mesSignalements]: 1,
+			[SIGNAL_LAYER_KEYS.croquis]: 1,
+			[SIGNAL_LAYER_KEYS.signalements]: 1,
+		}));
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -44,18 +38,39 @@ export function useLayers() {
 	const vectorLayers = useMemo(() => filterVectorLayers(layers), [layers]);
 
 	const setLayerVisibility = useCallback((layerKey: string, visible: boolean) => {
-		const isSignalementLayer =
-			Object.prototype.hasOwnProperty.call(DEFAULT_SIGNALEMENT_LAYER_VISIBILITY, layerKey);
-		if (isSignalementLayer) {
-			const signalementKey = layerKey as SignalementLayerKey;
+		if (isSignalementLayerKey(layerKey)) {
 			setSignalementLayerVisibility((previous) => ({
 				...previous,
-				[signalementKey]: visible,
+				[layerKey]: visible,
 			}));
 			return;
 		}
 
-		setLayers((previous) => updateLayerVisibility(previous, layerKey, visible));
+		setLayers((previous) =>
+			previous.map((layer) =>
+				getCommunityLayerKey(layer) === layerKey ? { ...layer, visible } : layer
+			)
+		);
+	}, []);
+
+	const setLayerOpacity = useCallback((layerKey: string, opacity: number) => {
+		const nextOpacity = clampNumber(opacity, 0, 1);
+
+		if (isSignalementLayerKey(layerKey)) {
+			setSignalementLayerOpacity((previous) => ({
+				...previous,
+				[layerKey]: nextOpacity,
+			}));
+			return;
+		}
+
+		setLayers((previous) =>
+			previous.map((layer) =>
+				getCommunityLayerKey(layer) === layerKey
+					? { ...layer, opacity: nextOpacity }
+					: layer
+			)
+		);
 	}, []);
 
 	const fetchLayers = useCallback(async (forceRefresh = false) => {
@@ -95,9 +110,11 @@ export function useLayers() {
 		geoportailLayers,
 		vectorLayers,
 		signalementLayerVisibility,
+		signalementLayerOpacity,
 		isLoading,
 		error,
 		refetch: refetchLayers,
 		setLayerVisibility,
+		setLayerOpacity,
 	};
 }
