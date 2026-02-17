@@ -45,7 +45,15 @@
   "search": {
     "modeAddress": "Adresse",
     "modeParcelle": "Parcelle",
-    "close": "Fermer la recherche"
+    "close": "Fermer la recherche",
+    "addressPlaceholder": "Rechercher une adresse",
+    "parcelle": {
+      "communePlaceholder": "Choisir une commune",
+      "districtLabel": "Arrond.",
+      "prefixLabel": "Préfixe",
+      "sectionLabel": "Section",
+      "numberLabel": "Numéro"
+    }
   },
   "onboarding": {
     "welcome": {
