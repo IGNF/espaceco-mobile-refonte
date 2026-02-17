@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Toast } from '@capacitor/toast';
 import { APP_LOADING_TIMEOUT_MS } from '@/shared/constants/map';
+import { showToastSafe } from '@/shared/utils/toast';
 
 interface UseInitialAppLoadingOptions {
   isMapReady: boolean;
@@ -55,7 +55,7 @@ export function useInitialAppLoading({
 
     const timeoutId = window.setTimeout(() => {
       setHasInitialLoadingTimedOut(true);
-      void Toast.show({
+      void showToastSafe({
         text: t('home.loading.timeoutError'),
         duration: 'short',
         position: 'top',

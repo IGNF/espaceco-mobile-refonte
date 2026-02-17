@@ -181,14 +181,8 @@ export function useSignalementMapLayers(
             'EPSG:4326'
           );
           const reports = await reportSource.loadReports(extent4326);
-
-          const reportFeatures = reports.map((report) => {
-            const feature = new Feature();
-            feature.setProperties(report);
-            return feature;
-          });
           const loadedFeatures = await reportSource.loadFeatures(
-            reportFeatures,
+            reports,
             projection as Projection
           );
           const normalizedFeatures = deduplicateFeatures(

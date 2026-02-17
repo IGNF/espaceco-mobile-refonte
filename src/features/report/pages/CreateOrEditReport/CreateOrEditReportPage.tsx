@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Toast } from '@capacitor/toast';
 import type Map from 'ol/Map';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
@@ -9,6 +8,7 @@ import { Button } from '@/shared/ui/Button';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
+import { showToastSafe } from '@/shared/utils/toast';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportForm } from '@/features/report/hooks/useReportForm';
 import { ReportForm } from '@/features/report/components/NewReport/ReportForm';
@@ -137,7 +137,7 @@ export function CreateOrEditReportPage({
     resetPositionPicker();
     setTimeout(async () => {
       onClose();
-      await Toast.show({
+      await showToastSafe({
         text: t('reports.createOrEdit.actions.draftSaved'),
         duration: 'short',
         position: 'top',

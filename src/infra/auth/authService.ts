@@ -3,7 +3,6 @@ import { Browser } from '@capacitor/browser';
 import { App } from '@capacitor/app';
 import { CapacitorHttp } from '@capacitor/core';
 import { Device } from '@capacitor/device';
-import { Toast } from '@capacitor/toast';
 
 import { Storage } from '@ign/mobile-device';
 import { storageKey } from '@/shared/constants/storage';
@@ -16,6 +15,7 @@ import type { AuthResult, AuthTokens, RefreshResult, TokenExchangeResult, TokenR
 import { config } from "@/shared/config/env";
 
 import { generateCodeChallengeFromVerifier, generateCodeVerifier, getRedirectUri } from "@/shared/utils/auth";
+import { showToastSafe } from '@/shared/utils/toast';
 
 // Re-export domain types for convenience
 export type { AuthResult, RefreshResult } from "@/domain/auth/models";
@@ -298,7 +298,7 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
   // Check if refresh token is expired
   const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
   if (refreshExpiresAt && Date.now() >= parseInt(refreshExpiresAt, 10)) {
-    Toast.show({
+    void showToastSafe({
       text: i18n.t('login.sessionExpired'),
       duration: "short",
       position: "top"
