@@ -39,9 +39,41 @@
 }
 
 .positionText {
+  flex: 1;
+  min-width: 0;
   font-size: 14px;
   color: var(--color-dark);
   font-variant-numeric: tabular-nums;
+}
+
+.positionEditButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px;
+  min-width: 32px;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 999px !important;
+  background: var(--color-dark-contrast) !important;
+  flex-shrink: 0;
+}
+
+.positionEditButton:hover,
+.positionEditButton:focus-visible {
+  background: var(--color-light) !important;
+}
+
+.positionEditIcon {
+  width: 18px;
+  height: 18px;
+  color: var(--color-medium);
+}
+
+.positionEditIcon path {
+  fill: currentColor;
 }
 
 /* Attribute fields */

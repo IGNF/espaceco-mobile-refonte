@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/shared/ui/Checkbox';
+import { Button } from '@/shared/ui/Button';
 import type { UseReportFormReturn } from '@/features/report/hooks/useReportForm';
 import type { CommunityThemeAttribute } from '@/domain/community/models';
 import type { Position } from '@/platform/device/geolocation';
@@ -16,9 +17,10 @@ export interface ReportFormProps {
   form: UseReportFormReturn;
   position: Position | null;
   isLocating: boolean;
+  onEditPosition?: () => void;
 }
 
-export function ReportForm({ form, position, isLocating }: ReportFormProps) {
+export function ReportForm({ form, position, isLocating, onEditPosition }: ReportFormProps) {
   const { t } = useTranslation();
 
   const renderPositionCard = () => {
@@ -39,6 +41,18 @@ export function ReportForm({ form, position, isLocating }: ReportFormProps) {
         <div className={styles.positionCard}>
           <IconLocation className={styles.positionIcon} />
           <span className={styles.positionText}>{content}</span>
+          {onEditPosition && (
+            <Button
+              type="button"
+              color="medium"
+              variant="ghost"
+              className={styles.positionEditButton}
+              onClick={onEditPosition}
+              aria-label={t('reports.createOrEdit.form.editPosition')}
+            >
+              <IconPencil className={styles.positionEditIcon} />
+            </Button>
+          )}
         </div>
       </div>
     );

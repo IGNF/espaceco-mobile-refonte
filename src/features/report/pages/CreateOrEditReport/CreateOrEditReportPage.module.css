@@ -41,3 +41,48 @@
   gap: 12px;
   margin-top: 32px;
 }
+
+.locationPickerSheet {
+  transform: translateY(92%) !important;
+}
+
+.locationPickerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+}
+
+.locationTarget {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locationTargetIcon {
+  width: 36px;
+  height: 36px;
+  color: var(--color-primary);
+}
+
+.locationTargetIcon path {
+  fill: currentColor;
+}
+
+.validateButtonContainer {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: calc(14vh + var(--safe-bottom, 0px) + 18px);
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.validateButton {
+  width: min(320px, 100%) !important;
+  margin: 0 !important;
+}

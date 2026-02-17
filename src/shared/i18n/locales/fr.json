@@ -237,6 +237,7 @@
         "saveDraft": "Enregistrer le brouillon",
         "draftSaved": "Signalement enregistré dans les brouillons",
         "send": "Envoyer",
+        "validatePosition": "Valider la position",
         "cancel": "Annuler",
         "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé."
       },
@@ -249,6 +250,7 @@
         "position": "Position",
         "positionLocating": "Localisation en cours...",
         "positionUnavailable": "Position non disponible",
+        "editPosition": "Modifier la position",
         "photo": "Photo",
         "photoAdd": "Ajouter une photo",
         "object": "Objet",

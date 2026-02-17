@@ -109,6 +109,7 @@ export function HomePage() {
 
 	const handleNewReportStandard = () => {
 		setActiveOverlay(null);
+		setIsSearchOpen(false);
 		setTimeout(() => {
 			setActiveOverlay('/create-or-edit-report');
 		}, 300);
@@ -252,6 +253,8 @@ export function HomePage() {
 				isOpen={activeOverlay === '/create-or-edit-report'}
 				onClose={handleCloseOverlay}
 				mode="create"
+				map={map}
+				onSearchPanelVisibilityChange={setIsSearchOpen}
 			/>
 
 			<HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
