@@ -90,6 +90,148 @@
 }
 
 /* Attachment placeholders */
+.photoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1.5px solid var(--color-light-shade);
+  border-radius: 12px;
+  background: var(--color-light);
+}
+
+.photoHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.photoTitle {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.photoCountBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-medium);
+  background: var(--color-dark-contrast);
+  border: 1px solid var(--color-light-shade);
+}
+
+.photoEmptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 14px;
+  border: 1.5px dashed var(--color-light-shade);
+  border-radius: 10px;
+  background: var(--color-dark-contrast);
+}
+
+.photoEmptyIcon {
+  width: 28px;
+  height: 28px;
+  color: var(--color-medium);
+}
+
+.photoEmptyIcon path {
+  fill: currentColor;
+}
+
+.photoEmptyText {
+  font-size: 13px;
+  color: var(--color-medium);
+  text-align: center;
+}
+
+.photoAddAction {
+  align-self: center;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.photoItem {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid var(--color-light-shade);
+  background: var(--color-dark-contrast);
+}
+
+.photoPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photoFallback {
+  width: 100%;
+  height: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photoFallbackIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-medium);
+}
+
+.photoFallbackIcon path {
+  fill: currentColor;
+}
+
+.photoRemoveButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.photoRemoveButton:hover,
+.photoRemoveButton:focus-visible {
+  background: var(--color-dark-contrast);
+}
+
+.photoRemoveIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-dark);
+}
+
+.photoRemoveIcon path {
+  fill: currentColor;
+}
+
 .attachmentPlaceholder {
   display: flex;
   align-items: center;

@@ -1,13 +1,15 @@
-import { useState, useMemo, useCallback, useRef } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReportStatus } from '@ign/mobile-core';
-import type { Report } from '@ign/mobile-core';
+import { ReportStatus, type Report, type ReportPhoto } from '@ign/mobile-core';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { ReportStorageAdapter } from '@/infra/storage';
 import type { CommunityThemeConfig, CommunityThemeAttribute } from '@/domain/community/models';
 import type { AppReport } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
+import { MAX_REPORT_PHOTOS } from '@/shared/constants/report';
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
@@ -24,14 +26,19 @@ export interface UseReportFormReturn {
   currentAttributes: CommunityThemeAttribute[];
   selectedTheme: string;
   comment: string;
+  photos: ReportPhoto[];
+  photoLimit: number;
   attributeValues: Record<string, string>;
   errors: Record<string, string | undefined>;
   isDirty: boolean;
   isSaving: boolean;
+  isAddingPhoto: boolean;
   submitError: Error | null;
   setSelectedTheme: (theme: string) => void;
   setComment: (comment: string) => void;
   setAttributeValue: (name: string, value: string) => void;
+  addPhoto: () => Promise<void>;
+  removePhoto: (index: number) => void;
   validate: () => boolean;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
@@ -87,6 +94,15 @@ function buildDefaultValues(attributes: CommunityThemeAttribute[]): Record<strin
   return values;
 }
 
+function mapReportAttributesToFormValues(attributes?: Record<string, any>): Record<string, string> {
+  if (!attributes) return {};
+  return Object.fromEntries(
+    Object.entries(attributes)
+      .filter(([key]) => key !== 'themeName')
+      .map(([key, value]) => [key, String(value ?? '')])
+  );
+}
+
 const reportStorage = new ReportStorageAdapter();
 
 export function useReportForm({ mode, report, position, isOpen }: UseReportFormOptions): UseReportFormReturn {
@@ -102,60 +118,51 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
   const [selectedTheme, setSelectedThemeRaw] = useState<string>('');
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
   const [comment, setComment] = useState<string>('');
+  const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
+  const [reportId, setReportId] = useState<number>(report?.id ?? Date.now());
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [isDirty, setIsDirty] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddingPhoto, setIsAddingPhoto] = useState(false);
+
+  const resetFormState = useCallback((nextReport?: AppReport | null) => {
+    if (mode === 'edit' && nextReport) {
+      setReportId(nextReport.id);
+      setSelectedThemeRaw(nextReport.attributes?.themeName ? String(nextReport.attributes.themeName) : '');
+      setAttributeValues(mapReportAttributesToFormValues(nextReport.attributes));
+      setComment(nextReport.comment ?? '');
+      setPhotos(nextReport.photos ?? []);
+    } else {
+      setReportId(Date.now());
+      setSelectedThemeRaw('');
+      setAttributeValues({});
+      setComment('');
+      setPhotos([]);
+    }
+    setErrors({});
+    setIsDirty(false);
+  }, [mode]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const [prevReport, setPrevReport] = useState(report);
-  if (report !== prevReport) {
+  useEffect(() => {
+    if (report === prevReport) return;
     setPrevReport(report);
-    if (mode === 'edit' && report) {
-      setSelectedThemeRaw(report.attributes?.themeName ? String(report.attributes.themeName) : '');
-      const attrs = report.attributes
-        ? Object.fromEntries(
-            Object.entries(report.attributes)
-              .filter(([k]) => k !== 'themeName')
-              .map(([k, v]) => [k, String(v ?? '')])
-          )
-        : {};
-      setAttributeValues(attrs);
-      setComment(report.comment ?? '');
-    } else {
-      setSelectedThemeRaw('');
-      setAttributeValues({});
-      setComment('');
-    }
-    setErrors({});
-    setIsDirty(false);
-  }
+    resetFormState(report);
+  }, [report, prevReport, resetFormState]);
 
   // Initialize form when page opens (component stays mounted between sessions)
   const [wasOpen, setWasOpen] = useState(isOpen);
-  if (isOpen && !wasOpen) {
-    setWasOpen(true);
-    if (mode === 'edit' && report) {
-      setSelectedThemeRaw(report.attributes?.themeName ? String(report.attributes.themeName) : '');
-      const attrs = report.attributes
-        ? Object.fromEntries(
-            Object.entries(report.attributes)
-              .filter(([k]) => k !== 'themeName')
-              .map(([k, v]) => [k, String(v ?? '')])
-          )
-        : {};
-      setAttributeValues(attrs);
-      setComment(report.comment ?? '');
-    } else {
-      setSelectedThemeRaw('');
-      setAttributeValues({});
-      setComment('');
+  useEffect(() => {
+    if (isOpen && !wasOpen) {
+      setWasOpen(true);
+      resetFormState(report);
+      return;
     }
-    setErrors({});
-    setIsDirty(false);
-  }
-  if (!isOpen && wasOpen) {
-    setWasOpen(false);
-  }
+    if (!isOpen && wasOpen) {
+      setWasOpen(false);
+    }
+  }, [isOpen, wasOpen, report, resetFormState]);
 
   const currentThemeConfig = useMemo(
     () => themes.find(t => t.theme === selectedTheme),
@@ -190,6 +197,49 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
 
   const handleSetComment = useCallback((value: string) => {
     setComment(value);
+    setIsDirty(true);
+  }, []);
+
+  const addPhoto = useCallback(async () => {
+    if (isAddingPhoto) return;
+    if (photos.length >= MAX_REPORT_PHOTOS) return;
+
+    setIsAddingPhoto(true);
+    try {
+      const isWebPlatform = Capacitor.getPlatform() === 'web';
+      const capturedPhoto = await Camera.getPhoto({
+        source: isWebPlatform ? CameraSource.Photos : CameraSource.Prompt,
+        resultType: CameraResultType.DataUrl,
+        quality: 85,
+        webUseInput: true,
+      });
+
+      if (!capturedPhoto.dataUrl) return;
+      const blob = await fetch(capturedPhoto.dataUrl).then(response => response.blob());
+      const photoPath = await reportStorage.savePhotoBlob(reportId, Date.now(), blob);
+
+      setPhotos(prev => [
+        ...prev,
+        {
+          localPath: photoPath,
+          thumbnail: capturedPhoto.dataUrl ?? undefined,
+          uploaded: false,
+        },
+      ]);
+      setIsDirty(true);
+    } catch (error) {
+      // Ignore user-cancelled camera/gallery actions.
+      if (error instanceof Error && /cancel/i.test(error.message)) {
+        return;
+      }
+      console.error('Failed to add report photo', error);
+    } finally {
+      setIsAddingPhoto(false);
+    }
+  }, [isAddingPhoto, photos.length, reportId]);
+
+  const removePhoto = useCallback((index: number) => {
+    setPhotos(prev => prev.filter((_, itemIndex) => itemIndex !== index));
     setIsDirty(true);
   }, []);
 
@@ -232,7 +282,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     const lat = position?.coords.latitude ?? 0;
 
     return {
-      id: report?.id ?? Date.now(),
+      id: reportId,
       communityId: activeCommunity?.id ?? 0,
       themeId: report?.themeId ?? 0,
       geometry: `POINT(${lon} ${lat})`,
@@ -241,9 +291,9 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       status,
       createdAt: report?.createdAt ?? new Date(),
       modifiedAt: new Date(),
-      photos: report?.photos ?? [],
+      photos,
     };
-  }, [position, report, activeCommunity, comment, attributeValues, selectedTheme]);
+  }, [position, reportId, activeCommunity, report?.themeId, report?.createdAt, comment, attributeValues, selectedTheme, photos]);
 
   const { submitReport: apiSubmit, isSubmitting, error: submitError, clearError } = useSubmitReport();
 
@@ -291,14 +341,19 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     currentAttributes,
     selectedTheme,
     comment,
+    photos,
+    photoLimit: MAX_REPORT_PHOTOS,
     attributeValues,
     errors,
     isDirty,
     isSaving: isSaving || isSubmitting,
+    isAddingPhoto,
     submitError,
     setSelectedTheme,
     setComment: handleSetComment,
     setAttributeValue,
+    addPhoto,
+    removePhoto,
     validate,
     saveDraft,
     submit: submitForm,

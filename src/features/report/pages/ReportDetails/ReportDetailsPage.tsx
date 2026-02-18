@@ -8,7 +8,7 @@ import { ReportStatus, ClosedReportStatus } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
-import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
+import { ATTACHMENT_UPLOAD_FAILED_ERROR_CODE, useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -157,6 +157,10 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
     }
   };
 
+  const sendErrorKey = sendError?.message === ATTACHMENT_UPLOAD_FAILED_ERROR_CODE
+    ? 'reports.details.attachmentUploadWarning'
+    : 'reports.details.sendError'
+
   if (!report) {
     return null;
   }
@@ -290,7 +294,7 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
                 </Button>
                 {sendError && (
                   <p className={styles.permissionMessage}>
-                    {t('reports.details.sendError')}
+                    {t(sendErrorKey)}
                   </p>
                 )}
               </>

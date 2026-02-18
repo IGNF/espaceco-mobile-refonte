@@ -17,6 +17,25 @@ const REPORTS_KEY = 'REPORTS';
 const REPORT_PARAMS_KEY = 'REPORT_PARAMS';
 const PHOTOS_DIR = 'report_photos';
 
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let binary = '';
+  const chunkSize = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBlob(base64Data: string, mimeType: string): Blob {
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
+}
+
 export class ReportStorageAdapter implements IReportStorage {
   // Parameter operations
 
@@ -46,6 +65,9 @@ export class ReportStorageAdapter implements IReportStorage {
 
   async saveReport(report: Report): Promise<void> {
     const allReports = await this.getAllReports();
+    const previousPhotos = (allReports[report.id]?.photos ?? []) as ReportPhoto[];
+    await this.deleteRemovedPhotoFiles(previousPhotos, report.photos ?? []);
+
     // Serialize dates and features for storage
     const serializable = {
       ...report,
@@ -73,14 +95,7 @@ export class ReportStorageAdapter implements IReportStorage {
     if (report?.photos) {
       for (const photo of report.photos) {
         if (photo.localPath) {
-          try {
-            await FileSystem.deleteFile({
-              path: photo.localPath,
-              directory: 'DATA',
-            });
-          } catch {
-            console.log(`Photo ${photo.localPath} not found`);
-          }
+          await this.deletePhotoFile(photo.localPath);
         }
       }
     }
@@ -102,22 +117,16 @@ export class ReportStorageAdapter implements IReportStorage {
     }
 
     try {
-      const data = await FileSystem.readFile({
+      const base64Data = await FileSystem.readFile({
         path: photo.localPath,
         directory: 'DATA',
         encoding: 'base64',
       });
-      // Convert base64 string to Blob
-      const byteCharacters = atob(data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      // Try to determine MIME type from path extension
+
+      // Determine MIME type from extension as API expects image blobs.
       const ext = photo.localPath.split('.').pop()?.toLowerCase() ?? 'jpg';
       const mimeType = ext === 'png' ? 'image/png' : 'image/jpeg';
-      return new Blob([byteArray], { type: mimeType });
+      return base64ToBlob(base64Data, mimeType);
     } catch (error) {
       console.error(`Failed to read photo: ${photo.localPath}`, error);
       throw new Error(`Failed to read photo: ${photo.localPath}`);
@@ -129,6 +138,30 @@ export class ReportStorageAdapter implements IReportStorage {
   private async getAllReports(): Promise<Record<number, any>> {
     const data = await Storage.get(storageKey(REPORTS_KEY), 'object');
     return data ?? {};
+  }
+
+  private async deletePhotoFile(path: string): Promise<void> {
+    try {
+      await FileSystem.deleteFile({
+        path,
+        directory: 'DATA',
+      });
+    } catch {
+      console.log(`Photo ${path} not found`);
+    }
+  }
+
+  private async deleteRemovedPhotoFiles(previousPhotos: ReportPhoto[], nextPhotos: ReportPhoto[]): Promise<void> {
+    const currentPaths = new Set(
+      nextPhotos
+        .map(photo => photo.localPath)
+        .filter((path): path is string => typeof path === 'string')
+    );
+
+    for (const photo of previousPhotos) {
+      if (!photo.localPath || currentPaths.has(photo.localPath)) continue;
+      await this.deletePhotoFile(photo.localPath);
+    }
   }
 
   private deserializeReport(data: any): Report {
@@ -148,11 +181,13 @@ export class ReportStorageAdapter implements IReportStorage {
   async savePhotoBlob(reportId: number, photoIndex: number, blob: Blob): Promise<string> {
     const ext = blob.type === 'image/png' ? 'png' : 'jpg';
     const path = `${PHOTOS_DIR}/${reportId}_${photoIndex}.${ext}`;
+    const base64Data = await blobToBase64(blob);
 
     await FileSystem.writeFile({
       path,
-      data: blob,
+      data: base64Data,
       directory: 'DATA',
+      encoding: 'base64',
       recursive: true,
     });
 

@@ -247,7 +247,8 @@
         "send": "Envoyer",
         "validatePosition": "Valider la position",
         "cancel": "Annuler",
-        "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé."
+        "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
+        "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer."
       },
       "form": {
         "theme": "Theme",
@@ -261,6 +262,10 @@
         "editPosition": "Modifier la position",
         "photo": "Photo",
         "photoAdd": "Ajouter une photo",
+        "photoCount": "{{count}} / {{max}} photo(s)",
+        "photoEmpty": "Aucune photo ajoutée pour le moment",
+        "photoRemove": "Supprimer la photo",
+        "photoPreviewAlt": "Photo {{index}}",
         "object": "Objet",
         "objectAdd": "Ajouter un objet",
         "sketch": "Croquis",
@@ -297,6 +302,7 @@
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
       "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
+      "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
       "notAvailable": "N/A",
       "delete": {
         "dialogTitle": "Supprimer le signalement n°{{id}}",

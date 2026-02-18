@@ -9,6 +9,7 @@ import IconLocation from '@/shared/assets/icons/icon-location.svg?react';
 import IconCamera from '@/shared/assets/icons/icon-camera.svg?react';
 import IconObject from '@/shared/assets/icons/icon-object.svg?react';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
+import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import inputs from '@/shared/styles/inputs.module.css';
 import styles from './ReportForm.module.css';
@@ -210,12 +211,65 @@ export function ReportForm({ form, position, isLocating, onEditPosition }: Repor
 
       {/* Attachment placeholders */}
       <div className={styles.section}>
-        <div className={styles.attachmentPlaceholder}>
-          <IconCamera className={styles.attachmentIcon} />
-          <div className={styles.attachmentInfo}>
-            <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.photo')}</span>
-            <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.photoAdd')}</span>
+        <div className={styles.photoSection}>
+          <div className={styles.photoHeader}>
+            <div className={styles.photoTitle}>
+              <IconCamera className={styles.attachmentIcon} />
+              <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.photo')}</span>
+            </div>
+            <span className={styles.photoCountBadge}>
+              {t('reports.createOrEdit.form.photoCount', {
+                count: form.photos.length,
+                max: form.photoLimit,
+              })}
+            </span>
           </div>
+
+          {form.photos.length > 0 ? (
+            <>
+              <div className={styles.photoGrid}>
+                {form.photos.map((photo, index) => (
+                  <div className={styles.photoItem} key={photo.localPath ?? `${index}`}>
+                    {photo.thumbnail ? (
+                      <img
+                        src={photo.thumbnail}
+                        alt={t('reports.createOrEdit.form.photoPreviewAlt', { index: index + 1 })}
+                        className={styles.photoPreview}
+                      />
+                    ) : (
+                      <div className={styles.photoFallback}>
+                        <IconCamera className={styles.photoFallbackIcon} />
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.photoRemoveButton}
+                      onClick={() => form.removePhoto(index)}
+                      aria-label={t('reports.createOrEdit.form.photoRemove')}
+                    >
+                      <IconClose className={styles.photoRemoveIcon} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className={styles.photoEmptyState}>
+              <IconCamera className={styles.photoEmptyIcon} />
+              <span className={styles.photoEmptyText}>{t('reports.createOrEdit.form.photoEmpty')}</span>
+            </div>
+          )}
+          <Button
+            type="button"
+            color="primary"
+            variant="outline"
+            onClick={form.addPhoto}
+            loading={form.isAddingPhoto}
+            disabled={form.photos.length >= form.photoLimit}
+            className={styles.photoAddAction}
+          >
+            {t('reports.createOrEdit.form.photoAdd')}
+          </Button>
         </div>
 
         <div className={styles.attachmentPlaceholder}>
