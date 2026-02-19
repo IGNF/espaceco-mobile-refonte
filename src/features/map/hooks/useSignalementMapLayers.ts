@@ -15,10 +15,14 @@ import { Style, Stroke } from 'ol/style';
 import { ReportSource, type Report } from '@ign/mobile-core';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type {
+  SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility
 } from '@/features/map/types/signalementLayers';
-import { SIGNAL_LAYER_KEYS } from '@/features/map/types/signalementLayers';
+import {
+  SIGNAL_LAYER_KEYS,
+  normalizeSignalementLayerOrder,
+} from '@/features/map/types/signalementLayers';
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
@@ -29,6 +33,11 @@ const SIGNAL_GROUP_NAME = 'signalementGroup';
 const LAYER_NAME_MES_SIGNALEMENTS = 'MesSignalements';
 const LAYER_NAME_CROQUIS = 'Croquis';
 const LAYER_NAME_SIGNALEMENTS = 'Signalements';
+const LAYER_NAME_BY_SIGNALEMENT_KEY: Record<SignalementLayerKey, string> = {
+  [SIGNAL_LAYER_KEYS.mesSignalements]: LAYER_NAME_MES_SIGNALEMENTS,
+  [SIGNAL_LAYER_KEYS.croquis]: LAYER_NAME_CROQUIS,
+  [SIGNAL_LAYER_KEYS.signalements]: LAYER_NAME_SIGNALEMENTS,
+};
 
 const CROQUIS_STYLE = new Style({
   stroke: new Stroke({
@@ -126,6 +135,7 @@ export function useSignalementMapLayers(
   mapRef: RefObject<OlMap | null>,
   signalementLayerVisibility: SignalementLayerVisibility,
   signalementLayerOpacity: SignalementLayerOpacity,
+  signalementLayerOrder: SignalementLayerKey[],
   isMapReady: boolean
 ) {
   const { activeCommunity } = useCommunity();
@@ -308,6 +318,40 @@ export function useSignalementMapLayers(
         signalementLayerOpacity[SIGNAL_LAYER_KEYS.signalements],
       ],
     ]);
+    const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
+      signalementLayerOrder
+    );
+    const layersByName = new Map<string, BaseLayer>();
+
+    for (const layer of signalementGroup.getLayers().getArray()) {
+      const layerName = layer.get('name');
+      if (typeof layerName === 'string') {
+        layersByName.set(layerName, layer);
+      }
+    }
+
+    const orderedLayers: BaseLayer[] = [];
+
+    for (const layerKey of normalizedSignalementLayerOrder) {
+      const layerName = LAYER_NAME_BY_SIGNALEMENT_KEY[layerKey];
+      const layer = layersByName.get(layerName);
+
+      if (!layer) {
+        continue;
+      }
+
+      orderedLayers.push(layer);
+      layersByName.delete(layerName);
+    }
+
+    for (const layer of layersByName.values()) {
+      orderedLayers.push(layer);
+    }
+
+    signalementGroup.getLayers().clear();
+    for (const layer of orderedLayers) {
+      signalementGroup.getLayers().push(layer);
+    }
 
     for (const layer of signalementGroup.getLayers().getArray()) {
       const layerName = layer.get('name');
@@ -327,5 +371,11 @@ export function useSignalementMapLayers(
     signalementGroup.setVisible(
       Array.from(visibilityByLayerName.values()).some(Boolean)
     );
-  }, [isMapReady, mapRef, signalementLayerOpacity, signalementLayerVisibility]);
+  }, [
+    isMapReady,
+    mapRef,
+    signalementLayerOpacity,
+    signalementLayerOrder,
+    signalementLayerVisibility,
+  ]);
 }

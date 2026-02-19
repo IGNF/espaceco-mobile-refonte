@@ -21,6 +21,12 @@
 	border-radius: 10px;
 	background: white;
 	padding: 1rem;
+	transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.layerItemDragging {
+	z-index: 1;
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
 }
 
 .layerItemHeader {
@@ -58,6 +64,40 @@
 	width: 18px;
 	height: 18px;
 	color: var(--color-medium);
+}
+
+.layerDragHandle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 8px;
+	background: white;
+	cursor: grab;
+	flex-shrink: 0;
+	touch-action: none;
+}
+
+.layerDragHandle:active {
+	cursor: grabbing;
+}
+
+.layerDragHandle:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.layerDragHandleIcon {
+	width: 16px;
+	height: 16px;
+	color: var(--color-medium);
+}
+
+.layerDragHandleIcon path {
+	fill: currentColor;
 }
 
 .layerItemTitle {

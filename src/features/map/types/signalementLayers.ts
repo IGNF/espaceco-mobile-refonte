@@ -9,6 +9,9 @@ export type SignalementLayerKey =
 
 export type SignalementLayerVisibility = Record<SignalementLayerKey, boolean>;
 export type SignalementLayerOpacity = Record<SignalementLayerKey, number>;
+const SIGNAL_LAYER_KEY_SET = new Set<SignalementLayerKey>(
+  Object.values(SIGNAL_LAYER_KEYS)
+);
 
 export interface SignalementLayerDefinition {
   key: SignalementLayerKey;
@@ -35,3 +38,39 @@ export const DEFAULT_SIGNALEMENT_LAYER_VISIBILITY: SignalementLayerVisibility = 
   [SIGNAL_LAYER_KEYS.croquis]: true,
   [SIGNAL_LAYER_KEYS.signalements]: true,
 };
+
+export const DEFAULT_SIGNALEMENT_LAYER_ORDER: SignalementLayerKey[] =
+  SIGNALEMENT_LAYER_DEFINITIONS.map((layerDefinition) => layerDefinition.key);
+
+export function isSignalementLayerKey(value: unknown): value is SignalementLayerKey {
+  return typeof value === 'string' && SIGNAL_LAYER_KEY_SET.has(value as SignalementLayerKey);
+}
+
+export function normalizeSignalementLayerOrder(
+  value: unknown
+): SignalementLayerKey[] {
+  if (!Array.isArray(value)) {
+    return [...DEFAULT_SIGNALEMENT_LAYER_ORDER];
+  }
+
+  const normalizedOrder: SignalementLayerKey[] = [];
+
+  for (const rawLayerKey of value) {
+    if (
+      !isSignalementLayerKey(rawLayerKey) ||
+      normalizedOrder.includes(rawLayerKey)
+    ) {
+      continue;
+    }
+
+    normalizedOrder.push(rawLayerKey);
+  }
+
+  for (const layerKey of DEFAULT_SIGNALEMENT_LAYER_ORDER) {
+    if (!normalizedOrder.includes(layerKey)) {
+      normalizedOrder.push(layerKey);
+    }
+  }
+
+  return normalizedOrder;
+}

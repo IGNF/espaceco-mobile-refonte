@@ -4,9 +4,11 @@ import { storageKey } from '@/shared/constants/storage';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
 import type {
+  SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility,
 } from '@/features/map/types/signalementLayers';
+import { normalizeSignalementLayerOrder } from '@/features/map/types/signalementLayers';
 
 const LAYERS_CONFIGURATION_STORAGE_KEY = 'LAYERS_CONFIGURATION';
 
@@ -17,8 +19,10 @@ interface PersistedLayerState {
 
 export interface LayersConfiguration {
   layersByKey: Record<string, PersistedLayerState>;
+  layerOrder: string[];
   signalementLayerVisibility: Partial<SignalementLayerVisibility>;
   signalementLayerOpacity: Partial<SignalementLayerOpacity>;
+  signalementLayerOrder: SignalementLayerKey[];
 }
 
 export interface SaveLayersConfigurationParams {
@@ -26,6 +30,7 @@ export interface SaveLayersConfigurationParams {
   layers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
+  signalementLayerOrder: SignalementLayerKey[];
 }
 
 /**
@@ -62,6 +67,33 @@ function toLayerStateMap(value: unknown): Record<string, PersistedLayerState> {
   }
 
   return result;
+}
+
+/**
+ * Normalize raw persisted layer order values loaded from storage.
+ * @param value Unknown value read from storage.
+ * @returns Safe ordered list of layer keys.
+ */
+function toLayerOrder(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const orderedLayerKeys: string[] = [];
+
+  for (const rawLayerKey of value) {
+    if (typeof rawLayerKey !== 'string' || rawLayerKey.length === 0) {
+      continue;
+    }
+
+    if (orderedLayerKeys.includes(rawLayerKey)) {
+      continue;
+    }
+
+    orderedLayerKeys.push(rawLayerKey);
+  }
+
+  return orderedLayerKeys;
 }
 
 /**
@@ -109,6 +141,15 @@ function toSignalementOpacity(
 }
 
 /**
+ * Normalize raw signalement layer order loaded from storage.
+ * @param value Unknown value read from storage.
+ * @returns Safe signalement layer order with fallback values.
+ */
+function toSignalementLayerOrder(value: unknown): SignalementLayerKey[] {
+  return normalizeSignalementLayerOrder(value);
+}
+
+/**
  * Load one community layer configuration from storage.
  * @param communityId Active community identifier.
  * @returns Sanitized configuration or null when not found/unreadable.
@@ -130,10 +171,12 @@ export async function loadLayersConfiguration(
 
     return {
       layersByKey: toLayerStateMap(payload.layersByKey),
+      layerOrder: toLayerOrder(payload.layerOrder),
       signalementLayerVisibility: toSignalementVisibility(
         payload.signalementLayerVisibility
       ),
       signalementLayerOpacity: toSignalementOpacity(payload.signalementLayerOpacity),
+      signalementLayerOrder: toSignalementLayerOrder(payload.signalementLayerOrder),
     };
   } catch (error) {
     console.error('[Layers][Config] Failed to load layers configuration', error);
@@ -151,11 +194,15 @@ export async function saveLayersConfiguration({
   layers,
   signalementLayerVisibility,
   signalementLayerOpacity,
+  signalementLayerOrder,
 }: SaveLayersConfigurationParams): Promise<void> {
+  const layerOrder: string[] = [];
   const layersByKey: Record<string, PersistedLayerState> = {};
 
   for (const layer of layers) {
-    layersByKey[getCommunityLayerKey(layer)] = {
+    const layerKey = getCommunityLayerKey(layer);
+    layerOrder.push(layerKey);
+    layersByKey[layerKey] = {
       visible: layer.visible ?? true,
       opacity: clampNumber(layer.opacity ?? 1, 0, 1),
     };
@@ -163,8 +210,10 @@ export async function saveLayersConfiguration({
 
   const payload: LayersConfiguration = {
     layersByKey,
+    layerOrder,
     signalementLayerVisibility,
     signalementLayerOpacity,
+    signalementLayerOrder: normalizeSignalementLayerOrder(signalementLayerOrder),
   };
 
   try {

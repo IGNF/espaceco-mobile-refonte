@@ -1,13 +1,13 @@
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { createPortal } from "react-dom";
-import type { LayerGroupId, LayerGroupSummary } from "@/features/map/types/layerGroups";
-import styles from "./LayersPanel.module.css";
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
+import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
+import styles from './LayersPanel.module.css';
 
-import IconClose from "@/shared/assets/icons/icon-close.svg?react";
-import IconEye from "@/shared/assets/icons/icon-eye.svg?react";
-import IconEyeOff from "@/shared/assets/icons/icon-access.svg?react";
-import IconArrowRight from "@/shared/assets/icons/icon-angle-right.svg?react";
+import IconClose from '@/shared/assets/icons/icon-close.svg?react';
+import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
+import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
+import IconArrowRight from '@/shared/assets/icons/icon-angle-right.svg?react';
 
 const ANIMATION_DURATION = 300;
 
@@ -55,42 +55,42 @@ export function LayersPanel({
 
 	if (!shouldRender) return null;
 
-	const overlayClasses = [styles.overlay, isVisible ? styles.overlayVisible : ""]
+	const overlayClasses = [styles.overlay, isVisible ? styles.overlayVisible : '']
 		.filter(Boolean)
-		.join(" ");
+		.join(' ');
 
-	const panelClasses = [styles.panel, isVisible ? styles.panelVisible : ""]
+	const panelClasses = [styles.panel, isVisible ? styles.panelVisible : '']
 		.filter(Boolean)
-		.join(" ");
+		.join(' ');
 
 	const content = (
 		<>
 			<div className={overlayClasses} onClick={onClose} />
 			<div className={panelClasses}>
 				<div className={styles.header}>
-					<h2 className={styles.title}>{t("layers.title")}</h2>
-					<button className={styles.closeButton} onClick={onClose} aria-label="Close">
+					<h2 className={styles.title}>{t('layers.title')}</h2>
+					<button className={styles.closeButton} onClick={onClose} aria-label='Close'>
 						<IconClose className={styles.closeIcon} />
 					</button>
 				</div>
 				<div className={styles.content}>
 					{isLoading ? (
-						<p className={styles.loading}>{t("layers.loading")}</p>
+						<p className={styles.loading}>{t('layers.loading')}</p>
 					) : groups.length === 0 ? (
-						<p className={styles.empty}>{t("layers.empty")}</p>
+						<p className={styles.empty}>{t('layers.empty')}</p>
 					) : (
 						<ul className={styles.groupList}>
 							{groups.map((group) => (
 								<li key={group.id} className={styles.groupItem}>
 									<button
-										type="button"
+										type='button'
 										className={styles.groupVisibilityButton}
 										onClick={() => onToggleGroupVisibility(group.id)}
 										disabled={!group.canToggle}
 										aria-label={
 											group.visible
-												? t("layers.groups.hideGroup")
-												: t("layers.groups.showGroup")
+												? t('layers.groups.hideGroup')
+												: t('layers.groups.showGroup')
 										}
 									>
 										{group.visible ? (
@@ -100,7 +100,7 @@ export function LayersPanel({
 										)}
 									</button>
 									<button
-										type="button"
+										type='button'
 										className={styles.groupButton}
 										onClick={() => onOpenGroup(group.id)}
 										aria-label={group.title}

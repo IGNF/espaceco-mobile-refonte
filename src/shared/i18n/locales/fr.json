@@ -157,7 +157,8 @@
       "showLayer": "Afficher la couche",
       "hideLayer": "Masquer la couche",
       "layerInfo": "Informations sur la couche",
-      "layerOpacity": "Opacité de la couche"
+      "layerOpacity": "Opacité de la couche",
+      "reorderLayer": "Maintenir puis glisser pour réordonner la couche"
     },
     "info": {
       "untitled": "Couche sans nom",

@@ -5,6 +5,7 @@ import { useLayerGroups } from '@/features/map/hooks/useLayerGroups';
 import { LayersPanel } from '@/features/map/components/LayersPanel';
 import { LayerGroupDetailsPage } from '@/features/map/pages/LayerGroupDetails/LayerGroupDetailsPage';
 import type {
+  SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility
 } from '@/features/map/types/signalementLayers';
@@ -17,9 +18,11 @@ export interface LayersPanelFlowProps {
   vectorLayers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
+  signalementLayerOrder: SignalementLayerKey[];
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
+  onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
 }
 
 export function LayersPanelFlow({
@@ -30,9 +33,11 @@ export function LayersPanelFlow({
   vectorLayers,
   signalementLayerVisibility,
   signalementLayerOpacity,
+  signalementLayerOrder,
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
+  onSetGroupLayerOrder,
 }: LayersPanelFlowProps) {
   const { layerGroups, layerGroupSummaries } = useLayerGroups({
     layers,
@@ -40,6 +45,7 @@ export function LayersPanelFlow({
     vectorLayers,
     signalementLayerVisibility,
     signalementLayerOpacity,
+    signalementLayerOrder,
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
@@ -106,6 +112,7 @@ export function LayersPanelFlow({
         isLoading={isLoading}
         onSetLayerVisibility={onSetLayerVisibility}
         onSetLayerOpacity={onSetLayerOpacity}
+        onSetGroupLayerOrder={onSetGroupLayerOrder}
       />
     </>
   );

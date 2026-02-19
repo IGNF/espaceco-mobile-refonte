@@ -13,8 +13,10 @@ import {
 } from '@/features/map/mappers/layerGroupMappers';
 import {
   SIGNALEMENT_LAYER_DEFINITIONS,
+  type SignalementLayerKey,
   type SignalementLayerOpacity,
   type SignalementLayerVisibility,
+  normalizeSignalementLayerOrder,
 } from '@/features/map/types/signalementLayers';
 
 interface UseLayerGroupsParams {
@@ -23,6 +25,7 @@ interface UseLayerGroupsParams {
   vectorLayers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
+  signalementLayerOrder: SignalementLayerKey[];
 }
 
 export function useLayerGroups({
@@ -31,6 +34,7 @@ export function useLayerGroups({
   vectorLayers,
   signalementLayerVisibility,
   signalementLayerOpacity,
+  signalementLayerOrder,
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -38,15 +42,28 @@ export function useLayerGroups({
   const layerGroups = useMemo<LayerGroupDetails[]>(() => {
     const vectorLayerSet = new Set(vectorLayers);
     const geoportailLayerSet = new Set(geoportailLayers);
+    const signalementDefinitionsByKey = new Map(
+      SIGNALEMENT_LAYER_DEFINITIONS.map((layerDefinition) => [
+        layerDefinition.key,
+        layerDefinition,
+      ])
+    );
+    const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
+      signalementLayerOrder
+    );
 
-    const signalementItems: LayerGroupItem[] = SIGNALEMENT_LAYER_DEFINITIONS.map(
-      (layerDefinition) => ({
-        id: layerDefinition.key,
-        layerKey: layerDefinition.key,
-        title: t(layerDefinition.titleKey),
-        visible: signalementLayerVisibility[layerDefinition.key],
-        opacity: signalementLayerOpacity[layerDefinition.key],
-      })
+    const signalementItems: LayerGroupItem[] = normalizedSignalementLayerOrder.map(
+      (layerKey) => {
+        const layerDefinition = signalementDefinitionsByKey.get(layerKey);
+
+        return {
+          id: layerKey,
+          layerKey,
+          title: layerDefinition ? t(layerDefinition.titleKey) : layerKey,
+          visible: signalementLayerVisibility[layerKey],
+          opacity: signalementLayerOpacity[layerKey],
+        };
+      }
     );
 
     const guichetLayers = vectorLayers;
@@ -85,6 +102,7 @@ export function useLayerGroups({
     geoportailLayers,
     layers,
     signalementLayerVisibility,
+    signalementLayerOrder,
     signalementLayerOpacity,
     t,
     vectorLayers,
