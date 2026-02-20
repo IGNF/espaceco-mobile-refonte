@@ -1,10 +1,5 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { DragDropProvider } from '@dnd-kit/react';
 import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -14,25 +9,17 @@ import type {
   LayerGroupItem,
 } from '@/features/map/types/layerGroups';
 import { Alert } from '@/shared/ui/Alert/Alert';
-import { Slider } from '@/shared/ui/Slider';
 import { clampNumber } from '@/shared/utils/number';
 import {
   areOrdersEqual,
   moveStringKey,
   orderItemsByStringKey,
 } from '@/features/map/utils/order';
+import { LayerGroupDetailsSortableItem } from '@/features/map/components/LayerGroupDetailsSortableItem';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './LayerGroupDetailsPage.module.css';
-
-import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
-import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
-import IconInfo from '@/shared/assets/icons/icon-info.svg?react';
-import IconDragAndDrop from '@/shared/assets/icons/icon-drag\'n-drop.svg?react';
-
-const LONG_PRESS_DURATION = 300;
-const MOVE_CANCEL_THRESHOLD = 8;
 
 interface LayerDraftState {
   visible: boolean;
@@ -40,19 +27,6 @@ interface LayerDraftState {
 }
 
 type LayerDraftByKey = Record<string, LayerDraftState>;
-
-interface PendingDragState {
-  pointerId: number;
-  itemId: string;
-  startX: number;
-  startY: number;
-}
-
-interface ActiveDragState {
-  pointerId: number;
-  itemId: string;
-  startY: number;
-}
 
 function getLayerKeys(items: LayerGroupItem[]): string[] {
   const layerKeys: string[] = [];
@@ -97,37 +71,20 @@ export function LayerGroupDetailsPage({
   const [selectedItem, setSelectedItem] = useState<LayerGroupItem | null>(null);
   const [layerDraftByKey, setLayerDraftByKey] = useState<LayerDraftByKey>({});
   const [itemOrder, setItemOrder] = useState<string[]>([]);
-  const [draggingItemId, setDraggingItemId] = useState<string | null>(null);
-  const [dragOffsetY, setDragOffsetY] = useState(0);
-
-  const itemRefs = useRef<Record<string, HTMLLIElement | null>>({});
-  const pendingDragRef = useRef<PendingDragState | null>(null);
-  const activeDragRef = useRef<ActiveDragState | null>(null);
-  const holdTimerRef = useRef<number | null>(null);
 
   const infoDescription =
     typeof selectedItem?.description === 'string' && selectedItem.description.trim().length > 0
       ? selectedItem.description
       : t('layers.info.noDescription');
+  const showLayerLabel = t('layers.groupDetails.showLayer');
+  const hideLayerLabel = t('layers.groupDetails.hideLayer');
+  const layerInfoLabel = t('layers.groupDetails.layerInfo');
+  const layerOpacityLabel = t('layers.groupDetails.layerOpacity');
+  const reorderLayerLabel = t('layers.groupDetails.reorderLayer');
 
   const orderedItems = group
     ? orderItemsByStringKey(group.items, (item) => item.id, itemOrder)
     : [];
-
-  const clearHoldTimer = useCallback(() => {
-    if (holdTimerRef.current === null) return;
-
-    window.clearTimeout(holdTimerRef.current);
-    holdTimerRef.current = null;
-  }, []);
-
-  const clearDraggingState = useCallback(() => {
-    clearHoldTimer();
-    pendingDragRef.current = null;
-    activeDragRef.current = null;
-    setDraggingItemId(null);
-    setDragOffsetY(0);
-  }, [clearHoldTimer]);
 
   const getLayerDraftState = (item: LayerGroupItem): LayerDraftState => {
     if (!item.layerKey) {
@@ -135,37 +92,6 @@ export function LayerGroupDetailsPage({
     }
 
     return layerDraftByKey[item.layerKey] ?? getInitialLayerDraftState(item);
-  };
-
-  const findTargetIndex = (
-    itemId: string,
-    clientY: number,
-    currentItems: LayerGroupItem[]
-  ): number => {
-    let targetIndex = currentItems.length - 1;
-
-    for (let index = 0; index < currentItems.length; index += 1) {
-      const candidate = currentItems[index];
-
-      if (candidate.id === itemId) {
-        continue;
-      }
-
-      const item = itemRefs.current[candidate.id];
-      if (!item) {
-        continue;
-      }
-
-      const rect = item.getBoundingClientRect();
-      const midpoint = rect.top + rect.height / 2;
-
-      if (clientY < midpoint) {
-        targetIndex = index;
-        break;
-      }
-    }
-
-    return targetIndex;
   };
 
   const applyDraftChanges = () => {
@@ -213,7 +139,6 @@ export function LayerGroupDetailsPage({
   const handleClose = () => {
     applyDraftChanges();
     applyLayerOrderChanges();
-    clearDraggingState();
     setLayerDraftByKey({});
     setSelectedItem(null);
     onClose();
@@ -251,107 +176,31 @@ export function LayerGroupDetailsPage({
     }));
   };
 
-  const handleDragHandlePointerDown = (
-    item: LayerGroupItem,
-    event: ReactPointerEvent<HTMLButtonElement>
+  const reorderFromIds = useCallback((
+    sourceId: string | number | null | undefined,
+    targetId: string | number | null | undefined
   ) => {
-    if (!onSetGroupLayerOrder || !item.layerKey || !event.isPrimary) {
+    if (!onSetGroupLayerOrder || sourceId == null || targetId == null) {
       return;
     }
-
-    if (event.pointerType === 'mouse' && event.button !== 0) {
-      return;
-    }
-
-    const pointerId = event.pointerId;
-
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(pointerId);
-
-    clearHoldTimer();
-    pendingDragRef.current = {
-      pointerId,
-      itemId: item.id,
-      startX: event.clientX,
-      startY: event.clientY,
-    };
-
-    holdTimerRef.current = window.setTimeout(() => {
-      const pendingDrag = pendingDragRef.current;
-
-      if (
-        !pendingDrag ||
-        pendingDrag.pointerId !== pointerId ||
-        pendingDrag.itemId !== item.id
-      ) {
-        return;
-      }
-
-      pendingDragRef.current = null;
-      activeDragRef.current = {
-        pointerId,
-        itemId: item.id,
-        startY: pendingDrag.startY,
-      };
-
-      const currentOrder = orderedItems.map((orderedItem) => orderedItem.id);
-      setItemOrder(currentOrder);
-      setDraggingItemId(item.id);
-      setDragOffsetY(0);
-    }, LONG_PRESS_DURATION);
-  };
-
-  const handleDragHandlePointerMove = (
-    event: ReactPointerEvent<HTMLButtonElement>
-  ) => {
-    const pendingDrag = pendingDragRef.current;
-    if (pendingDrag && pendingDrag.pointerId === event.pointerId) {
-      const deltaX = event.clientX - pendingDrag.startX;
-      const deltaY = event.clientY - pendingDrag.startY;
-
-      if (Math.hypot(deltaX, deltaY) > MOVE_CANCEL_THRESHOLD) {
-        clearHoldTimer();
-        pendingDragRef.current = null;
-      }
-
-      return;
-    }
-
-    const activeDrag = activeDragRef.current;
-    if (!activeDrag || activeDrag.pointerId !== event.pointerId || !group) {
-      return;
-    }
-
-    event.preventDefault();
-    setDragOffsetY(event.clientY - activeDrag.startY);
 
     setItemOrder((currentItemOrder) => {
-      const currentItems = orderItemsByStringKey(
-        group.items,
-        (item) => item.id,
-        currentItemOrder
-      );
-      const targetIndex = findTargetIndex(activeDrag.itemId, event.clientY, currentItems);
-      return moveStringKey(currentItemOrder, activeDrag.itemId, targetIndex);
+      const sourceLayerId = String(sourceId);
+      const sourceIndex = currentItemOrder.indexOf(sourceLayerId);
+      if (sourceIndex < 0) {
+        return currentItemOrder;
+      }
+
+      const targetLayerId = String(targetId);
+      const targetIndex = currentItemOrder.indexOf(targetLayerId);
+
+      if (targetIndex < 0 || sourceIndex === targetIndex) {
+        return currentItemOrder;
+      }
+
+      return moveStringKey(currentItemOrder, sourceLayerId, targetIndex);
     });
-  };
-
-  const handleDragHandlePointerEnd = (
-    event: ReactPointerEvent<HTMLButtonElement>
-  ) => {
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-
-    const isPendingPointer = pendingDragRef.current?.pointerId === event.pointerId;
-    const isActivePointer = activeDragRef.current?.pointerId === event.pointerId;
-
-    if (!isPendingPointer && !isActivePointer) {
-      return;
-    }
-
-    clearDraggingState();
-  };
+  }, [onSetGroupLayerOrder]);
 
   useEffect(() => {
     const nextItemOrder = group?.items.map((item) => item.id) ?? [];
@@ -368,26 +217,6 @@ export function LayerGroupDetailsPage({
       window.clearTimeout(timer);
     };
   }, [group]);
-
-  useEffect(() => {
-    if (isOpen) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      clearDraggingState();
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [clearDraggingState, isOpen]);
-
-  useEffect(() => {
-    return () => {
-      clearHoldTimer();
-    };
-  }, [clearHoldTimer]);
 
   return (
     <>
@@ -410,80 +239,41 @@ export function LayerGroupDetailsPage({
           ) : !group || orderedItems.length === 0 ? (
             <p className={styles.empty}>{t('layers.groupDetails.empty')}</p>
           ) : (
-            <ul className={styles.layerList}>
-              {orderedItems.map((item) => {
-                const draftState = getLayerDraftState(item);
-                const isDragging = draggingItemId === item.id;
-                const layerItemClasses = [
-                  styles.layerItem,
-                  isDragging ? styles.layerItemDragging : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ');
+            <DragDropProvider
+              onDragOver={(event) =>
+                reorderFromIds(event.operation.source?.id, event.operation.target?.id)
+              }
+              onDragEnd={(event) =>
+                reorderFromIds(event.operation.source?.id, event.operation.target?.id)
+              }
+            >
+              <ul className={styles.layerList}>
+                {orderedItems.map((item, index) => {
+                  const draftState = getLayerDraftState(item);
+                  const canReorder = Boolean(item.layerKey && onSetGroupLayerOrder);
 
-                return (
-                  <li
-                    key={item.id}
-                    className={layerItemClasses}
-                    style={isDragging ? { transform: `translateY(${dragOffsetY}px)` } : undefined}
-                    ref={(element) => {
-                      itemRefs.current[item.id] = element;
-                    }}
-                  >
-                    <div className={styles.layerItemHeader}>
-                      <button
-                        type='button'
-                        className={styles.layerActionButton}
-                        onClick={() => handleToggleVisibility(item)}
-                        disabled={!item.layerKey}
-                        aria-label={
-                          draftState.visible
-                            ? t('layers.groupDetails.hideLayer')
-                            : t('layers.groupDetails.showLayer')
-                        }
-                      >
-                        {draftState.visible ? (
-                          <IconEye className={styles.layerItemIcon} />
-                        ) : (
-                          <IconEyeOff className={styles.layerItemIcon} />
-                        )}
-                      </button>
-                      <span className={styles.layerItemTitle}>{item.title}</span>
-                      <button
-                        type='button'
-                        className={styles.layerActionButton}
-                        onClick={() => setSelectedItem(item)}
-                        aria-label={t('layers.groupDetails.layerInfo')}
-                      >
-                        <IconInfo className={styles.layerActionIcon} />
-                      </button>
-                      <button
-                        type='button'
-                        className={styles.layerDragHandle}
-                        onPointerDown={(event) => handleDragHandlePointerDown(item, event)}
-                        onPointerMove={handleDragHandlePointerMove}
-                        onPointerUp={handleDragHandlePointerEnd}
-                        onPointerCancel={handleDragHandlePointerEnd}
-                        aria-label={`${t('layers.groupDetails.reorderLayer')}: ${item.title}`}
-                        disabled={!item.layerKey || !onSetGroupLayerOrder}
-                      >
-                        <IconDragAndDrop className={styles.layerDragHandleIcon} />
-                      </button>
-                    </div>
-                    <Slider
-                      value={draftState.opacity}
-                      min={0}
-                      max={1}
-                      step={0.01}
-                      disabled={!item.layerKey}
-                      className={styles.layerSlider}
-                      ariaLabel={t('layers.groupDetails.layerOpacity')}
-                      onChange={(opacity) => handleSetOpacity(item, opacity)}
+                  return (
+                    <LayerGroupDetailsSortableItem
+                      key={item.id}
+                      item={item}
+                      index={index}
+                      groupId={group.id}
+                      canReorder={canReorder}
+                      visible={draftState.visible}
+                      opacity={draftState.opacity}
+                      showLayerLabel={showLayerLabel}
+                      hideLayerLabel={hideLayerLabel}
+                      layerInfoLabel={layerInfoLabel}
+                      layerOpacityLabel={layerOpacityLabel}
+                      reorderLayerLabel={`${reorderLayerLabel}: ${item.title}`}
+                      onToggleVisibility={() => handleToggleVisibility(item)}
+                      onShowInfo={() => setSelectedItem(item)}
+                      onSetOpacity={(opacity) => handleSetOpacity(item, opacity)}
                     />
-                  </li>
-                );
-              })}
-            </ul>
+                  );
+                })}
+              </ul>
+            </DragDropProvider>
           )}
         </main>
       </SlideUpPage>

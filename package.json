@@ -29,6 +29,7 @@
     "@capacitor/network": "^8.0.0",
     "@capacitor/preferences": "^8.0.0",
     "@capacitor/toast": "^8.0.0",
+    "@dnd-kit/react": "^0.3.2",
     "@ign/mobile-core": "git+ssh://git@github.com/IGNF/mobile-core.git#main",
     "@ign/mobile-device": "git+ssh://git@github.com/IGNF/mobile-device.git#main",
     "@ionic/pwa-elements": "^3.3.0",

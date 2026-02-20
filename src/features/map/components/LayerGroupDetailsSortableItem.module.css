@@ -1,0 +1,100 @@
+.layerItem {
+	border: 1px solid var(--color-light-tint);
+	border-radius: 10px;
+	background: white;
+	padding: 1rem;
+	transition: box-shadow 0.15s ease-out;
+	-webkit-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+.layerItemDragging {
+	z-index: 1;
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.14);
+}
+
+.layerItemHeader {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.layerActionButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	padding: 0;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	flex-shrink: 0;
+}
+
+.layerActionButton:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.layerItemIcon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-medium);
+	flex-shrink: 0;
+}
+
+.layerActionIcon {
+	width: 18px;
+	height: 18px;
+	color: var(--color-medium);
+}
+
+.layerDragHandle {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	padding: 0;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 8px;
+	background: white;
+	cursor: grab;
+	flex-shrink: 0;
+	touch-action: none;
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.layerDragHandle:active {
+	cursor: grabbing;
+}
+
+.layerDragHandle:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.layerDragHandleIcon {
+	width: 16px;
+	height: 16px;
+	color: var(--color-medium);
+}
+
+.layerDragHandleIcon path {
+	fill: currentColor;
+}
+
+.layerItemTitle {
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--color-dark);
+	flex: 1;
+}
+
+.layerSlider {
+	margin-top: 0.75rem;
+}
