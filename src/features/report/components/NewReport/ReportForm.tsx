@@ -1,9 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import { Checkbox } from '@/shared/ui/Checkbox';
 import { Button } from '@/shared/ui/Button';
+import { AttachmentSection } from '@/features/report/components/NewReport/AttachmentSection';
 import type { UseReportFormReturn } from '@/features/report/hooks/useReportForm';
 import type { CommunityThemeAttribute } from '@/domain/community/models';
 import type { Position } from '@/platform/device/geolocation';
+import {
+  getReportObjectKey,
+  getReportObjectLabel,
+  getReportObjectLayerTitle,
+} from '@/features/report/utils/reportObjects';
 
 import IconLocation from '@/shared/assets/icons/icon-location.svg?react';
 import IconCamera from '@/shared/assets/icons/icon-camera.svg?react';
@@ -13,15 +19,25 @@ import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import inputs from '@/shared/styles/inputs.module.css';
 import styles from './ReportForm.module.css';
+import attachmentStyles from './AttachmentSection.module.css';
 
 export interface ReportFormProps {
   form: UseReportFormReturn;
   position: Position | null;
   isLocating: boolean;
   onEditPosition?: () => void;
+  onAddObject?: () => void;
+  isPickingObject?: boolean;
 }
 
-export function ReportForm({ form, position, isLocating, onEditPosition }: ReportFormProps) {
+export function ReportForm({
+  form,
+  position,
+  isLocating,
+  onEditPosition,
+  onAddObject,
+  isPickingObject = false,
+}: ReportFormProps) {
   const { t } = useTranslation();
 
   const renderPositionCard = () => {
@@ -158,6 +174,59 @@ export function ReportForm({ form, position, isLocating, onEditPosition }: Repor
     }
   };
 
+  const renderObjectCard = () => {
+    const objectAction = onAddObject
+      ? {
+        label: isPickingObject
+          ? t('reports.createOrEdit.form.objectPicking')
+          : t('reports.createOrEdit.form.objectAdd'),
+        onClick: onAddObject,
+      }
+      : undefined;
+
+    return (
+      <AttachmentSection
+        Icon={IconObject}
+        label={t('reports.createOrEdit.form.object')}
+        badge={t('reports.createOrEdit.form.objectCount', { count: form.objects.length })}
+        hasContent={form.objects.length > 0}
+        emptyText={t('reports.createOrEdit.form.objectEmpty')}
+        action={objectAction}
+      >
+        {form.objects.length > 0 && (
+          <div className={styles.objectList}>
+            {form.objects.map((feature, index) => {
+              const objectKey = getReportObjectKey(feature) ?? `object-${index}`;
+              const label =
+                getReportObjectLabel(feature) ??
+                t('reports.createOrEdit.form.objectDefaultName');
+              const layerTitle =
+                getReportObjectLayerTitle(feature) ??
+                t('reports.createOrEdit.form.objectLayerUnknown');
+
+              return (
+                <div key={objectKey} className={styles.objectItem}>
+                  <div className={styles.objectItemInfo}>
+                    <span className={styles.objectItemLabel}>{label}</span>
+                    <span className={styles.objectItemLayer}>{layerTitle}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.objectRemoveButton}
+                    onClick={() => form.removeObject(index)}
+                    aria-label={t('reports.createOrEdit.form.objectRemove')}
+                  >
+                    <IconClose className={styles.objectRemoveIcon} />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </AttachmentSection>
+    );
+  };
+
   return (
     <div className={styles.form}>
       {/* Position */}
@@ -211,21 +280,23 @@ export function ReportForm({ form, position, isLocating, onEditPosition }: Repor
 
       {/* Attachment placeholders */}
       <div className={styles.section}>
-        <div className={styles.photoSection}>
-          <div className={styles.photoHeader}>
-            <div className={styles.photoTitle}>
-              <IconCamera className={styles.attachmentIcon} />
-              <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.photo')}</span>
-            </div>
-            <span className={styles.photoCountBadge}>
-              {t('reports.createOrEdit.form.photoCount', {
-                count: form.photos.length,
-                max: form.photoLimit,
-              })}
-            </span>
-          </div>
-
-          {form.photos.length > 0 ? (
+        <AttachmentSection
+          Icon={IconCamera}
+          label={t('reports.createOrEdit.form.photo')}
+          badge={t('reports.createOrEdit.form.photoCount', {
+            count: form.photos.length,
+            max: form.photoLimit,
+          })}
+          hasContent={form.photos.length > 0}
+          emptyText={t('reports.createOrEdit.form.photoEmpty')}
+          action={{
+            label: t('reports.createOrEdit.form.photoAdd'),
+            onClick: form.addPhoto,
+            loading: form.isAddingPhoto,
+            disabled: form.photos.length >= form.photoLimit,
+          }}
+        >
+          {form.photos.length > 0 && (
             <>
               <div className={styles.photoGrid}>
                 {form.photos.map((photo, index) => (
@@ -253,37 +324,15 @@ export function ReportForm({ form, position, isLocating, onEditPosition }: Repor
                 ))}
               </div>
             </>
-          ) : (
-            <div className={styles.photoEmptyState}>
-              <IconCamera className={styles.photoEmptyIcon} />
-              <span className={styles.photoEmptyText}>{t('reports.createOrEdit.form.photoEmpty')}</span>
-            </div>
           )}
-          <Button
-            type="button"
-            color="primary"
-            variant="outline"
-            onClick={form.addPhoto}
-            loading={form.isAddingPhoto}
-            disabled={form.photos.length >= form.photoLimit}
-            className={styles.photoAddAction}
-          >
-            {t('reports.createOrEdit.form.photoAdd')}
-          </Button>
-        </div>
+        </AttachmentSection>
+
+        {renderObjectCard()}
 
         <div className={styles.attachmentPlaceholder}>
-          <IconObject className={styles.attachmentIcon} />
+          <IconPencil className={attachmentStyles.icon} />
           <div className={styles.attachmentInfo}>
-            <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.object')}</span>
-            <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.objectAdd')}</span>
-          </div>
-        </div>
-
-        <div className={styles.attachmentPlaceholder}>
-          <IconPencil className={styles.attachmentIcon} />
-          <div className={styles.attachmentInfo}>
-            <span className={styles.attachmentLabel}>{t('reports.createOrEdit.form.sketch')}</span>
+            <span className={attachmentStyles.label}>{t('reports.createOrEdit.form.sketch')}</span>
             <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.sketchAdd')}</span>
           </div>
         </div>

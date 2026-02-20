@@ -89,76 +89,6 @@
   gap: 4px;
 }
 
-/* Attachment placeholders */
-.photoSection {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border: 1.5px solid var(--color-light-shade);
-  border-radius: 12px;
-  background: var(--color-light);
-}
-
-.photoHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.photoTitle {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.photoCountBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-medium);
-  background: var(--color-dark-contrast);
-  border: 1px solid var(--color-light-shade);
-}
-
-.photoEmptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 20px 14px;
-  border: 1.5px dashed var(--color-light-shade);
-  border-radius: 10px;
-  background: var(--color-dark-contrast);
-}
-
-.photoEmptyIcon {
-  width: 28px;
-  height: 28px;
-  color: var(--color-medium);
-}
-
-.photoEmptyIcon path {
-  fill: currentColor;
-}
-
-.photoEmptyText {
-  font-size: 13px;
-  color: var(--color-medium);
-  text-align: center;
-}
-
-.photoAddAction {
-  align-self: center;
-}
-
 .photoGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -232,6 +162,76 @@
   fill: currentColor;
 }
 
+.objectList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.objectItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px solid var(--color-light-shade);
+  border-radius: 10px;
+  background: var(--color-dark-contrast);
+  padding: 10px 12px;
+}
+
+.objectItemInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.objectItemLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.objectItemLayer {
+  font-size: 12px;
+  color: var(--color-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.objectRemoveButton {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-light-shade);
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-light);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.objectRemoveButton:hover,
+.objectRemoveButton:focus-visible {
+  background: var(--color-dark-contrast);
+}
+
+.objectRemoveIcon {
+  width: 16px;
+  height: 16px;
+  color: var(--color-dark);
+}
+
+.objectRemoveIcon path {
+  fill: currentColor;
+}
+
 .attachmentPlaceholder {
   display: flex;
   align-items: center;
@@ -243,28 +243,11 @@
   pointer-events: none;
 }
 
-.attachmentIcon {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  color: var(--color-medium);
-}
-
-.attachmentIcon path {
-  fill: currentColor;
-}
-
 .attachmentInfo {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-width: 0;
-}
-
-.attachmentLabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-dark);
 }
 
 .attachmentHint {

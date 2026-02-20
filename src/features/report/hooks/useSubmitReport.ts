@@ -1,15 +1,41 @@
 import { useState, useCallback } from 'react';
 import type { Report } from '@ign/mobile-core';
 import { ReportManager } from '@ign/mobile-core';
+import { get as getProjection } from 'ol/proj';
 import { collabApiClient } from '@/infra/api';
 import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 import type { AppReport } from '@/domain/report/models';
+import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 
 export const ATTACHMENT_UPLOAD_FAILED_ERROR_CODE = 'ATTACHMENT_UPLOAD_FAILED'
 
 const reportStorage = new ReportStorageAdapter();
 const reportManager = new ReportManager(collabApiClient, reportStorage);
+
+function withSketchFromFeatures(report: Report): Report {
+  if (report.sketch || !report.features?.length) {
+    return report;
+  }
+
+  try {
+    const reportProjection = getProjection(WEB_MERCATOR_PROJECTION);
+    const sketch = reportProjection
+      ? reportManager.feature2sketch(report.features, reportProjection)
+      : reportManager.feature2sketch(report.features);
+    if (!sketch) {
+      return report;
+    }
+
+    return {
+      ...report,
+      sketch,
+    };
+  } catch (error) {
+    console.error('[report] failed to generate sketch from selected objects', error);
+    return report;
+  }
+}
 
 async function uploadReportAttachments(reportId: number, report: Report): Promise<void> {
   if (!report.photos?.length) return;
@@ -57,14 +83,15 @@ export function useSubmitReport(): UseSubmitReportReturn {
     setError(null);
 
     try {
-      const body = mapAppReportToApiBody(report);
+      const reportPayload = withSketchFromFeatures(report);
+      const body = mapAppReportToApiBody(reportPayload);
       const response = await collabApiClient.report.add(body);
       const createdReportId = (response.data as ApiReportResponse).id;
       console.info('[report] report created', { localReportId: report.id, createdReportId });
 
-      if (report.photos?.length) {
+      if (reportPayload.photos?.length) {
         try {
-          await uploadReportAttachments(createdReportId, report);
+          await uploadReportAttachments(createdReportId, reportPayload);
         } catch (attachmentError) {
           console.error('Report created but attachment upload failed', attachmentError);
           setError(new Error(ATTACHMENT_UPLOAD_FAILED_ERROR_CODE));

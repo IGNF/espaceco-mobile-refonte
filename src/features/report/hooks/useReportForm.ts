@@ -1,6 +1,8 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReportStatus, type Report, type ReportPhoto } from '@ign/mobile-core';
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -10,6 +12,10 @@ import type { CommunityThemeConfig, CommunityThemeAttribute } from '@/domain/com
 import type { AppReport } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
 import { MAX_REPORT_PHOTOS } from '@/shared/constants/report';
+import {
+  buildReportObjectKey,
+  getReportObjectLayerName,
+} from '@/features/report/utils/reportObjects';
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
@@ -27,6 +33,7 @@ export interface UseReportFormReturn {
   selectedTheme: string;
   comment: string;
   photos: ReportPhoto[];
+  objects: Feature<Geometry>[];
   photoLimit: number;
   attributeValues: Record<string, string>;
   errors: Record<string, string | undefined>;
@@ -39,6 +46,8 @@ export interface UseReportFormReturn {
   setAttributeValue: (name: string, value: string) => void;
   addPhoto: () => Promise<void>;
   removePhoto: (index: number) => void;
+  addObject: (feature: Feature<Geometry>) => void;
+  removeObject: (index: number) => void;
   validate: () => boolean;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
@@ -119,6 +128,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
   const [comment, setComment] = useState<string>('');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
+  const [objects, setObjects] = useState<Feature<Geometry>[]>(report?.features ?? []);
   const [reportId, setReportId] = useState<number>(report?.id ?? Date.now());
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -132,37 +142,38 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       setAttributeValues(mapReportAttributesToFormValues(nextReport.attributes));
       setComment(nextReport.comment ?? '');
       setPhotos(nextReport.photos ?? []);
+      setObjects(nextReport.features ?? []);
     } else {
       setReportId(Date.now());
       setSelectedThemeRaw('');
       setAttributeValues({});
       setComment('');
       setPhotos([]);
+      setObjects([]);
     }
     setErrors({});
     setIsDirty(false);
   }, [mode]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
-  const [prevReport, setPrevReport] = useState(report);
+  const previousReportRef = useRef(report);
   useEffect(() => {
-    if (report === prevReport) return;
-    setPrevReport(report);
+    if (report === previousReportRef.current) return;
+    previousReportRef.current = report;
     resetFormState(report);
-  }, [report, prevReport, resetFormState]);
+  }, [report, resetFormState]);
 
   // Initialize form when page opens (component stays mounted between sessions)
-  const [wasOpen, setWasOpen] = useState(isOpen);
+  const wasOpenRef = useRef(Boolean(isOpen));
   useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+
     if (isOpen && !wasOpen) {
-      setWasOpen(true);
       resetFormState(report);
-      return;
     }
-    if (!isOpen && wasOpen) {
-      setWasOpen(false);
-    }
-  }, [isOpen, wasOpen, report, resetFormState]);
+
+    wasOpenRef.current = Boolean(isOpen);
+  }, [isOpen, report, resetFormState]);
 
   const currentThemeConfig = useMemo(
     () => themes.find(t => t.theme === selectedTheme),
@@ -243,6 +254,45 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     setIsDirty(true);
   }, []);
 
+  const getObjectUniqueKey = useCallback((feature: Feature<Geometry>): string => {
+    const layerName = getReportObjectLayerName(feature) ?? 'layer';
+    return buildReportObjectKey(feature, layerName);
+  }, []);
+
+  const addObject = useCallback((feature: Feature<Geometry>) => {
+    const nextObjectKey = getObjectUniqueKey(feature);
+    let hasAdded = false;
+
+    setObjects(prev => {
+      const duplicate = prev.some((existingFeature) => {
+        return getObjectUniqueKey(existingFeature) === nextObjectKey;
+      });
+
+      if (duplicate) return prev;
+
+      hasAdded = true;
+      return [...prev, feature];
+    });
+
+    if (hasAdded) {
+      setIsDirty(true);
+    }
+  }, [getObjectUniqueKey]);
+
+  const removeObject = useCallback((index: number) => {
+    let hasRemoved = false;
+
+    setObjects(prev => {
+      if (index < 0 || index >= prev.length) return prev;
+      hasRemoved = true;
+      return prev.filter((_, itemIndex) => itemIndex !== index);
+    });
+
+    if (hasRemoved) {
+      setIsDirty(true);
+    }
+  }, []);
+
   const validate = useCallback((): boolean => {
     const newErrors: Record<string, string | undefined> = {};
     let valid = true;
@@ -292,8 +342,9 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       createdAt: report?.createdAt ?? new Date(),
       modifiedAt: new Date(),
       photos,
+      features: objects,
     };
-  }, [position, reportId, activeCommunity, report?.themeId, report?.createdAt, comment, attributeValues, selectedTheme, photos]);
+  }, [position, reportId, activeCommunity, report?.themeId, report?.createdAt, comment, attributeValues, selectedTheme, photos, objects]);
 
   const { submitReport: apiSubmit, isSubmitting, error: submitError, clearError } = useSubmitReport();
 
@@ -342,6 +393,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     selectedTheme,
     comment,
     photos,
+    objects,
     photoLimit: MAX_REPORT_PHOTOS,
     attributeValues,
     errors,
@@ -354,6 +406,8 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     setAttributeValue,
     addPhoto,
     removePhoto,
+    addObject,
+    removeObject,
     validate,
     saveDraft,
     submit: submitForm,

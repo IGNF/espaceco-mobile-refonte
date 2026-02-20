@@ -86,3 +86,56 @@
   width: min(320px, 100%) !important;
   margin: 0 !important;
 }
+
+.objectPickerHint {
+  position: absolute;
+  top: calc(var(--safe-top, 0px) + 18px);
+  left: 18px;
+  right: 18px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-dark);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--color-light-shade);
+}
+
+.objectChoiceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.objectChoiceButton {
+  width: 100%;
+  border: 1.5px solid var(--color-light-shade);
+  border-radius: 10px;
+  background: var(--color-dark-contrast);
+  padding: 10px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.objectChoiceButton:hover,
+.objectChoiceButton:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-light);
+}
+
+.objectChoiceLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.objectChoiceLayer {
+  font-size: 12px;
+  color: var(--color-medium);
+}

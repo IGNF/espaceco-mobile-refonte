@@ -28,6 +28,7 @@ import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { clampNumber } from '@/shared/utils/number';
+import { WGS84_PROJECTION } from '@/shared/constants/projections';
 
 const SIGNAL_GROUP_NAME = 'signalementGroup';
 const LAYER_NAME_MES_SIGNALEMENTS = 'MesSignalements';
@@ -188,7 +189,7 @@ export function useSignalementMapLayers(
           const extent4326 = transformExtent(
             extent,
             mapProjectionCode,
-            'EPSG:4326'
+            WGS84_PROJECTION
           );
           const reports = await reportSource.loadReports(extent4326);
           const loadedFeatures = await reportSource.loadFeatures(

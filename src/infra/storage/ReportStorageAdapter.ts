@@ -11,11 +11,22 @@
  */
 import type { IReportStorage, Report, ReportPhoto } from '@ign/mobile-core';
 import { Storage, FileSystem } from '@ign/mobile-device';
+import Feature from 'ol/Feature';
+import GeoJSON from 'ol/format/GeoJSON';
 import { storageKey } from '../../shared/constants/storage';
+import {
+  WEB_MERCATOR_PROJECTION,
+  WGS84_PROJECTION,
+} from '../../shared/constants/projections';
 
 const REPORTS_KEY = 'REPORTS';
 const REPORT_PARAMS_KEY = 'REPORT_PARAMS';
 const PHOTOS_DIR = 'report_photos';
+const reportFeatureFormat = new GeoJSON();
+const REPORT_FEATURE_SERIALIZATION_OPTIONS = {
+  featureProjection: WEB_MERCATOR_PROJECTION,
+  dataProjection: WGS84_PROJECTION,
+} as const;
 
 async function blobToBase64(blob: Blob): Promise<string> {
   const bytes = new Uint8Array(await blob.arrayBuffer());
@@ -34,6 +45,54 @@ function base64ToBlob(base64Data: string, mimeType: string): Blob {
     byteNumbers[i] = byteCharacters.charCodeAt(i);
   }
   return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
+}
+
+function serializeReportFeatures(features?: Report['features']): unknown {
+  if (!Array.isArray(features) || features.length === 0) {
+    return undefined;
+  }
+
+  const serializableFeatures = features.filter(
+    (feature): feature is Feature => feature instanceof Feature
+  );
+
+  if (serializableFeatures.length === 0) {
+    return undefined;
+  }
+
+  return reportFeatureFormat.writeFeaturesObject(
+    serializableFeatures,
+    REPORT_FEATURE_SERIALIZATION_OPTIONS
+  );
+}
+
+function deserializeReportFeatures(rawFeatures: unknown): Report['features'] {
+  if (!rawFeatures) {
+    return [];
+  }
+
+  try {
+    if (Array.isArray(rawFeatures)) {
+      return reportFeatureFormat.readFeatures(
+        {
+          type: 'FeatureCollection',
+          features: rawFeatures,
+        },
+        REPORT_FEATURE_SERIALIZATION_OPTIONS
+      );
+    }
+
+    if (typeof rawFeatures === 'object') {
+      return reportFeatureFormat.readFeatures(
+        rawFeatures as object,
+        REPORT_FEATURE_SERIALIZATION_OPTIONS
+      );
+    }
+  } catch (error) {
+    console.warn('[ReportStorageAdapter] Failed to deserialize report features', error);
+  }
+
+  return [];
 }
 
 export class ReportStorageAdapter implements IReportStorage {
@@ -68,13 +127,12 @@ export class ReportStorageAdapter implements IReportStorage {
     const previousPhotos = (allReports[report.id]?.photos ?? []) as ReportPhoto[];
     await this.deleteRemovedPhotoFiles(previousPhotos, report.photos ?? []);
 
-    // Serialize dates and features for storage
+    // Serialize dates and OpenLayers features for storage
     const serializable = {
       ...report,
       createdAt: report.createdAt instanceof Date ? report.createdAt.toISOString() : report.createdAt,
       modifiedAt: report.modifiedAt instanceof Date ? report.modifiedAt.toISOString() : report.modifiedAt,
-      // Features are OpenLayers objects - store as GeoJSON or skip
-      features: undefined, // Features should be stored separately if needed
+      features: serializeReportFeatures(report.features),
     };
     allReports[report.id] = serializable;
     await Storage.set(storageKey(REPORTS_KEY), allReports, 'object');
@@ -169,7 +227,7 @@ export class ReportStorageAdapter implements IReportStorage {
       ...data,
       createdAt: new Date(data.createdAt),
       modifiedAt: data.modifiedAt ? new Date(data.modifiedAt) : undefined,
-      features: [], // Features need to be loaded separately if needed
+      features: deserializeReportFeatures(data.features),
     } as Report;
   }
 
