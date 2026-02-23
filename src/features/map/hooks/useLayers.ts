@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { CommunityLayer } from '@ign/mobile-core';
 import {
 	fetchCommunityLayers,
@@ -84,8 +85,10 @@ function reorderLayersWithinSubset(
 }
 
 export function useLayers() {
+	const { user } = useAuth();
 	const { activeCommunity } = useCommunity();
 	const activeCommunityId = activeCommunity?.id;
+	const userId = user?.id ?? null;
 	const [layers, setLayers] = useState<CommunityLayer[]>([]);
 	const [signalementLayerVisibility, setSignalementLayerVisibility] =
 		useState<SignalementLayerVisibility>(() => ({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY }));
@@ -97,6 +100,7 @@ export function useLayers() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [hydratedCommunityId, setHydratedCommunityId] = useState<number | null>(null);
+	const [hydratedUserId, setHydratedUserId] = useState<number | null>(null);
 
 	const resetLayerPreferences = useCallback(() => {
 		setSignalementLayerVisibility({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY });
@@ -159,6 +163,7 @@ export function useLayers() {
 
 	const fetchLayers = useCallback(async (forceRefresh = false) => {
 		setHydratedCommunityId(null);
+		setHydratedUserId(null);
 
 		if (!activeCommunityId) {
 			setLayers([]);
@@ -174,7 +179,7 @@ export function useLayers() {
 				forceRefresh,
 			});
 
-			const savedConfiguration = await loadLayersConfiguration(activeCommunityId);
+			const savedConfiguration = await loadLayersConfiguration(activeCommunityId, userId);
 
 			const layersWithConfiguration = enrichedLayers.map((layer) => {
 				const layerKey = getCommunityLayerKey(layer);
@@ -211,6 +216,7 @@ export function useLayers() {
 			setSignalementLayerOpacity(nextSignalementLayerOpacity);
 			setSignalementLayerOrder(nextSignalementLayerOrder);
 			setHydratedCommunityId(activeCommunityId);
+			setHydratedUserId(userId);
 		} catch (err) {
 			console.error('Failed to fetch layers:', err);
 			setError('Failed to fetch layers');
@@ -219,19 +225,24 @@ export function useLayers() {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [activeCommunityId, resetLayerPreferences]);
+	}, [activeCommunityId, resetLayerPreferences, userId]);
 
 	useEffect(() => {
 		fetchLayers();
 	}, [fetchLayers]);
 
 	useEffect(() => {
-		if (!activeCommunityId || hydratedCommunityId !== activeCommunityId) {
+		if (
+			!activeCommunityId ||
+			hydratedCommunityId !== activeCommunityId ||
+			hydratedUserId !== userId
+		) {
 			return;
 		}
 
 		void saveLayersConfiguration({
 			communityId: activeCommunityId,
+			userId,
 			layers,
 			signalementLayerVisibility,
 			signalementLayerOpacity,
@@ -240,10 +251,12 @@ export function useLayers() {
 	}, [
 		activeCommunityId,
 		hydratedCommunityId,
+		hydratedUserId,
 		layers,
 		signalementLayerOpacity,
 		signalementLayerOrder,
 		signalementLayerVisibility,
+		userId,
 	]);
 
 	const refetchLayers = useCallback(async () => {

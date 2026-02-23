@@ -27,6 +27,7 @@ export interface LayersConfiguration {
 
 export interface SaveLayersConfigurationParams {
   communityId: number;
+  userId?: number | null;
   layers: CommunityLayer[];
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
@@ -36,8 +37,14 @@ export interface SaveLayersConfigurationParams {
 /**
  * Returns the storage key used for one community layer configuration entry.
  */
-function getLayersConfigurationStorageKey(communityId: number): string {
-  return storageKey(`${LAYERS_CONFIGURATION_STORAGE_KEY}_${communityId}`);
+function getLayersConfigurationStorageKey(
+  communityId: number,
+  userId?: number | null
+): string {
+  const userStorageKeyPart = userId == null ? 'anonymous' : String(userId);
+  return storageKey(
+    `${LAYERS_CONFIGURATION_STORAGE_KEY}_${communityId}_${userStorageKeyPart}`
+  );
 }
 
 /**
@@ -155,11 +162,12 @@ function toSignalementLayerOrder(value: unknown): SignalementLayerKey[] {
  * @returns Sanitized configuration or null when not found/unreadable.
  */
 export async function loadLayersConfiguration(
-  communityId: number
+  communityId: number,
+  userId?: number | null
 ): Promise<LayersConfiguration | null> {
   try {
     const raw = await Storage.get(
-      getLayersConfigurationStorageKey(communityId),
+      getLayersConfigurationStorageKey(communityId, userId),
       'object'
     );
 
@@ -191,6 +199,7 @@ export async function loadLayersConfiguration(
  */
 export async function saveLayersConfiguration({
   communityId,
+  userId,
   layers,
   signalementLayerVisibility,
   signalementLayerOpacity,
@@ -218,7 +227,7 @@ export async function saveLayersConfiguration({
 
   try {
     await Storage.set(
-      getLayersConfigurationStorageKey(communityId),
+      getLayersConfigurationStorageKey(communityId, userId),
       payload,
       'object'
     );
