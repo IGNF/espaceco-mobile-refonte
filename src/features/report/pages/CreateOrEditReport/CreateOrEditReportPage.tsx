@@ -148,13 +148,21 @@ export function CreateOrEditReportPage({
   const {
     currentSketchMode,
     sketchFeatureCount,
+    isDrawingInProgress,
     triggerSketchAction,
+    finalizeCurrentDrawing,
     getSketchFeatures,
     clearSession: clearSketchSession,
   } = useReportSketchSession({
     map,
     enabled: isOpen && isPickingSketch,
   });
+  // Auto-finish is supported only for lines (double-tap is not obvious on mobile).
+  // For other geometries, CTA requires already committed features.
+  const canValidateSketch = sketchFeatureCount > 0 || (
+    isDrawingInProgress &&
+    currentSketchMode === 'draw-linestring'
+  );
 
   const sketchToolItems = useMemo<MapToolbarItem[]>(() => {
     return SKETCH_TOOL_DEFINITIONS.map((definition) => {
@@ -323,13 +331,19 @@ export function CreateOrEditReportPage({
     };
   }, [isOpen, isPickingObject, map, form, closeMapPickers, t]);
 
-  const handleValidateSketch = useCallback(() => {
+  const handleValidateSketch = useCallback(async () => {
+    if (currentSketchMode === 'draw-linestring') {
+      finalizeCurrentDrawing();
+      // Let OL emit drawend/addfeature before reading the source snapshot.
+      await Promise.resolve();
+    }
+
     const sketchFeatures = getSketchFeatures();
     if (sketchFeatures.length === 0) return;
 
     form.addSketches(sketchFeatures);
     closeMapPickers();
-  }, [closeMapPickers, form, getSketchFeatures]);
+  }, [closeMapPickers, currentSketchMode, finalizeCurrentDrawing, form, getSketchFeatures]);
 
   const handlePageClose = useCallback(() => {
     resetMapPickers();
@@ -533,7 +547,7 @@ export function CreateOrEditReportPage({
               color="primary"
               onClick={handleValidateSketch}
               className={styles.validateButton}
-              disabled={sketchFeatureCount === 0}
+              disabled={!canValidateSketch}
             >
               {t('reports.createOrEdit.form.sketchAddToReport')}
             </Button>
