@@ -55,6 +55,18 @@
       "numberLabel": "Numéro"
     }
   },
+  "geometry": {
+    "types": {
+      "point": "Point",
+      "lineString": "Ligne",
+      "polygon": "Polygone",
+      "circle": "Cercle",
+      "multiPoint": "Points",
+      "multiLineString": "Lignes",
+      "multiPolygon": "Polygones",
+      "unknown": "Géométrie"
+    }
+  },
   "onboarding": {
     "welcome": {
       "title": "Découvrir l'application",
@@ -281,6 +293,20 @@
         "objectChooseSubtitle": "Sélectionnez l'objet à associer au signalement",
         "sketch": "Croquis",
         "sketchAdd": "Ajouter un croquis",
+        "sketchAddToReport": "Ajouter le croquis",
+        "sketchPicking": "Edition du croquis en cours",
+        "sketchCount": "{{count}} croquis",
+        "sketchEmpty": "Aucun croquis ajouté pour le moment",
+        "sketchRemove": "Retirer le croquis",
+        "sketchItem": "Croquis {{index}}",
+        "sketchToolPoint": "Dessiner un point",
+        "sketchToolLine": "Dessiner une ligne",
+        "sketchToolPolygon": "Dessiner un polygone",
+        "sketchToolModify": "Modifier les sommets",
+        "sketchToolSelect": "Sélectionner un objet",
+        "sketchToolDelete": "Supprimer la sélection",
+        "sketchToolUndo": "Annuler la dernière action",
+        "sketchToolClose": "Fermer l'outil croquis",
         "comingSoon": "bientot disponible",
         "validation": {
           "themeRequired": "Veuillez choisir un theme",

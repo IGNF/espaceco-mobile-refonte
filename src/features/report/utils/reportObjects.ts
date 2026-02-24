@@ -6,6 +6,9 @@ export const REPORT_OBJECT_KEY_PROP = '__espaceco_report_object_key';
 export const REPORT_OBJECT_LABEL_PROP = '__espaceco_report_object_label';
 export const REPORT_OBJECT_LAYER_TITLE_PROP = '__espaceco_report_object_layer_title';
 export const REPORT_OBJECT_LAYER_NAME_PROP = '__espaceco_report_object_layer_name';
+export const REPORT_FEATURE_KIND_PROP = '__espaceco_report_feature_kind';
+
+export type ReportFeatureKind = 'object' | 'sketch';
 
 const LABEL_PROPERTY_NAME_REGEX = /name|nom|label/i;
 const KEY_PROPERTY_NAME_REGEX = /(^|_)(id|gid|fid|objectid|numero|num|code|reference|ref)($|_)/i;
@@ -18,6 +21,7 @@ const INTERNAL_FEATURE_PROPERTY_NAMES = new Set([
   REPORT_OBJECT_LABEL_PROP,
   REPORT_OBJECT_LAYER_TITLE_PROP,
   REPORT_OBJECT_LAYER_NAME_PROP,
+  REPORT_FEATURE_KIND_PROP,
 ]);
 
 function normalizeLabelValue(value: unknown): string | null {
@@ -107,6 +111,15 @@ export function getReportObjectLayerTitle(feature: Feature<Geometry>): string | 
  */
 export function getReportObjectLayerName(feature: Feature<Geometry>): string | null {
   return getMetadataString(feature, REPORT_OBJECT_LAYER_NAME_PROP);
+}
+
+export function getReportFeatureKind(feature: Feature<Geometry>): ReportFeatureKind | null {
+  const kind = feature.get(REPORT_FEATURE_KIND_PROP);
+  return kind === 'object' || kind === 'sketch' ? kind : null;
+}
+
+export function setReportFeatureKind(feature: Feature<Geometry>, kind: ReportFeatureKind): void {
+  feature.set(REPORT_FEATURE_KIND_PROP, kind, true);
 }
 
 /**
@@ -207,6 +220,7 @@ export function applyReportObjectMetadata(
 ): void {
   feature.set(REPORT_OBJECT_KEY_PROP, metadata.key, true);
   feature.set(REPORT_OBJECT_LABEL_PROP, metadata.label, true);
+  setReportFeatureKind(feature, 'object');
 
   if (metadata.layerTitle) {
     feature.set(REPORT_OBJECT_LAYER_TITLE_PROP, metadata.layerTitle, true);

@@ -14,7 +14,10 @@ import type { Position } from '@/platform/device/geolocation';
 import { MAX_REPORT_PHOTOS } from '@/shared/constants/report';
 import {
   buildReportObjectKey,
+  getReportFeatureKind,
+  getReportObjectKey,
   getReportObjectLayerName,
+  setReportFeatureKind,
 } from '@/features/report/utils/reportObjects';
 import { useSubmitReport } from './useSubmitReport';
 
@@ -34,6 +37,7 @@ export interface UseReportFormReturn {
   comment: string;
   photos: ReportPhoto[];
   objects: Feature<Geometry>[];
+  sketches: Feature<Geometry>[];
   photoLimit: number;
   attributeValues: Record<string, string>;
   errors: Record<string, string | undefined>;
@@ -48,6 +52,8 @@ export interface UseReportFormReturn {
   removePhoto: (index: number) => void;
   addObject: (feature: Feature<Geometry>) => void;
   removeObject: (index: number) => void;
+  addSketches: (features: Feature<Geometry>[]) => void;
+  removeSketch: (index: number) => void;
   validate: () => boolean;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
@@ -112,6 +118,60 @@ function mapReportAttributesToFormValues(attributes?: Record<string, any>): Reco
   );
 }
 
+interface SplitReportFeaturesResult {
+  objects: Feature<Geometry>[];
+  sketches: Feature<Geometry>[];
+}
+
+function isFeatureLike(value: unknown): value is Feature<Geometry> {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as {
+    get?: unknown;
+    getGeometry?: unknown;
+    clone?: unknown;
+  };
+
+  return typeof candidate.get === 'function' &&
+    typeof candidate.getGeometry === 'function' &&
+    typeof candidate.clone === 'function';
+}
+
+function splitReportFeatures(features?: Feature<Geometry>[]): SplitReportFeaturesResult {
+  if (!features || features.length === 0) {
+    return { objects: [], sketches: [] };
+  }
+
+  const objects: Feature<Geometry>[] = [];
+  const sketches: Feature<Geometry>[] = [];
+
+  for (const feature of features) {
+    if (!isFeatureLike(feature)) continue;
+
+    const featureKind = getReportFeatureKind(feature);
+    if (featureKind === 'object') {
+      objects.push(feature);
+      continue;
+    }
+    if (featureKind === 'sketch') {
+      sketches.push(feature);
+      continue;
+    }
+
+    if (getReportObjectKey(feature)) {
+      setReportFeatureKind(feature, 'object');
+      objects.push(feature);
+      continue;
+    }
+
+    // Legacy fallback: before sketch support, selected map features were report objects.
+    setReportFeatureKind(feature, 'object');
+    objects.push(feature);
+  }
+
+  return { objects, sketches };
+}
+
 const reportStorage = new ReportStorageAdapter();
 
 export function useReportForm({ mode, report, position, isOpen }: UseReportFormOptions): UseReportFormReturn {
@@ -128,7 +188,12 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
   const [comment, setComment] = useState<string>('');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
-  const [objects, setObjects] = useState<Feature<Geometry>[]>(report?.features ?? []);
+  const [objects, setObjects] = useState<Feature<Geometry>[]>(() => {
+    return splitReportFeatures(report?.features).objects;
+  });
+  const [sketches, setSketches] = useState<Feature<Geometry>[]>(() => {
+    return splitReportFeatures(report?.features).sketches;
+  });
   const [reportId, setReportId] = useState<number>(report?.id ?? Date.now());
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
   const [isDirty, setIsDirty] = useState(false);
@@ -142,7 +207,9 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       setAttributeValues(mapReportAttributesToFormValues(nextReport.attributes));
       setComment(nextReport.comment ?? '');
       setPhotos(nextReport.photos ?? []);
-      setObjects(nextReport.features ?? []);
+      const { objects: nextObjects, sketches: nextSketches } = splitReportFeatures(nextReport.features);
+      setObjects(nextObjects);
+      setSketches(nextSketches);
     } else {
       setReportId(Date.now());
       setSelectedThemeRaw('');
@@ -150,6 +217,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       setComment('');
       setPhotos([]);
       setObjects([]);
+      setSketches([]);
     }
     setErrors({});
     setIsDirty(false);
@@ -260,7 +328,14 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
   }, []);
 
   const addObject = useCallback((feature: Feature<Geometry>) => {
-    const nextObjectKey = getObjectUniqueKey(feature);
+    const featureForForm = feature.clone();
+    const featureId = feature.getId();
+    if (featureId !== undefined) {
+      featureForForm.setId(featureId);
+    }
+    setReportFeatureKind(featureForForm, 'object');
+
+    const nextObjectKey = getObjectUniqueKey(featureForForm);
     let hasAdded = false;
 
     setObjects(prev => {
@@ -271,7 +346,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       if (duplicate) return prev;
 
       hasAdded = true;
-      return [...prev, feature];
+      return [...prev, featureForForm];
     });
 
     if (hasAdded) {
@@ -283,6 +358,35 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     let hasRemoved = false;
 
     setObjects(prev => {
+      if (index < 0 || index >= prev.length) return prev;
+      hasRemoved = true;
+      return prev.filter((_, itemIndex) => itemIndex !== index);
+    });
+
+    if (hasRemoved) {
+      setIsDirty(true);
+    }
+  }, []);
+
+  const addSketches = useCallback((features: Feature<Geometry>[]) => {
+    const nextFeatures = features.filter(isFeatureLike);
+    if (nextFeatures.length === 0) return;
+
+    for (const feature of nextFeatures) {
+      setReportFeatureKind(feature, 'sketch');
+    }
+
+    setSketches(prev => [
+      ...prev,
+      ...nextFeatures,
+    ]);
+    setIsDirty(true);
+  }, []);
+
+  const removeSketch = useCallback((index: number) => {
+    let hasRemoved = false;
+
+    setSketches(prev => {
       if (index < 0 || index >= prev.length) return prev;
       hasRemoved = true;
       return prev.filter((_, itemIndex) => itemIndex !== index);
@@ -342,9 +446,21 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       createdAt: report?.createdAt ?? new Date(),
       modifiedAt: new Date(),
       photos,
-      features: objects,
+      features: [...objects, ...sketches],
     };
-  }, [position, reportId, activeCommunity, report?.themeId, report?.createdAt, comment, attributeValues, selectedTheme, photos, objects]);
+  }, [
+    position,
+    reportId,
+    activeCommunity,
+    report?.themeId,
+    report?.createdAt,
+    comment,
+    attributeValues,
+    selectedTheme,
+    photos,
+    objects,
+    sketches,
+  ]);
 
   const { submitReport: apiSubmit, isSubmitting, error: submitError, clearError } = useSubmitReport();
 
@@ -394,6 +510,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     comment,
     photos,
     objects,
+    sketches,
     photoLimit: MAX_REPORT_PHOTOS,
     attributeValues,
     errors,
@@ -408,6 +525,8 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     removePhoto,
     addObject,
     removeObject,
+    addSketches,
+    removeSketch,
     validate,
     saveDraft,
     submit: submitForm,

@@ -5,6 +5,7 @@ import { AttachmentSection } from '@/features/report/components/NewReport/Attach
 import type { UseReportFormReturn } from '@/features/report/hooks/useReportForm';
 import type { CommunityThemeAttribute } from '@/domain/community/models';
 import type { Position } from '@/platform/device/geolocation';
+import { getGeometryLabelKeyFromType } from '@/shared/utils/geometry';
 import {
   getReportObjectKey,
   getReportObjectLabel,
@@ -19,7 +20,6 @@ import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import inputs from '@/shared/styles/inputs.module.css';
 import styles from './ReportForm.module.css';
-import attachmentStyles from './AttachmentSection.module.css';
 
 export interface ReportFormProps {
   form: UseReportFormReturn;
@@ -27,7 +27,9 @@ export interface ReportFormProps {
   isLocating: boolean;
   onEditPosition?: () => void;
   onAddObject?: () => void;
+  onAddSketch?: () => void;
   isPickingObject?: boolean;
+  isPickingSketch?: boolean;
 }
 
 export function ReportForm({
@@ -36,7 +38,9 @@ export function ReportForm({
   isLocating,
   onEditPosition,
   onAddObject,
+  onAddSketch,
   isPickingObject = false,
+  isPickingSketch = false,
 }: ReportFormProps) {
   const { t } = useTranslation();
 
@@ -227,6 +231,53 @@ export function ReportForm({
     );
   };
 
+  const renderSketchCard = () => {
+    const sketchAction = onAddSketch
+      ? {
+        label: isPickingSketch
+          ? t('reports.createOrEdit.form.sketchPicking')
+          : t('reports.createOrEdit.form.sketchAdd'),
+        onClick: onAddSketch,
+      }
+      : undefined;
+
+    return (
+      <AttachmentSection
+        Icon={IconPencil}
+        label={t('reports.createOrEdit.form.sketch')}
+        badge={t('reports.createOrEdit.form.sketchCount', { count: form.sketches.length })}
+        hasContent={form.sketches.length > 0}
+        emptyText={t('reports.createOrEdit.form.sketchEmpty')}
+        action={sketchAction}
+      >
+        {form.sketches.length > 0 && (
+          <div className={styles.objectList}>
+            {form.sketches.map((feature, index) => (
+              <div key={`sketch-${index}`} className={styles.objectItem}>
+                <div className={styles.objectItemInfo}>
+                  <span className={styles.objectItemLabel}>
+                    {t('reports.createOrEdit.form.sketchItem', { index: index + 1 })}
+                  </span>
+                  <span className={styles.objectItemLayer}>
+                    {t(getGeometryLabelKeyFromType(feature.getGeometry()?.getType()))}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  className={styles.objectRemoveButton}
+                  onClick={() => form.removeSketch(index)}
+                  aria-label={t('reports.createOrEdit.form.sketchRemove')}
+                >
+                  <IconClose className={styles.objectRemoveIcon} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </AttachmentSection>
+    );
+  };
+
   return (
     <div className={styles.form}>
       {/* Position */}
@@ -328,14 +379,7 @@ export function ReportForm({
         </AttachmentSection>
 
         {renderObjectCard()}
-
-        <div className={styles.attachmentPlaceholder}>
-          <IconPencil className={attachmentStyles.icon} />
-          <div className={styles.attachmentInfo}>
-            <span className={attachmentStyles.label}>{t('reports.createOrEdit.form.sketch')}</span>
-            <span className={styles.attachmentHint}>{t('reports.createOrEdit.form.sketchAdd')}</span>
-          </div>
-        </div>
+        {renderSketchCard()}
       </div>
     </div>
   );

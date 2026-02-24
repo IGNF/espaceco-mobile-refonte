@@ -231,36 +231,3 @@
 .objectRemoveIcon path {
   fill: currentColor;
 }
-
-.attachmentPlaceholder {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  border: 1.5px dashed var(--color-light-shade);
-  border-radius: 10px;
-  opacity: 0.5;
-  pointer-events: none;
-}
-
-.attachmentInfo {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 0;
-}
-
-.attachmentHint {
-  font-size: 12px;
-  color: var(--color-medium);
-}
-
-.comingSoon {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-medium);
-  background: var(--color-light);
-  padding: 3px 8px;
-  border-radius: 100px;
-  white-space: nowrap;
-}
