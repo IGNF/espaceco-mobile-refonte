@@ -11,7 +11,7 @@
  */
 import type { IReportStorage, Report, ReportPhoto } from '@ign/mobile-core';
 import { Storage, FileSystem } from '@ign/mobile-device';
-import Feature from 'ol/Feature';
+import type Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import { storageKey } from '../../shared/constants/storage';
 import {
@@ -52,8 +52,20 @@ function serializeReportFeatures(features?: Report['features']): unknown {
     return undefined;
   }
 
+  const isSerializableFeature = (value: unknown): value is Feature => {
+    if (!value || typeof value !== 'object') return false;
+
+    const candidate = value as {
+      getGeometry?: unknown;
+      getProperties?: unknown;
+    };
+
+    return typeof candidate.getGeometry === 'function' &&
+      typeof candidate.getProperties === 'function';
+  };
+
   const serializableFeatures = features.filter(
-    (feature): feature is Feature => feature instanceof Feature
+    isSerializableFeature
   );
 
   if (serializableFeatures.length === 0) {

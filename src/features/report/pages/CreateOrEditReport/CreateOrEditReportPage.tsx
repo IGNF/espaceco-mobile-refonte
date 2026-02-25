@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ReportStatus } from '@ign/mobile-core';
+import { createPortal } from 'react-dom';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
@@ -101,6 +103,7 @@ export function CreateOrEditReportPage({
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
   const isEditMode = mode === 'edit';
+  const isDraftReport = report?.status === ReportStatus.Draft;
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [mapPickerMode, setMapPickerMode] = useState<MapPickerMode>('none');
   const [objectCandidates, setObjectCandidates] = useState<PickedMapObjectCandidate[]>([]);
@@ -122,8 +125,8 @@ export function CreateOrEditReportPage({
   const basePosition = isEditMode ? editPosition : geoPosition;
   const position = selectedPosition ?? basePosition;
   const canEditPosition = !isEditMode && Boolean(map);
-  const canPickObjects = !isEditMode && Boolean(map);
-  const canPickSketches = !isEditMode && Boolean(map);
+  const canPickObjects = Boolean(map) && (!isEditMode || isDraftReport);
+  const canPickSketches = Boolean(map) && (!isEditMode || isDraftReport);
   const isPickingPosition = mapPickerMode === 'position';
   const isPickingObject = mapPickerMode === 'object';
   const isPickingSketch = mapPickerMode === 'sketch';
@@ -424,6 +427,89 @@ export function CreateOrEditReportPage({
     ? 'reports.createOrEdit.actions.attachmentUploadWarning'
     : 'reports.createOrEdit.actions.submitError';
 
+  const mapPickerOverlay = useMemo(() => {
+    if (!isOpen) return null;
+
+    if (isPickingPosition) {
+      return (
+        <div className={styles.locationPickerOverlay}>
+          <div className={styles.locationTarget} aria-hidden="true">
+            <IconAdd className={styles.locationTargetIcon} />
+          </div>
+          <div className={styles.validateButtonContainer}>
+            <Button
+              color="primary"
+              onClick={handleValidatePosition}
+              className={styles.validateButton}
+            >
+              {t('reports.createOrEdit.actions.validatePosition')}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (isPickingObject) {
+      return (
+        <div className={styles.locationPickerOverlay}>
+          <div className={styles.objectPickerHint}>
+            {t('reports.createOrEdit.form.objectPickInstruction')}
+          </div>
+          <div className={styles.validateButtonContainer}>
+            <Button
+              color="medium"
+              variant="outline"
+              onClick={closeMapPickers}
+              className={styles.validateButton}
+            >
+              {t('reports.createOrEdit.actions.cancel')}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    if (isPickingSketch) {
+      return (
+        <div className={styles.locationPickerOverlay}>
+          <div className={styles.sketchToolboxWrapper}>
+            <MapToolbar
+              items={sketchToolItems}
+              onItemClick={handleSketchToolClick}
+              statusText={t('reports.createOrEdit.form.sketchCount', { count: sketchFeatureCount })}
+            />
+          </div>
+
+          <div className={styles.validateButtonContainer}>
+            <Button
+              color="primary"
+              onClick={handleValidateSketch}
+              className={styles.validateButton}
+              disabled={!canValidateSketch}
+            >
+              {t('reports.createOrEdit.form.sketchAddToReport')}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
+    return null;
+  }, [
+    canValidateSketch,
+    closeMapPickers,
+    handleSketchToolClick,
+    handleValidatePosition,
+    handleValidateSketch,
+    isOpen,
+    isPickingObject,
+    isPickingPosition,
+    isPickingSketch,
+    sketchFeatureCount,
+    sketchToolItems,
+    t,
+  ]);
+
   return (
     <>
       <SlideUpPage
@@ -497,63 +583,9 @@ export function CreateOrEditReportPage({
         </main>
       </SlideUpPage>
 
-      {isOpen && isPickingPosition && map && (
-        <div className={styles.locationPickerOverlay}>
-          <div className={styles.locationTarget} aria-hidden="true">
-            <IconAdd className={styles.locationTargetIcon} />
-          </div>
-          <div className={styles.validateButtonContainer}>
-            <Button
-              color="primary"
-              onClick={handleValidatePosition}
-              className={styles.validateButton}
-            >
-              {t('reports.createOrEdit.actions.validatePosition')}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {isOpen && isPickingObject && map && (
-        <div className={styles.locationPickerOverlay}>
-          <div className={styles.objectPickerHint}>
-            {t('reports.createOrEdit.form.objectPickInstruction')}
-          </div>
-          <div className={styles.validateButtonContainer}>
-            <Button
-              color="medium"
-              variant="outline"
-              onClick={closeMapPickers}
-              className={styles.validateButton}
-            >
-              {t('reports.createOrEdit.actions.cancel')}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {isOpen && isPickingSketch && map && (
-        <div className={styles.locationPickerOverlay}>
-          <div className={styles.sketchToolboxWrapper}>
-            <MapToolbar
-              items={sketchToolItems}
-              onItemClick={handleSketchToolClick}
-              statusText={t('reports.createOrEdit.form.sketchCount', { count: sketchFeatureCount })}
-            />
-          </div>
-
-          <div className={styles.validateButtonContainer}>
-            <Button
-              color="primary"
-              onClick={handleValidateSketch}
-              className={styles.validateButton}
-              disabled={!canValidateSketch}
-            >
-              {t('reports.createOrEdit.form.sketchAddToReport')}
-            </Button>
-          </div>
-        </div>
-      )}
+      {mapPickerOverlay && typeof document !== 'undefined'
+        ? createPortal(mapPickerOverlay, document.body)
+        : null}
 
       <Alert
         isOpen={isObjectChoiceOpen}

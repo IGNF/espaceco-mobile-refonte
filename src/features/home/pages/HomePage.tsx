@@ -247,6 +247,8 @@ export function HomePage() {
 			<MyReportsPage
 				isOpen={activeOverlay === '/my-reports'}
 				onClose={handleCloseOverlay}
+				map={map}
+				onSearchPanelVisibilityChange={setIsSearchOpen}
 			/>
 			<NewReportPage
 				isOpen={activeOverlay === '/new-report-choice'}

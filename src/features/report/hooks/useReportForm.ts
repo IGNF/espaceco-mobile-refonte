@@ -164,9 +164,20 @@ function splitReportFeatures(features?: Feature<Geometry>[]): SplitReportFeature
       continue;
     }
 
-    // Legacy fallback: before sketch support, selected map features were report objects.
-    setReportFeatureKind(feature, 'object');
-    objects.push(feature);
+    // Legacy fallback:
+    // - selected map objects usually have a stable feature id or layer metadata
+    // - user sketches typically have neither
+    const hasLegacyObjectHints = feature.getId() !== undefined && feature.getId() !== null ||
+      Boolean(getReportObjectLayerName(feature));
+
+    if (hasLegacyObjectHints) {
+      setReportFeatureKind(feature, 'object');
+      objects.push(feature);
+      continue;
+    }
+
+    setReportFeatureKind(feature, 'sketch');
+    sketches.push(feature);
   }
 
   return { objects, sketches };

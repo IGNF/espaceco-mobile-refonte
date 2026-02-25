@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import type OlMap from 'ol/Map';
 import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
@@ -16,9 +17,16 @@ import typography from "@/shared/styles/typography.module.css";
 export interface MyReportsPageProps {
   isOpen?: boolean;
   onClose?: () => void;
+  map?: OlMap | null;
+  onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
 }
 
-export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsPageProps) {
+export function MyReportsPage({
+  isOpen = true,
+  onClose = () => { },
+  map,
+  onSearchPanelVisibilityChange,
+}: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities } = useCommunity();
@@ -93,7 +101,11 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
   };
 
   return (
-    <SlideUpPage isOpen={isOpen} onClose={onClose}>
+    <SlideUpPage
+      isOpen={isOpen}
+      onClose={onClose}
+      className={selectedReport ? styles.hiddenBehindChild : undefined}
+    >
       <PageHeader
         title={t('reports.myReports.headerTitle')}
         subtitle={t('reports.myReports.headerSubtitle')}
@@ -119,6 +131,8 @@ export function MyReportsPage({ isOpen = true, onClose = () => { } }: MyReportsP
         report={selectedReport}
         onBack={handleEditBack}
         onClose={handleEditClose}
+        map={map}
+        onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
       />
     </SlideUpPage>
   );

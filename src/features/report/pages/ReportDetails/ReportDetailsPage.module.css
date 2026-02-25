@@ -53,3 +53,8 @@
   color: var(--color-danger, #d32f2f);
   margin-top: 4px;
 }
+
+.hiddenBehindChild {
+  visibility: hidden;
+  pointer-events: none;
+}

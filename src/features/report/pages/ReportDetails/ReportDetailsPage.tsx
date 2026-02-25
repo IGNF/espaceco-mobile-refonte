@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type OlMap from 'ol/Map';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Alert } from '@/shared/ui/Alert';
@@ -49,9 +50,19 @@ export interface ReportDetailsPageProps {
   onClose: () => void;
   onBack: () => void;
   onReplySuccess?: (updatedReport: AppReport) => void;
+  map?: OlMap | null;
+  onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
 }
 
-export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySuccess }: ReportDetailsPageProps) {
+export function ReportDetailsPage({
+  isOpen,
+  report,
+  onClose,
+  onBack,
+  onReplySuccess,
+  map,
+  onSearchPanelVisibilityChange,
+}: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
@@ -183,7 +194,12 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
   const attributesText = formatAttributes();
 
   return (
-    <SlideUpPage isOpen={isOpen} onClose={onClose} level={2}>
+    <SlideUpPage
+      isOpen={isOpen}
+      onClose={onClose}
+      level={2}
+      className={isEditOpen ? styles.hiddenBehindChild : undefined}
+    >
       <PageHeader
         title={t('reports.details.headerTitle')}
         subtitle={t('reports.details.headerSubtitle')}
@@ -399,6 +415,8 @@ export function ReportDetailsPage({ isOpen, report, onClose, onBack, onReplySucc
         level={3}
         onBack={handleEditBack}
         onClose={handleEditClose}
+        map={map}
+        onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
       />
     </SlideUpPage>
   );

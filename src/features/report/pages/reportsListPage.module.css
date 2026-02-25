@@ -143,3 +143,8 @@
 	font-size: 14px;
 	font-style: italic;
 }
+
+.hiddenBehindChild {
+	visibility: hidden;
+	pointer-events: none;
+}
