@@ -27,6 +27,7 @@ import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import buttonStyles from '@/shared/ui/Button/Button.module.css';
+import { showToastSafe } from '@/shared/utils/toast';
 
 const reportStorage = new ReportStorageAdapter();
 
@@ -161,6 +162,11 @@ export function ReportDetailsPage({
     setIsDeleting(true);
     try {
       await reportStorage.deleteReport(report.id);
+      void showToastSafe({
+        text: t('reports.details.delete.successMessage'),
+        duration: 'short',
+        position: 'top',
+      });
       setIsDeleteOpen(false);
       onBack();
     } finally {
