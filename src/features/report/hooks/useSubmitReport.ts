@@ -7,6 +7,10 @@ import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse 
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 import type { AppReport } from '@/domain/report/models';
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
+import {
+  normalizeSketchForApi,
+  sanitizeFeaturesForSketchPayload,
+} from '@/features/report/utils/sketchPayload';
 
 export const ATTACHMENT_UPLOAD_FAILED_ERROR_CODE = 'ATTACHMENT_UPLOAD_FAILED'
 
@@ -19,10 +23,16 @@ function withSketchFromFeatures(report: Report): Report {
   }
 
   try {
+    const serializableFeatures = sanitizeFeaturesForSketchPayload(report.features);
+    if (serializableFeatures.length === 0) {
+      return report;
+    }
+
     const reportProjection = getProjection(WEB_MERCATOR_PROJECTION);
-    const sketch = reportProjection
-      ? reportManager.feature2sketch(report.features, reportProjection)
-      : reportManager.feature2sketch(report.features);
+    const rawSketch = reportProjection
+      ? reportManager.feature2sketch(serializableFeatures, reportProjection)
+      : reportManager.feature2sketch(serializableFeatures);
+    const sketch = normalizeSketchForApi(rawSketch);
     if (!sketch) {
       return report;
     }

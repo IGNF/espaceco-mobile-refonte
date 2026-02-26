@@ -1,7 +1,7 @@
 import { Toast, type ShowOptions } from '@capacitor/toast';
 
 /**
- * Displays a toast and swallows runtime loading failures (e.g. stale dev chunks).
+ * Displays a toast and swallows runtime loading failures
  */
 export async function showToastSafe(options: ShowOptions): Promise<void> {
   try {
