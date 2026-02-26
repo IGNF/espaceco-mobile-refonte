@@ -14,6 +14,7 @@ import { Button } from '@/shared/ui/Button';
 import { Alert } from '@/shared/ui/Alert';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
+import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
@@ -133,6 +134,7 @@ export function CreateOrEditReportPage({
   const isPickingOnMap = mapPickerMode !== 'none';
 
   const form = useReportForm({ mode, report, position, isOpen });
+  const hasUnsavedChanges = form.isDirty || selectedPosition !== null;
 
   const headerTitle = isEditMode
     ? t('reports.createOrEdit.headerTitleEdit')
@@ -348,15 +350,18 @@ export function CreateOrEditReportPage({
     closeMapPickers();
   }, [closeMapPickers, currentSketchMode, finalizeCurrentDrawing, form, getSketchFeatures]);
 
-  const handlePageClose = useCallback(() => {
-    resetMapPickers();
-    onClose();
-  }, [resetMapPickers, onClose]);
-
-  const handlePageBack = useCallback(() => {
-    resetMapPickers();
-    onBack?.();
-  }, [resetMapPickers, onBack]);
+  const {
+    isLeaveAlertOpen,
+    requestClose: handlePageClose,
+    requestBack: handlePageBack,
+    confirmLeave: handleConfirmLeave,
+    cancelLeave: closeLeaveAlert,
+  } = useUnsavedChangesGuard({
+    hasUnsavedChanges,
+    onClose,
+    onBack,
+    beforeLeave: resetMapPickers,
+  });
 
   const handleSaveDraft = async () => {
     await form.saveDraft();
@@ -376,15 +381,6 @@ export function CreateOrEditReportPage({
     const success = await form.submit();
     if (success) {
       resetMapPickers();
-      onClose();
-    }
-  };
-
-  const handleCancel = () => {
-    resetMapPickers();
-    if (onBack) {
-      onBack();
-    } else {
       onClose();
     }
   };
@@ -568,7 +564,7 @@ export function CreateOrEditReportPage({
               color="medium"
               variant="outline"
               fullWidth
-              onClick={handleCancel}
+              onClick={handlePageBack}
             >
               <IconClose className={buttonStyles.icon} />
               {t('reports.createOrEdit.actions.cancel')}
@@ -616,6 +612,25 @@ export function CreateOrEditReportPage({
           ))}
         </div>
       </Alert>
+
+      <Alert
+        isOpen={isLeaveAlertOpen}
+        onClose={closeLeaveAlert}
+        title={t('reports.createOrEdit.unsavedChanges.title')}
+        subtitle={t('reports.createOrEdit.unsavedChanges.message')}
+        buttons={[
+          {
+            label: t('reports.createOrEdit.unsavedChanges.leaveButton'),
+            onClick: handleConfirmLeave,
+            color: 'danger',
+          },
+          {
+            label: t('reports.createOrEdit.unsavedChanges.stayButton'),
+            onClick: closeLeaveAlert,
+            variant: 'outline',
+          },
+        ]}
+      />
     </>
   );
 }

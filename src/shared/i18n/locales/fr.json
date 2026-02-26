@@ -263,6 +263,12 @@
         "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
         "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer."
       },
+      "unsavedChanges": {
+        "title": "Quitter la page ?",
+        "message": "Si vous quittez cette page maintenant, toutes les modifications non enregistrées seront perdues.",
+        "leaveButton": "Quitter sans enregistrer",
+        "stayButton": "Rester et continuer"
+      },
       "form": {
         "theme": "Theme",
         "themePlaceholder": "Choisir un theme",
