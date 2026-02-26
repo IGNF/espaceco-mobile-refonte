@@ -109,6 +109,8 @@ export function CreateOrEditReportPage({
   const [mapPickerMode, setMapPickerMode] = useState<MapPickerMode>('none');
   const [objectCandidates, setObjectCandidates] = useState<PickedMapObjectCandidate[]>([]);
   const [isObjectChoiceOpen, setIsObjectChoiceOpen] = useState(false);
+  const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
+  const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
 
   const { position: geoPosition, isLocating, error, fetchPosition } = useGeolocation({
     fetchOnMount: !isEditMode, // fetch position only on create mode
@@ -378,12 +380,27 @@ export function CreateOrEditReportPage({
 
   const handleSend = async () => {
     if (!form.validate()) return;
+    setIsSendConfirmOpen(true);
+  };
+
+  const handleCloseSendConfirm = useCallback(() => {
+    setIsSendConfirmOpen(false);
+  }, []);
+
+  const handleConfirmSend = async () => {
+    if (form.isSaving) return;
+    setIsSendConfirmOpen(false);
     const success = await form.submit();
     if (success) {
-      resetMapPickers();
-      onClose();
+      setIsSendSuccessOpen(true);
     }
   };
+
+  const handleCloseSendSuccess = useCallback(() => {
+    setIsSendSuccessOpen(false);
+    resetMapPickers();
+    onClose();
+  }, [onClose, resetMapPickers]);
 
   const renderGeolocationStatus = () => {
     if (isEditMode) return null;
@@ -612,6 +629,39 @@ export function CreateOrEditReportPage({
           ))}
         </div>
       </Alert>
+
+      <Alert
+        isOpen={isSendConfirmOpen}
+        onClose={handleCloseSendConfirm}
+        title={t('reports.createOrEdit.sendConfirmation.title')}
+        subtitle={t('reports.createOrEdit.sendConfirmation.message')}
+        buttons={[
+          {
+            label: t('reports.createOrEdit.actions.send'),
+            onClick: handleConfirmSend,
+            color: 'primary',
+          },
+          {
+            label: t('reports.createOrEdit.actions.cancel'),
+            onClick: handleCloseSendConfirm,
+            variant: 'outline',
+          },
+        ]}
+      />
+
+      <Alert
+        isOpen={isSendSuccessOpen}
+        onClose={handleCloseSendSuccess}
+        title={t('reports.createOrEdit.sendSuccess.title')}
+        subtitle={t('reports.createOrEdit.sendSuccess.message')}
+        buttons={[
+          {
+            label: t('reports.general.ok'),
+            onClick: handleCloseSendSuccess,
+            color: 'primary',
+          },
+        ]}
+      />
 
       <Alert
         isOpen={isLeaveAlertOpen}

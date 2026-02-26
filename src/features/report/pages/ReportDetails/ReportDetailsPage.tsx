@@ -74,6 +74,7 @@ export function ReportDetailsPage({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
+  const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
   const [replyTitle, setReplyTitle] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyStatus, setReplyStatus] = useState(ReportStatus.Submit);
@@ -145,8 +146,13 @@ export function ReportDetailsPage({
     if (!report) return;
     const result = await submitReport(report);
     if (result) {
-      onBack();
+      setIsSendSuccessOpen(true);
     }
+  };
+
+  const handleSendSuccessClose = () => {
+    setIsSendSuccessOpen(false);
+    onBack();
   };
 
   const handleDeleteReport = () => {
@@ -410,6 +416,20 @@ export function ReportDetailsPage({
             label: t('reports.details.delete.cancelButton'),
             onClick: handleDeleteClose,
             variant: 'outline',
+          },
+        ]}
+      />
+
+      <Alert
+        isOpen={isSendSuccessOpen}
+        onClose={handleSendSuccessClose}
+        title={t('reports.details.sendSuccess.title')}
+        subtitle={t('reports.details.sendSuccess.message')}
+        buttons={[
+          {
+            label: t('reports.general.ok'),
+            onClick: handleSendSuccessClose,
+            color: 'primary',
           },
         ]}
       />

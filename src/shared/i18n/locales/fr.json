@@ -182,6 +182,7 @@
       "report_singular": "signalement",
       "report_plural": "signalements",
       "loading": "Chargement...",
+      "ok": "OK",
       "search": "Rechercher",
       "filter": "Filtrer",
       "error": "Erreur"
@@ -269,6 +270,14 @@
         "leaveButton": "Quitter sans enregistrer",
         "stayButton": "Rester et continuer"
       },
+      "sendConfirmation": {
+        "title": "Envoyer le signalement",
+        "message": "Vous êtes sur le point d'envoyer votre signalement. Assurez-vous que votre signalement est précis. Votre signalement est public."
+      },
+      "sendSuccess": {
+        "title": "Signalement envoyé",
+        "message": "Votre signalement a bien été envoyé."
+      },
       "form": {
         "theme": "Theme",
         "themePlaceholder": "Choisir un theme",
@@ -346,6 +355,10 @@
       "deleteButton": "Supprimer",
       "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
       "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
+      "sendSuccess": {
+        "title": "Signalement envoyé",
+        "message": "Votre signalement a bien été envoyé."
+      },
       "notAvailable": "N/A",
       "delete": {
         "dialogTitle": "Supprimer le signalement n°{{id}}",
