@@ -8,11 +8,46 @@
   background: var(--color-light);
 }
 
-.header {
+.headerButton {
+  appearance: none;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.headerButton:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--color-medium);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.chevron path {
+  fill: currentColor;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
 }
 
 .title {

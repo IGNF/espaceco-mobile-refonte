@@ -136,16 +136,35 @@ export function mapAppReportToApiBody(report: Report): Record<string, any> {
     device_version: report.deviceVersion,
   };
 
-  // Build flat attributes object for the API
+  // API expects:
+  // {
+  //   community: number,
+  //   theme: string,
+  //   attributes: { [dynamicFieldName]: value }
+  // }
+  // and not a flat object with custom fields at root level.
   if (report.attributes) {
-    const { themeName, ...rest } = report.attributes as Record<string, any>;
-    const apiAttributes: Record<string, any> = { ...rest };
-    if (report.communityId) {
-      apiAttributes.community = report.communityId;
-    }
+    const attributesRecord = report.attributes as Record<string, any>;
+    const { themeName, attributes: nestedAttributes, ...dynamicAttributes } = attributesRecord;
+    delete dynamicAttributes.raw;
+
+    const normalizedDynamicAttributes = (
+      nestedAttributes &&
+      typeof nestedAttributes === 'object' &&
+      !Array.isArray(nestedAttributes)
+    )
+      ? nestedAttributes
+      : dynamicAttributes;
+
+    const apiAttributes: Record<string, any> = {
+      community: report.communityId,
+      attributes: normalizedDynamicAttributes,
+    };
+
     if (themeName) {
       apiAttributes.theme = themeName;
     }
+
     body.attributes = JSON.stringify(apiAttributes);
   }
 
