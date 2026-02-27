@@ -9,7 +9,9 @@ import { ReportStatus, ClosedReportStatus } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
-import { ATTACHMENT_UPLOAD_FAILED_ERROR_CODE, useSubmitReport } from '@/features/report/hooks/useSubmitReport';
+import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
+import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
+import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -180,9 +182,10 @@ export function ReportDetailsPage({
     }
   };
 
-  const sendErrorKey = sendError?.message === ATTACHMENT_UPLOAD_FAILED_ERROR_CODE
-    ? 'reports.details.attachmentUploadWarning'
-    : 'reports.details.sendError'
+  const sendErrorKey = getReportSubmitErrorTranslationKey(
+    sendError,
+    'reports.details.sendError'
+  )
 
   if (!report) {
     return null;
@@ -393,7 +396,7 @@ export function ReportDetailsPage({
           )}
           {replyError && (
             <p className={replyFormStyles.replyError}>
-              {t('reports.details.reply.errorMessage')}
+              {t(getAppErrorTranslationKey(replyError, 'reports.details.reply.errorMessage'))}
             </p>
           )}
         </div>

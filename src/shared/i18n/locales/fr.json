@@ -18,6 +18,35 @@
     "continueWithoutAccount": "Continuer sans compte",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
   },
+  "errors": {
+    "global": {
+      "network": "Réseau indisponible. Vérifiez votre connexion puis réessayez.",
+      "unauthorized": "Votre session a expiré. Merci de vous reconnecter.",
+      "forbidden": "Vous n'avez pas les droits nécessaires pour effectuer cette action.",
+      "validation": "Certaines données saisies sont invalides.",
+      "notFound": "La ressource demandée est introuvable.",
+      "conflict": "Un conflit est survenu. Rechargez les données puis réessayez.",
+      "server": "Le service est momentanément indisponible. Réessayez plus tard.",
+      "unknown": "Une erreur inattendue est survenue."
+    },
+    "auth": {
+      "loginFailed": "La connexion a échoué. Merci de réessayer.",
+      "invalidCredentials": "Identifiant ou mot de passe incorrect.",
+      "oauthRedirect": "Redirection vers le portail d'authentification...",
+      "oauthCallbackFailed": "L'authentification n'a pas pu être finalisée.",
+      "noAuthorizationCode": "Aucun code d'autorisation n'a été reçu.",
+      "noAccessTokenAfterExchange": "Le jeton d'accès est introuvable après authentification.",
+      "failedToFetchUserInfo": "Impossible de récupérer les informations utilisateur.",
+      "codeVerifierMissing": "Le vérificateur PKCE est introuvable.",
+      "tokenExchangeFailed": "L'échange du code d'authentification a échoué.",
+      "refreshTokenMissing": "Aucun jeton de rafraîchissement disponible.",
+      "refreshTokenExpired": "La session a expiré. Merci de vous reconnecter.",
+      "tokenRefreshFailed": "Le rafraîchissement de session a échoué.",
+      "notAuthenticated": "Vous n'êtes pas authentifié.",
+      "currentUserFailed": "Impossible de récupérer l'utilisateur courant.",
+      "continueWithoutAccountFailed": "Impossible de continuer sans compte pour le moment."
+    }
+  },
   "communitySelection": {
     "title": "Profil actif",
     "subtitle": "de votre Espace collaboratif IGN",
@@ -391,6 +420,17 @@
       "valid0": "Déjà pris en compte",
       "reject": "Rejeté (hors spéc.)",
       "reject0": "Rejeté (hors propos)"
+    },
+    "errors": {
+      "submit": {
+        "attachmentUploadFailed": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
+        "reportCreationFailed": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
+        "network": "Réseau indisponible. Vérifiez votre connexion puis réessayez.",
+        "unauthorized": "Votre session a expiré. Merci de vous reconnecter.",
+        "forbidden": "Vous n'avez pas les droits nécessaires pour envoyer ce signalement.",
+        "validation": "Le signalement ne peut pas être envoyé car certaines données sont invalides.",
+        "unknown": "Une erreur inattendue est survenue lors de l'envoi du signalement."
+      }
     }
   }
 }

@@ -19,6 +19,7 @@ import {
   getReportObjectLayerName,
   setReportFeatureKind,
 } from '@/features/report/utils/reportObjects';
+import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
@@ -498,10 +499,16 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     setIsSaving(true);
     try {
       const submitted = buildReportRef.current(ReportStatus.Submit);
-      // Save locally as fallback in case the API call fails
-      await reportStorage.saveReport(submitted);
+      const storedReport = await reportStorage.getReport(submitted.id);
+      const storedSyncState = storedReport ? getReportSyncState(storedReport) : {};
+      const reportToSubmit = (storedSyncState.serverId || storedSyncState.photosToSend)
+        ? setReportSyncState(submitted, storedSyncState)
+        : submitted;
 
-      const result = await apiSubmit(submitted);
+      // Save locally as fallback in case the API call fails
+      await reportStorage.saveReport(reportToSubmit);
+
+      const result = await apiSubmit(reportToSubmit);
       if (result) {
         // API succeeded — draft was already deleted by useSubmitReport
         setIsDirty(false);

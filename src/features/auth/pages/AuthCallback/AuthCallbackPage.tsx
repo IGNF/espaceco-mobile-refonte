@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from 'react-i18next';
 import { useAuth } from "../../hooks/useAuth";
 import { handleOAuthCallback } from "@/infra/auth/authService";
+import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
@@ -11,6 +13,7 @@ import typography from "@/shared/styles/typography.module.css";
  * Extracts the authorization code from URL and exchanges it for tokens.
  */
 export function AuthCallbackPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUserFromOAuthCallback } = useAuth();
@@ -28,7 +31,7 @@ export function AuthCallbackPage() {
       }
 
       if (!code) {
-        setError("No authorization code received");
+        setError(t('errors.auth.noAuthorizationCode'));
         return;
       }
 
@@ -39,15 +42,15 @@ export function AuthCallbackPage() {
           await setUserFromOAuthCallback(result.user);
           navigate("/community-selection", { replace: true });
         } else {
-          setError(result.error?.message || "Authentication failed");
+          setError(t(getAppErrorTranslationKey(result.error, 'errors.auth.oauthCallbackFailed')));
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Authentication failed");
+        setError(t(getAppErrorTranslationKey(err, 'errors.auth.oauthCallbackFailed')));
       }
     }
 
     processCallback();
-  }, [searchParams, navigate, setUserFromOAuthCallback]);
+  }, [searchParams, navigate, setUserFromOAuthCallback, t]);
 
   if (error) {
     return (

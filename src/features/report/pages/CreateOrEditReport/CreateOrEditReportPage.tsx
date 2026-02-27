@@ -21,7 +21,7 @@ import { showToastSafe } from '@/shared/utils/toast';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportForm } from '@/features/report/hooks/useReportForm';
 import { useReportSketchSession } from '@/features/report/hooks/useReportSketchSession';
-import { ATTACHMENT_UPLOAD_FAILED_ERROR_CODE } from '@/features/report/hooks/useSubmitReport';
+import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { ReportForm } from '@/features/report/components/NewReport/ReportForm';
 import {
   applyReportObjectMetadata,
@@ -436,9 +436,10 @@ export function CreateOrEditReportPage({
     return null;
   };
 
-  const submitErrorKey = form.submitError?.message === ATTACHMENT_UPLOAD_FAILED_ERROR_CODE
-    ? 'reports.createOrEdit.actions.attachmentUploadWarning'
-    : 'reports.createOrEdit.actions.submitError';
+  const submitErrorKey = getReportSubmitErrorTranslationKey(
+    form.submitError,
+    'reports.createOrEdit.actions.submitError'
+  );
 
   const mapPickerOverlay = useMemo(() => {
     if (!isOpen) return null;

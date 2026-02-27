@@ -13,12 +13,34 @@ import { mapApiUserToAppUser, type ApiUserResponse } from "@/domain/user/mappers
 import type { AppUser } from "@/domain/user/models";
 import type { AuthResult, AuthTokens, RefreshResult, TokenExchangeResult, TokenResponse } from "@/domain/auth/models";
 import { config } from "@/shared/config/env";
+import { AppError, toAppError } from '@/shared/errors/appError';
+import type { AppErrorKind } from '@/shared/errors/appError';
 
 import { generateCodeChallengeFromVerifier, generateCodeVerifier, getRedirectUri } from "@/shared/utils/auth";
 import { showToastSafe } from '@/shared/utils/toast';
 
 // Re-export domain types for convenience
 export type { AuthResult, RefreshResult } from "@/domain/auth/models";
+
+function buildAuthError(
+  translationKey: string,
+  options: {
+    kind?: AppErrorKind;
+    message?: string;
+    code?: number | string;
+    retryable?: boolean;
+    cause?: unknown;
+  } = {}
+): AppError {
+  return new AppError({
+    kind: options.kind ?? 'unknown',
+    translationKey,
+    message: options.message,
+    code: options.code,
+    retryable: options.retryable,
+    cause: options.cause,
+  });
+}
 
 /**
  * Login with email and password.
@@ -34,13 +56,35 @@ export async function loginWithPassword(email: string, password: string): Promis
   } catch (error) {
     collabApiClient.disconnect();
 
-    const message = error instanceof Error ? error.message : "Authentication failed";
+    const appError = toAppError(error, {
+      fallbackKind: 'unknown',
+      fallbackTranslationKey: 'errors.auth.loginFailed',
+    });
 
-    if (message.includes("401") || message.includes("Unauthorized")) {
-      return { success: false, user: null, error: new Error("Invalid email or password") };
+    if (appError.kind === 'unauthorized') {
+      return {
+        success: false,
+        user: null,
+        error: buildAuthError('errors.auth.invalidCredentials', {
+          kind: 'unauthorized',
+          code: appError.code,
+          cause: error,
+          retryable: false,
+        }),
+      };
     }
 
-    return { success: false, user: null, error: new Error(message) };
+    return {
+      success: false,
+      user: null,
+      error: buildAuthError('errors.auth.loginFailed', {
+        kind: appError.kind,
+        code: appError.code,
+        message: appError.message,
+        cause: error,
+        retryable: appError.retryable,
+      }),
+    };
   }
 }
 
@@ -78,7 +122,14 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     // The callback will be handled by the /auth/callback route
     window.location.href = authUrl;
     // Return a pending result - the actual auth will complete after redirect
-    return { success: false, user: null, error: new Error('Redirection vers le portail d\'authentification...') };
+    return {
+      success: false,
+      user: null,
+      error: buildAuthError('errors.auth.oauthRedirect', {
+        kind: 'unknown',
+        retryable: false,
+      })
+    };
   }
 
   // Mobile flow: use native app URL listeners
@@ -102,13 +153,28 @@ export async function loginWithOAuth(): Promise<AuthResult> {
 
         if (error) {
           await Storage.remove(storageKey('temp_code_verifier'));
-          resolve({ success: false, user: null, error: new Error(error) });
+          resolve({
+            success: false,
+            user: null,
+            error: buildAuthError('errors.auth.oauthCallbackFailed', {
+              kind: 'unknown',
+              message: error,
+              retryable: false,
+            }),
+          });
           return;
         }
 
         if (!code) {
           await Storage.remove(storageKey('temp_code_verifier'));
-          resolve({ success: false, user: null, error: new Error('No authorization code received') });
+          resolve({
+            success: false,
+            user: null,
+            error: buildAuthError('errors.auth.noAuthorizationCode', {
+              kind: 'validation',
+              retryable: false,
+            }),
+          });
           return;
         }
 
@@ -122,7 +188,11 @@ export async function loginWithOAuth(): Promise<AuthResult> {
         // Fetch user info
         const accessToken = await getStoredAccessToken();
         if (!accessToken) {
-          resolve({ success: false, user: null, error: new Error('No access token after exchange') });
+          resolve({
+            success: false,
+            user: null,
+            error: buildAuthError('errors.auth.noAccessTokenAfterExchange'),
+          });
           return;
         }
 
@@ -132,8 +202,14 @@ export async function loginWithOAuth(): Promise<AuthResult> {
         resolve({ success: true, user });
       } catch (err) {
         await Storage.remove(storageKey('temp_code_verifier'));
-        const message = err instanceof Error ? err.message : 'OAuth callback failed';
-        resolve({ success: false, user: null, error: new Error(message) });
+        resolve({
+          success: false,
+          user: null,
+          error: toAppError(err, {
+            fallbackKind: 'unknown',
+            fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
+          }),
+        });
       }
     };
 
@@ -161,7 +237,11 @@ export async function handleOAuthCallback(code: string): Promise<AuthResult> {
     // Fetch user info
     const accessToken = await getStoredAccessToken();
     if (!accessToken) {
-      return { success: false, user: null, error: new Error('No access token after exchange') };
+      return {
+        success: false,
+        user: null,
+        error: buildAuthError('errors.auth.noAccessTokenAfterExchange'),
+      };
     }
 
     collabApiClient.setExternalToken(
@@ -173,14 +253,24 @@ export async function handleOAuthCallback(code: string): Promise<AuthResult> {
 
     const user = await fetchUserInfo();
     if (!user) {
-      return { success: false, user: null, error: new Error('Failed to fetch user info') };
+      return {
+        success: false,
+        user: null,
+        error: buildAuthError('errors.auth.failedToFetchUserInfo'),
+      };
     }
 
     return { success: true, user };
   } catch (err) {
     await Storage.remove(storageKey('temp_code_verifier'));
-    const message = err instanceof Error ? err.message : 'OAuth callback failed';
-    return { success: false, user: null, error: new Error(message) };
+    return {
+      success: false,
+      user: null,
+      error: toAppError(err, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
+      }),
+    };
   }
 }
 
@@ -191,7 +281,13 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
   const codeVerifier = await Storage.get(storageKey('temp_code_verifier'));
 
   if (!codeVerifier) {
-    return { success: false, error: new Error('Code verifier not found') };
+    return {
+      success: false,
+      error: buildAuthError('errors.auth.codeVerifierMissing', {
+        kind: 'validation',
+        retryable: false,
+      }),
+    };
   }
 
   try {
@@ -234,8 +330,13 @@ async function exchangeCodeForTokens(code: string, redirectUri: string): Promise
     return { success: true, tokens: authTokens };
   } catch (err) {
     await Storage.remove(storageKey('temp_code_verifier'));
-    const message = err instanceof Error ? err.message : 'Token exchange failed';
-    return { success: false, error: new Error(message) };
+    return {
+      success: false,
+      error: toAppError(err, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'errors.auth.tokenExchangeFailed',
+      }),
+    };
   }
 }
 
@@ -292,7 +393,13 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
   const refreshToken = await Storage.get(storageKey('refresh_token'));
 
   if (!refreshToken) {
-    return { success: false, error: new Error('No refresh token available') };
+    return {
+      success: false,
+      error: buildAuthError('errors.auth.refreshTokenMissing', {
+        kind: 'unauthorized',
+        retryable: false,
+      }),
+    };
   }
 
   // Check if refresh token is expired
@@ -303,7 +410,13 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
       duration: "short",
       position: "top"
     });
-    return { success: false, error: new Error('Refresh token expired') };
+    return {
+      success: false,
+      error: buildAuthError('errors.auth.refreshTokenExpired', {
+        kind: 'unauthorized',
+        retryable: false,
+      }),
+    };
   }
 
   try {
@@ -337,8 +450,13 @@ export async function refreshAccessToken(): Promise<RefreshResult> {
 
     return { success: true, tokens: authTokens };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Token refresh failed';
-    return { success: false, error: new Error(message) };
+    return {
+      success: false,
+      error: toAppError(err, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'errors.auth.tokenRefreshFailed',
+      }),
+    };
   }
 }
 
@@ -405,7 +523,14 @@ export async function logout(): Promise<void> {
  */
 export async function getCurrentUser(): Promise<AuthResult> {
   if (collabApiClient.isConnected() === false) {
-    return { success: false, user: null, error: new Error("Not authenticated") };
+    return {
+      success: false,
+      user: null,
+      error: buildAuthError('errors.auth.notAuthenticated', {
+        kind: 'unauthorized',
+        retryable: false,
+      }),
+    };
   }
 
   try {
@@ -413,8 +538,14 @@ export async function getCurrentUser(): Promise<AuthResult> {
     const user = mapApiUserToAppUser(response.data as ApiUserResponse);
     return { success: true, user };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to get user";
-    return { success: false, user: null, error: new Error(message) };
+    return {
+      success: false,
+      user: null,
+      error: toAppError(error, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'errors.auth.currentUserFailed',
+      }),
+    };
   }
 }
 

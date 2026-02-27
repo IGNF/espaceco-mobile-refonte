@@ -7,12 +7,12 @@ import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse 
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 import type { AppReport } from '@/domain/report/models';
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
+import { ReportSubmitError, toReportSubmitError } from '@/features/report/errors/reportSubmitError';
+import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
 import {
   normalizeSketchForApi,
   sanitizeFeaturesForSketchPayload,
 } from '@/features/report/utils/sketchPayload';
-
-export const ATTACHMENT_UPLOAD_FAILED_ERROR_CODE = 'ATTACHMENT_UPLOAD_FAILED'
 
 const reportStorage = new ReportStorageAdapter();
 const reportManager = new ReportManager(collabApiClient, reportStorage);
@@ -57,14 +57,16 @@ async function uploadReportAttachments(reportId: number, report: Report): Promis
   });
 
   try {
-    await reportManager.uploadAttachements(reportId, {
-      communityId: report.communityId,
-      themeId: report.themeId,
-      geometry: report.geometry,
-      comment: report.comment,
-      photos: report.photos,
-      photosToSend: true,
+    const body: Record<string, Blob> = {};
+    const blobs = await Promise.all(
+      report.photos.map((photo) => reportStorage.getBlob(photo))
+    );
+
+    blobs.forEach((blob, index) => {
+      body[`photo${index}`] = blob;
     });
+
+    await collabApiClient.report.addAttachments(reportId, body);
     console.info('[report] attachments uploaded', { reportId });
   } catch (error) {
     console.error('[report] attachment upload error', {
@@ -78,13 +80,58 @@ async function uploadReportAttachments(reportId: number, report: Report): Promis
 interface UseSubmitReportReturn {
   submitReport: (report: Report) => Promise<AppReport | null>;
   isSubmitting: boolean;
-  error: Error | null;
+  error: ReportSubmitError | null;
   clearError: () => void;
+}
+
+async function resolveReportSnapshot(report: Report): Promise<Report> {
+  const storedReport = await reportStorage.getReport(report.id);
+  return storedReport ?? report;
+}
+
+async function persistAttachmentRetryState(report: Report, serverId: number): Promise<void> {
+  const reportWithRetryState = setReportSyncState(report, {
+    serverId,
+    photosToSend: true,
+  });
+
+  await reportStorage.saveReport(reportWithRetryState);
+}
+
+async function fetchServerReport(serverId: number): Promise<AppReport | null> {
+  try {
+    const response = await collabApiClient.report.get(serverId);
+    return mapApiReportToAppReport(response.data as ApiReportResponse);
+  } catch (error) {
+    console.warn('[report] failed to fetch server report after successful send', {
+      serverId,
+      error,
+    });
+    return null;
+  }
+}
+
+async function deleteLocalReportQuietly(localReportId: number): Promise<void> {
+  try {
+    await reportStorage.deleteReport(localReportId);
+  } catch (error) {
+    console.warn('[report] failed to delete local report after successful send', {
+      localReportId,
+      error,
+    });
+  }
+}
+
+function toFallbackSubmittedReport(report: Report, serverId: number): AppReport {
+  return {
+    ...(report as AppReport),
+    id: serverId,
+  };
 }
 
 export function useSubmitReport(): UseSubmitReportReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<ReportSubmitError | null>(null);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -93,7 +140,36 @@ export function useSubmitReport(): UseSubmitReportReturn {
     setError(null);
 
     try {
-      const reportPayload = withSketchFromFeatures(report);
+      const localReport = await resolveReportSnapshot(report);
+      const reportPayload = withSketchFromFeatures(localReport);
+      const syncState = getReportSyncState(reportPayload);
+
+      if (syncState.serverId && syncState.photosToSend && !reportPayload.photos?.length) {
+        await deleteLocalReportQuietly(reportPayload.id);
+
+        const serverReport = await fetchServerReport(syncState.serverId);
+        return serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId);
+      }
+
+      // Retry path for reports already created on server with pending attachment uploads.
+      if (syncState.serverId && syncState.photosToSend && reportPayload.photos?.length) {
+        try {
+          await uploadReportAttachments(syncState.serverId, reportPayload);
+          await deleteLocalReportQuietly(reportPayload.id);
+
+          const serverReport = await fetchServerReport(syncState.serverId);
+          return serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId);
+        } catch (attachmentError) {
+          await persistAttachmentRetryState(reportPayload, syncState.serverId);
+          const submitError = new ReportSubmitError({
+            kind: 'attachmentUploadFailed',
+            cause: attachmentError,
+          });
+          setError(submitError);
+          return null;
+        }
+      }
+
       const body = mapAppReportToApiBody(reportPayload);
       const response = await collabApiClient.report.add(body);
       const createdReportId = (response.data as ApiReportResponse).id;
@@ -104,7 +180,11 @@ export function useSubmitReport(): UseSubmitReportReturn {
           await uploadReportAttachments(createdReportId, reportPayload);
         } catch (attachmentError) {
           console.error('Report created but attachment upload failed', attachmentError);
-          setError(new Error(ATTACHMENT_UPLOAD_FAILED_ERROR_CODE));
+          await persistAttachmentRetryState(reportPayload, createdReportId);
+          setError(new ReportSubmitError({
+            kind: 'attachmentUploadFailed',
+            cause: attachmentError,
+          }));
           return null;
         }
       }
@@ -113,12 +193,11 @@ export function useSubmitReport(): UseSubmitReportReturn {
       const appReport = mapApiReportToAppReport(response.data as ApiReportResponse);
 
       // Delete the local draft now that the API accepted it
-      await reportStorage.deleteReport(report.id);
+      await deleteLocalReportQuietly(reportPayload.id);
 
       return appReport;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to submit report');
-      setError(error);
+      setError(toReportSubmitError(err, 'reportCreationFailed'));
       return null;
     } finally {
       setIsSubmitting(false);

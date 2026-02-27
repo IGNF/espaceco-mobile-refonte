@@ -3,6 +3,7 @@ import { AuthContext } from "./AuthContext";
 import * as authService from "@/infra/auth";
 import type { AppUser } from "@/domain/user/models";
 import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
+import { toAppError } from '@/shared/errors/appError';
 
 const userStorage = new UserStorageAdapter();
 
@@ -104,7 +105,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 			return {
 				success: false,
 				user: null,
-				error: error instanceof Error ? error : new Error("Unknown error"),
+				error: toAppError(error, {
+          fallbackKind: 'unknown',
+          fallbackTranslationKey: 'errors.auth.continueWithoutAccountFailed',
+        }),
 			};
 		} finally {
 			setIsLoading(false);

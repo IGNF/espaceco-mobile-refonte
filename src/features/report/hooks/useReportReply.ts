@@ -3,16 +3,18 @@ import { collabApiClient } from '@/infra/api';
 import { mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import type { AppReport } from '@/domain/report/models';
 import type { ReportStatus } from '@ign/mobile-core';
+import type { AppError } from '@/shared/errors/appError';
+import { toAppError } from '@/shared/errors/appError';
 
 interface UseReportReplyResult {
   submitReply: (reportId: number, title: string, content: string, status: ReportStatus) => Promise<AppReport | null>;
   isSubmitting: boolean;
-  error: Error | null;
+  error: AppError | null;
 }
 
 export function useReportReply(): UseReportReplyResult {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<AppError | null>(null);
 
   const submitReply = useCallback(async (reportId: number, title: string, content: string, status: string): Promise<AppReport | null> => {
     setIsSubmitting(true);
@@ -24,7 +26,10 @@ export function useReportReply(): UseReportReplyResult {
       const response = await collabApiClient.report.get(reportId);
       return mapApiReportToAppReport(response.data as ApiReportResponse);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to submit reply'));
+      setError(toAppError(err, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'reports.details.reply.errorMessage',
+      }));
       return null;
     } finally {
       setIsSubmitting(false);

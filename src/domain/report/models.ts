@@ -1,7 +1,17 @@
 import type { Report, ReportStatus } from '@ign/mobile-core';
 
+export interface ReportSyncMetadata {
+  serverId?: number;
+  photosToSend?: boolean;
+}
+
+export interface ReportExtraData {
+  sync?: ReportSyncMetadata;
+  [key: string]: unknown;
+}
+
 export interface AppReport extends Report {
-  extraData?: Record<string, any>;
+  extraData?: ReportExtraData;
 }
 
 // Params to send along with the request to the API

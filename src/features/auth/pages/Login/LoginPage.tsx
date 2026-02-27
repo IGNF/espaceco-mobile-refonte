@@ -4,6 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
+import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
@@ -40,7 +41,7 @@ export function LoginPage() {
 		// const loginResponse = await loginWithPassword(email, password);
 		setIsLoading(false);
 		if (!loginResponse.success) {
-			setError(loginResponse.error?.message ?? t("login.error"));
+			setError(t(getAppErrorTranslationKey(loginResponse.error, "errors.auth.loginFailed")));
 		}
 	};
 
