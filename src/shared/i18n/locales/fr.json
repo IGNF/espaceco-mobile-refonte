@@ -351,13 +351,36 @@
         "sketchToolDelete": "Supprimer la sélection",
         "sketchToolUndo": "Annuler la dernière action",
         "sketchToolClose": "Fermer l'outil croquis",
+        "trace": "Trace",
+        "traceAdd": "Ajouter une trace",
+        "traceRecording": "Saisie de la trace en cours",
+        "traceCount": "{{count}} trace(s)",
+        "traceEmpty": "Aucune trace ajoutée pour le moment",
+        "traceItem": "Trace GPS ({{pointCount}} points)",
+        "traceRemove": "Supprimer la trace",
         "comingSoon": "bientot disponible",
         "validation": {
           "themeRequired": "Veuillez choisir un theme",
           "fieldRequired": "Ce champ est obligatoire",
           "invalidInteger": "Veuillez saisir un nombre entier",
-          "invalidDecimal": "Veuillez saisir un nombre decimal"
+          "invalidDecimal": "Veuillez saisir un nombre decimal",
+          "traceRequired": "Veuillez ajouter une trace avant d'envoyer"
         }
+      },
+      "traceToolbar": {
+        "enableAudio": "Activer les bips",
+        "disableAudio": "Couper les bips",
+        "start": "Démarrer l'enregistrement",
+        "pause": "Mettre en pause",
+        "resume": "Reprendre l'enregistrement",
+        "switchToPedestrian": "Passer en mode piéton",
+        "switchToCar": "Passer en mode voiture",
+        "validate": "Valider la trace",
+        "cancel": "Annuler la trace",
+        "statusIdle": "Appuyez sur enregistrer pour démarrer la trace",
+        "statusRecording": "Enregistrement : {{pointCount}} pts · {{distance}} m",
+        "statusPaused": "Pause : {{pointCount}} pts · {{distance}} m",
+        "statusReady": "Trace prête : {{pointCount}} pts · {{distance}} m"
       }
     },
     "details": {

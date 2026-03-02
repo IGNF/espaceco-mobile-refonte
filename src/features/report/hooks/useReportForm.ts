@@ -23,15 +23,18 @@ import { getReportSyncState, setReportSyncState } from '@/features/report/utils/
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
+export type ReportCreationType = 'standard' | 'trace';
 
 export interface UseReportFormOptions {
   mode: ReportFormMode;
   report?: AppReport | null;
   position: Position | null;
   isOpen?: boolean;
+  reportType?: ReportCreationType;
 }
 
 export interface UseReportFormReturn {
+  reportType: ReportCreationType;
   themes: CommunityThemeConfig[];
   currentAttributes: CommunityThemeAttribute[];
   selectedTheme: string;
@@ -54,6 +57,7 @@ export interface UseReportFormReturn {
   addObject: (feature: Feature<Geometry>) => void;
   removeObject: (index: number) => void;
   addSketches: (features: Feature<Geometry>[]) => void;
+  replaceSketches: (features: Feature<Geometry>[]) => void;
   removeSketch: (index: number) => void;
   validate: () => boolean;
   saveDraft: () => Promise<void>;
@@ -186,7 +190,13 @@ function splitReportFeatures(features?: Feature<Geometry>[]): SplitReportFeature
 
 const reportStorage = new ReportStorageAdapter();
 
-export function useReportForm({ mode, report, position, isOpen }: UseReportFormOptions): UseReportFormReturn {
+export function useReportForm({
+  mode,
+  report,
+  position,
+  isOpen,
+  reportType,
+}: UseReportFormOptions): UseReportFormReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeCommunity } = useCommunity();
@@ -195,6 +205,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     () => extractThemeConfigs(user?.communities_member, activeCommunity?.id),
     [user?.communities_member, activeCommunity?.id]
   );
+  const resolvedReportType: ReportCreationType = reportType ?? 'standard';
 
   const [selectedTheme, setSelectedThemeRaw] = useState<string>('');
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
@@ -392,6 +403,19 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       ...prev,
       ...nextFeatures,
     ]);
+    setErrors(prev => ({ ...prev, trace: undefined }));
+    setIsDirty(true);
+  }, []);
+
+  const replaceSketches = useCallback((features: Feature<Geometry>[]) => {
+    const nextFeatures = features.filter(isFeatureLike);
+
+    for (const feature of nextFeatures) {
+      setReportFeatureKind(feature, 'sketch');
+    }
+
+    setSketches(nextFeatures);
+    setErrors(prev => ({ ...prev, trace: undefined }));
     setIsDirty(true);
   }, []);
 
@@ -439,9 +463,14 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
       }
     }
 
+    if (resolvedReportType === 'trace' && sketches.length === 0) {
+      newErrors.trace = t('reports.createOrEdit.form.validation.traceRequired');
+      valid = false;
+    }
+
     setErrors(newErrors);
     return valid;
-  }, [selectedTheme, currentAttributes, attributeValues, t]);
+  }, [selectedTheme, currentAttributes, attributeValues, resolvedReportType, sketches.length, t]);
 
   const buildReport = useCallback((status: ReportStatus): Report => {
     const lon = position?.coords.longitude ?? 0;
@@ -522,6 +551,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
   }, [apiSubmit, clearError]);
 
   return {
+    reportType: resolvedReportType,
     themes,
     currentAttributes,
     selectedTheme,
@@ -544,6 +574,7 @@ export function useReportForm({ mode, report, position, isOpen }: UseReportFormO
     addObject,
     removeObject,
     addSketches,
+    replaceSketches,
     removeSketch,
     validate,
     saveDraft,

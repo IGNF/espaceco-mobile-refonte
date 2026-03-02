@@ -6,6 +6,7 @@ import type { UseReportFormReturn } from '@/features/report/hooks/useReportForm'
 import type { CommunityThemeAttribute } from '@/domain/community/models';
 import type { Position } from '@/platform/device/geolocation';
 import { getGeometryLabelKeyFromType } from '@/shared/utils/geometry';
+import type LineString from 'ol/geom/LineString';
 import {
   getReportObjectKey,
   getReportObjectLabel,
@@ -16,6 +17,7 @@ import IconLocation from '@/shared/assets/icons/icon-location.svg?react';
 import IconCamera from '@/shared/assets/icons/icon-camera.svg?react';
 import IconObject from '@/shared/assets/icons/icon-object.svg?react';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
+import IconTrack from '@/shared/assets/icons/icon-track.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import inputs from '@/shared/styles/inputs.module.css';
@@ -25,22 +27,28 @@ export interface ReportFormProps {
   form: UseReportFormReturn;
   position: Position | null;
   isLocating: boolean;
+  isTraceMode?: boolean;
   onEditPosition?: () => void;
   onAddObject?: () => void;
   onAddSketch?: () => void;
+  onAddTrace?: () => void;
   isPickingObject?: boolean;
   isPickingSketch?: boolean;
+  isPickingTrace?: boolean;
 }
 
 export function ReportForm({
   form,
   position,
   isLocating,
+  isTraceMode = false,
   onEditPosition,
   onAddObject,
   onAddSketch,
+  onAddTrace,
   isPickingObject = false,
   isPickingSketch = false,
+  isPickingTrace = false,
 }: ReportFormProps) {
   const { t } = useTranslation();
 
@@ -88,6 +96,58 @@ export function ReportForm({
 
   const renderError = (error?: string) =>
     error ? <span className={inputs.error}>{error}</span> : null;
+
+  const renderTraceCard = () => {
+    const traceAction = onAddTrace
+      ? {
+        label: isPickingTrace
+          ? t('reports.createOrEdit.form.traceRecording')
+          : t('reports.createOrEdit.form.traceAdd'),
+        onClick: onAddTrace,
+      }
+      : undefined;
+
+    const traceFeature = form.sketches[0];
+    const traceGeometry = traceFeature?.getGeometry();
+    const tracePointCount = traceGeometry?.getType() === 'LineString'
+      ? (traceGeometry as LineString).getCoordinates().length
+      : 0;
+
+    return (
+      <AttachmentSection
+        Icon={IconTrack}
+        label={t('reports.createOrEdit.form.trace')}
+        badge={t('reports.createOrEdit.form.traceCount', { count: form.sketches.length })}
+        hasContent={form.sketches.length > 0}
+        emptyText={t('reports.createOrEdit.form.traceEmpty')}
+        action={traceAction}
+      >
+        {form.sketches.length > 0 && (
+          <div className={styles.objectList}>
+            <div className={styles.objectItem}>
+              <div className={styles.objectItemInfo}>
+                <span className={styles.objectItemLabel}>
+                  {t('reports.createOrEdit.form.traceItem', { pointCount: tracePointCount })}
+                </span>
+                <span className={styles.objectItemLayer}>
+                  {t('geometry.types.lineString')}
+                </span>
+              </div>
+              <button
+                type="button"
+                className={styles.objectRemoveButton}
+                onClick={() => form.replaceSketches([])}
+                aria-label={t('reports.createOrEdit.form.traceRemove')}
+              >
+                <IconClose className={styles.objectRemoveIcon} />
+              </button>
+            </div>
+          </div>
+        )}
+        {renderError(form.errors.trace)}
+      </AttachmentSection>
+    );
+  };
 
   const renderAttributeField = (attr: CommunityThemeAttribute) => {
     const value = form.attributeValues[attr.name] ?? '';
@@ -331,55 +391,61 @@ export function ReportForm({
 
       {/* Attachment placeholders */}
       <div className={styles.section}>
-        <AttachmentSection
-          Icon={IconCamera}
-          label={t('reports.createOrEdit.form.photo')}
-          badge={t('reports.createOrEdit.form.photoCount', {
-            count: form.photos.length,
-            max: form.photoLimit,
-          })}
-          hasContent={form.photos.length > 0}
-          emptyText={t('reports.createOrEdit.form.photoEmpty')}
-          action={{
-            label: t('reports.createOrEdit.form.photoAdd'),
-            onClick: form.addPhoto,
-            loading: form.isAddingPhoto,
-            disabled: form.photos.length >= form.photoLimit,
-          }}
-        >
-          {form.photos.length > 0 && (
-            <>
-              <div className={styles.photoGrid}>
-                {form.photos.map((photo, index) => (
-                  <div className={styles.photoItem} key={photo.localPath ?? `${index}`}>
-                    {photo.thumbnail ? (
-                      <img
-                        src={photo.thumbnail}
-                        alt={t('reports.createOrEdit.form.photoPreviewAlt', { index: index + 1 })}
-                        className={styles.photoPreview}
-                      />
-                    ) : (
-                      <div className={styles.photoFallback}>
-                        <IconCamera className={styles.photoFallbackIcon} />
+        {isTraceMode ? (
+          renderTraceCard()
+        ) : (
+          <>
+            <AttachmentSection
+              Icon={IconCamera}
+              label={t('reports.createOrEdit.form.photo')}
+              badge={t('reports.createOrEdit.form.photoCount', {
+                count: form.photos.length,
+                max: form.photoLimit,
+              })}
+              hasContent={form.photos.length > 0}
+              emptyText={t('reports.createOrEdit.form.photoEmpty')}
+              action={{
+                label: t('reports.createOrEdit.form.photoAdd'),
+                onClick: form.addPhoto,
+                loading: form.isAddingPhoto,
+                disabled: form.photos.length >= form.photoLimit,
+              }}
+            >
+              {form.photos.length > 0 && (
+                <>
+                  <div className={styles.photoGrid}>
+                    {form.photos.map((photo, index) => (
+                      <div className={styles.photoItem} key={photo.localPath ?? `${index}`}>
+                        {photo.thumbnail ? (
+                          <img
+                            src={photo.thumbnail}
+                            alt={t('reports.createOrEdit.form.photoPreviewAlt', { index: index + 1 })}
+                            className={styles.photoPreview}
+                          />
+                        ) : (
+                          <div className={styles.photoFallback}>
+                            <IconCamera className={styles.photoFallbackIcon} />
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className={styles.photoRemoveButton}
+                          onClick={() => form.removePhoto(index)}
+                          aria-label={t('reports.createOrEdit.form.photoRemove')}
+                        >
+                          <IconClose className={styles.photoRemoveIcon} />
+                        </button>
                       </div>
-                    )}
-                    <button
-                      type="button"
-                      className={styles.photoRemoveButton}
-                      onClick={() => form.removePhoto(index)}
-                      aria-label={t('reports.createOrEdit.form.photoRemove')}
-                    >
-                      <IconClose className={styles.photoRemoveIcon} />
-                    </button>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </>
-          )}
-        </AttachmentSection>
+                </>
+              )}
+            </AttachmentSection>
 
-        {renderObjectCard()}
-        {renderSketchCard()}
+            {renderObjectCard()}
+            {renderSketchCard()}
+          </>
+        )}
       </div>
     </div>
   );

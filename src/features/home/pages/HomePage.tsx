@@ -30,6 +30,7 @@ import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverla
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
+type NewReportType = 'standard' | 'trace';
 
 function isOverlayRoute(route: string): route is OverlayRoute {
 	return overlayRoutes.includes(route as OverlayRoute);
@@ -64,6 +65,7 @@ export function HomePage() {
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
 	const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
+	const [newReportType, setNewReportType] = useState<NewReportType>('standard');
 
 	const {
 		showModal: showOnboarding,
@@ -111,6 +113,7 @@ export function HomePage() {
 	};
 
 	const handleNewReportStandard = () => {
+		setNewReportType('standard');
 		setActiveOverlay(null);
 		setIsSearchOpen(false);
 		setTimeout(() => {
@@ -119,8 +122,12 @@ export function HomePage() {
 	};
 
 	const handleNewReportTrace = () => {
-		// TODO: Handle trace report
-		console.log("Trace report selected");
+		setNewReportType('trace');
+		setActiveOverlay(null);
+		setIsSearchOpen(false);
+		setTimeout(() => {
+			setActiveOverlay('/create-or-edit-report');
+		}, 300);
 	};
 
 	const handleSearchClick = () => {
@@ -260,6 +267,7 @@ export function HomePage() {
 				isOpen={activeOverlay === '/create-or-edit-report'}
 				onClose={handleCloseOverlay}
 				mode="create"
+				reportType={newReportType}
 				map={map}
 				onSearchPanelVisibilityChange={setIsSearchOpen}
 			/>
