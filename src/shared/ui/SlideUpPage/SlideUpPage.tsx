@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
@@ -50,16 +51,16 @@ export function SlideUpPage({ children, isOpen, className, level = 1, fullPage =
 
 	if (!shouldRender) return null;
 
-	const classNames = [
+	const classNames = joinCSSClassNames(
 		styles.slideUpPage,
 		isVisible ? styles.slideUpPageVisible : '',
-		className ?? '',
-	].filter(Boolean).join(' ');
+		className
+	);
 
-	const innerClassNames = [
+	const innerClassNames = joinCSSClassNames(
 		styles.slideUpPageInner,
-		fullPage ? styles.slideUpPageInnerFullPage : '',
-	].filter(Boolean).join(' ');
+		fullPage ? styles.slideUpPageInnerFullPage : ''
+	);
 
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
 

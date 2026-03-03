@@ -4,6 +4,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ExternalLink } from '@/shared/ui/ExternalLink';
 import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
+import { joinTruthy } from '@/shared/utils/join';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './MyInformationsPage.module.css';
 
@@ -18,7 +19,7 @@ export function MyInformationsPage({ isOpen, onClose }: MyInformationsPageProps)
 
 	const getFullName = (): string | null => {
 		if (!user?.firstName && !user?.lastName) return null;
-		return [user.firstName, user.lastName].filter(Boolean).join(' ');
+		return joinTruthy([user.firstName, user.lastName], ' ');
 	};
 
 	const fullName = getFullName();

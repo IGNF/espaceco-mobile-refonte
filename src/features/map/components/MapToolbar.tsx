@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './MapToolbar.module.css';
 
 export interface MapToolbarItem {
@@ -16,10 +17,6 @@ export interface MapToolbarProps {
   className?: string;
 }
 
-function cx(...classNames: Array<string | undefined | false>): string {
-  return classNames.filter(Boolean).join(' ');
-}
-
 export function MapToolbar({
   items,
   onItemClick,
@@ -27,13 +24,13 @@ export function MapToolbar({
   className,
 }: MapToolbarProps) {
   return (
-    <div className={cx(styles.root, className)}>
+    <div className={joinCSSClassNames(styles.root, className)}>
       <div className={styles.toolbar}>
         {items.map(({ id, Icon, label, active, disabled }) => (
           <button
             key={id}
             type="button"
-            className={cx(styles.toolButton, active && styles.toolButtonActive)}
+            className={joinCSSClassNames(styles.toolButton, active && styles.toolButtonActive)}
             onClick={() => onItemClick(id)}
             aria-label={label}
             disabled={disabled}

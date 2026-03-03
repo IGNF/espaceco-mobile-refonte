@@ -1,6 +1,7 @@
 import type { AnchorHTMLAttributes, ReactNode } from 'react';
 import styles from './ExternalLink.module.css';
 import ExternalLinkIcon from '@/shared/assets/icons/icon-external-link.svg';
+import { joinCSSClassNames } from '@/shared/utils/join';
 
 export interface ExternalLinkProps extends AnchorHTMLAttributes<HTMLAnchorElement> {
   children: ReactNode
@@ -17,12 +18,7 @@ export function ExternalLink({
   rel = 'noopener noreferrer',
   ...rest
 }: ExternalLinkProps) {
-  const classNames = [
-    styles.externalLink,
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const classNames = joinCSSClassNames(styles.externalLink, className);
 
   return (
     <a
@@ -43,4 +39,3 @@ export function ExternalLink({
     </a>
   );
 }
-

@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './Button.module.css';
 
 export type ButtonColor =
@@ -32,15 +33,13 @@ export function Button({
   disabled,
   ...rest
 }: ButtonProps) {
-  const classNames = [
+  const classNames = joinCSSClassNames(
     styles.button,
     styles[color],
     styles[variant],
     fullWidth ? styles.fullWidth : '',
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   return (
     <button className={classNames} disabled={disabled || loading} {...rest}>

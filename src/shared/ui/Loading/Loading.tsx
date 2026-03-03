@@ -1,3 +1,4 @@
+import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './Loading.module.css';
 
 export type LoadingSize = 'small' | 'medium' | 'large';
@@ -9,10 +10,7 @@ export interface LoadingProps {
 }
 
 export function Loading({ size = 'medium', label, className }: LoadingProps) {
-  const classNames = [
-    styles.container,
-    className ?? '',
-  ].filter(Boolean).join(' ');
+  const classNames = joinCSSClassNames(styles.container, className);
 
   return (
     <div className={classNames}>

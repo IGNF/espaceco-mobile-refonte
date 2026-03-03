@@ -1,3 +1,4 @@
+import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './Toggle.module.css';
 
 export type ToggleColor =
@@ -23,11 +24,11 @@ export function Toggle({
   color = 'primary',
   disabled = false,
 }: ToggleProps) {
-  const classNames = [
+  const classNames = joinCSSClassNames(
     styles.toggle,
     styles[color],
-    disabled ? styles.disabled : '',
-  ].filter(Boolean).join(' ');
+    disabled ? styles.disabled : ''
+  );
 
   return (
     <label className={classNames}>
