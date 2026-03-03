@@ -1,4 +1,6 @@
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
+import tracePointBeepSound from '@/shared/assets/sounds/bip.mp3';
+import traceEndBeepSound from '@/shared/assets/sounds/bip2.mp3';
 
 export type TraceTransportMode = 'pedestrian' | 'car';
 
@@ -24,10 +26,9 @@ export const TRACE_TOLERANCE_BY_MODE: Record<TraceTransportMode, number> = {
   car: 5,
 };
 
-// Audio feedback defaults used when recording the GPS trace.
-export const TRACE_BEEP_FREQUENCY = 880;
-export const TRACE_BEEP_GAIN = 0.03;
-export const TRACE_BEEP_DURATION_MS = 70;
+// Audio feedback sounds used while recording and validating a trace.
+export const TRACE_SOUND_RECORDING_POINT_SRC = tracePointBeepSound;
+export const TRACE_SOUND_RECORDING_END_SRC = traceEndBeepSound;
 
 export const TRACE_STYLE = [
   new Style({
