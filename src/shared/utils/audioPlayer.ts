@@ -63,3 +63,32 @@ export function createAudioPlayer(source: string): AudioPlayer {
     destroy,
   };
 }
+
+/**
+ * Play a one-shot sound that should not be tied to a long-lived player lifecycle.
+ */
+export function playAudioOnce(source: string): void {
+  if (typeof window === 'undefined' || typeof window.Audio === 'undefined') {
+    return;
+  }
+
+  try {
+    const audio = new window.Audio(source);
+    audio.preload = 'auto';
+
+    const cleanup = () => {
+      audio.removeAttribute('src');
+      audio.load();
+    };
+
+    audio.addEventListener('ended', cleanup, { once: true });
+    audio.addEventListener('error', cleanup, { once: true });
+
+    void audio.play().catch(() => {
+      console.warn('playAudioOnce: sound playback may be blocked by device/browser policy');
+      cleanup();
+    });
+  } catch {
+    console.warn('playAudioOnce: unable to play audio');
+  }
+}
