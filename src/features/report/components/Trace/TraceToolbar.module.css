@@ -1,0 +1,131 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  pointer-events: none;
+}
+
+.audioButton {
+  position: absolute;
+  top: calc(var(--safe-top, 0px) + 88px);
+  left: 16px;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(23, 31, 38, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.audioButtonMuted {
+  color: var(--color-medium);
+}
+
+.audioButtonMuted::after {
+  content: '';
+  position: absolute;
+  width: 2px;
+  height: 22px;
+  background: currentColor;
+  transform: rotate(-35deg);
+}
+
+.audioIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.audioIcon path {
+  fill: currentColor;
+}
+
+.bottomBar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 14px 16px calc(14px + var(--safe-bottom, 0px));
+  background: rgba(247, 248, 250, 0.98);
+  border-top: 1px solid rgba(23, 31, 38, 0.08);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.actionButton {
+  height: 46px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #8f96a3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.actionButton:hover,
+.actionButton:focus-visible {
+  background: rgba(31, 42, 55, 0.08);
+  color: #687083;
+}
+
+.actionButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.actionButtonActive {
+  color: var(--color-dark);
+}
+
+.recordButton {
+  color: #4a4f5d;
+}
+
+.recordDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.actionIcon {
+  width: 24px;
+  height: 24px;
+}
+
+.actionIcon path {
+  fill: currentColor;
+}
+
+.statusPill {
+  position: absolute;
+  left: 50%;
+  bottom: calc(68px + var(--safe-bottom, 0px));
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(23, 31, 38, 0.12);
+  color: var(--color-dark);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
