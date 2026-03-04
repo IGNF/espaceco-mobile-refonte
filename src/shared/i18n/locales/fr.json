@@ -153,6 +153,44 @@
     "aide": "Aide",
     "aPropos": "A propos"
   },
+  "settings": {
+    "headerTitle": "Paramètres",
+    "headerSubtitle": "Profil actif",
+    "gps": {
+      "title": "Source GPS",
+      "description": "Choisissez la source de géolocalisation utilisée par l'application pour le centrage carte et la saisie de trace.",
+      "currentSource": "Source active",
+      "chooseSource": "Source souhaitée",
+      "source": {
+        "internal": "GPS interne",
+        "external": "GPS externe (Bluetooth)"
+      },
+      "pluginUnavailable": "Le plugin de sélection de source GPS n'est pas disponible sur cet environnement.",
+      "changeUnsupported": "Le changement de source GPS externe n'est pas supporté sur cette plateforme.",
+      "apply": "Appliquer la source GPS",
+      "applySuccess": "Source GPS mise à jour.",
+      "errors": {
+        "notAvailable": "Impossible de changer la source GPS sur cet appareil.",
+        "unsupportedOnPlatform": "Le changement de source GPS n'est pas supporté sur cette plateforme.",
+        "noPairedDevice": "Aucun GPS externe appairé trouvé.",
+        "selectionCanceled": "Aucun appareil Bluetooth sélectionné.",
+        "connectionFailed": "Impossible de se connecter au GPS externe.",
+        "unknown": "Une erreur est survenue lors du changement de source GPS."
+      }
+    },
+    "trace": {
+      "title": "Réglages trace GPS",
+      "description": "Personnalisez la précision minimale GPS et la distance minimale entre deux points pour la saisie de trace.",
+      "minAccuracy": "Précision GPS minimale (m)",
+      "tolerancePedestrian": "Distance minimale piéton (m)",
+      "toleranceCar": "Distance minimale voiture (m)",
+      "apply": "Appliquer les réglages trace",
+      "applySuccess": "Réglages de trace mis à jour.",
+      "errors": {
+        "invalidNumber": "Veuillez saisir des valeurs numériques positives."
+      }
+    }
+  },
   "myInformations": {
     "title": "Mes informations",
     "subtitle": "sur l'Espace collaboratif IGN",

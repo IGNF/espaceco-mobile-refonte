@@ -8,17 +8,18 @@ import VectorSource from 'ol/source/Vector';
 import type { EventsKey } from 'ol/events';
 import GeolocationDraw, { type GeolocationDrawEvent } from 'ol-ext/interaction/GeolocationDraw';
 import {
+  DEFAULT_TRACE_RECORDING_SETTINGS,
   DEFAULT_TRACE_TRANSPORT_MODE,
   TRACE_LAYER_NAME,
   TRACE_LAYER_TITLE,
-  TRACE_MIN_ACCURACY,
   TRACE_MIN_ZOOM,
   TRACE_SOUND_RECORDING_END_SRC,
   TRACE_SOUND_RECORDING_POINT_SRC,
   TRACE_STYLE,
-  TRACE_TOLERANCE_BY_MODE,
+  type TraceRecordingSettings,
   type TraceTransportMode,
 } from '@/features/report/constants/reportTrace.constants';
+import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
 import { createAudioPlayer, playAudioOnce, type AudioPlayer } from '@/shared/utils/audioPlayer';
 import {
@@ -72,6 +73,10 @@ export function useReportTraceSession({
   const [traceDistanceMeters, setTraceDistanceMeters] = useState(0);
   const [transportMode, setTransportMode] = useState<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [traceRecordingSettings, setTraceRecordingSettings] = useState<TraceRecordingSettings>({
+    minAccuracy: DEFAULT_TRACE_RECORDING_SETTINGS.minAccuracy,
+    toleranceByMode: { ...DEFAULT_TRACE_RECORDING_SETTINGS.toleranceByMode },
+  });
 
   const interactionRef = useRef<GeolocationDraw | null>(null);
   const traceSourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
@@ -80,6 +85,7 @@ export function useReportTraceSession({
   // OL listeners are registered once; refs keep latest UI config without rebuilding the interaction.
   const transportModeRef = useRef<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
   const audioEnabledRef = useRef(isAudioEnabled);
+  const traceRecordingSettingsRef = useRef(traceRecordingSettings);
 
   const resetTraceState = useCallback(() => {
     setHasTrace(false);
@@ -163,7 +169,8 @@ export function useReportTraceSession({
       stopTracePointSound();
       source.clear(true);
       resetTraceState();
-      interaction.set('tolerance', TRACE_TOLERANCE_BY_MODE[transportMode]);
+      interaction.set('tolerance', traceRecordingSettingsRef.current.toleranceByMode[transportMode]);
+      interaction.set('minAccuracy', traceRecordingSettingsRef.current.minAccuracy);
       interaction.setActive(true);
       interaction.setFollowTrack('auto');
       interaction.pause(false);
@@ -237,8 +244,37 @@ export function useReportTraceSession({
     transportModeRef.current = transportMode;
     const interaction = interactionRef.current;
     if (!interaction) return;
-    interaction.set('tolerance', TRACE_TOLERANCE_BY_MODE[transportMode]);
+    interaction.set('tolerance', traceRecordingSettingsRef.current.toleranceByMode[transportMode]);
   }, [transportMode]);
+
+  useEffect(() => {
+    traceRecordingSettingsRef.current = traceRecordingSettings;
+    const interaction = interactionRef.current;
+    if (!interaction) return;
+    interaction.set('minAccuracy', traceRecordingSettings.minAccuracy);
+    interaction.set('tolerance', traceRecordingSettings.toleranceByMode[transportModeRef.current]);
+  }, [traceRecordingSettings]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void (async () => {
+      const settings = await EspaceCo_SettingsStore.getTraceRecordingSettings();
+      if (!isMounted) return;
+      setTraceRecordingSettings(settings);
+    })();
+
+    const removeTraceSettingsListener = EspaceCo_SettingsStore.addTraceRecordingSettingsListener(
+      (settings) => {
+        setTraceRecordingSettings(settings);
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      removeTraceSettingsListener();
+    };
+  }, []);
 
   useEffect(() => {
     pointSoundPlayerRef.current = createAudioPlayer(TRACE_SOUND_RECORDING_POINT_SRC);
@@ -268,8 +304,8 @@ export function useReportTraceSession({
       type: 'LineString',
       minZoom: TRACE_MIN_ZOOM,
       followTrack: 'auto',
-      tolerance: TRACE_TOLERANCE_BY_MODE[transportModeRef.current],
-      minAccuracy: TRACE_MIN_ACCURACY,
+      tolerance: traceRecordingSettingsRef.current.toleranceByMode[transportModeRef.current],
+      minAccuracy: traceRecordingSettingsRef.current.minAccuracy,
       style: TRACE_STYLE,
     });
     geolocationInteraction.setActive(false);

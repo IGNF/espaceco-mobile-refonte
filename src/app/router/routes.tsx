@@ -13,10 +13,9 @@ import { CommunityFirstSelectionPage } from "@/features/community/pages/Communit
 import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
 
-/** Help, About, Settings routes **/
+/** Help, About routes **/
 import { HelpPage } from "@/features/help/pages/HelpPage";
 import { AboutPage } from "@/features/about/pages/AboutPage";
-import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 
 
 export const router = createBrowserRouter([
@@ -57,7 +56,7 @@ export const router = createBrowserRouter([
         path: "/my-communities",
         element: <MyCommunitiesSelectionPage />,
       },
-      /* Help, About, Settings routes */
+      /* Help, About routes */
       {
         path: "/help",
         element: <HelpPage />,
@@ -66,10 +65,6 @@ export const router = createBrowserRouter([
         path: "/about",
         element: <AboutPage />,
       },
-      {
-        path: "/settings",
-        element: <SettingsPage />,
-      },
     ],
   },
 ]);
@@ -77,6 +72,7 @@ export const router = createBrowserRouter([
 export const overlayRoutes = [
   /* User routes (profile, logout, etc.) */
   '/my-informations', 
+  '/settings',
   '/logout-verification', 
   /* Report routes */
   '/group-reports',

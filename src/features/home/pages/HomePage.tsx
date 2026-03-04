@@ -10,6 +10,7 @@ import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { SearchPanel } from "@/features/search/components/SearchPanel";
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
+import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
@@ -237,16 +238,20 @@ export function HomePage() {
 				onClose={closeOnboarding}
 			/>
 
-			{/* Overlay pages */}
-			<MyInformationsPage
-				isOpen={activeOverlay === '/my-informations'}
-				onClose={handleCloseOverlay}
-			/>
-			<LogoutPage
-				isOpen={activeOverlay === '/logout-verification'}
-				onClose={handleCloseOverlay}
-				handleLogout={handleLogout}
-			/>
+				{/* Overlay pages */}
+				<MyInformationsPage
+					isOpen={activeOverlay === '/my-informations'}
+					onClose={handleCloseOverlay}
+				/>
+				<SettingsPage
+					isOpen={activeOverlay === '/settings'}
+					onClose={handleCloseOverlay}
+				/>
+				<LogoutPage
+					isOpen={activeOverlay === '/logout-verification'}
+					onClose={handleCloseOverlay}
+					handleLogout={handleLogout}
+				/>
 			<GroupReportsPage
 				isOpen={activeOverlay === '/group-reports'}
 				onClose={handleCloseOverlay}

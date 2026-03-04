@@ -3,6 +3,10 @@ import tracePointBeepSound from '@/shared/assets/sounds/bip.mp3';
 import traceEndBeepSound from '@/shared/assets/sounds/bip2.mp3';
 
 export type TraceTransportMode = 'pedestrian' | 'car';
+export interface TraceRecordingSettings {
+  minAccuracy: number;
+  toleranceByMode: Record<TraceTransportMode, number>;
+}
 
 export const DEFAULT_TRACE_TRANSPORT_MODE: TraceTransportMode = 'car';
 
@@ -24,6 +28,11 @@ export const TRACE_MIN_ZOOM = 17;
 export const TRACE_TOLERANCE_BY_MODE: Record<TraceTransportMode, number> = {
   pedestrian: 0,
   car: 5,
+};
+
+export const DEFAULT_TRACE_RECORDING_SETTINGS: TraceRecordingSettings = {
+  minAccuracy: TRACE_MIN_ACCURACY,
+  toleranceByMode: { ...TRACE_TOLERANCE_BY_MODE },
 };
 
 // Audio feedback sounds used while recording and validating a trace.
