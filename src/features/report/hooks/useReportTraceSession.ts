@@ -1,0 +1,360 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
+import VectorLayer from 'ol/layer/Vector';
+import type OlMap from 'ol/Map';
+import { unByKey } from 'ol/Observable';
+import VectorSource from 'ol/source/Vector';
+import type { EventsKey } from 'ol/events';
+import GeolocationDraw, { type GeolocationDrawEvent } from 'ol-ext/interaction/GeolocationDraw';
+import {
+  DEFAULT_TRACE_TRANSPORT_MODE,
+  TRACE_LAYER_NAME,
+  TRACE_LAYER_TITLE,
+  TRACE_MIN_ACCURACY,
+  TRACE_MIN_ZOOM,
+  TRACE_SOUND_RECORDING_END_SRC,
+  TRACE_SOUND_RECORDING_POINT_SRC,
+  TRACE_STYLE,
+  TRACE_TOLERANCE_BY_MODE,
+  type TraceTransportMode,
+} from '@/features/report/constants/reportTrace.constants';
+import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
+import { createAudioPlayer, playAudioOnce, type AudioPlayer } from '@/shared/utils/audioPlayer';
+import {
+  calculateTraceStats,
+  findLineStringFeature,
+  getLineStringGeometry,
+} from '@/features/report/utils/traceGeometry';
+
+export interface UseReportTraceSessionOptions {
+  /** OpenLayers map instance used to attach layer + interaction. */
+  map?: OlMap | null;
+  /** Enables or disables the whole session lifecycle. */
+  enabled: boolean;
+}
+
+/**
+ * Public state and actions exposed by the trace session.
+ */
+export interface UseReportTraceSessionReturn {
+  isRecording: boolean;
+  isPaused: boolean;
+  hasTrace: boolean;
+  tracePointCount: number;
+  traceDistanceMeters: number;
+  transportMode: TraceTransportMode;
+  isAudioEnabled: boolean;
+  startRecording: () => void;
+  togglePause: () => void;
+  finalizeRecording: () => Feature<Geometry>[];
+  discardTrace: () => void;
+  toggleTransportMode: () => void;
+  toggleAudio: () => void;
+  getTraceFeatures: () => Feature<Geometry>[];
+  clearSession: () => void;
+}
+
+/**
+ * Manages one report trace recording session:
+ * - creates/removes the temporary trace layer and interaction
+ * - drives recording controls (start/pause/finalize/cancel)
+ * - exposes computed stats for the toolbar
+ */
+export function useReportTraceSession({
+  map,
+  enabled,
+}: UseReportTraceSessionOptions): UseReportTraceSessionReturn {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [hasTrace, setHasTrace] = useState(false);
+  const [tracePointCount, setTracePointCount] = useState(0);
+  const [traceDistanceMeters, setTraceDistanceMeters] = useState(0);
+  const [transportMode, setTransportMode] = useState<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+
+  const interactionRef = useRef<GeolocationDraw | null>(null);
+  const traceSourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
+  const pointSoundPlayerRef = useRef<AudioPlayer | null>(null);
+
+  // OL listeners are registered once; refs keep latest UI config without rebuilding the interaction.
+  const transportModeRef = useRef<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
+  const audioEnabledRef = useRef(isAudioEnabled);
+
+  const resetTraceState = useCallback(() => {
+    setHasTrace(false);
+    setTracePointCount(0);
+    setTraceDistanceMeters(0);
+  }, []);
+
+  const syncStatsFromLineString = useCallback((line: ReturnType<typeof getLineStringGeometry>) => {
+    if (!line) {
+      resetTraceState();
+      return;
+    }
+    const stats = calculateTraceStats(line);
+    setHasTrace(stats.pointCount > 0);
+    setTracePointCount(stats.pointCount);
+    setTraceDistanceMeters(stats.distanceMeters);
+  }, [resetTraceState]);
+
+  const syncStatsFromSource = useCallback(() => {
+    const source = traceSourceRef.current;
+    if (!source) {
+      resetTraceState();
+      return;
+    }
+
+    const features = source.getFeatures();
+    const lineFeature = findLineStringFeature(features);
+    const lineString = getLineStringGeometry(lineFeature);
+    syncStatsFromLineString(lineString);
+  }, [resetTraceState, syncStatsFromLineString]);
+
+  const playTracePointSound = useCallback(() => {
+    if (!audioEnabledRef.current) return;
+    pointSoundPlayerRef.current?.play();
+  }, []);
+
+  const stopTracePointSound = useCallback(() => {
+    pointSoundPlayerRef.current?.stop();
+  }, []);
+
+  const playTraceEndSound = useCallback(() => {
+    if (!audioEnabledRef.current) return;
+    stopTracePointSound();
+    playAudioOnce(TRACE_SOUND_RECORDING_END_SRC);
+  }, [stopTracePointSound]);
+
+  /**
+   * Returns the current trace as cloned features for form persistence.
+   * Only the recorded LineString is exported.
+   */
+  const getTraceFeatures = useCallback((): Feature<Geometry>[] => {
+    const source = traceSourceRef.current;
+    if (!source) return [];
+
+    const lineFeature = findLineStringFeature(source.getFeatures());
+    if (!lineFeature) return [];
+
+    return [lineFeature.clone()];
+  }, []);
+
+  const clearRecordingFlags = useCallback(() => {
+    setIsRecording(false);
+    setIsPaused(false);
+  }, []);
+
+  const deactivateInteraction = useCallback((interaction: GeolocationDraw | null | undefined) => {
+    if (interaction?.getActive()) {
+      interaction.setActive(false);
+    }
+  }, []);
+
+  /**
+   * Starts a new recording (clears previous draft trace), or resumes when paused.
+   */
+  const startRecording = useCallback(() => {
+    const interaction = interactionRef.current;
+    const source = traceSourceRef.current;
+    if (!interaction || !source) return;
+
+    if (!interaction.getActive()) {
+      stopTracePointSound();
+      source.clear(true);
+      resetTraceState();
+      interaction.set('tolerance', TRACE_TOLERANCE_BY_MODE[transportMode]);
+      interaction.setActive(true);
+      interaction.setFollowTrack('auto');
+      interaction.pause(false);
+      setIsRecording(true);
+      setIsPaused(false);
+      return;
+    }
+
+    if (interaction.isPaused()) {
+      interaction.pause(false);
+      interaction.setFollowTrack('auto');
+      setIsPaused(false);
+    }
+  }, [resetTraceState, stopTracePointSound, transportMode]);
+
+  const togglePause = useCallback(() => {
+    const interaction = interactionRef.current;
+    if (!interaction || !interaction.getActive()) return;
+
+    const nextPaused = !interaction.isPaused();
+    interaction.pause(nextPaused);
+    if (!nextPaused) {
+      interaction.setFollowTrack('auto');
+    }
+    setIsPaused(nextPaused);
+  }, []);
+
+  /**
+   * Stops the interaction and returns the recorded trace for form integration.
+   * Plays the "recording end" sound when a trace exists.
+   */
+  const finalizeRecording = useCallback((): Feature<Geometry>[] => {
+    deactivateInteraction(interactionRef.current);
+    clearRecordingFlags();
+    const traceFeatures = getTraceFeatures();
+    if (traceFeatures.length > 0) {
+      playTraceEndSound();
+    }
+    return traceFeatures;
+  }, [clearRecordingFlags, deactivateInteraction, getTraceFeatures, playTraceEndSound]);
+
+  /**
+   * Cancels the current draft trace and fully resets UI/session state.
+   */
+  const discardTrace = useCallback(() => {
+    const interaction = interactionRef.current;
+    const source = traceSourceRef.current;
+
+    deactivateInteraction(interaction);
+    interaction?.reset();
+    source?.clear(true);
+
+    stopTracePointSound();
+    clearRecordingFlags();
+    resetTraceState();
+  }, [clearRecordingFlags, deactivateInteraction, resetTraceState, stopTracePointSound]);
+
+  const toggleTransportMode = useCallback(() => {
+    setTransportMode((previousMode) => (previousMode === 'car' ? 'pedestrian' : 'car'));
+  }, []);
+
+  const toggleAudio = useCallback(() => {
+    setIsAudioEnabled((enabledValue) => {
+      const nextValue = !enabledValue;
+      audioEnabledRef.current = nextValue;
+      return nextValue;
+    });
+  }, []);
+
+  useEffect(() => {
+    transportModeRef.current = transportMode;
+    const interaction = interactionRef.current;
+    if (!interaction) return;
+    interaction.set('tolerance', TRACE_TOLERANCE_BY_MODE[transportMode]);
+  }, [transportMode]);
+
+  useEffect(() => {
+    pointSoundPlayerRef.current = createAudioPlayer(TRACE_SOUND_RECORDING_POINT_SRC);
+
+    return () => {
+      pointSoundPlayerRef.current?.destroy();
+      pointSoundPlayerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !map) return;
+
+    const traceSource = new VectorSource<Feature<Geometry>>();
+    const traceLayer = new VectorLayer({
+      source: traceSource,
+      style: TRACE_STYLE,
+      properties: {
+        name: TRACE_LAYER_NAME,
+        title: TRACE_LAYER_TITLE,
+      },
+      zIndex: Infinity,
+    });
+
+    const geolocationInteraction = new GeolocationDraw({
+      source: traceSource,
+      type: 'LineString',
+      minZoom: TRACE_MIN_ZOOM,
+      followTrack: 'auto',
+      tolerance: TRACE_TOLERANCE_BY_MODE[transportModeRef.current],
+      minAccuracy: TRACE_MIN_ACCURACY,
+      style: TRACE_STYLE,
+    });
+    geolocationInteraction.setActive(false);
+
+    map.addLayer(traceLayer);
+    map.addInteraction(geolocationInteraction);
+
+    traceSourceRef.current = traceSource;
+    interactionRef.current = geolocationInteraction;
+
+    const onDrawing = (event: GeolocationDrawEvent) => {
+      const line = getLineStringGeometry(event.feature as Feature<Geometry>);
+      syncStatsFromLineString(line);
+      if (line) {
+        playTracePointSound();
+      }
+    };
+
+    const onActiveChange = () => {
+      const isActive = geolocationInteraction.getActive();
+      setIsRecording(isActive);
+      if (!isActive) {
+        setIsPaused(false);
+        syncStatsFromSource();
+        void EspaceCo_KeepAwake.allowSleep();
+      } else {
+        void EspaceCo_KeepAwake.keepAwake();
+      }
+    };
+
+    const listenerKeys: EventsKey[] = [
+      geolocationInteraction.on('drawing', onDrawing),
+      geolocationInteraction.on('change:active', onActiveChange),
+      traceSource.on('change', syncStatsFromSource),
+    ];
+
+    return () => {
+      unByKey(listenerKeys);
+      geolocationInteraction.setActive(false);
+
+      if (map.getInteractions().getArray().includes(geolocationInteraction)) {
+        map.removeInteraction(geolocationInteraction);
+      }
+      if (map.getLayers().getArray().includes(traceLayer)) {
+        map.removeLayer(traceLayer);
+      }
+
+      if (interactionRef.current === geolocationInteraction) {
+        interactionRef.current = null;
+      }
+      if (traceSourceRef.current === traceSource) {
+        traceSourceRef.current = null;
+      }
+
+      clearRecordingFlags();
+      resetTraceState();
+      stopTracePointSound();
+      void EspaceCo_KeepAwake.allowSleep();
+    };
+  }, [
+    clearRecordingFlags,
+    enabled,
+    map,
+    playTracePointSound,
+    resetTraceState,
+    syncStatsFromLineString,
+    syncStatsFromSource,
+    stopTracePointSound,
+  ]);
+
+  return {
+    isRecording,
+    isPaused,
+    hasTrace,
+    tracePointCount,
+    traceDistanceMeters,
+    transportMode,
+    isAudioEnabled,
+    startRecording,
+    togglePause,
+    finalizeRecording,
+    discardTrace,
+    toggleTransportMode,
+    toggleAudio,
+    getTraceFeatures,
+    clearSession: discardTrace,
+  };
+}

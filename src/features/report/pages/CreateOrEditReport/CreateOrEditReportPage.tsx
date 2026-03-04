@@ -19,10 +19,12 @@ import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { useReportForm } from '@/features/report/hooks/useReportForm';
+import { useReportForm, type ReportCreationType } from '@/features/report/hooks/useReportForm';
 import { useReportSketchSession } from '@/features/report/hooks/useReportSketchSession';
+import { useReportTraceSession } from '@/features/report/hooks/useReportTraceSession';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { ReportForm } from '@/features/report/components/NewReport/ReportForm';
+import { TraceToolbar } from '@/features/report/components/Trace/TraceToolbar';
 import {
   applyReportObjectMetadata,
   buildReportObjectKey,
@@ -52,6 +54,7 @@ export interface CreateOrEditReportPageProps {
   isOpen: boolean;
   onClose: () => void;
   mode: ReportPageMode;
+  reportType?: ReportCreationType;
   report?: AppReport | null;
   onBack?: () => void;
   level?: number;
@@ -59,7 +62,7 @@ export interface CreateOrEditReportPageProps {
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
 }
 
-type MapPickerMode = 'none' | 'position' | 'object' | 'sketch';
+type MapPickerMode = 'none' | 'position' | 'object' | 'sketch' | 'trace';
 
 interface PickedMapObjectCandidate {
   key: string;
@@ -95,6 +98,7 @@ export function CreateOrEditReportPage({
   isOpen,
   onClose,
   mode,
+  reportType,
   report,
   onBack,
   level = 2,
@@ -105,6 +109,8 @@ export function CreateOrEditReportPage({
   const { activeCommunity } = useCommunity();
   const isEditMode = mode === 'edit';
   const isDraftReport = report?.status === ReportStatus.Draft;
+  const resolvedReportType: ReportCreationType = reportType ?? 'standard';
+  const isTraceReport = resolvedReportType === 'trace';
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [mapPickerMode, setMapPickerMode] = useState<MapPickerMode>('none');
   const [objectCandidates, setObjectCandidates] = useState<PickedMapObjectCandidate[]>([]);
@@ -128,15 +134,22 @@ export function CreateOrEditReportPage({
   const basePosition = isEditMode ? editPosition : geoPosition;
   const position = selectedPosition ?? basePosition;
   const canEditPosition = !isEditMode && Boolean(map);
-  const canPickObjects = Boolean(map) && (!isEditMode || isDraftReport);
-  const canPickSketches = Boolean(map) && (!isEditMode || isDraftReport);
+  const canPickObjects = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
+  const canPickSketches = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
+  const canPickTrace = isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const isPickingPosition = mapPickerMode === 'position';
   const isPickingObject = mapPickerMode === 'object';
   const isPickingSketch = mapPickerMode === 'sketch';
+  const isPickingTrace = mapPickerMode === 'trace';
   const isPickingOnMap = mapPickerMode !== 'none';
 
-  const form = useReportForm({ mode, report, position, isOpen });
-  const hasUnsavedChanges = form.isDirty || selectedPosition !== null;
+  const form = useReportForm({
+    mode,
+    report,
+    position,
+    isOpen,
+    reportType: resolvedReportType,
+  });
 
   const headerTitle = isEditMode
     ? t('reports.createOrEdit.headerTitleEdit')
@@ -182,13 +195,37 @@ export function CreateOrEditReportPage({
     });
   }, [currentSketchMode, t]);
 
+  const {
+    isRecording: isTraceRecording,
+    isPaused: isTracePaused,
+    hasTrace: hasTraceInSession,
+    tracePointCount,
+    traceDistanceMeters,
+    transportMode: traceTransportMode,
+    isAudioEnabled: isTraceAudioEnabled,
+    startRecording: startTraceRecording,
+    togglePause: toggleTracePause,
+    finalizeRecording: finalizeTraceRecording,
+    toggleTransportMode: toggleTraceTransportMode,
+    toggleAudio: toggleTraceAudio,
+    clearSession: clearTraceSession,
+  } = useReportTraceSession({
+    map,
+    enabled: isOpen && isPickingTrace,
+  });
+
+  const hasUnsavedChanges = form.isDirty ||
+    selectedPosition !== null ||
+    (isTraceReport && (isPickingTrace || hasTraceInSession));
+
   const closeMapPickers = useCallback(() => {
     setMapPickerMode('none');
     setObjectCandidates([]);
     setIsObjectChoiceOpen(false);
     clearSketchSession();
+    clearTraceSession();
     onSearchPanelVisibilityChange?.(false);
-  }, [clearSketchSession, onSearchPanelVisibilityChange]);
+  }, [clearSketchSession, clearTraceSession, onSearchPanelVisibilityChange]);
 
   const handleSketchToolClick = useCallback((toolId: string) => {
     if (toolId === 'close') {
@@ -233,6 +270,10 @@ export function CreateOrEditReportPage({
 
   const handleStartSketchPicker = useCallback(() => {
     startMapPicker('sketch');
+  }, [startMapPicker]);
+
+  const handleStartTracePicker = useCallback(() => {
+    startMapPicker('trace');
   }, [startMapPicker]);
 
   const handleValidatePosition = useCallback(() => {
@@ -351,6 +392,47 @@ export function CreateOrEditReportPage({
     form.addSketches(sketchFeatures);
     closeMapPickers();
   }, [closeMapPickers, currentSketchMode, finalizeCurrentDrawing, form, getSketchFeatures]);
+
+  const handleValidateTrace = useCallback(() => {
+    const traceFeatures = finalizeTraceRecording();
+    const traceFeature = traceFeatures.find((feature) => {
+      return feature.getGeometry()?.getType() === 'LineString';
+    });
+
+    if (!traceFeature) return;
+
+    form.replaceSketches([traceFeature]);
+    closeMapPickers();
+  }, [closeMapPickers, finalizeTraceRecording, form]);
+
+  const traceStatusText = useMemo(() => {
+    if (isTraceRecording && !isTracePaused) {
+      return t('reports.createOrEdit.traceToolbar.statusRecording', {
+        pointCount: tracePointCount,
+        distance: traceDistanceMeters,
+      });
+    }
+    if (isTraceRecording && isTracePaused) {
+      return t('reports.createOrEdit.traceToolbar.statusPaused', {
+        pointCount: tracePointCount,
+        distance: traceDistanceMeters,
+      });
+    }
+    if (hasTraceInSession) {
+      return t('reports.createOrEdit.traceToolbar.statusReady', {
+        pointCount: tracePointCount,
+        distance: traceDistanceMeters,
+      });
+    }
+    return t('reports.createOrEdit.traceToolbar.statusIdle');
+  }, [
+    hasTraceInSession,
+    isTracePaused,
+    isTraceRecording,
+    t,
+    traceDistanceMeters,
+    tracePointCount,
+  ]);
 
   const {
     isLeaveAlertOpen,
@@ -508,6 +590,26 @@ export function CreateOrEditReportPage({
       );
     }
 
+    if (isPickingTrace) {
+      return (
+        <TraceToolbar
+          isRecording={isTraceRecording}
+          isPaused={isTracePaused}
+          hasTrace={hasTraceInSession}
+          canValidate={hasTraceInSession}
+          transportMode={traceTransportMode}
+          isAudioEnabled={isTraceAudioEnabled}
+          statusText={traceStatusText}
+          onStartRecording={startTraceRecording}
+          onTogglePause={toggleTracePause}
+          onToggleTransportMode={toggleTraceTransportMode}
+          onToggleAudio={toggleTraceAudio}
+          onValidate={handleValidateTrace}
+          onCancel={closeMapPickers}
+        />
+      );
+    }
+
     return null;
   }, [
     canValidateSketch,
@@ -515,13 +617,25 @@ export function CreateOrEditReportPage({
     handleSketchToolClick,
     handleValidatePosition,
     handleValidateSketch,
+    handleValidateTrace,
+    hasTraceInSession,
     isOpen,
     isPickingObject,
     isPickingPosition,
     isPickingSketch,
+    isPickingTrace,
+    isTraceAudioEnabled,
+    isTracePaused,
+    isTraceRecording,
+    startTraceRecording,
     sketchFeatureCount,
     sketchToolItems,
+    toggleTraceAudio,
+    toggleTracePause,
+    toggleTraceTransportMode,
     t,
+    traceStatusText,
+    traceTransportMode,
   ]);
 
   return (
@@ -552,11 +666,14 @@ export function CreateOrEditReportPage({
             form={form}
             position={position}
             isLocating={isLocating}
+            isTraceMode={isTraceReport}
             onEditPosition={canEditPosition ? handleStartPositionPicker : undefined}
             onAddObject={canPickObjects ? handleStartObjectPicker : undefined}
             onAddSketch={canPickSketches ? handleStartSketchPicker : undefined}
+            onAddTrace={canPickTrace ? handleStartTracePicker : undefined}
             isPickingObject={isPickingObject}
             isPickingSketch={isPickingSketch}
+            isPickingTrace={isPickingTrace}
           />
 
           <div className={styles.buttonContainer}>
