@@ -90,5 +90,7 @@
     <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Nous avons besoin du Bluetooth pour utiliser un GPS externe.</string>
   </dict>
 </plist>
