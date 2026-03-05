@@ -12,3 +12,11 @@ export function readNonNegativeNumber(value: unknown, fallback: number): number 
   if (parsed === undefined || parsed < 0) return fallback
   return parsed
 }
+
+export function parseDecimalInput(value: string): number {
+  return Number(value.replace(',', '.'))
+}
+
+export function isNonNegativeFinite(value: number): boolean {
+  return Number.isFinite(value) && value >= 0
+}

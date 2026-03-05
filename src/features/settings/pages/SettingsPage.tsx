@@ -22,8 +22,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
   const {
-    selectedGpsSource,
-    currentGpsSource,
+    pendingGpsSourceType,
+    activeGpsSourceInfo,
     isGpsSourcePluginAvailable,
     canSetGpsSource,
     isLoading,
@@ -34,7 +34,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     traceMinAccuracyInput,
     traceTolerancePedestrianInput,
     traceToleranceCarInput,
-    setSelectedGpsSource,
+    setPendingGpsSourceType,
     setTraceMinAccuracyInput,
     setTraceTolerancePedestrianInput,
     setTraceToleranceCarInput,
@@ -42,10 +42,10 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     applyTraceSettings,
   } = useSettings();
 
-  const currentSourceType = currentGpsSource.type === 'external' ? 'external' : 'internal';
+  const currentSourceType = activeGpsSourceInfo.type === 'external' ? 'external' : 'internal';
   const currentSourceText = t(`settings.gps.source.${currentSourceType}`);
-  const currentSourceLabel = currentGpsSource.type === 'external' && currentGpsSource.name
-    ? `${currentSourceText} (${currentGpsSource.name})`
+  const currentSourceLabel = activeGpsSourceInfo.type === 'external' && activeGpsSourceInfo.name
+    ? `${currentSourceText} (${activeGpsSourceInfo.name})`
     : currentSourceText;
 
   const canChooseExternal = isGpsSourcePluginAvailable && canSetGpsSource;
@@ -129,8 +129,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                     type='radio'
                     name='gps-source'
                     value='internal'
-                    checked={selectedGpsSource === 'internal'}
-                    onChange={() => setSelectedGpsSource('internal')}
+                    checked={pendingGpsSourceType === 'internal'}
+                    onChange={() => setPendingGpsSourceType('internal')}
                   />
                   <span>{t('settings.gps.source.internal')}</span>
                 </label>
@@ -142,8 +142,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                     type='radio'
                     name='gps-source'
                     value='external'
-                    checked={selectedGpsSource === 'external'}
-                    onChange={() => setSelectedGpsSource('external')}
+                    checked={pendingGpsSourceType === 'external'}
+                    onChange={() => setPendingGpsSourceType('external')}
                     disabled={!canChooseExternal}
                   />
                   <span>{t('settings.gps.source.external')}</span>

@@ -264,15 +264,8 @@ export function useReportTraceSession({
       setTraceRecordingSettings(settings);
     })();
 
-    const removeTraceSettingsListener = EspaceCo_SettingsStore.addTraceRecordingSettingsListener(
-      (settings) => {
-        setTraceRecordingSettings(settings);
-      }
-    );
-
     return () => {
       isMounted = false;
-      removeTraceSettingsListener();
     };
   }, []);
 
