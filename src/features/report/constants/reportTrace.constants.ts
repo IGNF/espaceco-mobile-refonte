@@ -17,14 +17,12 @@ export const TRACE_LAYER_NAME = 'ReportTraceDraft';
 export const TRACE_LAYER_TITLE = 'Trace GPS temporaire';
 
 // Minimum accepted GPS accuracy (in meters) before points are added to the trace.
-// In the legacy app, this can be changed in the settings.
-export const TRACE_MIN_ACCURACY = 20;
+export const TRACE_MIN_ACCURACY = 100;
 
 // Minimum zoom level when trace recording is active.
 export const TRACE_MIN_ZOOM = 17;
 
 // Point simplification tolerance (in meters) depending on transport mode.
-// In the legacy app, this can be changed in the settings.
 export const TRACE_TOLERANCE_BY_MODE: Record<TraceTransportMode, number> = {
   pedestrian: 0,
   car: 5,

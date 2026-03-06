@@ -80,13 +80,6 @@ export function isReportSubmitError(error: unknown): error is ReportSubmitError 
 }
 
 /**
- * Helper for the common "attachments pending retry" state.
- */
-export function isAttachmentUploadFailedError(error: unknown): boolean {
-  return isReportSubmitError(error) && error.kind === 'attachmentUploadFailed';
-}
-
-/**
  * Returns the translation key for report submit errors.
  * Falls back to a provided key when error is unknown.
  */

@@ -17,7 +17,6 @@ interface UseGroupReportsResult {
   error: Error | null;
   hasMore: boolean;
   loadMore: () => Promise<void>;
-  refetch: () => Promise<void>;
 }
 
 export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupReportsResult {
@@ -75,11 +74,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
         params.attributes = JSON.stringify(filters.themes);
       }
 
-      console.log('fetchReports', params);
-
       const response = await collabApiClient.report.getAll(params);
-
-      console.log('fetchReports => response', response);
 
       const apiReports = response.data as ApiReportResponse[];
       const appReports = mapApiReportsToAppReports(apiReports);
@@ -117,18 +112,12 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
     hasMoreRef.current = true;
     setHasMore(true);
     fetchReports(1, false);
-  }, [activeCommunity, user, limit, filters]);
+  }, [fetchReports]);
 
   const loadMore = useCallback(async () => {
     // Use refs for synchronous checks to prevent duplicate requests
     if (isLoadingRef.current || !hasMoreRef.current) return;
     await fetchReports(pageRef.current, true);
-  }, [fetchReports]);
-
-  const refetch = useCallback(async () => {
-    pageRef.current = 1;
-    setHasMore(true);
-    await fetchReports(1, false);
   }, [fetchReports]);
 
   return {
@@ -138,6 +127,5 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
     error,
     hasMore,
     loadMore,
-    refetch,
   };
 }

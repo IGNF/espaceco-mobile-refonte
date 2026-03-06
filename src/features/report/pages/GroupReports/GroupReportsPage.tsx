@@ -11,12 +11,11 @@ import { ActiveFilters } from '@/features/report/components/ActiveFilters/Active
 import { Loading } from '@/shared/ui/Loading';
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import type { ReportStatus } from '@ign/mobile-core';
-// import IconSearch from '@/shared/assets/icons/icon-search.svg?react';
 import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 
 import styles from '../reportsListPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
-import typography from "@/shared/styles/typography.module.css";
+import typography from '@/shared/styles/typography.module.css';
 
 export interface GroupReportsPageProps {
   isOpen: boolean;
@@ -28,7 +27,6 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
   const [filters, setFilters] = useState<ReportFilters>({});
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports({ filters });
-  // const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
 
@@ -75,10 +73,6 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     onClose();
   }, [onClose]);
 
-  // const handleSearch = () => {
-  //   console.log('Search:', searchQuery);
-  // };
-
   const handleFilter = () => {
     setIsFiltersOpen(true);
   };
@@ -101,14 +95,16 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
 
   const handleRemoveDate = useCallback(() => {
     setFilters(prev => {
-      const { updating_date: _, ...next } = prev;
+      const next = { ...prev };
+      delete next.updating_date;
       return next;
     });
   }, []);
 
   const handleRemoveMyReportsOnly = useCallback(() => {
     setFilters(prev => {
-      const { myReportsOnly: _, ...next } = prev;
+      const next = { ...prev };
+      delete next.myReportsOnly;
       return next;
     });
   }, []);
@@ -196,31 +192,12 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         onClose={onClose}
       />
 
-      <main className={screen.screenContainer + " " + styles.content}>
+      <main className={`${screen.screenContainer} ${styles.content}`}>
         <div className={styles.titleSection}>
           <h1 className={typography.title}>{t('reports.groupReports.title')}</h1>
           <p className={typography.subtitle}>
             {t('reports.groupReports.description')} {activeCommunity?.name || ''}
           </p>
-        </div>
-
-        <div className={styles.searchSection}>
-          {/* <div className={styles.searchBar}>
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder={`${t('reports.general.search')}...`}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button
-              className={styles.searchButton}
-              onClick={handleSearch}
-              aria-label={t('reports.general.search')}
-            >
-              <IconSearch className={styles.searchIcon} />
-            </button>
-          </div> */}
         </div>
 
         {renderContent()}

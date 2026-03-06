@@ -27,6 +27,8 @@ PODS:
     - Capacitor
   - CapacitorToast (8.0.0):
     - Capacitor
+  - CordovaPlugins (8.0.0):
+    - CapacitorCordova
   - IONFilesystemLib (1.0.1)
   - IONGeolocationLib (2.0.0)
   - OSInAppBrowserLib (2.3.1)
@@ -45,6 +47,7 @@ DEPENDENCIES:
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorToast (from `../../node_modules/@capacitor/toast`)"
+  - CordovaPlugins (from `../capacitor-cordova-ios-plugins`)
 
 SPEC REPOS:
   trunk:
@@ -79,6 +82,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/preferences"
   CapacitorToast:
     :path: "../../node_modules/@capacitor/toast"
+  CordovaPlugins:
+    :path: "../capacitor-cordova-ios-plugins"
 
 SPEC CHECKSUMS:
   Capacitor: 79e40e5e76f852965dce30406c65253fa154e24a
@@ -94,10 +99,11 @@ SPEC CHECKSUMS:
   CapacitorNetwork: e03b0c02b4a9d76e58c19e15e9e0c200929529b9
   CapacitorPreferences: 83f13cc19660ca9649a4769ec255be93f8c2ff68
   CapacitorToast: 6275c84283ac9c424a20554e71b8a6263f44554c
+  CordovaPlugins: a980f7fb90e21148d1e703497cfc65de9e7888ac
   IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
 
-PODFILE CHECKSUM: ec0422892d3ad61e23c8b3511f9c27f0b92d7c6c
+PODFILE CHECKSUM: 26c89d715228f4c4450f790eb210ca9c599868cb
 
 COCOAPODS: 1.16.2

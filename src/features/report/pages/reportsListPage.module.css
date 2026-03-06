@@ -14,62 +14,6 @@
   margin-bottom: 8px;
 }
 
-.searchSection {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	gap: 16px;
-	margin-bottom: 24px;
-}
-
-.searchBar {
-	display: flex;
-	flex: 1;
-	border: 1px solid var(--color-light-shade);
-	border-radius: 8px;
-	overflow: hidden;
-	background: white;
-}
-
-.searchInput {
-	flex: 1;
-	padding: 12px 16px;
-	border: none;
-	font-size: 16px;
-	outline: none;
-	background: transparent;
-	color: var(--color-dark);
-}
-
-.searchInput::placeholder {
-	color: var(--color-medium);
-}
-
-.searchButton {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 12px 16px;
-	background: var(--color-primary);
-	border: none;
-	cursor: pointer;
-	transition: background-color 0.2s ease;
-}
-
-.searchButton:hover {
-	background: var(--color-secondary-shade);
-}
-
-.searchButton:active {
-	background: var(--color-secondary-shade);
-}
-
-.searchIcon {
-	width: 20px;
-	height: 20px;
-	color: white;
-}
-
 .filterButton {
 	display: flex;
 	flex-direction: column;
@@ -127,13 +71,6 @@
 .sentinel {
 	height: 1px;
 	width: 100%;
-}
-
-.loadingMore {
-	padding: 16px;
-	text-align: center;
-	color: var(--color-medium);
-	font-size: 14px;
 }
 
 .endOfList {
