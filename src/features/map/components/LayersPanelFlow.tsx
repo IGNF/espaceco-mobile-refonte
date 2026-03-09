@@ -23,6 +23,11 @@ export interface LayersPanelFlowProps {
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
+  onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
+  onEditLayer?: (layerKey: string) => void;
+  onSendLayerDirectContributions?: (layerKey: string) => void;
+  onResetLayerDirectContributions?: (layerKey: string) => void;
+  onToggleLayerDirectContributionLock?: (layerKey: string, locked: boolean) => void;
 }
 
 export function LayersPanelFlow({
@@ -38,6 +43,11 @@ export function LayersPanelFlow({
   onSetLayerVisibility,
   onSetLayerOpacity,
   onSetGroupLayerOrder,
+  onSendGroupDirectContributions,
+  onEditLayer,
+  onSendLayerDirectContributions,
+  onResetLayerDirectContributions,
+  onToggleLayerDirectContributionLock,
 }: LayersPanelFlowProps) {
   const { layerGroups, layerGroupSummaries } = useLayerGroups({
     layers,
@@ -104,6 +114,7 @@ export function LayersPanelFlow({
         isLoading={isLoading}
         onOpenGroup={handleOpenLayerGroup}
         onToggleGroupVisibility={handleToggleGroupVisibility}
+        onSendGroupDirectContributions={onSendGroupDirectContributions}
       />
       <LayerGroupDetailsPage
         isOpen={isLayerGroupOpen && selectedLayerGroup !== null}
@@ -113,6 +124,10 @@ export function LayersPanelFlow({
         onSetLayerVisibility={onSetLayerVisibility}
         onSetLayerOpacity={onSetLayerOpacity}
         onSetGroupLayerOrder={onSetGroupLayerOrder}
+        onEditLayer={onEditLayer}
+        onSendLayerDirectContributions={onSendLayerDirectContributions}
+        onResetLayerDirectContributions={onResetLayerDirectContributions}
+        onToggleLayerDirectContributionLock={onToggleLayerDirectContributionLock}
       />
     </>
   );

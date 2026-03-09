@@ -1,5 +1,15 @@
 export type LayerGroupId = 'signalements' | 'guichet' | 'mesCartes' | 'geoservices';
 
+export interface LayerDirectContributionState {
+  editable: boolean;
+  locked: boolean;
+  pendingChangesCount: number;
+}
+
+export interface LayerGroupDirectContributionState {
+  pendingChangesCount: number;
+}
+
 export interface LayerGroupItem {
   id: string;
   title: string;
@@ -7,6 +17,7 @@ export interface LayerGroupItem {
   visible?: boolean;
   opacity?: number;
   description?: string;
+  directContribution?: LayerDirectContributionState;
 }
 
 export interface LayerGroupSummary {
@@ -15,6 +26,7 @@ export interface LayerGroupSummary {
   count: number;
   visible: boolean;
   canToggle: boolean;
+  directContribution?: LayerGroupDirectContributionState;
 }
 
 export interface LayerGroupDetails {

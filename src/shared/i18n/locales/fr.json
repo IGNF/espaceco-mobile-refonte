@@ -221,6 +221,7 @@
       "guichet": "Guichet",
       "mesCartes": "Mes cartes",
       "geoservices": "Géoservices",
+      "sendDirectContributions": "Envoyer les contributions directes",
       "showGroup": "Afficher toutes les couches du groupe",
       "hideGroup": "Masquer toutes les couches du groupe"
     },
@@ -237,7 +238,12 @@
       "hideLayer": "Masquer la couche",
       "layerInfo": "Informations sur la couche",
       "layerOpacity": "Opacité de la couche",
-      "reorderLayer": "Maintenir puis glisser pour réordonner la couche"
+      "reorderLayer": "Maintenir puis glisser pour réordonner la couche",
+      "editLayer": "Éditer la couche",
+      "sendLayerChanges": "Envoyer les modifications de la couche",
+      "resetLayerChanges": "Annuler les modifications de la couche",
+      "lockLayerEdition": "Verrouiller l'édition de la couche",
+      "unlockLayerEdition": "Déverrouiller l'édition de la couche"
     },
     "info": {
       "untitled": "Couche sans nom",
