@@ -55,6 +55,10 @@ export interface LayerGroupDetailsPageProps {
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
+  onEditLayer?: (layerKey: string) => void;
+  onSendLayerDirectContributions?: (layerKey: string) => void;
+  onResetLayerDirectContributions?: (layerKey: string) => void;
+  onToggleLayerDirectContributionLock?: (layerKey: string, locked: boolean) => void;
 }
 
 export function LayerGroupDetailsPage({
@@ -65,6 +69,10 @@ export function LayerGroupDetailsPage({
   onSetLayerVisibility,
   onSetLayerOpacity,
   onSetGroupLayerOrder,
+  onEditLayer,
+  onSendLayerDirectContributions,
+  onResetLayerDirectContributions,
+  onToggleLayerDirectContributionLock,
 }: LayerGroupDetailsPageProps) {
   const { t } = useTranslation();
   const title = group?.title ?? t('layers.title');
@@ -81,6 +89,11 @@ export function LayerGroupDetailsPage({
   const layerInfoLabel = t('layers.groupDetails.layerInfo');
   const layerOpacityLabel = t('layers.groupDetails.layerOpacity');
   const reorderLayerLabel = t('layers.groupDetails.reorderLayer');
+  const editLayerLabel = t('layers.groupDetails.editLayer');
+  const sendLayerChangesLabel = t('layers.groupDetails.sendLayerChanges');
+  const resetLayerChangesLabel = t('layers.groupDetails.resetLayerChanges');
+  const lockLayerLabel = t('layers.groupDetails.lockLayerEdition');
+  const unlockLayerLabel = t('layers.groupDetails.unlockLayerEdition');
 
   const orderedItems = group
     ? orderItemsByStringKey(group.items, (item) => item.id, itemOrder)
@@ -251,6 +264,7 @@ export function LayerGroupDetailsPage({
                 {orderedItems.map((item, index) => {
                   const draftState = getLayerDraftState(item);
                   const canReorder = Boolean(item.layerKey && onSetGroupLayerOrder);
+                  const layerKey = item.layerKey;
 
                   return (
                     <LayerGroupDetailsSortableItem
@@ -266,9 +280,34 @@ export function LayerGroupDetailsPage({
                       layerInfoLabel={layerInfoLabel}
                       layerOpacityLabel={layerOpacityLabel}
                       reorderLayerLabel={`${reorderLayerLabel}: ${item.title}`}
+                      editLayerLabel={`${editLayerLabel}: ${item.title}`}
+                      sendLayerChangesLabel={`${sendLayerChangesLabel}: ${item.title}`}
+                      resetLayerChangesLabel={`${resetLayerChangesLabel}: ${item.title}`}
+                      lockLayerLabel={`${lockLayerLabel}: ${item.title}`}
+                      unlockLayerLabel={`${unlockLayerLabel}: ${item.title}`}
                       onToggleVisibility={() => handleToggleVisibility(item)}
                       onShowInfo={() => setSelectedItem(item)}
                       onSetOpacity={(opacity) => handleSetOpacity(item, opacity)}
+                      onEditLayer={
+                        layerKey && onEditLayer
+                          ? () => onEditLayer(layerKey)
+                          : undefined
+                      }
+                      onSendLayerChanges={
+                        layerKey && onSendLayerDirectContributions
+                          ? () => onSendLayerDirectContributions(layerKey)
+                          : undefined
+                      }
+                      onResetLayerChanges={
+                        layerKey && onResetLayerDirectContributions
+                          ? () => onResetLayerDirectContributions(layerKey)
+                          : undefined
+                      }
+                      onToggleLayerLock={
+                        layerKey && onToggleLayerDirectContributionLock
+                          ? (locked) => onToggleLayerDirectContributionLock(layerKey, locked)
+                          : undefined
+                      }
                     />
                   );
                 })}

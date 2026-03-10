@@ -114,6 +114,7 @@
 
 .groupButton {
 	flex: 1;
+	min-width: 0;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -129,6 +130,7 @@
 	font-size: 1rem;
 	font-weight: 500;
 	color: var(--color-dark);
+	min-width: 0;
 }
 
 .groupMeta {
@@ -152,6 +154,47 @@
 
 .groupArrowIcon path {
 	fill: currentColor;
+}
+
+.groupActionButton {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 10px;
+	background: white;
+	cursor: pointer;
+	padding: 0;
+	flex-shrink: 0;
+}
+
+.groupActionButton:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
+.groupActionIcon {
+	width: 18px;
+	height: 18px;
+	color: var(--color-medium);
+}
+
+.groupActionBadge {
+	position: absolute;
+	top: -0.25rem;
+	right: -0.25rem;
+	min-width: 1.1rem;
+	height: 1.1rem;
+	padding: 0 0.2rem;
+	border-radius: 999px;
+	background: var(--color-primary);
+	color: var(--color-primary-contrast);
+	font-size: 0.7rem;
+	font-weight: 700;
+	line-height: 1.1rem;
+	text-align: center;
 }
 
 .loading {

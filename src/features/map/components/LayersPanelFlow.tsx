@@ -19,6 +19,7 @@ export interface LayersPanelFlowProps {
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
   signalementLayerOrder: SignalementLayerKey[];
+  pendingChangesCountByLayerKey?: Record<string, number>;
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
@@ -39,6 +40,7 @@ export function LayersPanelFlow({
   signalementLayerVisibility,
   signalementLayerOpacity,
   signalementLayerOrder,
+  pendingChangesCountByLayerKey,
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
@@ -56,6 +58,7 @@ export function LayersPanelFlow({
     signalementLayerVisibility,
     signalementLayerOpacity,
     signalementLayerOrder,
+    pendingChangesCountByLayerKey,
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);

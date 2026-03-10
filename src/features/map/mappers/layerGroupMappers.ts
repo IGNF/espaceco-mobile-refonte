@@ -1,6 +1,7 @@
 import type { CommunityLayer } from '@ign/mobile-core';
 import type {
   LayerGroupDetails,
+  LayerGroupDirectContributionState,
   LayerGroupItem,
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
@@ -59,7 +60,7 @@ function getLayerOpacity(layer: CommunityLayer): number {
   return clampNumber(opacity, 0, 1);
 }
 
-function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
+export function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
   const layerKey = getCommunityLayerKey(layer);
 
   return {
@@ -83,6 +84,8 @@ export function mapLayerGroupsToSummaries(
     let hasToggleableItems = false;
     let hasVisibleToggleableItem = false;
     let hasVisibleItem = false;
+    let hasDirectContributionItems = false;
+    let pendingDirectContributionCount = 0;
 
     for (const item of group.items) {
       if (item.visible ?? true) {
@@ -97,9 +100,20 @@ export function mapLayerGroupsToSummaries(
       if (item.visible ?? true) {
         hasVisibleToggleableItem = true;
       }
+
+      if (item.directContribution) {
+        hasDirectContributionItems = true;
+        pendingDirectContributionCount += item.directContribution.pendingChangesCount;
+      }
     }
 
     const visible = hasToggleableItems ? hasVisibleToggleableItem : hasVisibleItem;
+    const directContribution: LayerGroupDirectContributionState | undefined =
+      hasDirectContributionItems
+        ? {
+            pendingChangesCount: pendingDirectContributionCount,
+          }
+        : undefined;
 
     return {
       id: group.id,
@@ -107,6 +121,7 @@ export function mapLayerGroupsToSummaries(
       count: group.items.length,
       visible,
       canToggle: hasToggleableItems,
+      directContribution,
     };
   });
 }

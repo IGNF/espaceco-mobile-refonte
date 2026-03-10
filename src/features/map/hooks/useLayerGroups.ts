@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import type { CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
+import { getCommunityLayerDirectContributionState } from '@/domain/community/directContribution';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type {
   LayerGroupDetails,
@@ -9,7 +10,7 @@ import type {
 } from '@/features/map/types/layerGroups';
 import {
   mapLayerGroupsToSummaries,
-  mapLayersToGroupItems,
+  mapLayerToGroupItem,
 } from '@/features/map/mappers/layerGroupMappers';
 import {
   SIGNALEMENT_LAYER_DEFINITIONS,
@@ -26,6 +27,40 @@ interface UseLayerGroupsParams {
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
   signalementLayerOrder: SignalementLayerKey[];
+  pendingChangesCountByLayerKey?: Record<string, number>;
+}
+
+function getPendingChangesCountForLayer(
+  layerKey: string | undefined,
+  pendingChangesCountByLayerKey: Record<string, number>
+): number {
+  if (!layerKey) {
+    return 0;
+  }
+
+  const pendingChangesCount = pendingChangesCountByLayerKey[layerKey];
+  return Number.isFinite(pendingChangesCount) && pendingChangesCount > 0
+    ? Math.floor(pendingChangesCount)
+    : 0;
+}
+
+function mapLayersToGroupItemsWithDirectContribution(
+  layers: CommunityLayer[],
+  pendingChangesCountByLayerKey: Record<string, number>
+): LayerGroupItem[] {
+  return layers.map((layer) => {
+    const item = mapLayerToGroupItem(layer)
+
+    return {
+      ...item,
+      directContribution: getCommunityLayerDirectContributionState(layer, {
+        pendingChangesCount: getPendingChangesCountForLayer(
+          item.layerKey,
+          pendingChangesCountByLayerKey
+        ),
+      }),
+    }
+  })
 }
 
 export function useLayerGroups({
@@ -35,6 +70,7 @@ export function useLayerGroups({
   signalementLayerVisibility,
   signalementLayerOpacity,
   signalementLayerOrder,
+  pendingChangesCountByLayerKey = {},
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -84,23 +120,33 @@ export function useLayerGroups({
       {
         id: 'guichet',
         title: guichetTitle,
-        items: mapLayersToGroupItems(guichetLayers),
+        items: mapLayersToGroupItemsWithDirectContribution(
+          guichetLayers,
+          pendingChangesCountByLayerKey
+        ),
       },
       {
         id: 'mesCartes',
         title: t('layers.groups.mesCartes'),
-        items: mapLayersToGroupItems(mesCartesLayers),
+        items: mapLayersToGroupItemsWithDirectContribution(
+          mesCartesLayers,
+          pendingChangesCountByLayerKey
+        ),
       },
       {
         id: 'geoservices',
         title: t('layers.groups.geoservices'),
-        items: mapLayersToGroupItems(geoportailLayers),
+        items: mapLayersToGroupItemsWithDirectContribution(
+          geoportailLayers,
+          pendingChangesCountByLayerKey
+        ),
       },
     ];
   }, [
     activeCommunity,
     geoportailLayers,
     layers,
+    pendingChangesCountByLayerKey,
     signalementLayerVisibility,
     signalementLayerOrder,
     signalementLayerOpacity,

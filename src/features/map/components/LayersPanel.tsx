@@ -8,6 +8,7 @@ import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-angle-right.svg?react';
+import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 
 const ANIMATION_DURATION = 300;
 
@@ -18,6 +19,7 @@ export interface LayersPanelProps {
 	isLoading: boolean;
 	onOpenGroup: (groupId: LayerGroupId) => void;
 	onToggleGroupVisibility: (groupId: LayerGroupId) => void;
+	onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
 }
 
 export function LayersPanel({
@@ -27,10 +29,12 @@ export function LayersPanel({
 	isLoading,
 	onOpenGroup,
 	onToggleGroupVisibility,
+	onSendGroupDirectContributions,
 }: LayersPanelProps) {
 	const { t } = useTranslation();
 	const [isVisible, setIsVisible] = useState(false);
 	const [shouldRender, setShouldRender] = useState(false);
+	const sendDirectContributionsLabel = t('layers.groups.sendDirectContributions');
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -111,6 +115,25 @@ export function LayersPanel({
 											<IconArrowRight className={styles.groupArrowIcon} />
 										</span>
 									</button>
+									{group.directContribution && (
+										<button
+											type='button'
+											className={styles.groupActionButton}
+											onClick={() => onSendGroupDirectContributions?.(group.id)}
+											disabled={
+												!onSendGroupDirectContributions ||
+												group.directContribution.pendingChangesCount < 1
+											}
+											aria-label={`${sendDirectContributionsLabel} ${group.title}`}
+										>
+											<IconSend className={styles.groupActionIcon} />
+											{group.directContribution.pendingChangesCount > 0 && (
+												<span className={styles.groupActionBadge}>
+													{group.directContribution.pendingChangesCount}
+												</span>
+											)}
+										</button>
+									)}
 								</li>
 							))}
 						</ul>

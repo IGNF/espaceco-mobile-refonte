@@ -100,35 +100,21 @@ function getLayerOpacity(layer: CommunityLayer): number | undefined {
 }
 
 function getTableWfsUrl(layer: CommunityLayer): string | undefined {
-  const tableAny = layer.table as { wfs?: unknown; wfs_url?: unknown } | undefined;
-  if (!tableAny) return undefined;
+  const table = layer.table;
+  if (!table || typeof table !== 'object') return undefined;
 
-  if (typeof tableAny.wfs === 'string' && tableAny.wfs.length > 0) {
-    return tableAny.wfs;
-  }
-
-  if (typeof tableAny.wfs_url === 'string' && tableAny.wfs_url.length > 0) {
-    return tableAny.wfs_url;
+  if (typeof table.wfs === 'string' && table.wfs.length > 0) {
+    return table.wfs;
   }
 
   return undefined;
 }
 
 function getTableTileZoom(layer: CommunityLayer): number {
-  const tableAny = layer.table as {
-    tileZoomLevel?: unknown;
-    tile_zoom_level?: unknown;
-    minZoomLevel?: unknown;
-    min_zoom_level?: unknown;
-  } | undefined;
+  const table = layer.table;
 
-  if (!tableAny) return 13;
+  if (!table || typeof table !== 'object') return 13;
 
-  const rawTileZoom =
-    tableAny.tileZoomLevel ??
-    tableAny.tile_zoom_level ??
-    tableAny.minZoomLevel ??
-    tableAny.min_zoom_level;
-  const tileZoom = Number(rawTileZoom);
+  const tileZoom = Number(table.tileZoomLevel);
   return Number.isFinite(tileZoom) ? tileZoom : 13;
 }
