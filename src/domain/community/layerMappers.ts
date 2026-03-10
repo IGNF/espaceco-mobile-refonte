@@ -11,6 +11,23 @@ import {
 	toStringValue,
 } from '@/shared/utils/coercion';
 
+function getNormalizedTableBase(raw: Record<string, unknown>): Record<string, unknown> {
+	const normalizedRaw = { ...raw };
+
+	delete normalizedRaw.database_id;
+	delete normalizedRaw.database_name;
+	delete normalizedRaw.table_name;
+	delete normalizedRaw.geometry_name;
+	delete normalizedRaw.min_zoom_level;
+	delete normalizedRaw.max_zoom_level;
+	delete normalizedRaw.read_only;
+	delete normalizedRaw.doc_uri;
+	delete normalizedRaw.wfs_url;
+	delete normalizedRaw.tile_zoom_level;
+
+	return normalizedRaw;
+}
+
 function mapTableColumns(columns: unknown): Record<string, TableColumn> {
 	const columnsRecord: Record<string, TableColumn> = {};
 	const rawColumns = toRawObject(columns);
@@ -89,7 +106,7 @@ export function mapApiTable(apiTable: unknown): Table {
 	const databaseName = toStringValue(raw.database ?? raw.database_name ?? raw.dbname);
 
 	const mapped: Table = {
-		...(raw as unknown as Table),
+		...(getNormalizedTableBase(raw) as unknown as Table),
 		id: toNumber(raw.id) ?? 0,
 		database: databaseName ?? (databaseId !== undefined ? String(databaseId) : ''),
 		databaseId: databaseId ?? 0,
@@ -118,6 +135,9 @@ export function mapApiTable(apiTable: unknown): Table {
 	const editable = toBoolean(raw.editable);
 	if (editable !== undefined) mapped.editable = editable;
 
+	const readOnly = toBoolean(raw.readOnly ?? raw.read_only);
+	if (readOnly !== undefined) mapped.readOnly = readOnly;
+
 	const docURI = toStringValue(raw.docURI ?? raw.doc_uri);
 	if (docURI !== undefined) mapped.docURI = docURI;
 
@@ -131,7 +151,7 @@ export function mapApiTable(apiTable: unknown): Table {
 
 	const tileZoomLevel = toNumber(raw.tileZoomLevel ?? raw.tile_zoom_level);
 	if (tileZoomLevel !== undefined) {
-		;(mapped as Table & { tileZoomLevel?: number }).tileZoomLevel = tileZoomLevel;
+		mapped.tileZoomLevel = tileZoomLevel;
 	}
 
 	return mapped;
