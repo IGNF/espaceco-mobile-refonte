@@ -15,6 +15,7 @@ const LAYERS_CONFIGURATION_STORAGE_KEY = 'LAYERS_CONFIGURATION';
 interface PersistedLayerState {
   visible?: boolean;
   opacity?: number;
+  locked?: boolean;
 }
 
 export interface LayersConfiguration {
@@ -29,6 +30,7 @@ export interface SaveLayersConfigurationParams {
   communityId: number;
   userId?: number | null;
   layers: CommunityLayer[];
+  lockedByLayerKey: Record<string, boolean>;
   signalementLayerVisibility: SignalementLayerVisibility;
   signalementLayerOpacity: SignalementLayerOpacity;
   signalementLayerOrder: SignalementLayerKey[];
@@ -59,7 +61,11 @@ function toLayerStateMap(value: unknown): Record<string, PersistedLayerState> {
   for (const [layerKey, layerState] of Object.entries(source)) {
     if (!layerState || typeof layerState !== 'object') continue;
 
-    const rawState = layerState as { visible?: unknown; opacity?: unknown };
+    const rawState = layerState as {
+      visible?: unknown;
+      opacity?: unknown;
+      locked?: unknown;
+    };
     const nextState: PersistedLayerState = {};
 
     if (typeof rawState.visible === 'boolean') {
@@ -68,6 +74,10 @@ function toLayerStateMap(value: unknown): Record<string, PersistedLayerState> {
 
     if (typeof rawState.opacity === 'number' && Number.isFinite(rawState.opacity)) {
       nextState.opacity = clampNumber(rawState.opacity, 0, 1);
+    }
+
+    if (typeof rawState.locked === 'boolean') {
+      nextState.locked = rawState.locked;
     }
 
     result[layerKey] = nextState;
@@ -201,6 +211,7 @@ export async function saveLayersConfiguration({
   communityId,
   userId,
   layers,
+  lockedByLayerKey,
   signalementLayerVisibility,
   signalementLayerOpacity,
   signalementLayerOrder,
@@ -214,6 +225,7 @@ export async function saveLayersConfiguration({
     layersByKey[layerKey] = {
       visible: layer.visible ?? true,
       opacity: clampNumber(layer.opacity ?? 1, 0, 1),
+      locked: lockedByLayerKey[layerKey] === true,
     };
   }
 

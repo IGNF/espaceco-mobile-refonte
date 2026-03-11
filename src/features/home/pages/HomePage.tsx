@@ -16,6 +16,7 @@ import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
+import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContributionLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import styles from "./HomePage.module.css";
 
@@ -46,6 +47,7 @@ export function HomePage() {
 		layers,
 		geoportailLayers,
 		vectorLayers,
+		lockedByLayerKey,
 		signalementLayerVisibility,
 		signalementLayerOpacity,
 		signalementLayerOrder,
@@ -53,6 +55,7 @@ export function HomePage() {
 		setLayerVisibility,
 		setLayerOpacity,
 		setGroupLayerOrder,
+		setLayerDirectContributionLock,
 	} = useLayers();
 	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
 	useSignalementMapLayers(
@@ -62,6 +65,15 @@ export function HomePage() {
 		signalementLayerOrder,
 		isMapReady
 	);
+	const {
+		pendingChangesCountByLayerKey,
+		sendLayerDirectContributions,
+		resetLayerDirectContributions,
+	} = useDirectContributionLayers({
+		mapRef,
+		isMapReady,
+		vectorLayers,
+	});
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const [isSearchOpen, setIsSearchOpen] = useState(false);
 	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -216,13 +228,18 @@ export function HomePage() {
 				layers={layers}
 				geoportailLayers={geoportailLayers}
 				vectorLayers={vectorLayers}
+				lockedByLayerKey={lockedByLayerKey}
 				signalementLayerVisibility={signalementLayerVisibility}
 				signalementLayerOpacity={signalementLayerOpacity}
 				signalementLayerOrder={signalementLayerOrder}
+				pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
 				isLoading={isLayersLoading}
 				onSetLayerVisibility={setLayerVisibility}
 				onSetLayerOpacity={setLayerOpacity}
 				onSetGroupLayerOrder={setGroupLayerOrder}
+				onSendLayerDirectContributions={sendLayerDirectContributions}
+				onResetLayerDirectContributions={resetLayerDirectContributions}
+				onToggleLayerDirectContributionLock={setLayerDirectContributionLock}
 			/>
 
 			<OnboardingModal

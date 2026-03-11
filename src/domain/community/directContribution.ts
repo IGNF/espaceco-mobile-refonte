@@ -8,11 +8,11 @@ export interface CommunityLayerDirectContributionState {
 
 export interface CommunityLayerDirectContributionOptions {
   pendingChangesCount: number
+  locked?: boolean
 }
 
-interface EditableLayerShape {
+interface DirectContributionLayerShape {
   role?: string
-  edit?: boolean
 }
 
 function hasEditableRole(role: string | undefined): boolean | undefined {
@@ -39,7 +39,7 @@ export function getCommunityLayerDirectContributionState(
     return undefined
   }
 
-  const layerAny = layer as CommunityLayer & EditableLayerShape
+  const layerAny = layer as CommunityLayer & DirectContributionLayerShape
   const readOnly = table.readOnly === true
   const tableEditable =
     typeof table.editable === 'boolean'
@@ -57,7 +57,7 @@ export function getCommunityLayerDirectContributionState(
     editable: hasEditionCapability,
     // A layer is shown as locked either because it cannot be edited at all
     // or because the user locally disabled edition for this layer
-    locked: !hasEditionCapability || layerAny.edit === false,
+    locked: !hasEditionCapability || options.locked === true,
     // The pending count is injected by the caller; this helper does not inspect
     // sources or storage to derive it
     pendingChangesCount: options.pendingChangesCount,

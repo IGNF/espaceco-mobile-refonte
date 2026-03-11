@@ -28,36 +28,29 @@ interface UseLayerGroupsParams {
   signalementLayerOpacity: SignalementLayerOpacity;
   signalementLayerOrder: SignalementLayerKey[];
   pendingChangesCountByLayerKey?: Record<string, number>;
-}
-
-function getPendingChangesCountForLayer(
-  layerKey: string | undefined,
-  pendingChangesCountByLayerKey: Record<string, number>
-): number {
-  if (!layerKey) {
-    return 0;
-  }
-
-  const pendingChangesCount = pendingChangesCountByLayerKey[layerKey];
-  return Number.isFinite(pendingChangesCount) && pendingChangesCount > 0
-    ? Math.floor(pendingChangesCount)
-    : 0;
+  lockedByLayerKey?: Record<string, boolean>;
 }
 
 function mapLayersToGroupItemsWithDirectContribution(
   layers: CommunityLayer[],
-  pendingChangesCountByLayerKey: Record<string, number>
+  pendingChangesCountByLayerKey: Record<string, number>,
+  lockedByLayerKey: Record<string, boolean>
 ): LayerGroupItem[] {
   return layers.map((layer) => {
-    const item = mapLayerToGroupItem(layer)
+    const item = mapLayerToGroupItem(layer);
+    const layerKey = item.layerKey;
+    const rawPendingChangesCount =
+      layerKey ? pendingChangesCountByLayerKey[layerKey] : undefined;
+    const pendingChangesCount =
+      typeof rawPendingChangesCount === 'number' && rawPendingChangesCount > 0
+        ? Math.floor(rawPendingChangesCount)
+        : 0;
 
     return {
       ...item,
       directContribution: getCommunityLayerDirectContributionState(layer, {
-        pendingChangesCount: getPendingChangesCountForLayer(
-          item.layerKey,
-          pendingChangesCountByLayerKey
-        ),
+        pendingChangesCount,
+        locked: layerKey ? lockedByLayerKey[layerKey] === true : false,
       }),
     }
   })
@@ -71,6 +64,7 @@ export function useLayerGroups({
   signalementLayerOpacity,
   signalementLayerOrder,
   pendingChangesCountByLayerKey = {},
+  lockedByLayerKey = {},
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -78,19 +72,15 @@ export function useLayerGroups({
   const layerGroups = useMemo<LayerGroupDetails[]>(() => {
     const vectorLayerSet = new Set(vectorLayers);
     const geoportailLayerSet = new Set(geoportailLayers);
-    const signalementDefinitionsByKey = new Map(
-      SIGNALEMENT_LAYER_DEFINITIONS.map((layerDefinition) => [
-        layerDefinition.key,
-        layerDefinition,
-      ])
-    );
     const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
       signalementLayerOrder
     );
 
     const signalementItems: LayerGroupItem[] = normalizedSignalementLayerOrder.map(
       (layerKey) => {
-        const layerDefinition = signalementDefinitionsByKey.get(layerKey);
+        const layerDefinition = SIGNALEMENT_LAYER_DEFINITIONS.find(
+          (definition) => definition.key === layerKey
+        );
 
         return {
           id: layerKey,
@@ -122,7 +112,8 @@ export function useLayerGroups({
         title: guichetTitle,
         items: mapLayersToGroupItemsWithDirectContribution(
           guichetLayers,
-          pendingChangesCountByLayerKey
+          pendingChangesCountByLayerKey,
+          lockedByLayerKey
         ),
       },
       {
@@ -130,7 +121,8 @@ export function useLayerGroups({
         title: t('layers.groups.mesCartes'),
         items: mapLayersToGroupItemsWithDirectContribution(
           mesCartesLayers,
-          pendingChangesCountByLayerKey
+          pendingChangesCountByLayerKey,
+          lockedByLayerKey
         ),
       },
       {
@@ -138,7 +130,8 @@ export function useLayerGroups({
         title: t('layers.groups.geoservices'),
         items: mapLayersToGroupItemsWithDirectContribution(
           geoportailLayers,
-          pendingChangesCountByLayerKey
+          pendingChangesCountByLayerKey,
+          lockedByLayerKey
         ),
       },
     ];
@@ -146,6 +139,7 @@ export function useLayerGroups({
     activeCommunity,
     geoportailLayers,
     layers,
+    lockedByLayerKey,
     pendingChangesCountByLayerKey,
     signalementLayerVisibility,
     signalementLayerOrder,

@@ -5,6 +5,7 @@ import {
   WFSLayer,
   type CommunityLayer
 } from '@ign/mobile-core';
+import { applyCommunityLayerMetadata } from '@/infra/map/directContribution/DirectContributionLayerService';
 import { stripQueryParams } from '@/shared/utils/query';
 import { USE_LAYER_FEATURE_CACHE_WHEN_ONLINE } from '@/shared/constants/map';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
@@ -42,12 +43,15 @@ function createVectorLayer(
 ): BaseLayer | null {
   const geoservice = layer.geoservice;
   if (geoservice && (geoservice.type as string)?.toUpperCase() === 'WFS') {
-    return new WFSLayer({
+    const wfsLayer = new WFSLayer({
       geoservice,
       visibility: getLayerVisibility(layer),
       opacity: getLayerOpacity(layer),
       useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
     } as any, cacheStorage as any);
+    // Keep a link back to the originating CommunityLayer for layer-panel actions.
+    applyCommunityLayerMetadata(wfsLayer, layer);
+    return wfsLayer;
   }
 
   const wfsUrl = getTableWfsUrl(layer);
@@ -85,6 +89,8 @@ function createVectorLayer(
       collabLayer.setOpacity(opacity);
     }
 
+    // Direct contribution actions resolve the live OL layer from this metadata.
+    applyCommunityLayerMetadata(collabLayer, layer);
     return collabLayer;
   }
 
@@ -115,6 +121,7 @@ function getTableTileZoom(layer: CommunityLayer): number {
 
   if (!table || typeof table !== 'object') return 13;
 
+  // Match the legacy collaborative-layer rule: use the explicit table tile zoom.
   const tileZoom = Number(table.tileZoomLevel);
   return Number.isFinite(tileZoom) ? tileZoom : 13;
 }

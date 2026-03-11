@@ -20,6 +20,7 @@ export interface LayersPanelFlowProps {
   signalementLayerOpacity: SignalementLayerOpacity;
   signalementLayerOrder: SignalementLayerKey[];
   pendingChangesCountByLayerKey?: Record<string, number>;
+  lockedByLayerKey?: Record<string, boolean>;
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
@@ -41,6 +42,7 @@ export function LayersPanelFlow({
   signalementLayerOpacity,
   signalementLayerOrder,
   pendingChangesCountByLayerKey,
+  lockedByLayerKey,
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
@@ -59,6 +61,7 @@ export function LayersPanelFlow({
     signalementLayerOpacity,
     signalementLayerOrder,
     pendingChangesCountByLayerKey,
+    lockedByLayerKey,
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
@@ -108,6 +111,42 @@ export function LayersPanelFlow({
     setActiveLayerGroup(null);
   };
 
+  const handleSendGroupDirectContributions = (groupId: LayerGroupId) => {
+    // If the parent has a dedicated group level implementation to send direct contributions, prefer it
+    if (onSendGroupDirectContributions) {
+      onSendGroupDirectContributions(groupId)
+      return
+    }
+
+    // Otherwise, fall back to the per layer action by submitting each eligible layer
+    if (!onSendLayerDirectContributions) {
+      return
+    }
+
+    const group = layerGroups.find((candidate) => candidate.id === groupId)
+    if (!group) {
+      return
+    }
+
+    // filter layers that can submit direct contributions *and* have pending changes
+    const layerKeys = group.items
+      .filter((item) =>
+        item.layerKey &&
+        item.directContribution &&
+        item.directContribution.editable &&
+        !item.directContribution.locked &&
+        item.directContribution.pendingChangesCount > 0
+      )
+      .map((item) => item.layerKey as string)
+
+    void (async () => {
+      // submit sequentially the pending changes for each layer
+      for (const layerKey of layerKeys) {
+        await Promise.resolve(onSendLayerDirectContributions(layerKey))
+      }
+    })()
+  }
+
   return (
     <>
       <LayersPanel
@@ -117,7 +156,7 @@ export function LayersPanelFlow({
         isLoading={isLoading}
         onOpenGroup={handleOpenLayerGroup}
         onToggleGroupVisibility={handleToggleGroupVisibility}
-        onSendGroupDirectContributions={onSendGroupDirectContributions}
+        onSendGroupDirectContributions={handleSendGroupDirectContributions}
       />
       <LayerGroupDetailsPage
         isOpen={isLayerGroupOpen && selectedLayerGroup !== null}

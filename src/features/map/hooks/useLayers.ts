@@ -23,6 +23,7 @@ import { clampNumber } from '@/shared/utils/number';
 import {
 	loadLayersConfiguration,
 	saveLayersConfiguration,
+	type LayersConfiguration,
 } from '@/features/map/services/layersConfigurationStorage';
 import {
 	orderItemsByStringKey,
@@ -84,6 +85,42 @@ function reorderLayersWithinSubset(
 	});
 }
 
+function applySavedLayerConfiguration(
+	layers: CommunityLayer[],
+	savedConfiguration: LayersConfiguration | null
+): {
+	layers: CommunityLayer[];
+	lockedByLayerKey: Record<string, boolean>;
+} {
+	const lockedByLayerKey: Record<string, boolean> = {};
+
+	const configuredLayers = layers.map((layer) => {
+		const layerKey = getCommunityLayerKey(layer);
+		const savedLayerState = savedConfiguration?.layersByKey[layerKey];
+		if (!savedLayerState) {
+			return layer;
+		}
+
+		if (savedLayerState.locked === true) {
+			lockedByLayerKey[layerKey] = true;
+		}
+
+		return {
+			...layer,
+			visible: savedLayerState.visible ?? layer.visible,
+			opacity: savedLayerState.opacity ?? layer.opacity,
+		};
+	});
+
+	return {
+		layers: reorderLayersByLayerOrder(
+			configuredLayers,
+			savedConfiguration?.layerOrder ?? []
+		),
+		lockedByLayerKey,
+	};
+}
+
 export function useLayers() {
 	const { user } = useAuth();
 	const { activeCommunity } = useCommunity();
@@ -97,6 +134,7 @@ export function useLayers() {
 	const [signalementLayerOrder, setSignalementLayerOrder] = useState<
 		SignalementLayerKey[]
 	>(() => [...DEFAULT_SIGNALEMENT_LAYER_ORDER]);
+	const [lockedByLayerKey, setLockedByLayerKey] = useState<Record<string, boolean>>({});
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [hydratedCommunityId, setHydratedCommunityId] = useState<number | null>(null);
@@ -106,6 +144,7 @@ export function useLayers() {
 		setSignalementLayerVisibility({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY });
 		setSignalementLayerOpacity(getDefaultSignalementLayerOpacity());
 		setSignalementLayerOrder([...DEFAULT_SIGNALEMENT_LAYER_ORDER]);
+		setLockedByLayerKey({});
 	}, []);
 
 	const geoportailLayers = useMemo(() => filterGeoportailLayers(layers), [layers]);
@@ -164,15 +203,16 @@ export function useLayers() {
 	const fetchLayers = useCallback(async (forceRefresh = false) => {
 		setHydratedCommunityId(null);
 		setHydratedUserId(null);
+		setError(null);
 
 		if (!activeCommunityId) {
+			setIsLoading(false);
 			setLayers([]);
 			resetLayerPreferences();
 			return;
 		}
 
 		setIsLoading(true);
-		setError(null);
 
 		try {
 			const enrichedLayers = await fetchCommunityLayers(activeCommunityId, {
@@ -180,20 +220,10 @@ export function useLayers() {
 			});
 
 			const savedConfiguration = await loadLayersConfiguration(activeCommunityId, userId);
-
-			const layersWithConfiguration = enrichedLayers.map((layer) => {
-				const layerKey = getCommunityLayerKey(layer);
-				const savedLayerState = savedConfiguration?.layersByKey[layerKey];
-				if (!savedLayerState) {
-					return layer;
-				}
-
-				return {
-					...layer,
-					visible: savedLayerState.visible ?? layer.visible,
-					opacity: savedLayerState.opacity ?? layer.opacity,
-				};
-			});
+			const {
+				layers: nextLayers,
+				lockedByLayerKey: nextLockedByLayerKey,
+			} = applySavedLayerConfiguration(enrichedLayers, savedConfiguration);
 
 			const nextSignalementLayerVisibility: SignalementLayerVisibility = {
 				...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
@@ -206,12 +236,9 @@ export function useLayers() {
 			const nextSignalementLayerOrder = normalizeSignalementLayerOrder(
 				savedConfiguration?.signalementLayerOrder
 			);
-			const nextLayers = reorderLayersByLayerOrder(
-				layersWithConfiguration,
-				savedConfiguration?.layerOrder ?? []
-			);
 
 			setLayers(nextLayers);
+			setLockedByLayerKey(nextLockedByLayerKey);
 			setSignalementLayerVisibility(nextSignalementLayerVisibility);
 			setSignalementLayerOpacity(nextSignalementLayerOpacity);
 			setSignalementLayerOrder(nextSignalementLayerOrder);
@@ -244,6 +271,7 @@ export function useLayers() {
 			communityId: activeCommunityId,
 			userId,
 			layers,
+			lockedByLayerKey,
 			signalementLayerVisibility,
 			signalementLayerOpacity,
 			signalementLayerOrder,
@@ -253,20 +281,40 @@ export function useLayers() {
 		hydratedCommunityId,
 		hydratedUserId,
 		layers,
+		lockedByLayerKey,
 		signalementLayerOpacity,
 		signalementLayerOrder,
 		signalementLayerVisibility,
 		userId,
 	]);
 
-	const refetchLayers = useCallback(async () => {
-		await fetchLayers(true);
-	}, [fetchLayers]);
+	const refetchLayers = useCallback(() => fetchLayers(true), [fetchLayers]);
+
+	const setLayerDirectContributionLock = useCallback((layerKey: string, locked: boolean) => {
+		setLockedByLayerKey((previous) => {
+			if (locked) {
+				return {
+					...previous,
+					[layerKey]: true,
+				};
+			}
+
+			if (!(layerKey in previous)) {
+				return previous;
+			}
+
+			const next = { ...previous };
+      // remove the layer key from the lockedByLayerKey object - we don't store in it layers that are not locked
+			delete next[layerKey];
+			return next;
+		});
+	}, []);
 
 	return {
 		layers,
 		geoportailLayers,
 		vectorLayers,
+		lockedByLayerKey,
 		signalementLayerVisibility,
 		signalementLayerOpacity,
 		signalementLayerOrder,
@@ -276,5 +324,6 @@ export function useLayers() {
 		setLayerVisibility,
 		setLayerOpacity,
 		setGroupLayerOrder,
+		setLayerDirectContributionLock,
 	};
 }
