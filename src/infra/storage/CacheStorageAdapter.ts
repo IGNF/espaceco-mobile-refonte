@@ -10,6 +10,7 @@
  * - Features: FileSystem (GeoJSON in DATA directory)
  */
 import type { ICacheStorage, CacheMetadata } from '@ign/mobile-core';
+import { Capacitor } from '@capacitor/core';
 import { Feature } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Storage, FileSystem } from '@ign/mobile-device';
@@ -18,6 +19,9 @@ import { storageKey } from '../../shared/constants/storage';
 const CACHE_DIR = 'tiles';
 const FEATURES_DIR = 'features';
 const METADATA_KEY = 'CACHE_METADATA';
+// Disable feature cache on web to avoid freezing Chrome when a heavy community is loaded
+const FEATURE_CACHE_DISABLED_ON_WEB =
+  typeof window !== 'undefined' && Capacitor.getPlatform() === 'web';
 
 export class CacheStorageAdapter implements ICacheStorage {
   private geoJSON: GeoJSON;
@@ -137,6 +141,10 @@ export class CacheStorageAdapter implements ICacheStorage {
   // Feature operations
 
   async saveFeatures(layerId: string, features: Feature[]): Promise<void> {
+    if (FEATURE_CACHE_DISABLED_ON_WEB) {
+      return;
+    }
+
     const path = `${FEATURES_DIR}/${layerId}.geojson`;
     const geojsonStr = this.geoJSON.writeFeatures(features);
     await FileSystem.writeFile({
@@ -149,6 +157,10 @@ export class CacheStorageAdapter implements ICacheStorage {
   }
 
   async loadFeatures(layerId: string): Promise<Feature[]> {
+    if (FEATURE_CACHE_DISABLED_ON_WEB) {
+      return [];
+    }
+
     try {
       const path = `${FEATURES_DIR}/${layerId}.geojson`;
       const data = await FileSystem.readFile({
@@ -163,6 +175,10 @@ export class CacheStorageAdapter implements ICacheStorage {
   }
 
   async deleteFeatures(layerId: string): Promise<void> {
+    if (FEATURE_CACHE_DISABLED_ON_WEB) {
+      return;
+    }
+
     try {
       const path = `${FEATURES_DIR}/${layerId}.geojson`;
       await FileSystem.deleteFile({
