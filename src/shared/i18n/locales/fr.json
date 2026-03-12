@@ -249,7 +249,32 @@
       "submitSuccess": "Modifications envoyées",
       "submitError": "Impossible d'envoyer les modifications",
       "resetSuccess": "Modifications annulées",
-      "resetError": "Impossible d'annuler les modifications"
+      "resetError": "Impossible d'annuler les modifications",
+      "toolbarStatus": "Édition de {{layerTitle}}",
+      "tools": {
+        "drawPoint": "Ajouter un point",
+        "drawLine": "Ajouter une ligne",
+        "drawPolygon": "Ajouter un polygone",
+        "modify": "Modifier la géométrie",
+        "select": "Sélectionner un objet",
+        "delete": "Supprimer l'objet sélectionné",
+        "undo": "Annuler la dernière action",
+        "close": "Quitter l'édition"
+      },
+      "form": {
+        "headerTitleCreate": "Création d'un objet",
+        "headerTitleEdit": "Modification d'un objet",
+        "headerSubtitle": "Profil actif",
+        "title": "Attributs",
+        "back": "Retour",
+        "close": "Fermer",
+        "chooseOption": "Choisissez une valeur",
+        "requiredField": "Ce champ est obligatoire.",
+        "actions": {
+          "save": "Enregistrer",
+          "cancel": "Annuler"
+        }
+      }
     },
     "info": {
       "untitled": "Couche sans nom",

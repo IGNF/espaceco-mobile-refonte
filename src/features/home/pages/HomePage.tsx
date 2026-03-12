@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { getUid } from "ol/util";
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 import { useAuth } from "@/features/auth/hooks/useAuth";
@@ -17,7 +18,10 @@ import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
 import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContributionLayers";
+import { useDirectContributionSession } from "@/features/map/hooks/useDirectContributionSession";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
+import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
+import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import styles from "./HomePage.module.css";
 
 import { overlayRoutes } from "@/app/router/routes";
@@ -71,6 +75,20 @@ export function HomePage() {
 		resetLayerDirectContributions,
 	} = useDirectContributionLayers({
 		mapRef,
+		isMapReady,
+		vectorLayers,
+	});
+	const {
+		isSessionActive: isDirectContributionSessionActive,
+		toolbarItems: directContributionToolbarItems,
+		toolbarStatusText: directContributionToolbarStatusText,
+		featureFormState: directContributionFeatureFormState,
+		startSession: startDirectContributionSession,
+		triggerToolbarAction: triggerDirectContributionToolbarAction,
+		saveFeatureAttributes: saveDirectContributionFeatureAttributes,
+		cancelFeatureForm: cancelDirectContributionFeatureForm,
+	} = useDirectContributionSession({
+		map,
 		isMapReady,
 		vectorLayers,
 	});
@@ -151,6 +169,12 @@ export function HomePage() {
 		if (tab === "couches" && !isLayersPanelOpen) {
 			setIsLayersPanelOpen(true);
 		}
+	};
+
+	const handleEditLayer = (layerKey: string) => {
+		setIsLayersPanelOpen(false);
+		setIsSearchOpen(false);
+		startDirectContributionSession(layerKey);
 	};
 
 	const handleLogout = () => {
@@ -237,9 +261,31 @@ export function HomePage() {
 				onSetLayerVisibility={setLayerVisibility}
 				onSetLayerOpacity={setLayerOpacity}
 				onSetGroupLayerOrder={setGroupLayerOrder}
+				onEditLayer={handleEditLayer}
 				onSendLayerDirectContributions={sendLayerDirectContributions}
 				onResetLayerDirectContributions={resetLayerDirectContributions}
 				onToggleLayerDirectContributionLock={setLayerDirectContributionLock}
+			/>
+
+			<DirectContributionMapOverlay
+				isOpen={isDirectContributionSessionActive && directContributionFeatureFormState === null}
+				items={directContributionToolbarItems}
+				statusText={directContributionToolbarStatusText}
+				onItemClick={triggerDirectContributionToolbarAction}
+			/>
+
+			<DirectContributionFeatureFormPage
+				key={
+					directContributionFeatureFormState
+						? `${directContributionFeatureFormState.mode}-${getUid(directContributionFeatureFormState.feature)}`
+						: 'direct-contribution-form'
+				}
+				isOpen={directContributionFeatureFormState !== null}
+				mode={directContributionFeatureFormState?.mode ?? 'edit'}
+				table={directContributionFeatureFormState?.table ?? null}
+				feature={directContributionFeatureFormState?.feature ?? null}
+				onSave={saveDirectContributionFeatureAttributes}
+				onCancel={cancelDirectContributionFeatureForm}
 			/>
 
 			<OnboardingModal
