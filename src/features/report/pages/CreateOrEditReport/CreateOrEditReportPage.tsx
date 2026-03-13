@@ -548,9 +548,9 @@ export function CreateOrEditReportPage({
     if (isPickingObject) {
       return (
         <div className={styles.locationPickerOverlay}>
-          <div className={styles.objectPickerHint}>
+          {/* <div className={styles.objectPickerHint}>
             {t('reports.createOrEdit.form.objectPickInstruction')}
-          </div>
+          </div> */}
           <div className={styles.validateButtonContainer}>
             <Button
               color="medium"

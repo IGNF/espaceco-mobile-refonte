@@ -107,6 +107,22 @@ export class DirectContributionLayerService {
   }
 
   /**
+   * Exposes the live collaborative layer instance mounted on the map for one
+   * community layer key.
+   */
+  public getCollabLayer(layerKey: string): CollabVectorLayer | undefined {
+    return this.getLayer(layerKey);
+  }
+
+  /**
+   * Exposes the live collaborative source mounted on the map for one community
+   * layer key.
+   */
+  public getCollabSource(layerKey: string): CollabVectorSource | undefined {
+    return this.getSource(layerKey);
+  }
+
+  /**
    * Discards one layer draft from the collaborative source.
    */
   public resetLayerChanges(layerKey: string): void {
