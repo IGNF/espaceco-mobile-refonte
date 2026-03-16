@@ -1,7 +1,12 @@
 import type { Table, TableColumn } from '@ign/mobile-core';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import { toRawObject, toStringValue as toOptionalStringValue } from '@/shared/utils/coercion';
+import {
+  toRawObject,
+  toStringArrayFieldValue,
+  toStringFieldValue,
+  type FormFieldValue,
+} from '@/shared/utils/coercion';
 
 type SelectValues = string[] | Record<string, string | number | boolean | null>;
 type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
@@ -39,7 +44,9 @@ export interface DirectContributionLikeValue {
   userid: number | null;
   validDate: string | null;
 }
-export type DirectContributionFieldValue = string | string[] | DirectContributionDocumentValue | DirectContributionLikeValue;
+export type DirectContributionFieldValue = FormFieldValue<
+  DirectContributionDocumentValue | DirectContributionLikeValue
+>;
 export interface DirectContributionFieldOption {
   value: string;
   label: string;
@@ -186,16 +193,7 @@ function getFieldKind(column: DirectContributionTableColumn, options: DirectCont
   }
   return 'text';
 }
-function stringifyValue(rawValue: unknown): string {
-  const stringValue = toOptionalStringValue(rawValue);
-  if (stringValue !== undefined) {
-    return stringValue;
-  }
-  if (rawValue === null || rawValue === undefined) {
-    return '';
-  }
-  return String(rawValue);
-}
+
 function toBooleanSelectValue(rawValue: unknown): string {
   if (typeof rawValue === 'boolean') {
     return String(rawValue);
@@ -211,15 +209,7 @@ function toBooleanSelectValue(rawValue: unknown): string {
   }
   return '';
 }
-function toMultiselectValue(rawValue: unknown): string[] {
-  if (Array.isArray(rawValue)) {
-    return rawValue.map((value) => String(value));
-  }
-  if (rawValue === null || rawValue === undefined || rawValue === '') {
-    return [];
-  }
-  return [String(rawValue)];
-}
+
 function toPlainRecord(value: unknown): Record<string, unknown> | null {
   const rawObject = toRawObject(value);
   if (!rawObject || Array.isArray(rawObject)) {
@@ -244,7 +234,8 @@ function toPlainRecordFromJson(value: unknown): Record<string, unknown> | null {
 export function isDirectContributionDocumentValue(value: unknown): value is DirectContributionDocumentValue {
   return toPlainRecord(value)?.kind === 'document';
 }
-function createDocumentValue(rawValue: unknown): DirectContributionDocumentValue {
+
+export function toDirectContributionDocumentValue(rawValue: unknown): DirectContributionDocumentValue {
   if (isDirectContributionDocumentValue(rawValue)) {
     return rawValue;
   }
@@ -257,7 +248,7 @@ function createDocumentValue(rawValue: unknown): DirectContributionDocumentValue
   };
 }
 export function setDirectContributionDocumentFile(currentValue: unknown, file: File | null): DirectContributionDocumentValue {
-  const currentDocumentValue = createDocumentValue(currentValue);
+  const currentDocumentValue = toDirectContributionDocumentValue(currentValue);
   return {
     ...currentDocumentValue,
     file,
@@ -265,7 +256,7 @@ export function setDirectContributionDocumentFile(currentValue: unknown, file: F
   };
 }
 export function clearDirectContributionDocumentValue(currentValue: unknown): DirectContributionDocumentValue {
-  const currentDocumentValue = createDocumentValue(currentValue);
+  const currentDocumentValue = toDirectContributionDocumentValue(currentValue);
   return {
     ...currentDocumentValue,
     documentId: null,
@@ -277,7 +268,7 @@ export function isDirectContributionLikeValue(value: unknown): value is DirectCo
   return toPlainRecord(value)?.kind === 'like';
 }
 
-function createLikeValue(rawValue: unknown, userId?: number | null): DirectContributionLikeValue {
+export function toDirectContributionLikeValue(rawValue: unknown, userId?: number | null): DirectContributionLikeValue {
   if (isDirectContributionLikeValue(rawValue)) {
     return rawValue;
   }
@@ -298,7 +289,7 @@ function createLikeValue(rawValue: unknown, userId?: number | null): DirectContr
   };
 }
 export function incrementDirectContributionLikeValue(currentValue: unknown, userId?: number | null, now = new Date()): DirectContributionLikeValue {
-  const likeValue = createLikeValue(currentValue, userId);
+  const likeValue = toDirectContributionLikeValue(currentValue, userId);
   const currentDate = [
     now.getFullYear(),
     String(now.getMonth() + 1).padStart(2, '0'),
@@ -348,16 +339,16 @@ function toDatetimeLocalInputValue(rawValue: unknown): string {
 }
 function getInitialFieldValue(field: DirectContributionFieldDefinition, rawValue: unknown, userId?: number | null): DirectContributionFieldValue {
   if (field.kind === 'document') {
-    return createDocumentValue(rawValue);
+    return toDirectContributionDocumentValue(rawValue);
   }
   if (field.kind === 'like') {
-    return createLikeValue(rawValue, userId);
+    return toDirectContributionLikeValue(rawValue, userId);
   }
   if (field.kind === 'json') {
     return toJsonEditorValue(rawValue);
   }
   if (field.kind === 'multiselect') {
-    return toMultiselectValue(rawValue);
+    return toStringArrayFieldValue(rawValue);
   }
   if (field.kind === 'select' && isBooleanLegacyType(field.legacyType)) {
     return toBooleanSelectValue(rawValue);
@@ -365,7 +356,7 @@ function getInitialFieldValue(field: DirectContributionFieldDefinition, rawValue
   if (field.kind === 'datetime') {
     return toDatetimeLocalInputValue(rawValue);
   }
-  return stringifyValue(rawValue);
+  return toStringFieldValue(rawValue);
 }
 
 /** Builds the UI field model from collaborative table metadata. */
@@ -676,7 +667,7 @@ function validateMultiselectValue(field: DirectContributionFieldDefinition, rawV
   };
 }
 function validateDocumentValue(field: DirectContributionFieldDefinition, rawValue: DirectContributionFieldValue, context: DirectContributionFieldValidationContext): DirectContributionFieldValidationResult {
-  const value = createDocumentValue(rawValue);
+  const value = toDirectContributionDocumentValue(rawValue);
   const hasValue = (!value.removed && value.file !== null) || (!value.removed && value.documentId !== null);
   if (!hasValue) {
     return {
@@ -689,7 +680,7 @@ function validateDocumentValue(field: DirectContributionFieldDefinition, rawValu
   };
 }
 function validateLikeValue(field: DirectContributionFieldDefinition, rawValue: DirectContributionFieldValue, context: DirectContributionFieldValidationContext): DirectContributionFieldValidationResult {
-  const value = createLikeValue(rawValue);
+  const value = toDirectContributionLikeValue(rawValue);
   if (value.cnt <= 0) {
     return getEmptyValueResult(field, context.t);
   }

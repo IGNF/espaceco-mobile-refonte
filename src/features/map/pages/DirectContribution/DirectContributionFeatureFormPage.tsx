@@ -10,15 +10,16 @@ import {
   getDirectContributionFieldDefinitions,
   getDirectContributionInitialValues,
   incrementDirectContributionLikeValue,
-  isDirectContributionDocumentValue,
-  isDirectContributionLikeValue,
   setDirectContributionDocumentFile,
   type DirectContributionFieldDefinition,
   type DirectContributionFieldValue,
+  toDirectContributionDocumentValue,
+  toDirectContributionLikeValue,
   validateAndNormalizeDirectContributionFieldValue,
 } from '@/domain/community/directContributionForm';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { Button } from '@/shared/ui/Button';
+import { toStringArrayFieldValue, toStringFieldValue } from '@/shared/utils/coercion';
 import { joinCSSClassNames } from '@/shared/utils/join';
 
 import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
@@ -46,6 +47,7 @@ interface DirectContributionFeatureFormPageProps {
   onCancel: () => void;
 }
 
+/** Maps legacy collaborative field kinds to the closest HTML input type. */
 function getInputType(field: DirectContributionFieldDefinition): string {
   switch (field.kind) {
     case 'number':
@@ -109,6 +111,8 @@ function DirectContributionFeatureFormContent({
     const normalizedAttributes: Record<string, unknown> = {};
     setSubmitError(null);
 
+    // The form keeps display-friendly values. Normalize them once here before
+    // updating the collaborative feature, so field components stay simple.
     for (const field of fields) {
       if (field.disabled) {
         continue;
@@ -157,7 +161,7 @@ function DirectContributionFeatureFormContent({
             styles.select,
             error && inputs.inputError
           )}
-          value={typeof value === 'string' ? value : ''}
+          value={toStringFieldValue(value)}
           onChange={(event) => handleValueChange(field.name, event.target.value)}
           disabled={disabled}
         >
@@ -185,7 +189,7 @@ function DirectContributionFeatureFormContent({
             styles.multiselect,
             error && inputs.inputError
           )}
-          value={Array.isArray(value) ? value : []}
+          value={toStringArrayFieldValue(value)}
           onChange={(event) => {
             handleValueChange(
               field.name,
@@ -204,9 +208,7 @@ function DirectContributionFeatureFormContent({
     }
 
     if (field.kind === 'document') {
-      const documentValue = isDirectContributionDocumentValue(value)
-        ? value
-        : setDirectContributionDocumentFile(null, null);
+      const documentValue = toDirectContributionDocumentValue(value);
       const statusText = documentValue.file
         ? t('layers.directContribution.form.document.selected', { value: documentValue.file.name })
         : documentValue.documentId && !documentValue.removed
@@ -252,9 +254,7 @@ function DirectContributionFeatureFormContent({
     }
 
     if (field.kind === 'like') {
-      const likeValue = isDirectContributionLikeValue(value)
-        ? value
-        : { kind: 'like' as const, cnt: 0, userid: userId, validDate: null };
+      const likeValue = toDirectContributionLikeValue(value, userId);
 
       return (
         <div className={styles.likeField}>
@@ -294,7 +294,7 @@ function DirectContributionFeatureFormContent({
             styles.textarea,
             error && inputs.inputError
           )}
-          value={typeof value === 'string' ? value : ''}
+          value={toStringFieldValue(value)}
           onChange={(event) => handleValueChange(field.name, event.target.value)}
           disabled={disabled}
           placeholder={field.placeholder ?? t('layers.directContribution.form.json.placeholder')}
@@ -311,7 +311,7 @@ function DirectContributionFeatureFormContent({
           styles.input,
           error && inputs.inputError
         )}
-        value={typeof value === 'string' ? value : ''}
+        value={toStringFieldValue(value)}
         onChange={(event) => handleValueChange(field.name, event.target.value)}
         disabled={disabled}
         placeholder={field.placeholder}
@@ -413,6 +413,7 @@ function DirectContributionFeatureFormContent({
             onClick={() => {
               void handleSave();
             }}
+            fullWidth
             loading={isSaving}
             disabled={isSaving}
           >
@@ -424,6 +425,7 @@ function DirectContributionFeatureFormContent({
             variant="outline"
             className={styles.actionButton}
             onClick={onCancel}
+            fullWidth
             disabled={isSaving}
           >
             {t('layers.directContribution.form.actions.cancel')}
@@ -449,6 +451,8 @@ export function DirectContributionFeatureFormPage({
   const featureKey = feature.getId() ?? getUid(feature);
 
   return (
+    // Remount the inner form when the edited feature changes so local form
+    // state is rebuilt from the new feature attributes.
     <DirectContributionFeatureFormContent
       key={`${mode}-${String(featureKey)}`}
       isOpen={isOpen}

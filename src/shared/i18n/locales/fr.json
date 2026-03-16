@@ -270,6 +270,34 @@
         "close": "Fermer",
         "chooseOption": "Choisissez une valeur",
         "requiredField": "Ce champ est obligatoire.",
+        "saveError": "Impossible d'enregistrer les attributs",
+        "document": {
+          "current": "Document actuel : {{value}}",
+          "selected": "Document sélectionné : {{value}}",
+          "empty": "Aucun document sélectionné",
+          "remove": "Supprimer le document"
+        },
+        "like": {
+          "action": "Ajouter un j'aime",
+          "count": "{{count}} j'aime"
+        },
+        "json": {
+          "placeholder": "Saisissez une valeur JSON valide"
+        },
+        "validation": {
+          "mandatory": "La valeur est obligatoire",
+          "min": "La valeur ne doit pas être inférieure à {{value}}",
+          "max": "La valeur ne doit pas être supérieure à {{value}}",
+          "minLength": "Le texte ne doit pas faire moins de {{value}} caractères",
+          "maxLength": "Le texte ne doit pas faire plus de {{value}} caractères",
+          "invalidUrl": "La valeur n'est pas une URL valide",
+          "invalidRegex": "La valeur ne correspond pas à l'expression régulière {{value}}",
+          "unexpectedType": "La valeur est d'un type inattendu",
+          "invalidDate": "Le format de la date est invalide",
+          "invalidDouble": "Le format du nombre est invalide",
+          "invalidNumber": "Le format de la valeur numérique est invalide",
+          "invalidJson": "La valeur JSON est invalide"
+        },
         "actions": {
           "save": "Enregistrer",
           "cancel": "Annuler"

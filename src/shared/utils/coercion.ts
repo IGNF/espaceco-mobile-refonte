@@ -1,4 +1,5 @@
-export type RawObject = Record<string, unknown>
+export type RawObject = Record<string, unknown>;
+export type FormFieldValue<TExtra = never> = string | string[] | TExtra;
 
 export function toRawObject(value: unknown): RawObject | null {
 	if (value && typeof value === 'object') {
@@ -40,4 +41,32 @@ export function toBoolean(value: unknown): boolean | undefined {
 
 export function toStringValue(value: unknown): string | undefined {
 	return typeof value === 'string' ? value : undefined;
+}
+
+export function toStringFieldValue(value: unknown): string {
+	if (typeof value === 'string') {
+		return value;
+	}
+
+	if (typeof value === 'number' || typeof value === 'boolean') {
+		return String(value);
+	}
+
+	return '';
+}
+
+export function toStringArrayFieldValue(value: unknown): string[] {
+	if (Array.isArray(value)) {
+		return value.map((item) => String(item));
+	}
+
+	if (
+		typeof value === 'string' ||
+		typeof value === 'number' ||
+		typeof value === 'boolean'
+	) {
+		return [String(value)];
+	}
+
+	return [];
 }
