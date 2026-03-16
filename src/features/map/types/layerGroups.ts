@@ -4,10 +4,12 @@ export interface LayerDirectContributionState {
   editable: boolean;
   locked: boolean;
   pendingChangesCount: number;
+  isSubmitting: boolean;
 }
 
 export interface LayerGroupDirectContributionState {
   pendingChangesCount: number;
+  isSubmitting: boolean;
 }
 
 export interface LayerGroupItem {

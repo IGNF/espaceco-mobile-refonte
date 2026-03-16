@@ -29,12 +29,14 @@ interface UseLayerGroupsParams {
   signalementLayerOrder: SignalementLayerKey[];
   pendingChangesCountByLayerKey?: Record<string, number>;
   lockedByLayerKey?: Record<string, boolean>;
+  submittingByLayerKey?: Record<string, boolean>;
 }
 
 function mapLayersToGroupItemsWithDirectContribution(
   layers: CommunityLayer[],
   pendingChangesCountByLayerKey: Record<string, number>,
-  lockedByLayerKey: Record<string, boolean>
+  lockedByLayerKey: Record<string, boolean>,
+  submittingByLayerKey: Record<string, boolean>
 ): LayerGroupItem[] {
   return layers.map((layer) => {
     const item = mapLayerToGroupItem(layer);
@@ -51,9 +53,10 @@ function mapLayersToGroupItemsWithDirectContribution(
       directContribution: getCommunityLayerDirectContributionState(layer, {
         pendingChangesCount,
         locked: layerKey ? lockedByLayerKey[layerKey] === true : false,
+        isSubmitting: layerKey ? submittingByLayerKey[layerKey] === true : false,
       }),
-    }
-  })
+    };
+  });
 }
 
 export function useLayerGroups({
@@ -65,6 +68,7 @@ export function useLayerGroups({
   signalementLayerOrder,
   pendingChangesCountByLayerKey = {},
   lockedByLayerKey = {},
+  submittingByLayerKey = {},
 }: UseLayerGroupsParams) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -113,7 +117,8 @@ export function useLayerGroups({
         items: mapLayersToGroupItemsWithDirectContribution(
           guichetLayers,
           pendingChangesCountByLayerKey,
-          lockedByLayerKey
+          lockedByLayerKey,
+          submittingByLayerKey
         ),
       },
       {
@@ -122,7 +127,8 @@ export function useLayerGroups({
         items: mapLayersToGroupItemsWithDirectContribution(
           mesCartesLayers,
           pendingChangesCountByLayerKey,
-          lockedByLayerKey
+          lockedByLayerKey,
+          submittingByLayerKey
         ),
       },
       {
@@ -131,7 +137,8 @@ export function useLayerGroups({
         items: mapLayersToGroupItemsWithDirectContribution(
           geoportailLayers,
           pendingChangesCountByLayerKey,
-          lockedByLayerKey
+          lockedByLayerKey,
+          submittingByLayerKey
         ),
       },
     ];
@@ -141,9 +148,10 @@ export function useLayerGroups({
     layers,
     lockedByLayerKey,
     pendingChangesCountByLayerKey,
+    signalementLayerOpacity,
     signalementLayerVisibility,
     signalementLayerOrder,
-    signalementLayerOpacity,
+    submittingByLayerKey,
     t,
     vectorLayers,
   ]);

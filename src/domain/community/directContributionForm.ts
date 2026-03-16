@@ -32,10 +32,17 @@ type DirectContributionTableColumn = Omit<TableColumn, 'type'> & {
   jsonSchema?: Record<string, unknown>;
 };
 type DirectContributionFieldKind = 'text' | 'number' | 'date' | 'datetime' | 'month' | 'year' | 'select' | 'multiselect' | 'document' | 'like' | 'json';
+
+export interface DirectContributionDocumentDraftFile {
+  name: string;
+  mimeType?: string | null;
+  contentBase64: string;
+}
+
 export interface DirectContributionDocumentValue {
   kind: 'document';
   documentId: string | null;
-  file: File | null;
+  file: File | DirectContributionDocumentDraftFile | null;
   removed: boolean;
 }
 export interface DirectContributionLikeValue {

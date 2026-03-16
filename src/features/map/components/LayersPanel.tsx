@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
+import { Loading } from '@/shared/ui/Loading/Loading';
 import styles from './LayersPanel.module.css';
 
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
@@ -84,13 +85,17 @@ export function LayersPanel({
 						<p className={styles.empty}>{t('layers.empty')}</p>
 					) : (
 						<ul className={styles.groupList}>
-							{groups.map((group) => (
-								<li key={group.id} className={styles.groupItem}>
+							{groups.map((group) => {
+								const isSubmittingDirectContribution =
+									group.directContribution?.isSubmitting === true;
+
+								return (
+									<li key={group.id} className={styles.groupItem}>
 									<button
 										type='button'
 										className={styles.groupVisibilityButton}
 										onClick={() => onToggleGroupVisibility(group.id)}
-										disabled={!group.canToggle}
+										disabled={!group.canToggle || isSubmittingDirectContribution}
 										aria-label={
 											group.visible
 												? t('layers.groups.hideGroup')
@@ -107,6 +112,7 @@ export function LayersPanel({
 										type='button'
 										className={styles.groupButton}
 										onClick={() => onOpenGroup(group.id)}
+										disabled={isSubmittingDirectContribution}
 										aria-label={group.title}
 									>
 										<span className={styles.groupTitle}>{group.title}</span>
@@ -122,11 +128,16 @@ export function LayersPanel({
 											onClick={() => onSendGroupDirectContributions?.(group.id)}
 											disabled={
 												!onSendGroupDirectContributions ||
-												group.directContribution.pendingChangesCount < 1
+												group.directContribution.pendingChangesCount < 1 ||
+												isSubmittingDirectContribution
 											}
 											aria-label={`${sendDirectContributionsLabel} ${group.title}`}
 										>
-											<IconSend className={styles.groupActionIcon} />
+											{isSubmittingDirectContribution ? (
+												<Loading size='small' className={styles.groupActionLoading} />
+											) : (
+												<IconSend className={styles.groupActionIcon} />
+											)}
 											{group.directContribution.pendingChangesCount > 0 && (
 												<span className={styles.groupActionBadge}>
 													{group.directContribution.pendingChangesCount}
@@ -134,8 +145,9 @@ export function LayersPanel({
 											)}
 										</button>
 									)}
-								</li>
-							))}
+									</li>
+								);
+							})}
 						</ul>
 					)}
 				</div>

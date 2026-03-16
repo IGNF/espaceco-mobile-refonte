@@ -71,6 +71,7 @@ export function HomePage() {
 	);
 	const {
 		pendingChangesCountByLayerKey,
+		submittingByLayerKey,
 		sendLayerDirectContributions,
 		resetLayerDirectContributions,
 	} = useDirectContributionLayers({
@@ -257,6 +258,7 @@ export function HomePage() {
 				signalementLayerOpacity={signalementLayerOpacity}
 				signalementLayerOrder={signalementLayerOrder}
 				pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
+				submittingByLayerKey={submittingByLayerKey}
 				isLoading={isLayersLoading}
 				onSetLayerVisibility={setLayerVisibility}
 				onSetLayerOpacity={setLayerOpacity}

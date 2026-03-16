@@ -86,6 +86,7 @@ export function mapLayerGroupsToSummaries(
     let hasVisibleItem = false;
     let hasDirectContributionItems = false;
     let pendingDirectContributionCount = 0;
+    let isSubmittingDirectContribution = false;
 
     for (const item of group.items) {
       if (item.visible ?? true) {
@@ -104,6 +105,8 @@ export function mapLayerGroupsToSummaries(
       if (item.directContribution) {
         hasDirectContributionItems = true;
         pendingDirectContributionCount += item.directContribution.pendingChangesCount;
+        isSubmittingDirectContribution =
+          isSubmittingDirectContribution || item.directContribution.isSubmitting;
       }
     }
 
@@ -112,6 +115,7 @@ export function mapLayerGroupsToSummaries(
       hasDirectContributionItems
         ? {
             pendingChangesCount: pendingDirectContributionCount,
+            isSubmitting: isSubmittingDirectContribution,
           }
         : undefined;
 

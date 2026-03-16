@@ -17,6 +17,7 @@ interface UseDirectContributionLayersParams {
 
 interface UseDirectContributionLayersResult {
   pendingChangesCountByLayerKey: Record<string, number>;
+  submittingByLayerKey: Record<string, boolean>;
   sendLayerDirectContributions: (layerKey: string) => Promise<void>;
   resetLayerDirectContributions: (layerKey: string) => Promise<void>;
 }
@@ -32,6 +33,8 @@ export function useDirectContributionLayers({
   const { t } = useTranslation();
   const [pendingChangesCountByLayerKey, setPendingChangesCountByLayerKey] =
     useState<Record<string, number>>({});
+  const [submittingByLayerKey, setSubmittingByLayerKey] =
+    useState<Record<string, boolean>>({});
 
   const vectorLayerKeys = useMemo(
     () => vectorLayers.map((layer) => getCommunityLayerKey(layer)),
@@ -85,9 +88,14 @@ export function useDirectContributionLayers({
    * Sends the current layer draft to the collaborative backend, then refreshes the local badge state
    */
   const sendLayerDirectContributions = useCallback(async (layerKey: string) => {
-    if (!layerService) {
+    if (!layerService || submittingByLayerKey[layerKey] === true) {
       return;
     }
+
+    setSubmittingByLayerKey((current) => ({
+      ...current,
+      [layerKey]: true,
+    }));
 
     try {
       await layerService.submitLayerChanges(layerKey);
@@ -104,15 +112,20 @@ export function useDirectContributionLayers({
         position: 'top',
       });
     } finally {
+      setSubmittingByLayerKey((current) => {
+        const next = { ...current };
+        delete next[layerKey];
+        return next;
+      });
       refreshPendingChangesCounts();
     }
-  }, [layerService, refreshPendingChangesCounts, t]);
+  }, [layerService, refreshPendingChangesCounts, submittingByLayerKey, t]);
 
   /**
    * Discards the current layer draft from the collaborative source
    */
   const resetLayerDirectContributions = useCallback(async (layerKey: string) => {
-    if (!layerService) {
+    if (!layerService || submittingByLayerKey[layerKey] === true) {
       return;
     }
 
@@ -133,10 +146,11 @@ export function useDirectContributionLayers({
     } finally {
       refreshPendingChangesCounts();
     }
-  }, [layerService, refreshPendingChangesCounts, t]);
+  }, [layerService, refreshPendingChangesCounts, submittingByLayerKey, t]);
 
   return {
     pendingChangesCountByLayerKey,
+    submittingByLayerKey,
     sendLayerDirectContributions,
     resetLayerDirectContributions,
   };

@@ -21,6 +21,7 @@ export interface LayersPanelFlowProps {
   signalementLayerOrder: SignalementLayerKey[];
   pendingChangesCountByLayerKey?: Record<string, number>;
   lockedByLayerKey?: Record<string, boolean>;
+  submittingByLayerKey?: Record<string, boolean>;
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
@@ -43,6 +44,7 @@ export function LayersPanelFlow({
   signalementLayerOrder,
   pendingChangesCountByLayerKey,
   lockedByLayerKey,
+  submittingByLayerKey,
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
@@ -62,6 +64,7 @@ export function LayersPanelFlow({
     signalementLayerOrder,
     pendingChangesCountByLayerKey,
     lockedByLayerKey,
+    submittingByLayerKey,
   });
 
   const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
@@ -125,6 +128,13 @@ export function LayersPanelFlow({
 
     const group = layerGroups.find((candidate) => candidate.id === groupId)
     if (!group) {
+      return
+    }
+
+    const isSubmittingDirectContribution = group.items.some(
+      (item) => item.directContribution?.isSubmitting === true
+    )
+    if (isSubmittingDirectContribution) {
       return
     }
 

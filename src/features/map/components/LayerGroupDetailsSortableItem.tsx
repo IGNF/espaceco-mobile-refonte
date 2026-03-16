@@ -1,5 +1,6 @@
 import { useSortable } from '@dnd-kit/react/sortable';
 import { joinCSSClassNames } from '@/shared/utils/join';
+import { Loading } from '@/shared/ui/Loading/Loading';
 import type {
   LayerGroupId,
   LayerGroupItem,
@@ -82,16 +83,19 @@ export function LayerGroupDetailsSortableItem({
     .filter(Boolean)
     .join(' ');
   const directContribution = item.directContribution;
+  const isSubmittingDirectContribution = directContribution?.isSubmitting === true;
   const canEditDirectContribution = Boolean(
     directContribution &&
       directContribution.editable &&
       !directContribution.locked &&
+      !directContribution.isSubmitting &&
       onEditLayer
   );
   const canSendDirectContribution = Boolean(
     directContribution &&
       directContribution.editable &&
       !directContribution.locked &&
+      !directContribution.isSubmitting &&
       directContribution.pendingChangesCount > 0 &&
       onSendLayerChanges
   );
@@ -99,14 +103,17 @@ export function LayerGroupDetailsSortableItem({
     directContribution &&
       directContribution.editable &&
       !directContribution.locked &&
+      !directContribution.isSubmitting &&
       directContribution.pendingChangesCount > 0 &&
       onResetLayerChanges
   );
   const canToggleDirectContributionLock = Boolean(
     directContribution &&
       directContribution.editable &&
+      !directContribution.isSubmitting &&
       onToggleLayerLock
   );
+  const isInteractionDisabled = isSubmittingDirectContribution;
 
   return (
     <li ref={ref} className={layerItemClasses}>
@@ -115,7 +122,7 @@ export function LayerGroupDetailsSortableItem({
           type='button'
           className={styles.layerVisibilityButton}
           onClick={onToggleVisibility}
-          disabled={!item.layerKey}
+          disabled={!item.layerKey || isInteractionDisabled}
           aria-label={visible ? hideLayerLabel : showLayerLabel}
         >
           {visible ? (
@@ -146,7 +153,11 @@ export function LayerGroupDetailsSortableItem({
               disabled={!canSendDirectContribution}
               aria-label={sendLayerChangesLabel}
             >
-              <IconSend className={styles.layerActionIcon} />
+              {isSubmittingDirectContribution ? (
+                <Loading size='small' className={styles.layerActionLoading} />
+              ) : (
+                <IconSend className={styles.layerActionIcon} />
+              )}
               {directContribution.pendingChangesCount > 0 && (
                 <span className={styles.layerActionBadge}>
                   {directContribution.pendingChangesCount}
@@ -184,6 +195,7 @@ export function LayerGroupDetailsSortableItem({
           className={styles.layerActionButton}
           onClick={onShowInfo}
           aria-label={layerInfoLabel}
+          disabled={isInteractionDisabled}
         >
           <IconInfo className={styles.layerActionIcon} />
         </button>
@@ -193,7 +205,7 @@ export function LayerGroupDetailsSortableItem({
           className={styles.layerDragHandle}
           onContextMenu={(event) => event.preventDefault()}
           aria-label={reorderLayerLabel}
-          disabled={!canReorder}
+          disabled={!canReorder || isInteractionDisabled}
         >
           <IconDragAndDrop className={styles.layerDragHandleIcon} />
         </button>
@@ -203,7 +215,7 @@ export function LayerGroupDetailsSortableItem({
         min={0}
         max={1}
         step={0.01}
-        disabled={!item.layerKey}
+        disabled={!item.layerKey || isInteractionDisabled}
         className={styles.layerSlider}
         ariaLabel={layerOpacityLabel}
         onChange={onSetOpacity}

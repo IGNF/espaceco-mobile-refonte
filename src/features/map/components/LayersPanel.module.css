@@ -126,6 +126,11 @@
 	cursor: pointer;
 }
 
+.groupButton:disabled {
+	opacity: 0.45;
+	cursor: default;
+}
+
 .groupTitle {
 	font-size: 1rem;
 	font-weight: 500;
@@ -179,6 +184,11 @@
 	width: 18px;
 	height: 18px;
 	color: var(--color-medium);
+}
+
+.groupActionLoading {
+	padding: 0;
+	gap: 0;
 }
 
 .groupActionBadge {

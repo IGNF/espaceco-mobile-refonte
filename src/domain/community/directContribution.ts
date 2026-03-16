@@ -4,11 +4,13 @@ export interface CommunityLayerDirectContributionState {
   editable: boolean
   locked: boolean
   pendingChangesCount: number
+  isSubmitting: boolean
 }
 
 export interface CommunityLayerDirectContributionOptions {
   pendingChangesCount: number
   locked?: boolean
+  isSubmitting?: boolean
 }
 
 interface DirectContributionLayerShape {
@@ -61,5 +63,6 @@ export function getCommunityLayerDirectContributionState(
     // The pending count is injected by the caller; this helper does not inspect
     // sources or storage to derive it
     pendingChangesCount: options.pendingChangesCount,
+    isSubmitting: options.isSubmitting === true,
   }
 }

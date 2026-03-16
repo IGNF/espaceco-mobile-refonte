@@ -89,6 +89,11 @@
 	color: var(--color-medium);
 }
 
+.layerActionLoading {
+	padding: 0;
+	gap: 0;
+}
+
 .layerActionBadge {
 	position: absolute;
 	top: -0.25rem;

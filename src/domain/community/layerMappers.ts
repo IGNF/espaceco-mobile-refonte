@@ -18,6 +18,7 @@ type TableColumnSelectValues = string[] | Record<string, string | number | boole
 function getNormalizedTableBase(raw: Record<string, unknown>): Record<string, unknown> {
 	const normalizedRaw = { ...raw };
 
+	delete normalizedRaw.id_name;
 	delete normalizedRaw.database_id;
 	delete normalizedRaw.database_name;
 	delete normalizedRaw.table_name;
@@ -296,6 +297,7 @@ export function mapApiTable(apiTable: unknown): Table {
 		id: toNumber(raw.id) ?? 0,
 		database: databaseName ?? (databaseId !== undefined ? String(databaseId) : ''),
 		databaseId: databaseId ?? 0,
+		idName: toStringValue(raw.idName ?? raw.id_name) ?? 'id',
 		name: toStringValue(raw.name ?? raw.table_name) ?? '',
 		title: toStringValue(raw.title ?? raw.name ?? raw.table_name) ?? '',
 		wfs: toStringValue(raw.wfs ?? raw.wfs_url) ?? '',
