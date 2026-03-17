@@ -1,0 +1,37 @@
+.objectChoiceList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.objectChoiceButton {
+  width: 100%;
+  border: 1.5px solid var(--color-light-shade);
+  border-radius: 10px;
+  background: var(--color-dark-contrast);
+  padding: 10px 12px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.objectChoiceButton:hover,
+.objectChoiceButton:focus-visible {
+  border-color: var(--color-primary);
+  background: var(--color-light);
+}
+
+.objectChoiceLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.objectChoiceSecondaryLabel {
+  font-size: 12px;
+  color: var(--color-medium);
+}

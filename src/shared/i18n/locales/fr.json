@@ -261,6 +261,15 @@
         "undo": "Annuler la dernière action",
         "close": "Quitter l'édition"
       },
+      "objectChoice": {
+        "title": "Choisir un objet",
+        "subtitle_one": "{{count}} objet est sous ce point",
+        "subtitle_other": "{{count}} objets sont sous ce point",
+        "defaultObjectName": "Objet sans nom",
+        "actions": {
+          "cancel": "Annuler"
+        }
+      },
       "form": {
         "headerTitleCreate": "Création d'un objet",
         "headerTitleEdit": "Modification d'un objet",

@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SketchManager, type CommunityLayer, type InteractionMode, type Table } from '@ign/mobile-core';
+import {
+  SketchManager,
+  type CommunityLayer,
+  type InteractionMode,
+  type Table,
+} from '@ign/mobile-core';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type Draw from 'ol/interaction/Draw';
+import type Select from 'ol/interaction/Select';
 import type OlMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +20,8 @@ import {
 } from '@/features/map/constants/directContributionSession.constants';
 import { serializeDirectContributionDocumentAttributes } from '@/infra/map/directContribution/directContributionDocuments';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 export type DirectContributionFeatureFormMode = 'create' | 'edit';
@@ -38,12 +46,16 @@ export interface UseDirectContributionSessionReturn {
   toolbarItems: MapToolbarItem[];
   toolbarStatusText?: string;
   featureFormState: DirectContributionFeatureFormState | null;
+  featureCandidates: DirectContributionFeatureCandidate[];
+  isFeatureChoiceOpen: boolean;
   startSession: (layerKey: string) => void;
   closeSession: () => void;
   triggerToolbarAction: (toolId: string) => void;
   saveFeatureAttributes: (attributes: Record<string, unknown>) => Promise<void>;
   cancelFeatureForm: () => void;
   closeFeatureForm: () => void;
+  selectFeatureCandidate: (candidateKey: string) => void;
+  closeFeatureChoice: () => void;
 }
 
 interface DrawInteractionHandlers {
@@ -52,16 +64,26 @@ interface DrawInteractionHandlers {
 
 interface SketchManagerInternals {
   drawInteraction?: Draw | null;
+  selectInteraction?: Select | null;
 }
 
-function getGeometryTypeFromTable(layer: CommunityLayer | null): 'Point' | 'LineString' | 'Polygon' | null {
+const DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE = 0;
+// Keep the actual selection strict, but widen the object choice search a bit so overlapping nearby features are easier to disambiguate on touch screens.
+const DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE = 16;
+
+function getGeometryTypeFromTable(
+  layer: CommunityLayer | null
+): 'Point' | 'LineString' | 'Polygon' | null {
   const table = layer?.table;
   if (!table) {
     return null;
   }
 
-  const geometryColumn = table.columns[table.geometryName] as { type?: unknown } | undefined;
-  const rawType = typeof geometryColumn?.type === 'string' ? geometryColumn.type : '';
+  const geometryColumn = table.columns[table.geometryName] as
+    | { type?: unknown }
+    | undefined;
+  const rawType =
+    typeof geometryColumn?.type === 'string' ? geometryColumn.type : '';
 
   if (/point/i.test(rawType)) {
     return 'Point';
@@ -88,6 +110,10 @@ function isCompatibleDrawAction(
   return drawGeometryType === geometryType;
 }
 
+function isFeatureChoiceMode(mode: Exclude<InteractionMode, null>): boolean {
+  return mode === 'select' || mode === 'modify';
+}
+
 export function useDirectContributionSession({
   map,
   isMapReady,
@@ -97,11 +123,19 @@ export function useDirectContributionSession({
   const [activeLayerKey, setActiveLayerKey] = useState<string | null>(null);
   const [currentMode, setCurrentMode] =
     useState<Exclude<InteractionMode, null>>(DEFAULT_DIRECT_CONTRIBUTION_MODE);
-  const [selectedFeature, setSelectedFeature] = useState<Feature<Geometry> | null>(null);
-  const [featureFormState, setFeatureFormState] = useState<DirectContributionFeatureFormState | null>(null);
+  const [selectedFeature, setSelectedFeature] =
+    useState<Feature<Geometry> | null>(null);
+  const [featureFormState, setFeatureFormState] =
+    useState<DirectContributionFeatureFormState | null>(null);
+  const [featureCandidates, setFeatureCandidates] = useState<
+    DirectContributionFeatureCandidate[]
+  >([]);
+  const [isFeatureChoiceOpen, setIsFeatureChoiceOpen] = useState(false);
 
   const sketchManagerRef = useRef<SketchManager | null>(null);
-  const currentModeRef = useRef<Exclude<InteractionMode, null>>(DEFAULT_DIRECT_CONTRIBUTION_MODE);
+  const currentModeRef = useRef<Exclude<InteractionMode, null>>(
+    DEFAULT_DIRECT_CONTRIBUTION_MODE
+  );
   const drawInteractionRef = useRef<Draw | null>(null);
   const drawHandlersRef = useRef<DrawInteractionHandlers | null>(null);
   const createdFeaturesRef = useRef(new WeakSet<Feature<Geometry>>());
@@ -111,7 +145,10 @@ export function useDirectContributionSession({
       return null;
     }
 
-    return vectorLayers.find((layer) => getCommunityLayerKey(layer) === activeLayerKey) ?? null;
+    return (
+      vectorLayers.find((layer) => getCommunityLayerKey(layer) === activeLayerKey) ??
+      null
+    );
   }, [activeLayerKey, vectorLayers]);
 
   const activeGeometryType = useMemo(
@@ -159,21 +196,26 @@ export function useDirectContributionSession({
     setFeatureFormState(null);
   }, []);
 
-  const openFeatureForm = useCallback((
-    feature: Feature<Geometry>,
-    mode: DirectContributionFeatureFormMode
-  ) => {
-    if (!activeLayer?.table) {
-      return;
-    }
+  const closeFeatureChoice = useCallback(() => {
+    setFeatureCandidates([]);
+    setIsFeatureChoiceOpen(false);
+  }, []);
 
-    setFeatureFormState({
-      feature,
-      layer: activeLayer,
-      table: activeLayer.table,
-      mode,
-    });
-  }, [activeLayer]);
+  const openFeatureForm = useCallback(
+    (feature: Feature<Geometry>, mode: DirectContributionFeatureFormMode) => {
+      if (!activeLayer?.table) {
+        return;
+      }
+
+      setFeatureFormState({
+        feature,
+        layer: activeLayer,
+        table: activeLayer.table,
+        mode,
+      });
+    },
+    [activeLayer]
+  );
 
   const clearRemovedFeatureState = useCallback((feature: Feature<Geometry>) => {
     setFeatureFormState((currentFormState) =>
@@ -182,10 +224,32 @@ export function useDirectContributionSession({
     setSelectedFeature((currentSelected) =>
       currentSelected === feature ? null : currentSelected
     );
+    setFeatureCandidates((currentCandidates) =>
+      currentCandidates.filter((candidate) => candidate.feature !== feature)
+    );
+  }, []);
+
+  const syncSelectedFeature = useCallback((feature: Feature<Geometry> | null) => {
+    const sketchManager =
+      sketchManagerRef.current as unknown as SketchManagerInternals | null;
+    const selectedFeatures = sketchManager?.selectInteraction?.getFeatures();
+
+    if (selectedFeatures) {
+      selectedFeatures.clear();
+
+      if (feature) {
+        selectedFeatures.push(feature);
+      }
+    } else if (!feature) {
+      sketchManagerRef.current?.clearSelection();
+    }
+
+    setSelectedFeature(feature);
   }, []);
 
   const bindDrawInteractionListeners = useCallback(() => {
-    const sketchManager = sketchManagerRef.current as unknown as SketchManagerInternals | null;
+    const sketchManager =
+      sketchManagerRef.current as unknown as SketchManagerInternals | null;
     const drawInteraction = sketchManager?.drawInteraction ?? null;
 
     if (drawInteractionRef.current === drawInteraction) {
@@ -219,10 +283,16 @@ export function useDirectContributionSession({
     currentModeRef.current = DEFAULT_DIRECT_CONTRIBUTION_MODE;
     setSelectedFeature(null);
     setFeatureFormState(null);
-  }, [unbindDrawInteractionListeners]);
+    closeFeatureChoice();
+  }, [closeFeatureChoice, unbindDrawInteractionListeners]);
 
   useEffect(() => {
-    if (!activeLayerKey || !activeLayer || !activeCollabLayer || !activeCollabSource) {
+    if (
+      !activeLayerKey ||
+      !activeLayer ||
+      !activeCollabLayer ||
+      !activeCollabSource
+    ) {
       return;
     }
 
@@ -232,7 +302,7 @@ export function useDirectContributionSession({
       autoBindUI: false,
       layerFilter: (layer) => layer === activeCollabLayer,
       modifyInteractionScope: 'selection',
-      selectionHitTolerance: 10,
+      selectionHitTolerance: DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE,
       useSourceSelectionFallback: true,
       callbacks: {
         onModeChange: (nextMode) => {
@@ -245,7 +315,8 @@ export function useDirectContributionSession({
         },
         onFeatureAdded: (feature) => {
           createdFeaturesRef.current.add(feature);
-          setSelectedFeature(feature);
+          closeFeatureChoice();
+          syncSelectedFeature(feature);
           openFeatureForm(feature, 'create');
           window.requestAnimationFrame(() => {
             sketchManagerRef.current?.setMode(DEFAULT_DIRECT_CONTRIBUTION_MODE);
@@ -298,61 +369,115 @@ export function useDirectContributionSession({
     activeCollabSource,
     bindDrawInteractionListeners,
     clearRemovedFeatureState,
+    closeFeatureChoice,
     destroySession,
     map,
     openFeatureForm,
+    syncSelectedFeature,
   ]);
 
-  const startSession = useCallback((layerKey: string) => {
-    const collabLayer = layerService?.getCollabLayer(layerKey) ?? null;
-    const collabSource = layerService?.getCollabSource(layerKey) ?? null;
-
-    if (!collabLayer || !collabSource) {
+  useEffect(() => {
+    const activeTable = activeLayer?.table;
+    if (!map || !activeCollabLayer || !activeCollabSource || !activeTable) {
       return;
     }
 
-    setActiveLayerKey(layerKey);
-  }, [layerService]);
+    const handleMapSingleClick = (event: { pixel: number[] }) => {
+      if (!isFeatureChoiceMode(currentModeRef.current)) {
+        return;
+      }
+
+      const candidates = getDirectContributionFeatureCandidatesAtPixel({
+        map,
+        pixel: event.pixel,
+        layer: activeCollabLayer,
+        source: activeCollabSource,
+        table: activeTable,
+        hitTolerance: DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE,
+        fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
+      });
+
+      if (candidates.length <= 1) {
+        return;
+      }
+
+      sketchManagerRef.current?.clearSelection();
+      closeFeatureForm();
+      setFeatureCandidates(candidates);
+      setIsFeatureChoiceOpen(true);
+    };
+
+    map.on('singleclick', handleMapSingleClick);
+
+    return () => {
+      map.un('singleclick', handleMapSingleClick);
+    };
+  }, [activeCollabLayer, activeCollabSource, activeLayer, closeFeatureForm, map, t]);
+
+  const startSession = useCallback(
+    (layerKey: string) => {
+      const collabLayer = layerService?.getCollabLayer(layerKey) ?? null;
+      const collabSource = layerService?.getCollabSource(layerKey) ?? null;
+
+      if (!collabLayer || !collabSource) {
+        return;
+      }
+
+      setActiveLayerKey(layerKey);
+    },
+    [layerService]
+  );
 
   const closeSession = useCallback(() => {
     setActiveLayerKey(null);
     destroySession();
   }, [destroySession]);
 
-  const triggerToolbarAction = useCallback((toolId: string) => {
-    if (toolId === 'close') {
-      closeSession();
-      return;
-    }
+  const triggerToolbarAction = useCallback(
+    (toolId: string) => {
+      if (toolId === 'close') {
+        closeSession();
+        return;
+      }
 
-    const action = getDirectContributionToolActionById(toolId);
-    if (!action) {
-      return;
-    }
+      const action = getDirectContributionToolActionById(toolId);
+      if (!action) {
+        return;
+      }
 
-    sketchManagerRef.current?.triggerAction(action);
-    bindDrawInteractionListeners();
+      sketchManagerRef.current?.triggerAction(action);
+      bindDrawInteractionListeners();
 
-    if (action !== 'select' && action !== 'modify') {
-      closeFeatureForm();
-    }
-  }, [bindDrawInteractionListeners, closeFeatureForm, closeSession]);
+      if (action !== 'select') {
+        closeFeatureChoice();
+      }
 
-  const saveFeatureAttributes = useCallback(async (attributes: Record<string, unknown>) => {
-    const formState = featureFormState;
-    if (!formState) {
-      return;
-    }
+      if (action !== 'select' && action !== 'modify') {
+        closeFeatureForm();
+      }
+    },
+    [bindDrawInteractionListeners, closeFeatureChoice, closeFeatureForm, closeSession]
+  );
 
-    const normalizedAttributes = await serializeDirectContributionDocumentAttributes(attributes);
+  const saveFeatureAttributes = useCallback(
+    async (attributes: Record<string, unknown>) => {
+      const formState = featureFormState;
+      if (!formState) {
+        return;
+      }
 
-    for (const [name, value] of Object.entries(normalizedAttributes)) {
-      formState.feature.set(name, value);
-    }
+      const normalizedAttributes =
+        await serializeDirectContributionDocumentAttributes(attributes);
 
-    createdFeaturesRef.current.delete(formState.feature);
-    setFeatureFormState(null);
-  }, [featureFormState]);
+      for (const [name, value] of Object.entries(normalizedAttributes)) {
+        formState.feature.set(name, value);
+      }
+
+      createdFeaturesRef.current.delete(formState.feature);
+      setFeatureFormState(null);
+    },
+    [featureFormState]
+  );
 
   const cancelFeatureForm = useCallback(() => {
     const formState = featureFormState;
@@ -371,6 +496,27 @@ export function useDirectContributionSession({
     setFeatureFormState(null);
   }, [featureFormState, layerService]);
 
+  const selectFeatureCandidate = useCallback(
+    (candidateKey: string) => {
+      const candidate = featureCandidates.find(
+        (currentCandidate) => currentCandidate.key === candidateKey
+      );
+      if (!candidate) {
+        return;
+      }
+
+      closeFeatureChoice();
+      syncSelectedFeature(candidate.feature);
+
+      if (currentModeRef.current === 'select') {
+        const mode: DirectContributionFeatureFormMode =
+          createdFeaturesRef.current.has(candidate.feature) ? 'create' : 'edit';
+        openFeatureForm(candidate.feature, mode);
+      }
+    },
+    [closeFeatureChoice, featureCandidates, openFeatureForm, syncSelectedFeature]
+  );
+
   const toolbarItems = useMemo<MapToolbarItem[]>(() => {
     return DIRECT_CONTRIBUTION_TOOL_DEFINITIONS.map((definition) => ({
       id: definition.id,
@@ -378,8 +524,10 @@ export function useDirectContributionSession({
       label: t(definition.labelKey),
       active: definition.activeMode === currentMode,
       disabled:
-        !isCompatibleDrawAction(definition.drawGeometryType, activeGeometryType) ||
-        (definition.id === 'delete' && !selectedFeature),
+        !isCompatibleDrawAction(
+          definition.drawGeometryType,
+          activeGeometryType
+        ) || (definition.id === 'delete' && !selectedFeature),
     }));
   }, [activeGeometryType, currentMode, selectedFeature, t]);
 
@@ -388,9 +536,7 @@ export function useDirectContributionSession({
     : undefined;
 
   const isSessionActive = Boolean(
-    activeLayer &&
-    activeLayerKey &&
-    activeCollabLayer
+    activeLayer && activeLayerKey && activeCollabLayer
   );
 
   return {
@@ -400,11 +546,15 @@ export function useDirectContributionSession({
     toolbarItems,
     toolbarStatusText,
     featureFormState,
+    featureCandidates,
+    isFeatureChoiceOpen,
     startSession,
     closeSession,
     triggerToolbarAction,
     saveFeatureAttributes,
     cancelFeatureForm,
     closeFeatureForm,
+    selectFeatureCandidate,
+    closeFeatureChoice,
   };
 }

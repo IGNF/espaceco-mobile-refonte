@@ -21,6 +21,7 @@ import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContr
 import { useDirectContributionSession } from "@/features/map/hooks/useDirectContributionSession";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
+import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
 import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import styles from "./HomePage.module.css";
 
@@ -84,10 +85,14 @@ export function HomePage() {
 		toolbarItems: directContributionToolbarItems,
 		toolbarStatusText: directContributionToolbarStatusText,
 		featureFormState: directContributionFeatureFormState,
+		featureCandidates: directContributionFeatureCandidates,
+		isFeatureChoiceOpen: isDirectContributionFeatureChoiceOpen,
 		startSession: startDirectContributionSession,
 		triggerToolbarAction: triggerDirectContributionToolbarAction,
 		saveFeatureAttributes: saveDirectContributionFeatureAttributes,
 		cancelFeatureForm: cancelDirectContributionFeatureForm,
+		selectFeatureCandidate: selectDirectContributionFeatureCandidate,
+		closeFeatureChoice: closeDirectContributionFeatureChoice,
 	} = useDirectContributionSession({
 		map,
 		isMapReady,
@@ -288,6 +293,13 @@ export function HomePage() {
 				feature={directContributionFeatureFormState?.feature ?? null}
 				onSave={saveDirectContributionFeatureAttributes}
 				onCancel={cancelDirectContributionFeatureForm}
+			/>
+
+			<DirectContributionFeatureChoiceAlert
+				isOpen={isDirectContributionFeatureChoiceOpen}
+				candidates={directContributionFeatureCandidates}
+				onSelectCandidate={selectDirectContributionFeatureCandidate}
+				onClose={closeDirectContributionFeatureChoice}
 			/>
 
 			<OnboardingModal
