@@ -57,11 +57,9 @@ export function getCommunityLayerDirectContributionState(
 
   return {
     editable: hasEditionCapability,
-    // A layer is shown as locked either because it cannot be edited at all
-    // or because the user locally disabled edition for this layer
+    // A layer is shown as locked either because it cannot be edited at all or because the user locally disabled edition for this layer
     locked: !hasEditionCapability || options.locked === true,
-    // The pending count is injected by the caller; this helper does not inspect
-    // sources or storage to derive it
+    // The pending count is injected by the caller; this helper does not inspect sources or storage to derive it
     pendingChangesCount: options.pendingChangesCount,
     isSubmitting: options.isSubmitting === true,
   }

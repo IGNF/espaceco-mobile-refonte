@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { getUid } from 'ol/util';
 import type { Table } from '@ign/mobile-core';
 import type Feature from 'ol/Feature';
@@ -6,13 +6,17 @@ import type Geometry from 'ol/geom/Geometry';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
+  applyDirectContributionAsyncFieldEffects,
+  applyDirectContributionFieldEffects,
   clearDirectContributionDocumentValue,
   getDirectContributionFieldDefinitions,
   getDirectContributionInitialValues,
+  getDirectContributionResolvedFieldDefinitions,
   incrementDirectContributionLikeValue,
   setDirectContributionDocumentFile,
   type DirectContributionFieldDefinition,
   type DirectContributionFieldValue,
+  type DirectContributionResolvedFieldDefinition,
   toDirectContributionDocumentValue,
   toDirectContributionLikeValue,
   validateAndNormalizeDirectContributionFieldValue,
@@ -82,27 +86,48 @@ function DirectContributionFeatureFormContent({
   const [values, setValues] = useState<Record<string, DirectContributionFieldValue>>(() =>
     getDirectContributionInitialValues(table, feature, fields, userId)
   );
+  const resolvedFields = useMemo(
+    () => getDirectContributionResolvedFieldDefinitions(fields, values),
+    [fields, values]
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const asyncEffectsRequestIdRef = useRef(0);
 
   const headerTitle = mode === 'create'
     ? t('layers.directContribution.form.headerTitleCreate')
     : t('layers.directContribution.form.headerTitleEdit');
 
   const handleValueChange = (fieldName: string, nextValue: DirectContributionFieldValue) => {
-    setValues((current) => ({
-      ...current,
-      [fieldName]: nextValue,
-    }));
-    setErrors((current) => {
-      if (!(fieldName in current)) {
-        return current;
+    const nextValues = applyDirectContributionFieldEffects(
+      fields,
+      {
+        ...values,
+        [fieldName]: nextValue,
+      },
+      fieldName,
+      userId
+    );
+
+    setValues(nextValues);
+    setErrors({});
+
+    const requestId = ++asyncEffectsRequestIdRef.current;
+
+    // Some document-driven rules may need asynchronous metadata reads (for example EXIF date extraction on photos).
+    // Keep only the latest result so an older file read cannot overwrite a newer user change.
+    void applyDirectContributionAsyncFieldEffects(
+      fields,
+      nextValues,
+      fieldName,
+      userId
+    ).then((asyncValues) => {
+      if (requestId !== asyncEffectsRequestIdRef.current) {
+        return;
       }
 
-      const nextErrors = { ...current };
-      delete nextErrors[fieldName];
-      return nextErrors;
+      setValues(asyncValues);
     });
   };
 
@@ -111,9 +136,8 @@ function DirectContributionFeatureFormContent({
     const normalizedAttributes: Record<string, unknown> = {};
     setSubmitError(null);
 
-    // The form keeps display-friendly values. Normalize them once here before
-    // updating the collaborative feature, so field components stay simple.
-    for (const field of fields) {
+    // The form keeps display-friendly values. Normalize them once here before updating the collaborative feature, so field components stay simple.
+    for (const field of resolvedFields) {
       if (field.disabled) {
         continue;
       }
@@ -148,7 +172,10 @@ function DirectContributionFeatureFormContent({
     }
   };
 
-  const renderFieldControl = (field: DirectContributionFieldDefinition, error?: string) => {
+  const renderFieldControl = (
+    field: DirectContributionResolvedFieldDefinition,
+    error?: string
+  ) => {
     const value = values[field.name] ?? '';
     const disabled = field.disabled || isSaving;
 
@@ -372,7 +399,7 @@ function DirectContributionFeatureFormContent({
               await handleSave();
             }}
           >
-            {fields.map((field) => {
+            {resolvedFields.map((field) => {
               const error = errors[field.name];
 
               return (

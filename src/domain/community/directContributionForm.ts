@@ -7,9 +7,12 @@ import {
   toStringFieldValue,
   type FormFieldValue,
 } from '@/shared/utils/coercion';
+import { getExifOriginalDate } from '@/shared/utils/exif';
 
 type SelectValues = string[] | Record<string, string | number | boolean | null>;
 type TranslationFn = (key: string, options?: Record<string, unknown>) => string;
+
+type DirectContributionFieldConstraintType = 'mapping' | 'regex' | 'document' | string;
 
 type DirectContributionTableColumn = Omit<TableColumn, 'type'> & {
   type: string;
@@ -30,8 +33,18 @@ type DirectContributionTableColumn = Omit<TableColumn, 'type'> & {
   multiple?: boolean;
   mimeTypes?: string;
   jsonSchema?: Record<string, unknown>;
+  conditionField?: string;
+  constraint?: Record<string, unknown>;
+  jeuxAttributs?: Record<string, unknown>;
 };
 type DirectContributionFieldKind = 'text' | 'number' | 'date' | 'datetime' | 'month' | 'year' | 'select' | 'multiselect' | 'document' | 'like' | 'json';
+
+export interface DirectContributionFieldConstraint {
+  type: DirectContributionFieldConstraintType;
+  regex?: string;
+  mapping?: Record<string, string[]>;
+  value?: string;
+}
 
 export interface DirectContributionDocumentDraftFile {
   name: string;
@@ -78,6 +91,22 @@ export interface DirectContributionFieldDefinition {
   maxLength?: number;
   pattern?: string;
   jsonSchema?: Record<string, unknown>;
+  defaultValue?: unknown;
+  // Legacy dependent fields declare which other field drives their state.
+  // Example: a "subtype" field can depend on the current value of a "type" field.
+  conditionField?: string;
+  // The constraint explains how the dependency works for that field:
+  // - mapping: filter the allowed options from the controller value
+  // - regex: enable/disable the field depending on a pattern match
+  // - document: derive metadata fields from the selected file
+  constraint?: DirectContributionFieldConstraint;
+  // jeuxAttributs is a different mechanism: the current field does not depend on
+  // another one, it pushes preset values into other fields when its own value changes.
+  jeuxAttributs?: Record<string, string | number | boolean | null>;
+}
+export interface DirectContributionResolvedFieldDefinition extends DirectContributionFieldDefinition {
+  disabled: boolean;
+  options?: DirectContributionFieldOption[];
 }
 interface DirectContributionFieldValidationContext {
   t: TranslationFn;
@@ -135,6 +164,91 @@ function getColumnOptions(column: DirectContributionTableColumn): DirectContribu
     value: value == null ? '' : String(value),
   }));
 }
+
+function getConstraintMapping(
+  candidateMapping: unknown
+): Record<string, string[]> | undefined {
+  if (
+    !candidateMapping ||
+    typeof candidateMapping !== 'object' ||
+    Array.isArray(candidateMapping)
+  ) {
+    return undefined;
+  }
+
+  const normalizedMapping: Record<string, string[]> = {};
+  for (const [key, value] of Object.entries(candidateMapping)) {
+    // Legacy mapping rules accept either an array of allowed values or one single value.
+    if (Array.isArray(value)) {
+      normalizedMapping[key] = value.map((item) => String(item));
+      continue;
+    }
+
+    // A null entry means "no allowed value" for this controller key.
+    if (value == null) {
+      normalizedMapping[key] = [];
+      continue;
+    }
+
+    // Normalize the single-value shorthand to the same array shape as the rest.
+    normalizedMapping[key] = [String(value)];
+  }
+
+  return normalizedMapping;
+}
+
+function getColumnConstraint(
+  column: DirectContributionTableColumn
+): DirectContributionFieldConstraint | undefined {
+  const rawConstraint = column.constraint;
+  if (!rawConstraint || typeof rawConstraint !== 'object' || Array.isArray(rawConstraint)) {
+    return undefined;
+  }
+
+  const rawType = typeof rawConstraint?.type === 'string'
+    ? rawConstraint.type.trim().toLowerCase()
+    : '';
+
+  if (rawType.length === 0) {
+    return undefined;
+  }
+
+  // Keep one normalized constraint shape so the runtime form logic does not need to know how the API originally represented the rule.
+  return {
+    type: rawType,
+    regex: typeof rawConstraint.regex === 'string'
+      ? rawConstraint.regex
+      : undefined,
+    mapping: getConstraintMapping(rawConstraint.mapping),
+    value: typeof rawConstraint.value === 'string'
+      ? rawConstraint.value
+      : undefined,
+  };
+}
+
+function getColumnJeuxAttributs(
+  column: DirectContributionTableColumn
+): Record<string, string | number | boolean | null> | undefined {
+  const jeuxAttributs = column.jeuxAttributs;
+  if (!jeuxAttributs || typeof jeuxAttributs !== 'object' || Array.isArray(jeuxAttributs)) {
+    return undefined;
+  }
+
+  const normalizedConfig: Record<string, string | number | boolean | null> = {};
+  for (const [key, value] of Object.entries(jeuxAttributs)) {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      value === null
+    ) {
+      normalizedConfig[key] = value;
+    }
+  }
+
+  return Object.keys(normalizedConfig).length > 0 ? normalizedConfig : undefined;
+}
+
 function getColumnNullable(column: DirectContributionTableColumn): boolean {
   if (typeof column.nullable === 'boolean') {
     return column.nullable;
@@ -382,6 +496,7 @@ export function getDirectContributionFieldDefinitions(table: Table): DirectContr
       required: getColumnRequired(column),
       nullable: getColumnNullable(column),
       disabled: getColumnDisabled(column),
+      defaultValue: getColumnDefaultValue(column),
       placeholder: column.placeholder,
       description: column.description,
       options: kind === 'select' || kind === 'multiselect'
@@ -407,6 +522,11 @@ export function getDirectContributionFieldDefinitions(table: Table): DirectContr
       maxLength: column.maxLength,
       pattern: column.pattern,
       jsonSchema: column.jsonSchema,
+      conditionField: typeof column.conditionField === 'string'
+        ? column.conditionField
+        : undefined,
+      constraint: getColumnConstraint(column),
+      jeuxAttributs: getColumnJeuxAttributs(column),
     };
   });
 }
@@ -421,6 +541,478 @@ export function getDirectContributionInitialValues(table: Table, feature: Featur
   }
   return values;
 }
+
+function getControllerFieldValue(value: DirectContributionFieldValue | undefined): string {
+  if (Array.isArray(value)) {
+    return value.join(',');
+  }
+
+  return toStringFieldValue(value).trim();
+}
+
+function isRegexConstraintSatisfied(
+  value: string,
+  regex: string | undefined
+): boolean {
+  if (value.length === 0 || !regex) {
+    return false;
+  }
+
+  try {
+    return new RegExp(regex).test(value);
+  } catch {
+    return false;
+  }
+}
+
+function getFilteredOptionsFromMappingConstraint(
+  field: DirectContributionFieldDefinition,
+  values: Record<string, DirectContributionFieldValue>
+): DirectContributionFieldOption[] | null {
+  if (
+    field.constraint?.type !== 'mapping' ||
+    !field.conditionField ||
+    !field.options
+  ) {
+    return null;
+  }
+
+  const controllerValue = getControllerFieldValue(values[field.conditionField]);
+  if (controllerValue.length === 0) {
+    // No controller value means the dependent select should stay empty for now.
+    return [];
+  }
+
+  const allowedValues = field.constraint.mapping?.[controllerValue];
+  if (!allowedValues) {
+    // Missing mapping entry falls back to the field's original option list.
+    return null;
+  }
+
+  const allowedValueSet = new Set(allowedValues);
+  return field.options.filter((option) => allowedValueSet.has(option.value));
+}
+
+function isFieldDependencyDisabled(
+  field: DirectContributionFieldDefinition,
+  values: Record<string, DirectContributionFieldValue>
+): boolean {
+  if (!field.conditionField || !field.constraint) {
+    return false;
+  }
+
+  const controllerValue = getControllerFieldValue(values[field.conditionField]);
+
+  switch (field.constraint.type) {
+    // Mapping-based dependents are disabled until the controller has a value.
+    case 'mapping':
+      return controllerValue.length === 0;
+    // Regex-based dependents are enabled only when the controller matches.
+    case 'regex':
+      return !isRegexConstraintSatisfied(controllerValue, field.constraint.regex);
+    // Document-based dependents are filled automatically from the chosen file,
+    // so they are not manually editable by the user.
+    case 'document':
+      return true;
+    default:
+      return false;
+  }
+}
+
+function getResolvedSelectFallbackValue(
+  field: DirectContributionFieldDefinition,
+  allowedOptions: DirectContributionFieldOption[],
+  userId?: number | null
+): DirectContributionFieldValue {
+  const defaultValue = getInitialFieldValue(
+    field,
+    field.defaultValue ?? null,
+    userId
+  );
+  const allowedValueSet = new Set(allowedOptions.map((option) => option.value));
+
+  if (field.kind === 'multiselect') {
+    return toStringArrayFieldValue(defaultValue)
+      .filter((value) => allowedValueSet.has(value));
+  }
+
+  const normalizedDefaultValue = toStringFieldValue(defaultValue);
+  return allowedValueSet.has(normalizedDefaultValue) ? normalizedDefaultValue : '';
+}
+
+/**
+ * Document fields can point to a server id, a local file draft, or a removed state.
+ * Compare that richer shape so dependent fields are only recomputed on real changes.
+ */
+function areDocumentValuesEqual(
+  left: DirectContributionDocumentValue,
+  right: DirectContributionDocumentValue
+): boolean {
+  const leftFile = left.file;
+  const rightFile = right.file;
+  const leftFileSignature =
+    leftFile instanceof File
+      ? `${leftFile.name}:${leftFile.size}:${leftFile.type}:${leftFile.lastModified}`
+      : leftFile
+        ? `${leftFile.name}:${leftFile.mimeType ?? ''}:${leftFile.contentBase64.length}`
+        : null;
+  const rightFileSignature =
+    rightFile instanceof File
+      ? `${rightFile.name}:${rightFile.size}:${rightFile.type}:${rightFile.lastModified}`
+      : rightFile
+        ? `${rightFile.name}:${rightFile.mimeType ?? ''}:${rightFile.contentBase64.length}`
+        : null;
+
+  return (
+    left.documentId === right.documentId &&
+    left.removed === right.removed &&
+    leftFileSignature === rightFileSignature
+  );
+}
+
+function areLikeValuesEqual(
+  left: DirectContributionLikeValue,
+  right: DirectContributionLikeValue
+): boolean {
+  return (
+    left.cnt === right.cnt &&
+    left.userid === right.userid &&
+    left.validDate === right.validDate
+  );
+}
+
+function areFieldValuesEqual(
+  left: DirectContributionFieldValue | undefined,
+  right: DirectContributionFieldValue
+): boolean {
+  if (left === right) {
+    return true;
+  }
+
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length &&
+      left.every((value, index) => value === right[index])
+    );
+  }
+
+  if (isDirectContributionDocumentValue(left) && isDirectContributionDocumentValue(right)) {
+    return areDocumentValuesEqual(left, right);
+  }
+
+  if (isDirectContributionLikeValue(left) && isDirectContributionLikeValue(right)) {
+    return areLikeValuesEqual(left, right);
+  }
+
+  return false;
+}
+
+function normalizeDocumentDependentDateValue(
+  field: DirectContributionFieldDefinition,
+  date: Date
+): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  switch (field.kind) {
+    case 'datetime':
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    case 'year':
+      return String(year);
+    case 'month':
+      return `${year}-${month}`;
+    default:
+      return `${year}-${month}-${day}`;
+  }
+}
+
+function getDocumentConstraintRawValue(
+  field: DirectContributionFieldDefinition,
+  documentValue: DirectContributionDocumentValue
+): unknown {
+  const documentFile = documentValue.file;
+
+  if (!documentFile || !field.constraint?.value) {
+    return null;
+  }
+
+  switch (field.constraint.value) {
+    case 'nameFile()':
+      return documentFile.name;
+    case 'mimetypeFile()':
+      return documentFile instanceof File
+        ? documentFile.type
+        : (documentFile.mimeType ?? '');
+    case 'sizeFile()':
+      return documentFile instanceof File ? documentFile.size : null;
+    case 'dateFile()':
+      return documentFile instanceof File
+        ? normalizeDocumentDependentDateValue(
+          field,
+          new Date(documentFile.lastModified)
+        )
+        : null;
+    default:
+      return null;
+  }
+}
+
+async function getDocumentConstraintRawValueAsync(
+  field: DirectContributionFieldDefinition,
+  documentValue: DirectContributionDocumentValue
+): Promise<unknown> {
+  const documentFile = documentValue.file;
+
+  if (!documentFile || !field.constraint?.value) {
+    return null;
+  }
+
+  if (field.constraint.value !== 'dateFile()' || !(documentFile instanceof File)) {
+    return getDocumentConstraintRawValue(field, documentValue);
+  }
+
+  // Legacy tries to use the original capture date when it exists on a photo.
+  // Fall back to the browser file timestamp when EXIF metadata is unavailable.
+  const exifDate = await getExifOriginalDate(documentFile);
+  const resolvedDate = exifDate ?? new Date(documentFile.lastModified);
+
+  return normalizeDocumentDependentDateValue(field, resolvedDate);
+}
+
+/** Builds the runtime form state once current values are known. */
+export function getDirectContributionResolvedFieldDefinitions(
+  fields: DirectContributionFieldDefinition[],
+  values: Record<string, DirectContributionFieldValue>
+): DirectContributionResolvedFieldDefinition[] {
+  return fields.map((field) => {
+    const filteredOptions = getFilteredOptionsFromMappingConstraint(field, values);
+
+    return {
+      ...field,
+      disabled: field.disabled || isFieldDependencyDisabled(field, values),
+      options: filteredOptions ?? field.options,
+    };
+  });
+}
+
+function applyJeuxAttributsEffects(
+  field: DirectContributionFieldDefinition,
+  fieldsByName: Map<string, DirectContributionFieldDefinition>,
+  values: Record<string, DirectContributionFieldValue>,
+  userId: number | null | undefined,
+  pendingFieldNames: string[]
+): void {
+  if (!field.jeuxAttributs) {
+    return;
+  }
+
+  // jeux_attributs lets one field push preset values into other fields.
+  for (const [targetFieldName, rawValue] of Object.entries(field.jeuxAttributs)) {
+    const targetField = fieldsByName.get(targetFieldName);
+    if (!targetField) {
+      continue;
+    }
+
+    const nextValue = getInitialFieldValue(targetField, rawValue, userId);
+    if (areFieldValuesEqual(values[targetFieldName], nextValue)) {
+      continue;
+    }
+
+    values[targetFieldName] = nextValue;
+    pendingFieldNames.push(targetFieldName);
+  }
+}
+
+function applyDocumentDependentEffects(
+  field: DirectContributionFieldDefinition,
+  dependentFields: DirectContributionFieldDefinition[],
+  values: Record<string, DirectContributionFieldValue>,
+  userId: number | null | undefined,
+  pendingFieldNames: string[]
+): void {
+  if (field.kind !== 'document') {
+    return;
+  }
+
+  const documentValue = toDirectContributionDocumentValue(values[field.name]);
+
+  // Document constraints derive metadata fields such as filename, mime type or date.
+  for (const dependentField of dependentFields) {
+    if (dependentField.constraint?.type !== 'document') {
+      continue;
+    }
+
+    const rawValue = getDocumentConstraintRawValue(dependentField, documentValue);
+    const nextValue = getInitialFieldValue(dependentField, rawValue, userId);
+
+    if (areFieldValuesEqual(values[dependentField.name], nextValue)) {
+      continue;
+    }
+
+    values[dependentField.name] = nextValue;
+    pendingFieldNames.push(dependentField.name);
+  }
+}
+
+function sanitizeDependentFieldValue(
+  field: DirectContributionFieldDefinition,
+  values: Record<string, DirectContributionFieldValue>,
+  userId: number | null | undefined
+): DirectContributionFieldValue | null {
+  if (!field.conditionField || !field.constraint) {
+    return null;
+  }
+
+  if (field.constraint.type === 'document') {
+    return null;
+  }
+
+  const dependencyDisabled = isFieldDependencyDisabled(field, values);
+  if (dependencyDisabled) {
+    return getInitialFieldValue(field, field.defaultValue ?? null, userId);
+  }
+
+  const filteredOptions = getFilteredOptionsFromMappingConstraint(field, values);
+  if (!filteredOptions) {
+    return null;
+  }
+
+  // If a mapping rule removes the current value from the allowed list, reset the field to a safe value instead of keeping an invalid selection around.
+  if (field.kind === 'multiselect') {
+    const allowedValueSet = new Set(filteredOptions.map((option) => option.value));
+    const currentValues = toStringArrayFieldValue(values[field.name]);
+    const nextValues = currentValues.filter((value) => allowedValueSet.has(value));
+
+    return nextValues.length === currentValues.length
+      ? null
+      : nextValues;
+  }
+
+  const currentValue = toStringFieldValue(values[field.name]);
+  if (currentValue.length === 0) {
+    return null;
+  }
+
+  const allowedValueSet = new Set(filteredOptions.map((option) => option.value));
+  if (allowedValueSet.has(currentValue)) {
+    return null;
+  }
+
+  return getResolvedSelectFallbackValue(field, filteredOptions, userId);
+}
+
+/**
+ * Replays the legacy field side effects after a value changes:
+ * - conditionField tells us which field is the controller
+ * - constraint tells us how to react to that controller value
+ * - jeux_attributs lets the changed field push preset values into other fields
+ */
+export function applyDirectContributionFieldEffects(
+  fields: DirectContributionFieldDefinition[],
+  values: Record<string, DirectContributionFieldValue>,
+  changedFieldName: string,
+  userId?: number | null
+): Record<string, DirectContributionFieldValue> {
+  const fieldsByName = new Map(fields.map((field) => [field.name, field]));
+  const nextValues = { ...values };
+  const pendingFieldNames = [changedFieldName];
+
+  while (pendingFieldNames.length > 0) {
+    const controllerFieldName = pendingFieldNames.shift();
+    if (!controllerFieldName) {
+      continue;
+    }
+
+    const controllerField = fieldsByName.get(controllerFieldName);
+    if (!controllerField) {
+      continue;
+    }
+
+    const dependentFields = fields.filter(
+      (field) => field.conditionField === controllerFieldName
+    );
+
+    applyJeuxAttributsEffects(
+      controllerField,
+      fieldsByName,
+      nextValues,
+      userId,
+      pendingFieldNames
+    );
+    applyDocumentDependentEffects(
+      controllerField,
+      dependentFields,
+      nextValues,
+      userId,
+      pendingFieldNames
+    );
+
+    for (const dependentField of dependentFields) {
+      const sanitizedValue = sanitizeDependentFieldValue(
+        dependentField,
+        nextValues,
+        userId
+      );
+
+      if (
+        sanitizedValue === null ||
+        areFieldValuesEqual(nextValues[dependentField.name], sanitizedValue)
+      ) {
+        continue;
+      }
+
+      nextValues[dependentField.name] = sanitizedValue;
+      pendingFieldNames.push(dependentField.name);
+    }
+  }
+
+  return nextValues;
+}
+
+export async function applyDirectContributionAsyncFieldEffects(
+  fields: DirectContributionFieldDefinition[],
+  values: Record<string, DirectContributionFieldValue>,
+  changedFieldName: string,
+  userId?: number | null
+): Promise<Record<string, DirectContributionFieldValue>> {
+  const changedField = fields.find((field) => field.name === changedFieldName);
+  if (!changedField || changedField.kind !== 'document') {
+    return values;
+  }
+
+  const dependentFields = fields.filter(
+    (field) =>
+      field.conditionField === changedFieldName &&
+      field.constraint?.type === 'document'
+  );
+  if (dependentFields.length === 0) {
+    return values;
+  }
+
+  const nextValues = { ...values };
+  const documentValue = toDirectContributionDocumentValue(nextValues[changedFieldName]);
+
+  for (const dependentField of dependentFields) {
+    const rawValue = await getDocumentConstraintRawValueAsync(
+      dependentField,
+      documentValue
+    );
+    const nextValue = getInitialFieldValue(dependentField, rawValue, userId);
+
+    if (areFieldValuesEqual(nextValues[dependentField.name], nextValue)) {
+      continue;
+    }
+
+    nextValues[dependentField.name] = nextValue;
+  }
+
+  return nextValues;
+}
+
 function getMandatoryError(t: TranslationFn): string {
   return t('layers.directContribution.form.validation.mandatory');
 }

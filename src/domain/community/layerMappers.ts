@@ -51,6 +51,8 @@ function getNormalizedTableColumnBase(raw: Record<string, unknown>): Record<stri
 	delete normalizedRaw.custom_id;
 	delete normalizedRaw.mime_types;
 	delete normalizedRaw.json_schema;
+	delete normalizedRaw.condition_field;
+	delete normalizedRaw.jeux_attributs;
 
 	return normalizedRaw;
 }
@@ -206,6 +208,16 @@ function mapTableColumn(rawColumn: Record<string, unknown>): TableColumn {
 		(column as TableColumn & { pattern?: string }).pattern = pattern;
 	}
 
+	const conditionField = toStringValue(rawColumn.conditionField ?? rawColumn.condition_field);
+	if (conditionField !== undefined) {
+		(column as TableColumn & { conditionField?: string }).conditionField = conditionField;
+	}
+
+	const constraint = toRawObject(rawColumn.constraint);
+	if (constraint) {
+		(column as TableColumn & { constraint?: Record<string, unknown> }).constraint = constraint;
+	}
+
 	const customId = toBoolean(rawColumn.customId ?? rawColumn.custom_id);
 	if (customId !== undefined) {
 		(column as TableColumn & { customId?: boolean }).customId = customId;
@@ -224,6 +236,11 @@ function mapTableColumn(rawColumn: Record<string, unknown>): TableColumn {
 	const jsonSchema = toRawObject(rawColumn.jsonSchema ?? rawColumn.json_schema);
 	if (jsonSchema) {
 		(column as TableColumn & { jsonSchema?: Record<string, unknown> }).jsonSchema = jsonSchema;
+	}
+
+	const jeuxAttributs = toRawObject(rawColumn.jeuxAttributs ?? rawColumn.jeux_attributs);
+	if (jeuxAttributs) {
+		(column as TableColumn & { jeuxAttributs?: Record<string, unknown> }).jeuxAttributs = jeuxAttributs;
 	}
 
 	return column;
