@@ -4,7 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
-import { getAppErrorTranslationKey } from '@/shared/errors/appError';
+import { getAppErrorTranslationKey, isAppError } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
@@ -35,13 +35,17 @@ export function LoginPage() {
 		e.preventDefault();
 		setError(null);
 		setIsLoading(true);
-    const loginResponse = await loginWithOAuth();
-    console.log('loginResponse', loginResponse);
-    
-		// const loginResponse = await loginWithPassword(email, password);
-		setIsLoading(false);
-		if (!loginResponse.success) {
-			setError(t(getAppErrorTranslationKey(loginResponse.error, "errors.auth.loginFailed")));
+		try {
+			const loginResponse = await loginWithOAuth();
+			console.log('loginResponse', loginResponse);
+
+			// const loginResponse = await loginWithPassword(email, password);
+			const isOAuthCancelled = isAppError(loginResponse.error) && loginResponse.error.code === 'oauth_cancelled';
+			if (!loginResponse.success && !isOAuthCancelled) {
+				setError(t(getAppErrorTranslationKey(loginResponse.error, "errors.auth.loginFailed")));
+			}
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
