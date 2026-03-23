@@ -1,49 +1,34 @@
-
 # Change Log
-Tout les changement notables seront documenté dans ce fichier.
- 
-Le format est basée sur  [Keep a Changelog](http://keepachangelog.com/)
-et le versionnement se base sur [Semantic Versioning](http://semver.org/).
- 
-## [Unreleased] - yyyy-mm-dd
- 
-Ici on décrit les chagements à venir pour le projet. Ca doit être un résumé assez court et qui va droit au but.
- 
+
+Tous les changements notables du projet sont documentés dans ce fichier.
+
+Le format suit [Keep a Changelog](http://keepachangelog.com/)
+et le projet suit [Semantic Versioning](http://semver.org/).
+
+## [Unreleased]
+
 ### Added
-- [PROJECTNAME-XXXX](http://tickets.projectname.com/browse/PROJECTNAME-XXXX)
-  MINOR Nom du ticket si possible ou description de la modif.
-- [PROJECTNAME-YYYY](http://tickets.projectname.com/browse/PROJECTNAME-YYYY)
-  PATCH Nom du ticket si possible ou description de la modif.
- 
+
 ### Changed
- 
+
 ### Fixed
- 
-## [1.2.4] - 2017-03-15
-  
-ICI on décrit les changements avec la version précendente. Ca doit rester bref.
- 
+
+## [0.0.1] - 2026-03-23
+
 ### Added
- 
+
+- Implémentation basique des pages 'Aide' et 'À propos'.
+- Meilleure gestion des erreurs et des logs d'erreurs.
+
 ### Changed
-  
-- [PROJECTNAME-ZZZZ](http://tickets.projectname.com/browse/PROJECTNAME-ZZZZ)
-  PATCH Nom du ticket si possible ou description de la modif.
- 
+
+- La modale d'onboarding est maintenant affichée seulement après la fin de l'écran de chargement initial.
+- Le chargement au démarrage est plus fluide, le timeout mieux géré.
+- Le nom du groupe actif est maintenant affiché à la place du placeholder
+
 ### Fixed
- 
-- [PROJECTNAME-TTTT](http://tickets.projectname.com/browse/PROJECTNAME-TTTT)
-  PATCH Nom du ticket si possible ou description de la modif.
- 
-## [1.2.3] - 2017-03-14
- 
-### Added
-   
-### Changed
- 
-### Fixed
- 
-- [PROJECTNAME-UUUU](http://tickets.projectname.com/browse/PROJECTNAME-UUUU)
-  MINOR Nom du ticket si possible ou description de la modif.
-- [PROJECTNAME-RRRR](http://tickets.projectname.com/browse/PROJECTNAME-RRRR)
-  MAJOR Nom du ticket si possible ou description de la modif.
+
+- La déconnexion vide maintenant complètement la session locale, donc une réouverture de l'application renvoie bien vers la page de connexion.
+- Sur mobile, fermer le navigateur de connexion sans se connecter réinitialise maintenant correctement le bouton "Se connecter".
+- Au redémarrage de l'application, les utilisateurs connectés ne voient plus brièvement la page de connexion avant la redirection.
+- Sur Android, le tap sur les boutons, switches et éléments de menu ne montre plus le "highlight" bleu.

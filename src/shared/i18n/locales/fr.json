@@ -136,12 +136,12 @@
       "signalementsGroupe": "Signalements du groupe",
       "mesSignalements": "Mes signalements en cours",
       "nouveauSignalement": "Nouveau signalement",
-      "aPropos": "A propos des signalements"
+      "aPropos": "À propos des signalements"
     },
     "guichet": {
       "title": "Guichet",
       "guichet": "Guichet",
-      "aPropos": "A propos du guichet"
+      "aPropos": "À propos du guichet"
     },
     "monCompte": {
       "title": "Mon compte",
@@ -151,7 +151,7 @@
     },
     "parametres": "Paramètres",
     "aide": "Aide",
-    "aPropos": "A propos"
+    "aPropos": "À propos"
   },
   "settings": {
     "headerTitle": "Paramètres",
