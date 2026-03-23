@@ -14,6 +14,8 @@ venv.bak/
 /node_modules
 firebase-debug.log
 
+/docs
+
 # Fichier de config personnel
 config.ini
 config_*.ini

@@ -18,7 +18,6 @@ export interface LeftMenuProps {
   onClose: () => void;
   user?: AppUser;
   onNavigate?: (route: string) => void;
-  onLogout?: () => void;
 }
 
 type MenuGroupId = "signalements" | "guichet" | "monCompte";
@@ -82,7 +81,7 @@ const standaloneItems: StandaloneItem[] = [
   { id: "aPropos", labelKey: "leftMenu.aPropos", icon: IconInfo, route: "/about" },
 ];
 
-export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMenuProps) {
+export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
   console.log('from left menu => activeCommunity', activeCommunity);
@@ -132,11 +131,11 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMe
         {user && (
           <div className={styles.userSection}>
             <div className={styles.avatar}>
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.username} className={styles.avatarImage} />
+              {activeCommunity?.logo_url ? (
+                <img src={activeCommunity?.logo_url} alt={activeCommunity?.name} className={styles.avatarImage} />
               ) : (
                 <div className={styles.avatarPlaceholder}>
-                  {user.username.charAt(0).toUpperCase()}
+                  {activeCommunity?.name.charAt(0).toUpperCase()}
                 </div>
               )}
             </div>
