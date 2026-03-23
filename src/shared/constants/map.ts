@@ -51,4 +51,4 @@ export const USE_LAYER_FEATURE_CACHE_WHEN_ONLINE = true;
 /**
  * Maximum duration for initial app/map loading before showing an error toast.
  */
-export const APP_LOADING_TIMEOUT_MS = 25 * 1000;
+export const APP_LOADING_TIMEOUT_MS = 35 * 1000;

@@ -14,20 +14,27 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { loginWithOAuth, isAuthenticated } = useAuth();
+	const { loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [hasInitialAuthCheckCompleted, setHasInitialAuthCheckCompleted] = useState(() => !isAuthLoading);
+
+	useEffect(() => {
+		if (!isAuthLoading) {
+			setHasInitialAuthCheckCompleted(true);
+		}
+	}, [isAuthLoading]);
 
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
-		if (isAuthenticated) {
+		if (hasInitialAuthCheckCompleted && isAuthenticated) {
 			navigate("/community-selection", { replace: true });
 		}
-	}, [isAuthenticated, navigate]);
+	}, [hasInitialAuthCheckCompleted, isAuthenticated, navigate]);
 
-	if (isAuthenticated) {
+	if (!hasInitialAuthCheckCompleted || isAuthenticated) {
 		return null;
 	}
 
