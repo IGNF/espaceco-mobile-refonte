@@ -484,38 +484,71 @@ export async function getStoredAccessToken(): Promise<string | null> {
   return await Storage.get(storageKey('access_token'));
 }
 
-/**
- * Logout and clear credentials.
- * Uses CapacitorHttp directly to revoke the token to bypass CORS restrictions
- * (the SSO backend doesn't allow capacitor://localhost origin).
- */
-export async function logout(): Promise<void> {
-  // Revoke token using CapacitorHttp to bypass CORS
-  const token = await Storage.get(storageKey('access_token'));
-  if (token) {
-    try {
-      await CapacitorHttp.post({
-        url: `${config.oAuth.baseUrl}/revoke`,
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        data: new URLSearchParams({
-          client_id: config.oAuth.clientId,
-          token: token,
-        }).toString(),
-      });
-    } catch {
-      console.log('logout => error');
-      // Revocation failure is non-critical, token will expire anyway
-    }
+function clearInMemoryAuthState(): void {
+  collabApiClient.username = null;
+  collabApiClient.password = null;
+
+  if (!collabApiClient.clientAuth) {
+    return;
   }
 
-  // Clear OAuth tokens
-  await Storage.remove(storageKey('access_token'));
-  await Storage.remove(storageKey('access_token_expires_at'));
-  await Storage.remove(storageKey('refresh_token'));
-  await Storage.remove(storageKey('refresh_token_expires_at'));
-  await Storage.remove(storageKey('id_token'));
+  collabApiClient.clientAuth.started = false;
+  collabApiClient.clientAuth.usesExternalToken = false;
+  collabApiClient.clientAuth.token = null;
+  collabApiClient.clientAuth.refreshToken = null;
+  collabApiClient.clientAuth.expirationDate = null;
+  collabApiClient.clientAuth.refreshExpirationDate = null;
+}
+
+async function clearStoredAuthState(): Promise<void> {
+  await Promise.all([
+    Storage.remove(storageKey('access_token')),
+    Storage.remove(storageKey('access_token_expires_at')),
+    Storage.remove(storageKey('refresh_token')),
+    Storage.remove(storageKey('refresh_token_expires_at')),
+    Storage.remove(storageKey('id_token')),
+    Storage.remove(storageKey('temp_code_verifier')),
+  ]);
+}
+
+async function revokeToken(token: string): Promise<void> {
+  if(!token || token.length === 0) {
+    return;
+  }
+
+  try {
+    await CapacitorHttp.post({
+      url: `${config.oAuth.baseUrl}/revoke`,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      data: new URLSearchParams({
+        client_id: config.oAuth.clientId,
+        token,
+      }).toString(),
+    });
+  } catch {
+    console.log('logout => error');
+  }
+}
+
+/**
+ * Logout and clear credentials.
+ * Clears local session state first so logout still completes even if the
+ * revoke request is slow, fails, or the app is backgrounded immediately after.
+ * Token revocation remains best-effort.
+ */
+export async function logout(): Promise<void> {
+  const [accessToken, refreshToken] = await Promise.all([
+    Storage.get(storageKey('access_token')),
+    Storage.get(storageKey('refresh_token')),
+  ]);
+
+  clearInMemoryAuthState();
+  await clearStoredAuthState();
+
+  void revokeToken(accessToken);
+  void revokeToken(refreshToken);
 }
 
 /**

@@ -189,9 +189,14 @@ export function HomePage() {
     startDirectContributionSession(layerKey);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
+  const handleLogout = async () => {
+    setActiveOverlay(null);
+
+    try {
+      await logout();
+    } finally {
+      navigate("/login", { replace: true });
+    }
   };
 
   const { showInitialLoadingOverlay } = useInitialAppLoading({
@@ -207,7 +212,6 @@ export function HomePage() {
         onClose={handleMenuClose}
         user={user ?? undefined}
         onNavigate={handleMenuNavigate}
-        onLogout={handleLogout}
       />
       <header className={styles.header}>
         <button

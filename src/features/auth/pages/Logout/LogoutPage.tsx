@@ -10,7 +10,7 @@ import { Button } from "@/shared/ui/Button";
 export interface LogoutPageProps {
 	isOpen: boolean;
 	onClose: () => void;
-	handleLogout: () => void;
+	handleLogout: () => void | Promise<void>;
 }
 
 export function LogoutPage({ isOpen, onClose, handleLogout }: LogoutPageProps) {
