@@ -10,6 +10,8 @@ import screen from '@/shared/styles/screen.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 import styles from './SettingsPage.module.css';
 
 export interface SettingsPageProps {
@@ -21,6 +23,9 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const { t } = useTranslation();
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
+
+  const { activeCommunity } = useCommunity();
+
   const {
     pendingGpsSourceType,
     activeGpsSourceInfo,
@@ -78,7 +83,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     <SlideUpPage isOpen={isOpen} onClose={onClose}>
       <PageHeader
         title={t('settings.headerTitle')}
-        subtitle={t('settings.headerSubtitle')}
+        subtitle={activeCommunity?.name ?? t('settings.headerSubtitle')}
         showBackButton
         onBack={onClose}
         onClose={onClose}

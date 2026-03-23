@@ -5,6 +5,7 @@ import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
 import {
   applyDirectContributionAsyncFieldEffects,
   applyDirectContributionFieldEffects,
@@ -78,6 +79,7 @@ function DirectContributionFeatureFormContent({
 }: DirectContributionFeatureFormContentProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { activeCommunity } = useCommunity();
   const userId = user?.id ?? null;
   const fields = useMemo(
     () => getDirectContributionFieldDefinitions(table),
@@ -370,7 +372,7 @@ function DirectContributionFeatureFormContent({
 
           <div className={styles.headerTitles}>
             <h1 className={styles.headerTitle}>{headerTitle}</h1>
-            <p className={styles.headerSubtitle}>{t('layers.directContribution.form.headerSubtitle')}</p>
+            <p className={styles.headerSubtitle}>{activeCommunity?.name ?? t('layers.directContribution.form.headerSubtitle')}</p>
           </div>
 
           <Button

@@ -29,7 +29,7 @@ export function MyReportsPage({
 }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
-  const { communities } = useCommunity();
+  const { communities, activeCommunity } = useCommunity();
   const { reports, isLoading, error, refetch } = useMyReports();
 
   useEffect(() => {
@@ -108,7 +108,7 @@ export function MyReportsPage({
     >
       <PageHeader
         title={t('reports.myReports.headerTitle')}
-        subtitle={t('reports.myReports.headerSubtitle')}
+        subtitle={activeCommunity?.name ?? t('reports.myReports.headerSubtitle')}
         onClose={onClose}
       />
 

@@ -177,7 +177,7 @@ export function ReportFiltersPage({ isOpen, filters, onApply, onClose }: ReportF
         <div className={styles.filtersContainer}>
           <PageHeader
             title={t('reports.filters.headerTitle')}
-            subtitle={t('reports.filters.headerSubtitle')}
+            subtitle={activeCommunity?.name ?? t('reports.filters.headerSubtitle')}
             onClose={onClose}
           />
 

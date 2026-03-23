@@ -648,7 +648,7 @@ export function CreateOrEditReportPage({
       >
         <PageHeader
           title={headerTitle}
-          subtitle={t('reports.createOrEdit.headerSubtitle')}
+          subtitle={activeCommunity?.name ?? t('reports.createOrEdit.headerSubtitle')}
           showBackButton={isEditMode}
           onBack={onBack ? handlePageBack : undefined}
           onClose={handlePageClose}

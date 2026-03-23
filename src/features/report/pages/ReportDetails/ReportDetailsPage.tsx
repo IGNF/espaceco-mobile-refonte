@@ -211,7 +211,7 @@ export function ReportDetailsPage({
     >
       <PageHeader
         title={t('reports.details.headerTitle')}
-        subtitle={t('reports.details.headerSubtitle')}
+        subtitle={activeCommunity?.name ?? t('reports.details.headerSubtitle')}
         showBackButton
         onBack={onBack}
         onClose={onClose}
@@ -244,7 +244,7 @@ export function ReportDetailsPage({
 
           <div className={styles.detailRow}>
             <span className={styles.detailLabel}>{t('reports.details.group')} :</span>
-            <span className={styles.detailValue}>{activeCommunity?.name || t('reports.details.notAvailable')}</span>
+            <span className={styles.detailValue}>{activeCommunity?.name ?? t('reports.details.notAvailable')}</span>
           </div>
 
           <div className={styles.detailRow}>

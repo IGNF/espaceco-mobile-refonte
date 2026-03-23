@@ -188,7 +188,7 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
     <SlideUpPage isOpen={isOpen} onClose={onClose}>
       <PageHeader
         title={t('reports.groupReports.headerTitle')}
-        subtitle={t('reports.groupReports.headerSubtitle')}
+        subtitle={activeCommunity?.name || t('reports.groupReports.headerSubtitle')}
         onClose={onClose}
       />
 

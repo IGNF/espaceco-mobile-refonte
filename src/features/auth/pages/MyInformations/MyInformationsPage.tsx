@@ -8,6 +8,8 @@ import { joinTruthy } from '@/shared/utils/join';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './MyInformationsPage.module.css';
 
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 export interface MyInformationsPageProps {
 	isOpen: boolean;
 	onClose: () => void;
@@ -16,6 +18,7 @@ export interface MyInformationsPageProps {
 export function MyInformationsPage({ isOpen, onClose }: MyInformationsPageProps) {
 	const { t } = useTranslation();
 	const { user } = useAuth();
+  const { activeCommunity } = useCommunity();
 
 	const getFullName = (): string | null => {
 		if (!user?.firstName && !user?.lastName) return null;
@@ -28,7 +31,7 @@ export function MyInformationsPage({ isOpen, onClose }: MyInformationsPageProps)
 		<SlideUpPage isOpen={isOpen} onClose={onClose}>
 			<PageHeader
 				title={t('myInformations.title')}
-				subtitle={t('myInformations.activeProfile')}
+				subtitle={activeCommunity?.name ?? t('myInformations.activeProfile')}
 				onClose={onClose}
 			/>
 
