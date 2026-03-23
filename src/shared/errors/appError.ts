@@ -199,7 +199,7 @@ export function toAppError(error: unknown, options: ToAppErrorOptions = {}): App
   const resolvedKind = inferredKind === 'unknown' ? fallbackKind : inferredKind;
   const translationKey = options.fallbackTranslationKey ?? DEFAULT_TRANSLATION_KEYS[resolvedKind];
 
-  return new AppError({
+  const appError: AppError = new AppError({
     kind: resolvedKind,
     translationKey,
     message: parsedError.message,
@@ -207,4 +207,8 @@ export function toAppError(error: unknown, options: ToAppErrorOptions = {}): App
     retryable: options.retryable,
     cause: error,
   });
+
+  console.error("In-app error detected", appError);
+
+  return appError;
 }

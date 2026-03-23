@@ -14,199 +14,195 @@ import type { AppUser } from "@/domain/user/models";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
 
 export interface LeftMenuProps {
-	isOpen: boolean;
-	onClose: () => void;
-	user?: AppUser;
-	onNavigate?: (route: string) => void;
-	onLogout?: () => void;
+  isOpen: boolean;
+  onClose: () => void;
+  user?: AppUser;
+  onNavigate?: (route: string) => void;
+  onLogout?: () => void;
 }
 
 type MenuGroupId = "signalements" | "guichet" | "monCompte";
 
 interface MenuItem {
-	id: string;
-	labelKey: string;
-	route: string;
+  id: string;
+  labelKey: string;
+  route: string;
 }
 
 interface MenuGroup {
-	id: MenuGroupId;
-	titleKey: string;
-	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-	items: MenuItem[];
+  id: MenuGroupId;
+  titleKey: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  items: MenuItem[];
 }
 
 const menuGroups: MenuGroup[] = [
-	{
-		id: "signalements",
-		titleKey: "leftMenu.signalements.title",
-		icon: IconLocation,
-		items: [
-			{ id: "signalementsGroupe", labelKey: "leftMenu.signalements.signalementsGroupe", route: "/group-reports" },
-			{ id: "mesSignalements", labelKey: "leftMenu.signalements.mesSignalements", route: "/my-reports" },
-			{ id: "nouveauSignalement", labelKey: "leftMenu.signalements.nouveauSignalement", route: "/new-report-choice" },
-			{ id: "aProposSignalements", labelKey: "leftMenu.signalements.aPropos", route: "/about-reports" },
-		],
-	},
-	{
-		id: "guichet",
-		titleKey: "leftMenu.guichet.title",
-		icon: IconGuichet,
-		items: [
-			{ id: "guichet", labelKey: "leftMenu.guichet.guichet", route: "/community-selection" },
-			{ id: "aProposGuichet", labelKey: "leftMenu.guichet.aPropos", route: "/about-community" },
-		],
-	},
-	{
-		id: "monCompte",
-		titleKey: "leftMenu.monCompte.title",
-		icon: IconUser,
-		items: [
-			{ id: "mesInformations", labelKey: "leftMenu.monCompte.mesInformations", route: "/my-informations" },
-			{ id: "mesGroupes", labelKey: "leftMenu.monCompte.mesGroupes", route: "/my-communities" },
-			{ id: "deconnexion", labelKey: "leftMenu.monCompte.deconnexion", route: "/logout-verification" },
-		],
-	},
+  {
+    id: "signalements",
+    titleKey: "leftMenu.signalements.title",
+    icon: IconLocation,
+    items: [
+      { id: "signalementsGroupe", labelKey: "leftMenu.signalements.signalementsGroupe", route: "/group-reports" },
+      { id: "mesSignalements", labelKey: "leftMenu.signalements.mesSignalements", route: "/my-reports" },
+      { id: "nouveauSignalement", labelKey: "leftMenu.signalements.nouveauSignalement", route: "/new-report-choice" },
+      { id: "aProposSignalements", labelKey: "leftMenu.signalements.aPropos", route: "/about-reports" },
+    ],
+  },
+  {
+    id: "guichet",
+    titleKey: "leftMenu.guichet.title",
+    icon: IconGuichet,
+    items: [
+      { id: "guichet", labelKey: "leftMenu.guichet.guichet", route: "/community-selection" },
+      { id: "aProposGuichet", labelKey: "leftMenu.guichet.aPropos", route: "/about-community" },
+    ],
+  },
+  {
+    id: "monCompte",
+    titleKey: "leftMenu.monCompte.title",
+    icon: IconUser,
+    items: [
+      { id: "mesInformations", labelKey: "leftMenu.monCompte.mesInformations", route: "/my-informations" },
+      { id: "mesGroupes", labelKey: "leftMenu.monCompte.mesGroupes", route: "/my-communities" },
+      { id: "deconnexion", labelKey: "leftMenu.monCompte.deconnexion", route: "/logout-verification" },
+    ],
+  },
 ];
 
 interface StandaloneItem {
-	id: string;
-	labelKey: string;
-	icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-	route: string;
+  id: string;
+  labelKey: string;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  route: string;
 }
 
 const standaloneItems: StandaloneItem[] = [
-	{ id: "parametres", labelKey: "leftMenu.parametres", icon: IconConfiguration, route: "/settings" },
-	{ id: "aide", labelKey: "leftMenu.aide", icon: IconHelp, route: "/help" },
-	{ id: "aPropos", labelKey: "leftMenu.aPropos", icon: IconInfo, route: "/about" },
+  { id: "parametres", labelKey: "leftMenu.parametres", icon: IconConfiguration, route: "/settings" },
+  { id: "aide", labelKey: "leftMenu.aide", icon: IconHelp, route: "/help" },
+  { id: "aPropos", labelKey: "leftMenu.aPropos", icon: IconInfo, route: "/about" },
 ];
 
 export function LeftMenu({ isOpen, onClose, user, onNavigate, onLogout }: LeftMenuProps) {
-	const { t } = useTranslation();
-	const { activeCommunity } = useCommunity();
-	console.log('from left menu => activeCommunity', activeCommunity);
-	const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
-		new Set([])
-	);
+  const { t } = useTranslation();
+  const { activeCommunity } = useCommunity();
+  console.log('from left menu => activeCommunity', activeCommunity);
+  const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
+    new Set([])
+  );
 
-	const toggleGroup = (groupId: MenuGroupId) => {
-		setExpandedGroups((prev) => {
-			const newSet = new Set(prev);
-			if (newSet.has(groupId)) {
-				newSet.delete(groupId);
-			} else {
-				newSet.add(groupId);
-			}
-			return newSet;
-		});
-	};
+  const toggleGroup = (groupId: MenuGroupId) => {
+    setExpandedGroups((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(groupId)) {
+        newSet.delete(groupId);
+      } else {
+        newSet.add(groupId);
+      }
+      return newSet;
+    });
+  };
 
-	const handleItemClick = (route: string) => {
-		// Close the menu first
-		onClose();
+  const handleItemClick = (route: string) => {
+    // Close the menu first
+    onClose();
 
-		if (route === "logout") {
-			onLogout?.();
-		} else {
-			// Wait for menu close animation before navigating
-			setTimeout(() => {
-				onNavigate?.(route);
-			}, 300);
-		}
-	};
+    // Wait for menu close animation before navigating
+    setTimeout(() => {
+      onNavigate?.(route);
+    }, 300);
+  };
 
-	const handleOverlayClick = () => {
-		onClose();
-	};
+  const handleOverlayClick = () => {
+    onClose();
+  };
 
-	return (
-		<>
-			<div
-				className={`${screen.overlay} ${styles.overlay} ${isOpen ? styles.overlayVisible : ""}`}
-				onClick={handleOverlayClick}
-				aria-hidden="true"
-			/>
-			<nav
-				className={`${styles.menu} ${isOpen ? styles.menuOpen : ""}`}
-				aria-label="Main menu"
-				aria-hidden={!isOpen}
-			>
-				{/* User profile section */}
-				{user && (
-					<div className={styles.userSection}>
-						<div className={styles.avatar}>
-							{user.avatarUrl ? (
-								<img src={user.avatarUrl} alt={user.username} className={styles.avatarImage} />
-							) : (
-								<div className={styles.avatarPlaceholder}>
-									{user.username.charAt(0).toUpperCase()}
-								</div>
-							)}
-						</div>
-						<div className={styles.userInfo}>
-							<span className={styles.userName}>{user.username}</span>
-							{activeCommunity && (
-								<span className={styles.userLocation}>{activeCommunity.name}</span>
-							)}
-						</div>
-					</div>
-				)}
+  return (
+    <>
+      <div
+        className={`${screen.overlay} ${styles.overlay} ${isOpen ? styles.overlayVisible : ""}`}
+        onClick={handleOverlayClick}
+        aria-hidden="true"
+      />
+      <nav
+        className={`${styles.menu} ${isOpen ? styles.menuOpen : ""}`}
+        aria-label="Main menu"
+        aria-hidden={!isOpen}
+      >
+        {/* User profile section */}
+        {user && (
+          <div className={styles.userSection}>
+            <div className={styles.avatar}>
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.username} className={styles.avatarImage} />
+              ) : (
+                <div className={styles.avatarPlaceholder}>
+                  {user.username.charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className={styles.userInfo}>
+              <span className={styles.userName}>{user.username}</span>
+              {activeCommunity && (
+                <span className={styles.userLocation}>{activeCommunity.name}</span>
+              )}
+            </div>
+          </div>
+        )}
 
-				{/* Menu groups */}
-				<div className={styles.menuContent}>
-					{menuGroups.map((group) => {
-						const IconComponent = group.icon;
-						const isExpanded = expandedGroups.has(group.id);
+        {/* Menu groups */}
+        <div className={styles.menuContent}>
+          {menuGroups.map((group) => {
+            const IconComponent = group.icon;
+            const isExpanded = expandedGroups.has(group.id);
 
-						return (
-							<div key={group.id} className={styles.menuGroup}>
-								<button
-									className={styles.groupHeader}
-									onClick={() => toggleGroup(group.id)}
-									aria-expanded={isExpanded}
-								>
-									<IconComponent className={styles.groupIcon} />
-									<span className={styles.groupTitle}>{t(group.titleKey)}</span>
-									<IconAngleDown
-										className={`${styles.chevron} ${isExpanded ? styles.chevronExpanded : ""}`}
-									/>
-								</button>
-								<div
-									className={`${styles.groupItems} ${isExpanded ? styles.groupItemsExpanded : ""}`}
-								>
-									{group.items.map((item) => (
-										<button
-											key={item.id}
-											className={styles.menuItem}
-											onClick={() => handleItemClick(item.route)}
-										>
-											{t(item.labelKey)}
-										</button>
-									))}
-								</div>
-							</div>
-						);
-					})}
+            return (
+              <div key={group.id} className={styles.menuGroup}>
+                <button
+                  className={styles.groupHeader}
+                  onClick={() => toggleGroup(group.id)}
+                  aria-expanded={isExpanded}
+                >
+                  <IconComponent className={styles.groupIcon} />
+                  <span className={styles.groupTitle}>{t(group.titleKey)}</span>
+                  <IconAngleDown
+                    className={`${styles.chevron} ${isExpanded ? styles.chevronExpanded : ""}`}
+                  />
+                </button>
+                <div
+                  className={`${styles.groupItems} ${isExpanded ? styles.groupItemsExpanded : ""}`}
+                >
+                  {group.items.map((item) => (
+                    <button
+                      key={item.id}
+                      className={styles.menuItem}
+                      onClick={() => handleItemClick(item.route)}
+                    >
+                      {t(item.labelKey)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
 
-					{/* Standalone items */}
-					<div className={styles.standaloneItems}>
-						{standaloneItems.map((item) => {
-							const IconComponent = item.icon;
-							return (
-								<button
-									key={item.id}
-									className={styles.standaloneItem}
-									onClick={() => handleItemClick(item.route)}
-								>
-									<IconComponent className={styles.standaloneIcon} />
-									<span>{t(item.labelKey)}</span>
-								</button>
-							);
-						})}
-					</div>
-				</div>
-			</nav>
-		</>
-	);
+          {/* Standalone items */}
+          <div className={styles.standaloneItems}>
+            {standaloneItems.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <button
+                  key={item.id}
+                  className={styles.standaloneItem}
+                  onClick={() => handleItemClick(item.route)}
+                >
+                  <IconComponent className={styles.standaloneIcon} />
+                  <span>{t(item.labelKey)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </nav>
+    </>
+  );
 }

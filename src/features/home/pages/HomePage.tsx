@@ -40,321 +40,327 @@ type OverlayRoute = typeof overlayRoutes[number];
 type NewReportType = 'standard' | 'trace';
 
 function isOverlayRoute(route: string): route is OverlayRoute {
-	return overlayRoutes.includes(route as OverlayRoute);
+  return overlayRoutes.includes(route as OverlayRoute);
 }
 
 export function HomePage() {
-	const { t } = useTranslation();
-	const navigate = useNavigate();
-	const { user, logout } = useAuth();
-	const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady, isMapLoading } = useMap();
-	const {
-		layers,
-		geoportailLayers,
-		vectorLayers,
-		lockedByLayerKey,
-		signalementLayerVisibility,
-		signalementLayerOpacity,
-		signalementLayerOrder,
-		isLoading: isLayersLoading,
-		setLayerVisibility,
-		setLayerOpacity,
-		setGroupLayerOrder,
-		setLayerDirectContributionLock,
-	} = useLayers();
-	useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
-	useSignalementMapLayers(
-		mapRef,
-		signalementLayerVisibility,
-		signalementLayerOpacity,
-		signalementLayerOrder,
-		isMapReady
-	);
-	const {
-		pendingChangesCountByLayerKey,
-		submittingByLayerKey,
-		sendLayerDirectContributions,
-		resetLayerDirectContributions,
-	} = useDirectContributionLayers({
-		mapRef,
-		isMapReady,
-		vectorLayers,
-	});
-	const {
-		isSessionActive: isDirectContributionSessionActive,
-		toolbarItems: directContributionToolbarItems,
-		toolbarStatusText: directContributionToolbarStatusText,
-		featureFormState: directContributionFeatureFormState,
-		featureCandidates: directContributionFeatureCandidates,
-		isFeatureChoiceOpen: isDirectContributionFeatureChoiceOpen,
-		startSession: startDirectContributionSession,
-		triggerToolbarAction: triggerDirectContributionToolbarAction,
-		saveFeatureAttributes: saveDirectContributionFeatureAttributes,
-		cancelFeatureForm: cancelDirectContributionFeatureForm,
-		selectFeatureCandidate: selectDirectContributionFeatureCandidate,
-		closeFeatureChoice: closeDirectContributionFeatureChoice,
-	} = useDirectContributionSession({
-		map,
-		isMapReady,
-		vectorLayers,
-	});
-	const [isMenuOpen, setIsMenuOpen] = useState(false);
-	const [isSearchOpen, setIsSearchOpen] = useState(false);
-	const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
-	const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
-	const [newReportType, setNewReportType] = useState<NewReportType>('standard');
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady, isMapLoading } = useMap();
+  const {
+    layers,
+    geoportailLayers,
+    vectorLayers,
+    lockedByLayerKey,
+    signalementLayerVisibility,
+    signalementLayerOpacity,
+    signalementLayerOrder,
+    isLoading: isLayersLoading,
+    setLayerVisibility,
+    setLayerOpacity,
+    setGroupLayerOrder,
+    setLayerDirectContributionLock,
+  } = useLayers();
+  useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
+  useSignalementMapLayers(
+    mapRef,
+    signalementLayerVisibility,
+    signalementLayerOpacity,
+    signalementLayerOrder,
+    isMapReady
+  );
+  const {
+    pendingChangesCountByLayerKey,
+    submittingByLayerKey,
+    sendLayerDirectContributions,
+    resetLayerDirectContributions,
+  } = useDirectContributionLayers({
+    mapRef,
+    isMapReady,
+    vectorLayers,
+  });
+  const {
+    isSessionActive: isDirectContributionSessionActive,
+    toolbarItems: directContributionToolbarItems,
+    toolbarStatusText: directContributionToolbarStatusText,
+    featureFormState: directContributionFeatureFormState,
+    featureCandidates: directContributionFeatureCandidates,
+    isFeatureChoiceOpen: isDirectContributionFeatureChoiceOpen,
+    startSession: startDirectContributionSession,
+    triggerToolbarAction: triggerDirectContributionToolbarAction,
+    saveFeatureAttributes: saveDirectContributionFeatureAttributes,
+    cancelFeatureForm: cancelDirectContributionFeatureForm,
+    selectFeatureCandidate: selectDirectContributionFeatureCandidate,
+    closeFeatureChoice: closeDirectContributionFeatureChoice,
+  } = useDirectContributionSession({
+    map,
+    isMapReady,
+    vectorLayers,
+  });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+  const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
+  const [newReportType, setNewReportType] = useState<NewReportType>('standard');
 
-	const {
-		showModal: showOnboarding,
-		isTourMode,
-		currentStep,
-		currentStepIndex,
-		totalSteps,
-		startTour,
-		skipOnboarding,
-		nextStep,
-		previousStep,
-		closeOnboarding,
-	} = useOnboarding();
+  const {
+    showModal: showOnboarding,
+    isTourMode,
+    currentStep,
+    currentStepIndex,
+    totalSteps,
+    startTour,
+    skipOnboarding,
+    nextStep,
+    previousStep,
+    closeOnboarding,
+  } = useOnboarding();
 
-	const getHighlightedTab = (): TabId | null => {
-		if (!isTourMode || !currentStep) return null;
-		if (currentStep === "signalement" || currentStep === "guichet" || currentStep === "couches") {
-			return currentStep;
-		}
-		return null;
-	};
+  const getHighlightedTab = (): TabId | null => {
+    if (!isTourMode || !currentStep) return null;
+    if (currentStep === "signalement" || currentStep === "guichet" || currentStep === "couches") {
+      return currentStep;
+    }
+    return null;
+  };
 
-	const isHighlighted = (target: OnboardingStep): boolean => {
-		return isTourMode && currentStep === target;
-	};
+  const isHighlighted = (target: OnboardingStep): boolean => {
+    return isTourMode && currentStep === target;
+  };
 
-	const handleBurgerClick = () => {
-		setIsMenuOpen(true);
-	};
+  const handleBurgerClick = () => {
+    setIsMenuOpen(true);
+  };
 
-	const handleMenuClose = () => {
-		setIsMenuOpen(false);
-	};
+  const handleMenuClose = () => {
+    setIsMenuOpen(false);
+  };
 
-	const handleMenuNavigate = (route: string) => {
-		if (isOverlayRoute(route)) {
-			setActiveOverlay(route);
-		} else {
-			navigate(route);
-		}
-	};
+  const handleMenuNavigate = (route: string) => {
+    if (isOverlayRoute(route)) {
+      setActiveOverlay(route);
+    } else {
+      navigate(route);
+    }
+  };
 
-	const handleCloseOverlay = () => {
-		setActiveOverlay(null);
-	};
+  const handleCloseOverlay = () => {
+    setActiveOverlay(null);
+  };
 
-	const handleNewReportStandard = () => {
-		setNewReportType('standard');
-		setActiveOverlay(null);
-		setIsSearchOpen(false);
-		setTimeout(() => {
-			setActiveOverlay('/create-or-edit-report');
-		}, 300);
-	};
+  const handleNewReportStandard = () => {
+    setNewReportType('standard');
+    setActiveOverlay(null);
+    setIsSearchOpen(false);
+    setTimeout(() => {
+      setActiveOverlay('/create-or-edit-report');
+    }, 300);
+  };
 
-	const handleNewReportTrace = () => {
-		setNewReportType('trace');
-		setActiveOverlay(null);
-		setIsSearchOpen(false);
-		setTimeout(() => {
-			setActiveOverlay('/create-or-edit-report');
-		}, 300);
-	};
+  const handleNewReportTrace = () => {
+    setNewReportType('trace');
+    setActiveOverlay(null);
+    setIsSearchOpen(false);
+    setTimeout(() => {
+      setActiveOverlay('/create-or-edit-report');
+    }, 300);
+  };
 
-	const handleSearchClick = () => {
-		setIsSearchOpen((prev) => !prev);
-	};
+  const handleSearchClick = () => {
+    setIsSearchOpen((prev) => !prev);
+  };
 
-	const handleTabClick = (tab: TabId) => {
-		if (tab === "couches" && !isLayersPanelOpen) {
-			setIsLayersPanelOpen(true);
-		}
-	};
+  const handleTabClick = (tab: TabId) => {
+    if (tab === "couches" && !isLayersPanelOpen) {
+      setIsLayersPanelOpen(true);
+    }
+    else if (tab === "signalement") {
+      setActiveOverlay('/new-report-choice');
+    }
+    else if (tab === "guichet") {
+      console.log('guichet');
+    }
+  };
 
-	const handleEditLayer = (layerKey: string) => {
-		setIsLayersPanelOpen(false);
-		setIsSearchOpen(false);
-		startDirectContributionSession(layerKey);
-	};
+  const handleEditLayer = (layerKey: string) => {
+    setIsLayersPanelOpen(false);
+    setIsSearchOpen(false);
+    startDirectContributionSession(layerKey);
+  };
 
-	const handleLogout = () => {
-		logout();
-		navigate("/login");
-	};
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
-	const { showInitialLoadingOverlay } = useInitialAppLoading({
-		isMapReady,
-		isMapLoading,
-		isLayersLoading,
-	});
+  const { showInitialLoadingOverlay } = useInitialAppLoading({
+    isMapReady,
+    isMapLoading,
+    isLayersLoading,
+  });
 
-	return (
-		<div className={styles.container}>
-			<LeftMenu
-				isOpen={isMenuOpen}
-				onClose={handleMenuClose}
-				user={user ?? undefined}
-				onNavigate={handleMenuNavigate}
-				onLogout={handleLogout}
-			/>
-			<header className={styles.header}>
-				<button
-					className={`${styles.burgerButton} ${isHighlighted("menu") ? styles.highlighted : ""}`}
-					onClick={handleBurgerClick}
-					aria-label="Menu"
-					data-onboarding-target="menu"
-				>
-					<IconBurger className={styles.burgerIcon} />
-				</button>
-				<h1 className={styles.title}>{t("home.title")}</h1>
-				<button
-					className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
-					onClick={handleSearchClick}
-					aria-label="Search"
-					data-onboarding-target="search"
-				>
-					<IconSearch className={styles.searchIcon} />
-				</button>
-			</header>
+  return (
+    <div className={styles.container}>
+      <LeftMenu
+        isOpen={isMenuOpen}
+        onClose={handleMenuClose}
+        user={user ?? undefined}
+        onNavigate={handleMenuNavigate}
+        onLogout={handleLogout}
+      />
+      <header className={styles.header}>
+        <button
+          className={`${styles.burgerButton} ${isHighlighted("menu") ? styles.highlighted : ""}`}
+          onClick={handleBurgerClick}
+          aria-label="Menu"
+          data-onboarding-target="menu"
+        >
+          <IconBurger className={styles.burgerIcon} />
+        </button>
+        <h1 className={styles.title}>{t("home.title")}</h1>
+        <button
+          className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
+          onClick={handleSearchClick}
+          aria-label="Search"
+          data-onboarding-target="search"
+        >
+          <IconSearch className={styles.searchIcon} />
+        </button>
+      </header>
 
-			<main className={styles.main}>
-				<div className={styles.map} ref={mapElementRef} />
-				<SearchPanel
-					isOpen={isSearchOpen}
-					onClose={() => setIsSearchOpen(false)}
-					map={map}
-				/>
-			</main>
+      <main className={styles.main}>
+        <div className={styles.map} ref={mapElementRef} />
+        <SearchPanel
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          map={map}
+        />
+      </main>
 
-			{/* <p className={styles.copyright}>
+      {/* <p className={styles.copyright}>
 				{t("home.copyright")}
 			</p> */}
 
-			<button
-				className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}
-				onClick={centerOnUserLocation}
-				disabled={isLocating}
-				aria-label="Center on my position"
-				data-onboarding-target="geolocation"
-			>
-				<IconGeolocation className={styles.geolocationIcon} />
-			</button>
+      <button
+        className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}
+        onClick={centerOnUserLocation}
+        disabled={isLocating}
+        aria-label="Center on my position"
+        data-onboarding-target="geolocation"
+      >
+        <IconGeolocation className={styles.geolocationIcon} />
+      </button>
 
-			<BottomTabbar
-				onTabClick={handleTabClick}
-				highlightedTab={getHighlightedTab()}
-				activeTab={isLayersPanelOpen ? "couches" : null}
-			/>
+      <BottomTabbar
+        onTabClick={handleTabClick}
+        highlightedTab={getHighlightedTab()}
+        activeTab={isLayersPanelOpen ? "couches" : null}
+      />
 
-			<LayersPanelFlow
-				isOpen={isLayersPanelOpen}
-				onClose={() => setIsLayersPanelOpen(false)}
-				layers={layers}
-				geoportailLayers={geoportailLayers}
-				vectorLayers={vectorLayers}
-				lockedByLayerKey={lockedByLayerKey}
-				signalementLayerVisibility={signalementLayerVisibility}
-				signalementLayerOpacity={signalementLayerOpacity}
-				signalementLayerOrder={signalementLayerOrder}
-				pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
-				submittingByLayerKey={submittingByLayerKey}
-				isLoading={isLayersLoading}
-				onSetLayerVisibility={setLayerVisibility}
-				onSetLayerOpacity={setLayerOpacity}
-				onSetGroupLayerOrder={setGroupLayerOrder}
-				onEditLayer={handleEditLayer}
-				onSendLayerDirectContributions={sendLayerDirectContributions}
-				onResetLayerDirectContributions={resetLayerDirectContributions}
-				onToggleLayerDirectContributionLock={setLayerDirectContributionLock}
-			/>
+      <LayersPanelFlow
+        isOpen={isLayersPanelOpen}
+        onClose={() => setIsLayersPanelOpen(false)}
+        layers={layers}
+        geoportailLayers={geoportailLayers}
+        vectorLayers={vectorLayers}
+        lockedByLayerKey={lockedByLayerKey}
+        signalementLayerVisibility={signalementLayerVisibility}
+        signalementLayerOpacity={signalementLayerOpacity}
+        signalementLayerOrder={signalementLayerOrder}
+        pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
+        submittingByLayerKey={submittingByLayerKey}
+        isLoading={isLayersLoading}
+        onSetLayerVisibility={setLayerVisibility}
+        onSetLayerOpacity={setLayerOpacity}
+        onSetGroupLayerOrder={setGroupLayerOrder}
+        onEditLayer={handleEditLayer}
+        onSendLayerDirectContributions={sendLayerDirectContributions}
+        onResetLayerDirectContributions={resetLayerDirectContributions}
+        onToggleLayerDirectContributionLock={setLayerDirectContributionLock}
+      />
 
-			<DirectContributionMapOverlay
-				isOpen={isDirectContributionSessionActive && directContributionFeatureFormState === null}
-				items={directContributionToolbarItems}
-				statusText={directContributionToolbarStatusText}
-				onItemClick={triggerDirectContributionToolbarAction}
-			/>
+      <DirectContributionMapOverlay
+        isOpen={isDirectContributionSessionActive && directContributionFeatureFormState === null}
+        items={directContributionToolbarItems}
+        statusText={directContributionToolbarStatusText}
+        onItemClick={triggerDirectContributionToolbarAction}
+      />
 
-			<DirectContributionFeatureFormPage
-				key={
-					directContributionFeatureFormState
-						? `${directContributionFeatureFormState.mode}-${getUid(directContributionFeatureFormState.feature)}`
-						: 'direct-contribution-form'
-				}
-				isOpen={directContributionFeatureFormState !== null}
-				mode={directContributionFeatureFormState?.mode ?? 'edit'}
-				table={directContributionFeatureFormState?.table ?? null}
-				feature={directContributionFeatureFormState?.feature ?? null}
-				onSave={saveDirectContributionFeatureAttributes}
-				onCancel={cancelDirectContributionFeatureForm}
-			/>
+      <DirectContributionFeatureFormPage
+        key={
+          directContributionFeatureFormState
+            ? `${directContributionFeatureFormState.mode}-${getUid(directContributionFeatureFormState.feature)}`
+            : 'direct-contribution-form'
+        }
+        isOpen={directContributionFeatureFormState !== null}
+        mode={directContributionFeatureFormState?.mode ?? 'edit'}
+        table={directContributionFeatureFormState?.table ?? null}
+        feature={directContributionFeatureFormState?.feature ?? null}
+        onSave={saveDirectContributionFeatureAttributes}
+        onCancel={cancelDirectContributionFeatureForm}
+      />
 
-			<DirectContributionFeatureChoiceAlert
-				isOpen={isDirectContributionFeatureChoiceOpen}
-				candidates={directContributionFeatureCandidates}
-				onSelectCandidate={selectDirectContributionFeatureCandidate}
-				onClose={closeDirectContributionFeatureChoice}
-			/>
+      <DirectContributionFeatureChoiceAlert
+        isOpen={isDirectContributionFeatureChoiceOpen}
+        candidates={directContributionFeatureCandidates}
+        onSelectCandidate={selectDirectContributionFeatureCandidate}
+        onClose={closeDirectContributionFeatureChoice}
+      />
 
-			<OnboardingModal
-				isOpen={showOnboarding}
-				isTourMode={isTourMode}
-				currentStep={currentStep}
-				currentStepIndex={currentStepIndex}
-				totalSteps={totalSteps}
-				onStartTour={startTour}
-				onSkip={skipOnboarding}
-				onNext={nextStep}
-				onPrevious={previousStep}
-				onClose={closeOnboarding}
-			/>
+      <OnboardingModal
+        isOpen={showOnboarding}
+        isTourMode={isTourMode}
+        currentStep={currentStep}
+        currentStepIndex={currentStepIndex}
+        totalSteps={totalSteps}
+        onStartTour={startTour}
+        onSkip={skipOnboarding}
+        onNext={nextStep}
+        onPrevious={previousStep}
+        onClose={closeOnboarding}
+      />
 
-				{/* Overlay pages */}
-				<MyInformationsPage
-					isOpen={activeOverlay === '/my-informations'}
-					onClose={handleCloseOverlay}
-				/>
-				<SettingsPage
-					isOpen={activeOverlay === '/settings'}
-					onClose={handleCloseOverlay}
-				/>
-				<LogoutPage
-					isOpen={activeOverlay === '/logout-verification'}
-					onClose={handleCloseOverlay}
-					handleLogout={handleLogout}
-				/>
-			<GroupReportsPage
-				isOpen={activeOverlay === '/group-reports'}
-				onClose={handleCloseOverlay}
-			/>
-			<MyReportsPage
-				isOpen={activeOverlay === '/my-reports'}
-				onClose={handleCloseOverlay}
-				map={map}
-				onSearchPanelVisibilityChange={setIsSearchOpen}
-			/>
-			<NewReportPage
-				isOpen={activeOverlay === '/new-report-choice'}
-				onClose={handleCloseOverlay}
-				onSelectStandard={handleNewReportStandard}
-				onSelectTrace={handleNewReportTrace}
-			/>
-			<CreateOrEditReportPage
-				isOpen={activeOverlay === '/create-or-edit-report'}
-				onClose={handleCloseOverlay}
-				mode="create"
-				reportType={newReportType}
-				map={map}
-				onSearchPanelVisibilityChange={setIsSearchOpen}
-			/>
+      {/* Overlay pages */}
+      <MyInformationsPage
+        isOpen={activeOverlay === '/my-informations'}
+        onClose={handleCloseOverlay}
+      />
+      <SettingsPage
+        isOpen={activeOverlay === '/settings'}
+        onClose={handleCloseOverlay}
+      />
+      <LogoutPage
+        isOpen={activeOverlay === '/logout-verification'}
+        onClose={handleCloseOverlay}
+        handleLogout={handleLogout}
+      />
+      <GroupReportsPage
+        isOpen={activeOverlay === '/group-reports'}
+        onClose={handleCloseOverlay}
+      />
+      <MyReportsPage
+        isOpen={activeOverlay === '/my-reports'}
+        onClose={handleCloseOverlay}
+        map={map}
+        onSearchPanelVisibilityChange={setIsSearchOpen}
+      />
+      <NewReportPage
+        isOpen={activeOverlay === '/new-report-choice'}
+        onClose={handleCloseOverlay}
+        onSelectStandard={handleNewReportStandard}
+        onSelectTrace={handleNewReportTrace}
+      />
+      <CreateOrEditReportPage
+        isOpen={activeOverlay === '/create-or-edit-report'}
+        onClose={handleCloseOverlay}
+        mode="create"
+        reportType={newReportType}
+        map={map}
+        onSearchPanelVisibilityChange={setIsSearchOpen}
+      />
 
-			<HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
-		</div>
-	);
+      <HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
+    </div>
+  );
 }
