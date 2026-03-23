@@ -11,6 +11,7 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
 import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
+import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
@@ -199,14 +200,7 @@ export function ReportDetailsPage({
   const departmentName = report.departement?.name || t('reports.details.notAvailable');
   const authorName = report.author?.username || t('reports.details.notAvailable');
   const responses = report.replies || [];
-
-  // Format attributes for display
-  // TODO: Implement this - look at how it's done in the previous app
-  const formatAttributes = (): string | null => {
-    return '';
-  };
-
-  const attributesText = formatAttributes();
+  const attributesText = formatReportAttributes(report, user?.communities_member);
 
   return (
     <SlideUpPage

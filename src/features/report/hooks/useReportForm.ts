@@ -20,6 +20,7 @@ import {
   setReportFeatureKind,
 } from '@/features/report/utils/reportObjects';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
+import { extractThemeConfigs } from '@/features/report/utils/reportAttributes';
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
@@ -62,45 +63,6 @@ export interface UseReportFormReturn {
   validate: () => boolean;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
-}
-
-/**
- * Extract theme configurations from user's community memberships.
- */
-function extractThemeConfigs(
-  communitiesMembers: { community_id: number; profile?: any }[] | undefined,
-  activeCommunityId: number | undefined
-): CommunityThemeConfig[] {
-  if (!communitiesMembers || communitiesMembers.length === 0) return [];
-
-  const relevantMembers = activeCommunityId
-    ? communitiesMembers.filter(cm => cm.community_id === activeCommunityId)
-    : communitiesMembers;
-
-  const configs: CommunityThemeConfig[] = [];
-  const seen = new Set<string>();
-
-  for (const cm of relevantMembers) {
-    const profile = cm.profile;
-    if (!profile) continue;
-    const profiles = Array.isArray(profile) ? profile : [profile];
-    for (const p of profiles) {
-      if (!p.themes) continue;
-      for (const t of p.themes as any[]) {
-        if (!t.theme) continue;
-        const key = `${cm.community_id}:${t.theme}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        configs.push({
-          theme: t.theme as string,
-          attributes: (t.attributes ?? []) as CommunityThemeAttribute[],
-          autofilled_attributes: (t.autofilled_attributes ?? []) as CommunityThemeAttribute[],
-        });
-      }
-    }
-  }
-
-  return configs;
 }
 
 /**
