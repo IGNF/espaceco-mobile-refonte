@@ -10,10 +10,20 @@ import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { SearchPanel } from "@/features/search/components/SearchPanel";
+
+// PAGES //
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
+import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
+import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
+import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
+import { AboutPage } from "@/features/about/pages/AboutPage";
+import { HelpPage } from "@/features/help/pages/HelpPage";
+
+import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
+
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
@@ -22,17 +32,11 @@ import { useDirectContributionSession } from "@/features/map/hooks/useDirectCont
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
-import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import styles from "./HomePage.module.css";
-
 import { overlayRoutes } from "@/app/router/routes";
-
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
-import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
-import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
-import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 
 // Routes that should open as slide-up overlays instead of navigating
@@ -364,7 +368,14 @@ export function HomePage() {
         map={map}
         onSearchPanelVisibilityChange={setIsSearchOpen}
       />
-
+      <AboutPage
+        isOpen={activeOverlay === '/about'}
+        onClose={handleCloseOverlay}
+      />
+      <HelpPage
+        isOpen={activeOverlay === '/help'}
+        onClose={handleCloseOverlay}
+      />
       <HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
     </div>
   );

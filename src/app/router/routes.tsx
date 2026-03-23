@@ -13,11 +13,6 @@ import { CommunityFirstSelectionPage } from "@/features/community/pages/Communit
 import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
 
-/** Help, About routes **/
-import { HelpPage } from "@/features/help/pages/HelpPage";
-import { AboutPage } from "@/features/about/pages/AboutPage";
-
-
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -56,15 +51,6 @@ export const router = createBrowserRouter([
         path: "/my-communities",
         element: <MyCommunitiesSelectionPage />,
       },
-      /* Help, About routes */
-      {
-        path: "/help",
-        element: <HelpPage />,
-      },
-      {
-        path: "/about",
-        element: <AboutPage />,
-      },
     ],
   },
 ]);
@@ -80,5 +66,7 @@ export const overlayRoutes = [
   '/report-details',
   '/new-report-choice',
   '/create-or-edit-report',
-  '/about-reports'
+  '/about-reports',
+  '/about',
+  '/help'
 ] as const;

@@ -567,5 +567,13 @@
         "unknown": "Une erreur inattendue est survenue lors de l'envoi du signalement."
       }
     }
+  },
+  "about": {
+    "title": "À propos",
+    "subtitle": "de l'Espace collaboratif IGN"
+  },
+  "help": {
+    "title": "Aide",
+    "subtitle": "de l'Espace collaboratif IGN"
   }
 }
