@@ -29,7 +29,7 @@ interface UseMapReturn {
 	centerOnUserLocation: () => Promise<void>;
 	isLocating: boolean;
 	isMapReady: boolean;
-	isMapLoading: boolean;
+	hasInitialCenterCompleted: boolean;
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
@@ -40,7 +40,22 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 	const [map, setMap] = useState<Map | null>(null);
 	const [isLocating, setIsLocating] = useState(false);
 	const [isMapReady, setIsMapReady] = useState(false);
-	const [pendingLoadCount, setPendingLoadCount] = useState(0);
+	const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
+		() => !shouldCenterOnMount
+	);
+
+	const animateTo = useCallback(async (map: Map, centerLonLat: [number, number]) => {
+		await new Promise<void>((resolve) => {
+			map.getView().animate(
+				{
+					center: fromLonLat(centerLonLat),
+					zoom: DEFAULT_MAP_FOCUS_ZOOM,
+					duration: 500,
+				},
+				() => resolve()
+			);
+		});
+	}, []);
 
 	const centerOnUserLocation = useCallback(async () => {
 		const map = mapRef.current;
@@ -57,31 +72,19 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 			if (position) {
 				const { longitude, latitude } = position.coords;
-				map.getView().animate({
-					center: fromLonLat([longitude, latitude]),
-					zoom: DEFAULT_MAP_FOCUS_ZOOM,
-					duration: 500,
-				});
+				await animateTo(map, [longitude, latitude]);
 			} else {
 				// Fallback to default center if geolocation fails
-				map.getView().animate({
-					center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
-					zoom: DEFAULT_MAP_FOCUS_ZOOM,
-					duration: 500,
-				});
+				await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT);
 			}
 		} catch (error) {
 			console.error("Error centering on user location:", error);
 			// Fallback to default center
-			map.getView().animate({
-				center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
-				zoom: DEFAULT_MAP_FOCUS_ZOOM,
-				duration: 500,
-			});
+			await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT);
 		} finally {
 			setIsLocating(false);
 		}
-	}, []);
+	}, [animateTo]);
 
 	// Initialize map
 	useEffect(() => {
@@ -91,8 +94,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 		let mounted = true;
 		let initializedMap: Map | null = null;
-		let loadStartHandler: (() => void) | null = null;
-		let loadEndHandler: (() => void) | null = null;
 
 		async function initMap() {
 			if (!mapElementRef.current || !mounted) return;
@@ -159,19 +160,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				}),
 			});
 
-			loadStartHandler = () => {
-				if (!mounted) return;
-				setPendingLoadCount((current) => current + 1);
-			};
-
-			loadEndHandler = () => {
-				if (!mounted) return;
-				setPendingLoadCount((current) => Math.max(0, current - 1));
-			};
-
-			initializedMap.on('loadstart', loadStartHandler);
-			initializedMap.on('loadend', loadEndHandler);
-
 			mapRef.current = initializedMap;
 			setMap(initializedMap);
 			setIsMapReady(true);
@@ -181,24 +169,35 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 		return () => {
 			mounted = false;
-			if (initializedMap && loadStartHandler && loadEndHandler) {
-				initializedMap.un('loadstart', loadStartHandler);
-				initializedMap.un('loadend', loadEndHandler);
-			}
 			mapRef.current?.setTarget(undefined);
 			mapRef.current = null;
 			setMap(null);
 			setIsMapReady(false);
-			setPendingLoadCount(0);
 		};
 	}, []);
 
 	// Center on user location on mount
 	useEffect(() => {
-		if (shouldCenterOnMount && isMapReady) {
-			centerOnUserLocation();
+		if (!shouldCenterOnMount || !isMapReady || hasInitialCenterCompleted) {
+			return;
 		}
-	}, [shouldCenterOnMount, isMapReady, centerOnUserLocation]);
+
+		let cancelled = false;
+
+		void (async () => {
+			try {
+				await centerOnUserLocation();
+			} finally {
+				if (!cancelled) {
+					setHasInitialCenterCompleted(true);
+				}
+			}
+		})();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [centerOnUserLocation, hasInitialCenterCompleted, isMapReady, shouldCenterOnMount]);
 
 	return {
 		mapElementRef,
@@ -207,6 +206,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 		centerOnUserLocation,
 		isLocating,
 		isMapReady,
-		isMapLoading: pendingLoadCount > 0,
+		hasInitialCenterCompleted,
 	};
 }

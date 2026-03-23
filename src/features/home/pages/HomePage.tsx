@@ -51,7 +51,15 @@ export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { mapElementRef, mapRef, map, centerOnUserLocation, isLocating, isMapReady, isMapLoading } = useMap();
+  const {
+    mapElementRef,
+    mapRef,
+    map,
+    centerOnUserLocation,
+    isLocating,
+    isMapReady,
+    hasInitialCenterCompleted,
+  } = useMap();
   const {
     layers,
     geoportailLayers,
@@ -205,7 +213,7 @@ export function HomePage() {
 
   const { showInitialLoadingOverlay } = useInitialAppLoading({
     isMapReady,
-    isMapLoading,
+    hasInitialCenterCompleted,
     isLayersLoading,
   });
   const shouldShowOnboarding = showOnboarding && !showInitialLoadingOverlay;
