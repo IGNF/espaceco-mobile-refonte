@@ -204,6 +204,7 @@ export function HomePage() {
     isMapLoading,
     isLayersLoading,
   });
+  const shouldShowOnboarding = showOnboarding && !showInitialLoadingOverlay;
 
   return (
     <div className={styles.container}>
@@ -313,7 +314,7 @@ export function HomePage() {
       />
 
       <OnboardingModal
-        isOpen={showOnboarding}
+        isOpen={shouldShowOnboarding}
         isTourMode={isTourMode}
         currentStep={currentStep}
         currentStepIndex={currentStepIndex}
