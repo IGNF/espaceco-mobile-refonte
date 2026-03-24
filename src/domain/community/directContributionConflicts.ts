@@ -64,11 +64,12 @@ function getConflictFieldNames(
   localObject: Record<string, unknown> | null | undefined,
   serverObject: Record<string, unknown>
 ): string[] {
+  // Legacy compares the fields present on the local feature first. If the local feature cannot be found, fall back to the server object.
   const fieldNames = localObject
     ? Object.keys(localObject)
     : Object.keys(serverObject);
 
-  return Array.from(new Set(fieldNames)).filter((fieldName) => {
+  return fieldNames.filter((fieldName) => {
     return !TECHNICAL_CONFLICT_FIELD_NAMES.has(fieldName);
   });
 }
@@ -99,8 +100,7 @@ export function parseDirectContributionConflict(
       continue;
     }
 
-    console.log('conflictRecord', conflictRecord);
-    const serverObject = toRawObject(conflictRecord.server_object); // or  ?? conflictRecord.serverObject
+    const serverObject = toRawObject(conflictRecord.server_object);
     if (!serverObject) {
       continue;
     }

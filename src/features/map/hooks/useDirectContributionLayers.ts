@@ -3,6 +3,7 @@ import type { RefObject } from 'react';
 import type Map from 'ol/Map';
 import type { CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
+import { parseDirectContributionConflict, type DirectContributionConflict } from '@/domain/community/directContributionConflicts';
 import {
   DirectContributionLayerService,
 } from '@/infra/map/directContribution/DirectContributionLayerService';
@@ -18,6 +19,8 @@ interface UseDirectContributionLayersParams {
 interface UseDirectContributionLayersResult {
   pendingChangesCountByLayerKey: Record<string, number>;
   submittingByLayerKey: Record<string, boolean>;
+  activeConflict: DirectContributionConflict | null;
+  clearActiveConflict: () => void;
   sendLayerDirectContributions: (layerKey: string) => Promise<void>;
   resetLayerDirectContributions: (layerKey: string) => Promise<void>;
 }
@@ -35,6 +38,8 @@ export function useDirectContributionLayers({
     useState<Record<string, number>>({});
   const [submittingByLayerKey, setSubmittingByLayerKey] =
     useState<Record<string, boolean>>({});
+  const [activeConflict, setActiveConflict] =
+    useState<DirectContributionConflict | null>(null);
 
   const vectorLayerKeys = useMemo(
     () => vectorLayers.map((layer) => getCommunityLayerKey(layer)),
@@ -65,6 +70,13 @@ export function useDirectContributionLayers({
     );
   }, [hasVectorLayers, layerService, vectorLayerKeys]);
 
+  /**
+   * Clears the currently displayed conflict once the dedicated UI has been closed or fully processed.
+   */
+  const clearActiveConflict = useCallback(() => {
+    setActiveConflict(null);
+  }, []);
+
   useEffect(() => {
     refreshPendingChangesCounts();
 
@@ -92,6 +104,7 @@ export function useDirectContributionLayers({
       return;
     }
 
+    setActiveConflict(null);
     setSubmittingByLayerKey((current) => ({
       ...current,
       [layerKey]: true,
@@ -105,6 +118,27 @@ export function useDirectContributionLayers({
         position: 'top',
       });
     } catch (error) {
+      const layer = vectorLayers.find(
+        (candidateLayer) => getCommunityLayerKey(candidateLayer) === layerKey
+      );
+      const table = layer?.table;
+      const conflictContext =
+        layer && table && typeof table === 'object'
+          ? {
+              layerKey,
+              layerTitle: layer.title,
+              idName: table.idName,
+            }
+          : null;
+      const conflict = conflictContext
+        ? parseDirectContributionConflict(error, conflictContext)
+        : null;
+
+      if (conflict) {
+        setActiveConflict(conflict);
+        return;
+      }
+
       console.error('[DirectContribution] Failed to submit changes', error);
       await showToastSafe({
         text: t('layers.directContribution.submitError'),
@@ -119,7 +153,13 @@ export function useDirectContributionLayers({
       });
       refreshPendingChangesCounts();
     }
-  }, [layerService, refreshPendingChangesCounts, submittingByLayerKey, t]);
+  }, [
+    layerService,
+    refreshPendingChangesCounts,
+    submittingByLayerKey,
+    vectorLayers,
+    t,
+  ]);
 
   /**
    * Discards the current layer draft from the collaborative source
@@ -151,6 +191,8 @@ export function useDirectContributionLayers({
   return {
     pendingChangesCountByLayerKey,
     submittingByLayerKey,
+    activeConflict,
+    clearActiveConflict,
     sendLayerDirectContributions,
     resetLayerDirectContributions,
   };
