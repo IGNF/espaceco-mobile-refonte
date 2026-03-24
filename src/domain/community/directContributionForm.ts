@@ -547,7 +547,7 @@ function getControllerFieldValue(value: DirectContributionFieldValue | undefined
     return value.join(',');
   }
 
-  return toStringFieldValue(value).trim();
+  return toStringFieldValue(value);
 }
 
 function isRegexConstraintSatisfied(
@@ -1232,13 +1232,14 @@ function validateDateLikeValue(field: DirectContributionFieldDefinition, rawValu
   };
 }
 function validateSelectValue(field: DirectContributionFieldDefinition, rawValue: DirectContributionFieldValue, context: DirectContributionFieldValidationContext): DirectContributionFieldValidationResult {
-  const value = typeof rawValue === 'string' ? rawValue.trim() : '';
+  const value = typeof rawValue === 'string' ? rawValue : '';
   if (isBooleanLegacyType(field.legacyType)) {
-    if (value.length === 0) {
+    const normalizedBooleanValue = value.trim();
+    if (normalizedBooleanValue.length === 0) {
       return getEmptyValueResult(field, context.t);
     }
     return {
-      normalizedValue: value === 'true',
+      normalizedValue: normalizedBooleanValue === 'true',
     };
   }
   if (value.length === 0) {
@@ -1256,7 +1257,7 @@ function validateMultiselectValue(field: DirectContributionFieldDefinition, rawV
     };
   }
   const normalizedValues = rawValue
-    .map((value) => String(value).trim())
+    .map((value) => String(value))
     .filter((value) => value.length > 0);
   if (normalizedValues.length === 0) {
     return getEmptyValueResult(field, context.t);
