@@ -32,6 +32,7 @@ import { useDirectContributionSession } from "@/features/map/hooks/useDirectCont
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
+import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
 import styles from "./HomePage.module.css";
 import { overlayRoutes } from "@/app/router/routes";
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
@@ -85,6 +86,8 @@ export function HomePage() {
   const {
     pendingChangesCountByLayerKey,
     submittingByLayerKey,
+    activeConflict,
+    clearActiveConflict,
     sendLayerDirectContributions,
     resetLayerDirectContributions,
   } = useDirectContributionLayers({
@@ -323,6 +326,19 @@ export function HomePage() {
         candidates={directContributionFeatureCandidates}
         onSelectCandidate={selectDirectContributionFeatureCandidate}
         onClose={closeDirectContributionFeatureChoice}
+      />
+
+      <DirectContributionConflictAlert
+        key={
+          activeConflict
+            ? `${activeConflict.layerKey}-${activeConflict.conflicts
+                .map((conflict) => conflict.key)
+                .join('-')}`
+            : 'direct-contribution-conflict'
+        }
+        isOpen={activeConflict !== null}
+        conflict={activeConflict}
+        onClose={clearActiveConflict}
       />
 
       <OnboardingModal

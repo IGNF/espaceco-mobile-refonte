@@ -270,6 +270,26 @@
           "cancel": "Annuler"
         }
       },
+      "conflicts": {
+        "title": "Conflits détectés",
+        "subtitle_one": "{{count}} objet est en conflit sur {{layerTitle}}",
+        "subtitle_other": "{{count}} objets sont en conflit sur {{layerTitle}}",
+        "objectsTitle": "Objets en conflit",
+        "comparisonTitle": "Comparaison locale / serveur",
+        "localValue": "Valeur locale",
+        "serverValue": "Valeur serveur",
+        "noChoice": "Aucune action choisie",
+        "currentChoice": "Action : {{choice}}",
+        "choices": {
+          "force": "Forcer",
+          "delete": "Supprimer",
+          "report": "Signaler"
+        },
+        "actions": {
+          "close": "Fermer",
+          "validate": "Valider"
+        }
+      },
       "form": {
         "headerTitleCreate": "Création d'un objet",
         "headerTitleEdit": "Modification d'un objet",

@@ -1,0 +1,127 @@
+.content {
+  display: grid;
+  gap: 16px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  margin: 0;
+}
+
+.objectList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.objectButton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--color-light-tint);
+  border-radius: 12px;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+}
+
+.objectButtonSelected {
+  border-color: var(--color-primary);
+  background: var(--color-light);
+}
+
+.objectButtonLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.objectButtonMeta {
+  font-size: 0.875rem;
+  color: var(--color-medium);
+}
+
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detailCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-light-tint);
+  border-radius: 12px;
+  background: var(--color-light);
+}
+
+.detailTitle {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.fieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fieldRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-light-tint);
+}
+
+.fieldRowDifferent {
+  border-left: 3px solid var(--color-warning);
+  padding-left: 10px;
+}
+
+.fieldRow:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.fieldName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-medium);
+}
+
+.fieldValue {
+  font-size: 1rem;
+  color: var(--color-dark);
+  word-break: break-word;
+}
+
+.fieldValueGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fieldValueLabel {
+  font-size: 0.8125rem;
+  color: var(--color-medium);
+}
+
+@media (min-width: 768px) {
+  .content {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: start;
+  }
+}

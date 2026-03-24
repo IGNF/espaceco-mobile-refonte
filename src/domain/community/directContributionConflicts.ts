@@ -34,6 +34,8 @@ export interface DirectContributionConflictObject {
   objectId: string | number;
   objectLabel: string;
   serverFingerprint?: string;
+  localObject?: Record<string, unknown>;
+  locallyUpdatedFieldNames?: string[];
   serverObject: Record<string, unknown>;
   resolutionChoice?: DirectContributionConflictResolutionChoice;
 }

@@ -1,14 +1,65 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RefObject } from 'react';
+import type Feature from 'ol/Feature';
 import type Map from 'ol/Map';
-import type { CommunityLayer } from '@ign/mobile-core';
+import type { CollabVectorSource, CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
 import { parseDirectContributionConflict, type DirectContributionConflict } from '@/domain/community/directContributionConflicts';
 import {
   DirectContributionLayerService,
 } from '@/infra/map/directContribution/DirectContributionLayerService';
+import { getAppErrorTranslationKey, type AppError, toAppError } from '@/shared/errors/appError';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+
+type DirectContributionPendingFeature = Feature & {
+  updates?: Record<string, boolean>;
+};
+
+function findPendingFeatureByObjectId(
+  source: CollabVectorSource,
+  idName: string,
+  objectId: string | number
+): DirectContributionPendingFeature | null {
+  const pendingFeatures = [
+    ...source.updatedFeatures.getArray(),
+    ...source.deletedFeatures.getArray(),
+    ...source.insertedFeatures.getArray(),
+  ] as DirectContributionPendingFeature[];
+
+  return pendingFeatures.find((feature) => {
+    return feature.get(idName) === objectId || feature.getId() === objectId;
+  }) ?? null;
+}
+
+function getConflictLocalData(
+  source: CollabVectorSource,
+  idName: string,
+  objectId: string | number
+): {
+  localObject?: Record<string, unknown>;
+  locallyUpdatedFieldNames?: string[];
+} {
+  const pendingFeature = findPendingFeatureByObjectId(source, idName, objectId);
+  if (!pendingFeature) {
+    return {};
+  }
+
+  return {
+    localObject: pendingFeature.getProperties(),
+    locallyUpdatedFieldNames: Object.keys(pendingFeature.updates ?? {}),
+  };
+}
+
+function getUserFacingErrorMessage(
+  error: AppError,
+  t: (key: string) => string,
+  fallbackKey: string
+): string {
+  return error.message && error.message !== error.translationKey
+    ? error.message
+    : t(getAppErrorTranslationKey(error, fallbackKey));
+}
 
 interface UseDirectContributionLayersParams {
   mapRef: RefObject<Map | null>;
@@ -127,7 +178,7 @@ export function useDirectContributionLayers({
           ? {
               layerKey,
               layerTitle: layer.title,
-              idName: table.idName,
+              idName: typeof table.idName === 'string' ? table.idName : 'id',
             }
           : null;
       const conflict = conflictContext
@@ -135,13 +186,33 @@ export function useDirectContributionLayers({
         : null;
 
       if (conflict) {
-        setActiveConflict(conflict);
+        const source = layerService.getCollabSource(layerKey);
+        const nextConflict = source
+          ? {
+              ...conflict,
+              conflicts: conflict.conflicts.map((conflictObject) => ({
+                ...conflictObject,
+                ...getConflictLocalData(source, conflict.idName, conflictObject.objectId),
+              })),
+            }
+          : conflict;
+
+        setActiveConflict(nextConflict);
         return;
       }
 
-      console.error('[DirectContribution] Failed to submit changes', error);
+      const appError = toAppError(error, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'layers.directContribution.submitError',
+      });
+
+      console.error('[DirectContribution] Failed to submit changes', appError);
       await showToastSafe({
-        text: t('layers.directContribution.submitError'),
+        text: getUserFacingErrorMessage(
+          appError,
+          t,
+          'layers.directContribution.submitError'
+        ),
         duration: 'short',
         position: 'top',
       });
@@ -177,9 +248,18 @@ export function useDirectContributionLayers({
         position: 'top',
       });
     } catch (error) {
-      console.error('[DirectContribution] Failed to reset changes', error);
+      const appError = toAppError(error, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'layers.directContribution.resetError',
+      });
+
+      console.error('[DirectContribution] Failed to reset changes', appError);
       await showToastSafe({
-        text: t('layers.directContribution.resetError'),
+        text: getUserFacingErrorMessage(
+          appError,
+          t,
+          'layers.directContribution.resetError'
+        ),
         duration: 'short',
         position: 'top',
       });
