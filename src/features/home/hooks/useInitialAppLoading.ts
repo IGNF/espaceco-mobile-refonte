@@ -6,7 +6,7 @@ import { showToastSafe } from '@/shared/utils/toast';
 interface UseInitialAppLoadingOptions {
   isMapReady: boolean;
   hasInitialCenterCompleted: boolean;
-  isLayersLoading: boolean;
+  isAppDataLoading: boolean;
   timeoutMs?: number;
   settleMs?: number;
 }
@@ -20,7 +20,7 @@ const DEFAULT_SETTLE_MS = 400;
 export function useInitialAppLoading({
   isMapReady,
   hasInitialCenterCompleted,
-  isLayersLoading,
+  isAppDataLoading,
   timeoutMs = APP_LOADING_TIMEOUT_MS,
   settleMs = DEFAULT_SETTLE_MS,
 }: UseInitialAppLoadingOptions): UseInitialAppLoadingResult {
@@ -34,7 +34,7 @@ export function useInitialAppLoading({
     const hasFinishedLoading =
       isMapReady &&
       hasInitialCenterCompleted &&
-      !isLayersLoading;
+      !isAppDataLoading;
     if (!hasFinishedLoading) return;
 
     const settleTimeoutId = window.setTimeout(() => {
@@ -48,7 +48,7 @@ export function useInitialAppLoading({
     hasInitialLoadingTimedOut,
     hasInitialCenterCompleted,
     isInitialLoadingComplete,
-    isLayersLoading,
+    isAppDataLoading,
     isMapReady,
     settleMs,
   ]);

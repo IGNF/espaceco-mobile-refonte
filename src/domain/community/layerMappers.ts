@@ -380,6 +380,11 @@ export function mapApiLayerToCommunityLayer(apiLayer: unknown): CommunityLayer {
 		mapped.opacity = opacity;
 	}
 
+	const format = toStringValue(raw.format)?.toUpperCase();
+	if (format === 'CSV' || format === 'JSON') {
+		mapped.format = format;
+	}
+
 	const database = toNumber(raw.database ?? raw.database_id);
 	if (database !== undefined) {
 		mapped.database = database;

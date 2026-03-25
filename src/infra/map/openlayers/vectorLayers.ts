@@ -10,34 +10,7 @@ import { stripQueryParams } from '@/shared/utils/query';
 import { USE_LAYER_FEATURE_CACHE_WHEN_ONLINE } from '@/shared/constants/map';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 
-/**
- * Create OpenLayers vector layers from enriched community layer data.
- * Handles WFS geoservice layers and table-based collaborative layers.
- */
-export function createCommunityVectorLayers(
-  layers: CommunityLayer[],
-  apiClient: ApiClient
-): BaseLayer[] {
-  const olLayers: BaseLayer[] = [];
-
-  for (const layer of layers) {
-    try {
-      const olLayer = createVectorLayer(layer, apiClient);
-      if (olLayer) {
-        olLayers.push(olLayer);
-      }
-    } catch (err) {
-      console.error(
-        `[VectorLayers] Failed to create layer "${layer.title}":`,
-        err
-      );
-    }
-  }
-
-  return olLayers;
-}
-
-function createVectorLayer(
+export function createCommunityVectorLayer(
   layer: CommunityLayer,
   apiClient: ApiClient
 ): BaseLayer | null {
@@ -72,8 +45,9 @@ function createVectorLayer(
       },
       {
         tileZoom: getTableTileZoom(layer),
-        maxFeatures: 5000,
+        maxFeatures: getLayerMaxFeatures(layer),
         online,
+        outputFormat: getLayerOutputFormat(layer),
         useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
         cache: cacheStorage,
       } as any
@@ -124,4 +98,25 @@ function getTableTileZoom(layer: CommunityLayer): number {
   // Match the legacy collaborative-layer rule: use the explicit table tile zoom.
   const tileZoom = Number(table.tileZoomLevel);
   return Number.isFinite(tileZoom) ? tileZoom : 13;
+}
+
+function getLayerMaxFeatures(layer: CommunityLayer): number {
+  const tileZoom = getTableTileZoom(layer);
+
+  // Lower-zoom collaborative tiles cover a much larger area, so a smaller cap keeps slow environments responsive.
+  if (tileZoom <= 12) {
+    return 1000;
+  }
+
+  if (tileZoom <= 14) {
+    return 2000;
+  }
+
+  return 5000;
+}
+
+function getLayerOutputFormat(layer: CommunityLayer): 'CSV' | 'JSON' | undefined {
+  return layer.format === 'CSV' || layer.format === 'JSON'
+    ? layer.format
+    : undefined;
 }

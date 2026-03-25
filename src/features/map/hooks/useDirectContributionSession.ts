@@ -326,7 +326,11 @@ export function useDirectContributionSession({
         onFeatureSelected: (feature) => {
           setSelectedFeature(feature);
 
-          if (!feature || currentModeRef.current !== 'select') {
+          if (!feature) {
+            return;
+          }
+
+          if (currentModeRef.current !== 'select') {
             return;
           }
 
@@ -416,16 +420,9 @@ export function useDirectContributionSession({
 
   const startSession = useCallback(
     (layerKey: string) => {
-      const collabLayer = layerService?.getCollabLayer(layerKey) ?? null;
-      const collabSource = layerService?.getCollabSource(layerKey) ?? null;
-
-      if (!collabLayer || !collabSource) {
-        return;
-      }
-
       setActiveLayerKey(layerKey);
     },
-    [layerService]
+    []
   );
 
   const closeSession = useCallback(() => {

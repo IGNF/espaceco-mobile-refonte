@@ -29,6 +29,7 @@ import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
 import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContributionLayers";
 import { useDirectContributionSession } from "@/features/map/hooks/useDirectContributionSession";
+import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
@@ -39,6 +40,7 @@ import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -75,7 +77,6 @@ export function HomePage() {
     setGroupLayerOrder,
     setLayerDirectContributionLock,
   } = useLayers();
-  useCommunityMapLayers(mapRef, geoportailLayers, vectorLayers, isMapReady);
   useSignalementMapLayers(
     mapRef,
     signalementLayerVisibility,
@@ -96,6 +97,7 @@ export function HomePage() {
     vectorLayers,
   });
   const {
+    activeLayer: activeDirectContributionLayer,
     isSessionActive: isDirectContributionSessionActive,
     toolbarItems: directContributionToolbarItems,
     toolbarStatusText: directContributionToolbarStatusText,
@@ -113,6 +115,19 @@ export function HomePage() {
     isMapReady,
     vectorLayers,
   });
+  const mountableVectorLayers = hasInitialCenterCompleted ? vectorLayers : [];
+  const mountedVectorLayers = useMountedCommunityVectorLayers({
+    vectorLayers: mountableVectorLayers,
+    pendingChangesCountByLayerKey,
+    activeLayer: activeDirectContributionLayer,
+  });
+  const { isVectorLayersLoading } = useCommunityMapLayers(
+    mapRef,
+    geoportailLayers,
+    mountedVectorLayers,
+    isMapReady
+  );
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
@@ -201,6 +216,15 @@ export function HomePage() {
   const handleEditLayer = (layerKey: string) => {
     setIsLayersPanelOpen(false);
     setIsSearchOpen(false);
+
+    const layer = vectorLayers.find(
+      (candidateLayer) => getCommunityLayerKey(candidateLayer) === layerKey
+    );
+    if (layer?.visible === false) {
+      // Editing a hidden layer is confusing and would keep it outside the normal visible-layer mount set.
+      setLayerVisibility(layerKey, true);
+    }
+
     startDirectContributionSession(layerKey);
   };
 
@@ -217,7 +241,9 @@ export function HomePage() {
   const { showInitialLoadingOverlay } = useInitialAppLoading({
     isMapReady,
     hasInitialCenterCompleted,
-    isLayersLoading,
+    isAppDataLoading:
+      isLayersLoading ||
+      isVectorLayersLoading,
   });
   const shouldShowOnboarding = showOnboarding && !showInitialLoadingOverlay;
 

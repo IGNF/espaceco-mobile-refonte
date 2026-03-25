@@ -9,7 +9,7 @@ import type LayerGroup from 'ol/layer/Group';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 const GUICHET_LAYER_GROUP_NAME = 'guichet';
-const DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES = ['editchange', 'saveend', 'loadend'] as const;
+const DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES = ['editchange', 'saveend'] as const;
 
 export const COMMUNITY_LAYER_KEY_PROPERTY = 'communityLayerKey';
 
@@ -53,7 +53,7 @@ export class DirectContributionLayerService {
   }
 
   /**
-   * Subscribes to collaborative source events so the UI can refresh badges whenever local edits are restored, saved, or reloaded.
+   * Subscribes to collaborative draft events so the UI refreshes badges only when the local edit state actually changes.
    */
   public observeLayers(onChange: () => void): () => void {
     const cleanupTasks: Array<() => void> = [];
