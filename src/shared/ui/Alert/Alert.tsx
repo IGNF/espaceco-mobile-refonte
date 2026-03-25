@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui/Button';
 import type { ButtonColor, ButtonVariant } from '@/shared/ui/Button';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
+import { joinCSSClassNames } from '@/shared/utils/join';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './Alert.module.css';
 
@@ -22,9 +23,18 @@ export interface AlertProps {
 	subtitle?: string;
 	children?: ReactNode;
 	buttons?: AlertButton[];
+	size?: 'default' | 'wide';
 }
 
-export function Alert({ isOpen, onClose, title, subtitle, children, buttons = [] }: AlertProps) {
+export function Alert({
+	isOpen,
+	onClose,
+	title,
+	subtitle,
+	children,
+	buttons = [],
+	size = 'default',
+}: AlertProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
@@ -53,10 +63,19 @@ export function Alert({ isOpen, onClose, title, subtitle, children, buttons = []
 
 	const content = (
 		<div
-			className={`${styles.overlay} ${isVisible ? styles.overlayVisible : ''}`}
+			className={joinCSSClassNames(
+				styles.overlay,
+				isVisible && styles.overlayVisible
+			)}
 			onClick={onClose}
 		>
-			<div className={styles.card} onClick={(e) => e.stopPropagation()}>
+			<div
+				className={joinCSSClassNames(
+					styles.card,
+					size === 'wide' && styles.cardWide
+				)}
+				onClick={(e) => e.stopPropagation()}
+			>
 				<button
 					className={styles.closeButton}
 					onClick={onClose}
