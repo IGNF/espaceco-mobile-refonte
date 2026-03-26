@@ -5,13 +5,12 @@ import type Map from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import type LayerGroup from 'ol/layer/Group';
 import { collabApiClient } from '@/infra/api/collabApiClient';
+import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
+import { getCommunityLayerKeyFromOlLayer } from '@/infra/map/openlayers/layerMetadata';
 import {
   createCommunityVectorLayer,
 } from '@/infra/map/openlayers/vectorLayers';
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
-import {
-  COMMUNITY_LAYER_KEY_PROPERTY,
-} from '@/infra/map/directContribution/DirectContributionLayerService';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 interface UseCommunityMapLayersResult {
@@ -21,23 +20,6 @@ interface UseCommunityMapLayersResult {
 interface ObservableLayerSource {
   on(type: string, listener: (event: unknown) => void): void;
   un(type: string, listener: (event: unknown) => void): void;
-}
-
-function findLayerGroup(map: Map, name: string): LayerGroup | undefined {
-  return map
-    .getLayers()
-    .getArray()
-    .find(
-      (layer) => layer.get('name') === name
-    ) as LayerGroup | undefined;
-}
-
-function getCommunityLayerKeyFromOlLayer(layer: BaseLayer): string | undefined {
-  const rawLayerKey = layer.get(COMMUNITY_LAYER_KEY_PROPERTY);
-
-  return typeof rawLayerKey === 'string' && rawLayerKey.length > 0
-    ? rawLayerKey
-    : undefined;
 }
 
 function getObservableLayerSource(layer: BaseLayer): ObservableLayerSource | null {
@@ -144,7 +126,7 @@ export function useCommunityMapLayers(
     const map = mapRef.current;
     if (!map) return;
 
-    const groupe = findLayerGroup(map, 'groupe');
+    const groupe = findLayerGroupByName(map, 'groupe');
     if (!groupe) return;
 
     replaceLayerGroupContent(
@@ -159,7 +141,7 @@ export function useCommunityMapLayers(
     const map = mapRef.current;
     if (!map) return;
 
-    const guichet = findLayerGroup(map, 'guichet');
+    const guichet = findLayerGroupByName(map, 'guichet');
     if (!guichet) return;
 
     syncCommunityVectorLayerGroup(guichet, vectorLayers);
@@ -171,7 +153,7 @@ export function useCommunityMapLayers(
     const map = mapRef.current;
     if (!map) return;
 
-    const guichet = findLayerGroup(map, 'guichet');
+    const guichet = findLayerGroupByName(map, 'guichet');
     if (!guichet) return;
 
     const loadingByLayerKey: Record<string, boolean> = {};

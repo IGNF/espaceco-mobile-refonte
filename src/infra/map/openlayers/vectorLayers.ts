@@ -5,7 +5,7 @@ import {
   WFSLayer,
   type CommunityLayer
 } from '@ign/mobile-core';
-import { applyCommunityLayerMetadata } from '@/infra/map/directContribution/DirectContributionLayerService';
+import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 import { stripQueryParams } from '@/shared/utils/query';
 import { USE_LAYER_FEATURE_CACHE_WHEN_ONLINE } from '@/shared/constants/map';
 import { cacheStorage } from '@/infra/storage/cacheStorage';

@@ -1,45 +1,202 @@
 import {
   CollabVectorLayer,
   CollabVectorSource,
+  ReportStatus,
 } from '@ign/mobile-core';
-import type { CommunityLayer } from '@ign/mobile-core';
+import type { AppReport } from '@/domain/report/models';
 import type Map from 'ol/Map';
-import type BaseLayer from 'ol/layer/Base';
-import type LayerGroup from 'ol/layer/Group';
-import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
+import { getCenter } from 'ol/extent';
+import { transform } from 'ol/proj';
+import type {
+  DirectContributionConflict,
+  DirectContributionConflictObject,
+  DirectContributionConflictResolutionSelection,
+} from '@/domain/community/directContributionConflicts';
+import { AppError } from '@/shared/errors/appError';
+import { ReportStorageAdapter } from '@/infra/storage';
+import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
+import {
+  getCommunityLayerKeyFromOlLayer,
+} from '@/infra/map/openlayers/layerMetadata';
+import {
+  applyReportObjectMetadata,
+} from '@/features/report/utils/reportObjects';
+import {
+  WEB_MERCATOR_PROJECTION,
+  WGS84_PROJECTION,
+} from '@/shared/constants/projections';
 
 const GUICHET_LAYER_GROUP_NAME = 'guichet';
 const DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES = ['editchange', 'saveend'] as const;
-
-export const COMMUNITY_LAYER_KEY_PROPERTY = 'communityLayerKey';
+const reportStorage = new ReportStorageAdapter();
 
 type ObservableCollabVectorSource = CollabVectorSource & {
   on(type: string, listener: (event: unknown) => void): void;
   un(type: string, listener: (event: unknown) => void): void;
 };
 
-function findLayerGroup(map: Map, name: string): LayerGroup | undefined {
-  return map
-    .getLayers()
-    .getArray()
-    .find((layer) => layer.get('name') === name) as LayerGroup | undefined;
+type DirectContributionPendingFeature = Feature<Geometry> & {
+  updates?: Record<string, boolean>;
+  state?: string;
+};
+
+interface DirectContributionConflictResolutionOptions {
+  communityId: number;
 }
 
-function getLayerKeyFromOlLayer(layer: BaseLayer): string | undefined {
-  const rawLayerKey = layer.get(COMMUNITY_LAYER_KEY_PROPERTY);
-  return typeof rawLayerKey === 'string' && rawLayerKey.length > 0
-    ? rawLayerKey
-    : undefined;
+interface DirectContributionConflictLocalData {
+  localObject?: Record<string, unknown>;
+  locallyUpdatedFieldNames?: string[];
+}
+
+interface PreparedConflictResolution {
+  choice: 'force' | 'delete' | 'report';
+  conflictObject: DirectContributionConflictObject;
+  pendingFeature: DirectContributionPendingFeature;
 }
 
 /**
- * Stores the app layer key on the OpenLayers layer so direct contribution actions can resolve the matching collaborative source from the map.
+ * Resolves the feature identifier from either the table id property or the OpenLayers feature id, depending on how the feature is currently exposed.
  */
-export function applyCommunityLayerMetadata(
-  olLayer: BaseLayer,
-  layer: CommunityLayer
-): void {
-  olLayer.set(COMMUNITY_LAYER_KEY_PROPERTY, getCommunityLayerKey(layer));
+function getFeatureIdentifier(
+  feature: Feature,
+  idName: string
+): string | number | undefined {
+  const propertyId = feature.get(idName);
+  if (typeof propertyId === 'string' || typeof propertyId === 'number') {
+    return propertyId;
+  }
+
+  const featureId = feature.getId();
+  if (typeof featureId === 'string' || typeof featureId === 'number') {
+    return featureId;
+  }
+
+  return undefined;
+}
+
+function getPendingDraftFeatures(
+  source: CollabVectorSource
+): DirectContributionPendingFeature[] {
+  return [
+    ...source.updatedFeatures.getArray(),
+    ...source.deletedFeatures.getArray(),
+    ...source.insertedFeatures.getArray(),
+  ] as DirectContributionPendingFeature[];
+}
+
+/**
+ * Returns the local draft feature that matches one object id among the unsent updates, deletions and creations tracked by the collaborative source.
+ */
+function findPendingDraftFeature(
+  source: CollabVectorSource,
+  idName: string,
+  objectId: string | number
+): DirectContributionPendingFeature | null {
+  const pendingDraftFeatures = getPendingDraftFeatures(source);
+
+  for (const pendingDraftFeature of pendingDraftFeatures) {
+    const pendingFeatureId = getFeatureIdentifier(pendingDraftFeature, idName);
+    if (pendingFeatureId !== undefined && String(pendingFeatureId) === String(objectId)) {
+      return pendingDraftFeature;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Removes a feature from one collaborative draft collection when it is currently present there.
+ */
+function removeFeatureFromCollection(
+  sourceCollection: {
+    getArray(): Feature[];
+    removeAt(index: number): void;
+  },
+  feature: Feature
+): boolean {
+  const featureIndex = sourceCollection.getArray().indexOf(feature);
+  if (featureIndex < 0) {
+    return false;
+  }
+
+  sourceCollection.removeAt(featureIndex);
+  return true;
+}
+
+/**
+ * Clears a pending feature from the collaborative source and resets its local draft markers so it no longer counts as an unsent change.
+ */
+function removePendingFeatureFromSource(
+  source: CollabVectorSource,
+  feature: DirectContributionPendingFeature
+): boolean {
+  const wasRemoved =
+    removeFeatureFromCollection(source.insertedFeatures, feature) ||
+    removeFeatureFromCollection(source.deletedFeatures, feature) ||
+    removeFeatureFromCollection(source.updatedFeatures, feature);
+
+  if (!wasRemoved) {
+    return false;
+  }
+
+  feature.updates = {};
+  delete feature.state;
+  return true;
+}
+
+/**
+ * Converts the conflicted object geometry into the point WKT expected by the legacy "Signaler" flow, which creates a point-based report draft.
+ */
+function getConflictReportPointWkt(feature: Feature<Geometry>): string {
+  const geometry = feature.getGeometry();
+  if (!geometry) {
+    throw new AppError({
+      kind: 'validation',
+      message: 'Impossible de créer un signalement sans géométrie.',
+    });
+  }
+
+  // Legacy signalements generated from conflicts use a simple point derived from the conflicted object geometry, not the full object geometry itself.
+  const featureGeometry = geometry as Geometry & {
+    getFirstCoordinate?: () => number[];
+  };
+  const anchor = typeof featureGeometry.getFirstCoordinate === 'function'
+    ? featureGeometry.getFirstCoordinate()
+    : getCenter(geometry.getExtent());
+  const [longitude, latitude] = transform(
+    anchor,
+    WEB_MERCATOR_PROJECTION,
+    WGS84_PROJECTION
+  );
+
+  return `POINT(${longitude} ${latitude})`;
+}
+
+/**
+ * Creates the local report draft persisted when a conflict is turned into a report instead of staying in direct contribution.
+ */
+function cloneConflictFeatureForReport(
+  feature: Feature<Geometry>,
+  conflict: DirectContributionConflict,
+  conflictObject: DirectContributionConflictObject
+): Feature<Geometry> {
+  const reportFeature = feature.clone();
+  const featureId = feature.getId();
+  if (featureId !== undefined && featureId !== null) {
+    reportFeature.setId(featureId);
+  }
+
+  applyReportObjectMetadata(reportFeature, {
+    key: conflictObject.key,
+    label: conflictObject.objectLabel,
+    layerTitle: conflict.layerTitle,
+    layerName: conflict.layerKey,
+  });
+
+  return reportFeature;
 }
 
 /**
@@ -56,23 +213,54 @@ export class DirectContributionLayerService {
    * Subscribes to collaborative draft events so the UI refreshes badges only when the local edit state actually changes.
    */
   public observeLayers(onChange: () => void): () => void {
-    const cleanupTasks: Array<() => void> = [];
-
-    for (const layer of this.listLayers()) {
-      const source = layer.getSource() as ObservableCollabVectorSource | null;
-      if (!source) {
-        continue;
-      }
-
-      for (const eventType of DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES) {
-        source.on(eventType, onChange);
-        cleanupTasks.push(() => {
-          source.un(eventType, onChange);
-        });
-      }
+    const guichet = findLayerGroupByName(this.map, GUICHET_LAYER_GROUP_NAME);
+    if (!guichet) {
+      return () => undefined;
     }
 
+    const cleanupTasks: Array<() => void> = [];
+    const groupLayers = guichet.getLayers();
+    let sourceCleanupTasks: Array<() => void> = [];
+
+    const bindLayerSources = () => {
+      for (const cleanup of sourceCleanupTasks) {
+        cleanup();
+      }
+      sourceCleanupTasks = [];
+
+      for (const layer of this.listLayers()) {
+        const source = layer.getSource() as ObservableCollabVectorSource | null;
+        if (!source) {
+          continue;
+        }
+
+        for (const eventType of DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES) {
+          source.on(eventType, onChange);
+          sourceCleanupTasks.push(() => {
+            source.un(eventType, onChange);
+          });
+        }
+      }
+    };
+
+    const handleLayerGroupChange = () => {
+      bindLayerSources();
+      onChange();
+    };
+
+    bindLayerSources();
+
+    groupLayers.on('add', handleLayerGroupChange);
+    groupLayers.on('remove', handleLayerGroupChange);
+    cleanupTasks.push(() => {
+      groupLayers.un('add', handleLayerGroupChange);
+      groupLayers.un('remove', handleLayerGroupChange);
+    });
+
     return () => {
+      for (const cleanup of sourceCleanupTasks) {
+        cleanup();
+      }
       for (const cleanup of cleanupTasks) {
         cleanup();
       }
@@ -107,16 +295,38 @@ export class DirectContributionLayerService {
   }
 
   /**
-   * Exposes the live collaborative layer instance mounted on the map for one
-   * community layer key.
+   * Returns the local draft snapshot currently associated with one conflicted
+   * object so the conflict UI can compare local values and server values.
+   */
+  public getConflictLocalData(
+    layerKey: string,
+    idName: string,
+    objectId: string | number
+  ): DirectContributionConflictLocalData {
+    const source = this.getSource(layerKey);
+    if (!source) {
+      return {};
+    }
+    const pendingFeature = findPendingDraftFeature(source, idName, objectId);
+    if (!pendingFeature) {
+      return {};
+    }
+
+    return {
+      localObject: pendingFeature.getProperties(),
+      locallyUpdatedFieldNames: Object.keys(pendingFeature.updates ?? {}),
+    };
+  }
+
+  /**
+   * Exposes the live collaborative layer instance mounted on the map for one community layer key.
    */
   public getCollabLayer(layerKey: string): CollabVectorLayer | undefined {
     return this.getLayer(layerKey);
   }
 
   /**
-   * Exposes the live collaborative source mounted on the map for one community
-   * layer key.
+   * Exposes the live collaborative source mounted on the map for one community layer key.
    */
   public getCollabSource(layerKey: string): CollabVectorSource | undefined {
     return this.getSource(layerKey);
@@ -135,14 +345,147 @@ export class DirectContributionLayerService {
   public async submitLayerChanges(layerKey: string): Promise<unknown> {
     const source = this.getSource(layerKey);
     if (!source) {
-      throw new Error(`No collaborative layer found for key "${layerKey}"`);
+      throw new AppError({
+        kind: 'unknown',
+        message: `Impossible de retrouver la couche collaborative "${layerKey}".`,
+      });
     }
 
     return source.submitChanges();
   }
 
+  /**
+   * Applies the legacy conflict actions on one collaborative source, then persists the updated draft state and reloads the layer.
+   */
+  public async applyConflictResolutions(
+    conflict: DirectContributionConflict,
+    selection: DirectContributionConflictResolutionSelection,
+    options: DirectContributionConflictResolutionOptions
+  ): Promise<{ createdReportCount: number }> {
+    const source = this.getSource(conflict.layerKey);
+    if (!source) {
+      throw new AppError({
+        kind: 'unknown',
+        message: `Impossible de retrouver la couche collaborative "${conflict.layerKey}".`,
+      });
+    }
+
+    const reportDrafts: AppReport[] = [];
+    const reportTheme = selection.reportTheme;
+    let reportIdSeed = Date.now();
+    const preparedResolutions: PreparedConflictResolution[] = [];
+
+    const hasReportResolutions = Object.values(selection.resolutionsByConflictKey).some((choice) => choice === 'report');
+    if (hasReportResolutions) {
+      if (!reportTheme) {
+        throw new AppError({
+          kind: 'validation',
+          message: 'Un thème est requis pour créer un signalement.',
+        });
+      }
+    }
+
+    // Validate everything first so we do not leave the local draft partially updated if one conflicted object cannot be processed.
+    for (const conflictObject of conflict.conflicts) {
+      const resolutionChoice = selection.resolutionsByConflictKey[conflictObject.key];
+      if (!resolutionChoice) {
+        throw new AppError({
+          kind: 'validation',
+          message: 'Chaque conflit doit avoir une action de résolution.',
+        });
+      }
+
+      // A conflict can only be resolved from an existing local draft.
+      const pendingFeature = findPendingDraftFeature(
+        source,
+        conflict.idName,
+        conflictObject.objectId
+      )!;
+
+      if (resolutionChoice === 'force') {
+        if (!conflictObject.serverFingerprint) {
+          throw new AppError({
+            kind: 'validation',
+            message: `Impossible de forcer ${conflictObject.objectLabel} sans empreinte serveur.`,
+          });
+        }
+      }
+
+      preparedResolutions.push({
+        choice: resolutionChoice,
+        conflictObject,
+        pendingFeature,
+      });
+    }
+
+    // Apply the validated actions, then persist the new collaborative draft.
+    for (const resolution of preparedResolutions) {
+      switch (resolution.choice) {
+        case 'force': {
+          const pendingFeature = resolution.pendingFeature;
+
+          pendingFeature.set(
+            'gcms_fingerprint',
+            resolution.conflictObject.serverFingerprint,
+            true
+          );
+          pendingFeature.updates = {
+            ...(pendingFeature.updates ?? {}),
+            gcms_fingerprint: true,
+          };
+          break;
+        }
+
+        case 'delete': {
+          removePendingFeatureFromSource(source, resolution.pendingFeature);
+          break;
+        }
+
+        case 'report': {
+          const pendingFeature = resolution.pendingFeature;
+
+          removePendingFeatureFromSource(source, pendingFeature);
+          reportDrafts.push(
+            {
+              id: reportIdSeed++,
+              communityId: options.communityId,
+              themeId: 0,
+              geometry: getConflictReportPointWkt(pendingFeature),
+              comment: resolution.conflictObject.objectLabel,
+              attributes: {
+                themeName: reportTheme,
+              },
+              status: ReportStatus.Draft,
+              createdAt: new Date(),
+              modifiedAt: new Date(),
+              features: [
+                cloneConflictFeatureForReport(
+                  pendingFeature,
+                  conflict,
+                  resolution.conflictObject
+                ),
+              ],
+            } satisfies AppReport
+          );
+          break;
+        }
+      }
+    }
+
+    await Promise.all(
+      reportDrafts.map((reportDraft) => reportStorage.saveReport(reportDraft))
+    );
+
+    source.writeChanges(true);
+    source.reload();
+
+    return {
+      createdReportCount: reportDrafts.length,
+    };
+  }
+
   private listLayers(): CollabVectorLayer[] {
-    const guichet = findLayerGroup(this.map, GUICHET_LAYER_GROUP_NAME);
+    const guichet = findLayerGroupByName(this.map, GUICHET_LAYER_GROUP_NAME);
     if (!guichet) {
       return [];
     }
@@ -151,11 +494,11 @@ export class DirectContributionLayerService {
       .getLayers()
       .getArray()
       .filter((layer): layer is CollabVectorLayer => layer instanceof CollabVectorLayer)
-      .filter((layer) => typeof getLayerKeyFromOlLayer(layer) === 'string');
+      .filter((layer) => typeof getCommunityLayerKeyFromOlLayer(layer) === 'string');
   }
 
   private getLayer(layerKey: string): CollabVectorLayer | undefined {
-    return this.listLayers().find((layer) => getLayerKeyFromOlLayer(layer) === layerKey);
+    return this.listLayers().find((layer) => getCommunityLayerKeyFromOlLayer(layer) === layerKey);
   }
 
   private getSource(layerKey: string): CollabVectorSource | undefined {

@@ -40,6 +40,11 @@ export interface DirectContributionConflictObject {
   resolutionChoice?: DirectContributionConflictResolutionChoice;
 }
 
+export interface DirectContributionConflictResolutionSelection {
+  resolutionsByConflictKey: Record<string, DirectContributionConflictResolutionChoice>;
+  reportTheme?: string;
+}
+
 export interface DirectContributionConflict {
   layerKey: string;
   layerTitle?: string;
@@ -64,16 +69,45 @@ function getConflictFieldState(
 
 function getConflictFieldNames(
   localObject: Record<string, unknown> | null | undefined,
-  serverObject: Record<string, unknown>
+  serverObject: Record<string, unknown>,
+  locallyUpdatedFieldNames: string[]
 ): string[] {
-  // Legacy compares the fields present on the local feature first. If the local feature cannot be found, fall back to the server object.
-  const fieldNames = localObject
+  const fieldNames: string[] = [];
+
+  const appendFieldName = (fieldName: string) => {
+    if (TECHNICAL_CONFLICT_FIELD_NAMES.has(fieldName)) {
+      return;
+    }
+
+    if (!fieldNames.includes(fieldName)) {
+      fieldNames.push(fieldName);
+    }
+  };
+
+  // The conflict payload currently returned by the backend only contains the
+  // conflicting fields, so prioritize the fields changed locally and the fields
+  // actually sent back by the server.
+  for (const fieldName of locallyUpdatedFieldNames) {
+    appendFieldName(fieldName);
+  }
+
+  for (const fieldName of Object.keys(serverObject)) {
+    appendFieldName(fieldName);
+  }
+
+  if (fieldNames.length > 0) {
+    return fieldNames;
+  }
+
+  const fallbackFieldNames = localObject
     ? Object.keys(localObject)
     : Object.keys(serverObject);
 
-  return fieldNames.filter((fieldName) => {
-    return !TECHNICAL_CONFLICT_FIELD_NAMES.has(fieldName);
-  });
+  for (const fieldName of fallbackFieldNames) {
+    appendFieldName(fieldName);
+  }
+
+  return fieldNames;
 }
 
 /**
@@ -143,8 +177,11 @@ export function getDirectContributionConflictFieldDiffs(
 ): DirectContributionConflictFieldDiff[] {
   const locallyUpdatedFieldNameSet = new Set(locallyUpdatedFieldNames);
 
-  return getConflictFieldNames(localObject, conflictObject.serverObject).map(
-    (fieldName) => {
+  return getConflictFieldNames(
+    localObject,
+    conflictObject.serverObject,
+    locallyUpdatedFieldNames
+  ).map((fieldName) => {
       const localValue = localObject?.[fieldName];
       const serverValue = conflictObject.serverObject[fieldName];
 
@@ -155,6 +192,7 @@ export function getDirectContributionConflictFieldDiffs(
         state: getConflictFieldState(localValue, serverValue),
         isLocallyUpdated: locallyUpdatedFieldNameSet.has(fieldName),
       };
-    }
-  );
+    }).filter((fieldDiff) => {
+      return fieldDiff.isLocallyUpdated || fieldDiff.state !== 'same';
+    });
 }

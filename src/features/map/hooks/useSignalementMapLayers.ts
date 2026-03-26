@@ -24,6 +24,7 @@ import {
   normalizeSignalementLayerOrder,
 } from '@/features/map/types/signalementLayers';
 import { collabApiClient } from '@/infra/api/collabApiClient';
+import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -47,15 +48,8 @@ const CROQUIS_STYLE = new Style({
   }),
 });
 
-function findLayerGroup(map: OlMap, name: string): LayerGroup | undefined {
-  return map
-    .getLayers()
-    .getArray()
-    .find((layer) => layer.get('name') === name) as LayerGroup | undefined;
-}
-
 function getOrCreateSignalementGroup(map: OlMap): LayerGroup {
-  const existingGroup = findLayerGroup(map, SIGNAL_GROUP_NAME);
+  const existingGroup = findLayerGroupByName(map, SIGNAL_GROUP_NAME);
   if (existingGroup) {
     return existingGroup;
   }
@@ -294,7 +288,7 @@ export function useSignalementMapLayers(
     const map = mapRef.current;
     if (!map) return;
 
-    const signalementGroup = findLayerGroup(map, SIGNAL_GROUP_NAME);
+    const signalementGroup = findLayerGroupByName(map, SIGNAL_GROUP_NAME);
     if (!signalementGroup) return;
 
     const visibilityByLayerName = new Map<string, boolean>([

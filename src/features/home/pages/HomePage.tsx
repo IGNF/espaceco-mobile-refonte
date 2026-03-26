@@ -89,6 +89,7 @@ export function HomePage() {
     submittingByLayerKey,
     activeConflict,
     clearActiveConflict,
+    confirmConflictResolutions,
     sendLayerDirectContributions,
     resetLayerDirectContributions,
   } = useDirectContributionLayers({
@@ -365,6 +366,7 @@ export function HomePage() {
         isOpen={activeConflict !== null}
         conflict={activeConflict}
         onClose={clearActiveConflict}
+        onConfirmResolutions={confirmConflictResolutions}
       />
 
       <OnboardingModal

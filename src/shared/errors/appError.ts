@@ -186,6 +186,20 @@ export function getAppErrorTranslationKey(
 }
 
 /**
+ * Resolves the final user-facing error text from an app error and a translation function.
+ * Keeps backend-provided messages when they differ from the translation key.
+ */
+export function getUserFacingErrorMessage(
+  error: unknown,
+  translate: (key: string) => string,
+  fallbackKey: string = DEFAULT_TRANSLATION_KEYS.unknown
+): string {
+  return isAppError(error) && error.message && error.message !== error.translationKey
+    ? error.message
+    : translate(getAppErrorTranslationKey(error, fallbackKey));
+}
+
+/**
  * Normalizes any thrown value to an 'AppError'.
  */
 export function toAppError(error: unknown, options: ToAppErrorOptions = {}): AppError {

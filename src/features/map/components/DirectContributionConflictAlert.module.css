@@ -1,33 +1,61 @@
 .content {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+  min-height: 0;
 }
 
 .column {
   display: flex;
   flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.objectsColumn {
+  min-width: 0;
+}
+
+.detailsColumn {
+  min-width: 0;
+}
+
+.sectionCard {
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-light-tint);
+  border-radius: 14px;
+  min-height: 0;
 }
 
 .sectionTitle {
   margin: 0;
 }
 
+.sectionDescription {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-medium);
+}
+
 .objectList {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 220px;
+  max-height: min(42vh, 320px);
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .objectButton {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
   padding: 14px 16px;
-  border: 1px solid var(--color-light-tint);
+  border: 1.5px solid var(--color-light-shade);
   border-radius: 12px;
   background: white;
   text-align: left;
@@ -36,18 +64,54 @@
 
 .objectButtonSelected {
   border-color: var(--color-primary);
-  background: var(--color-light);
+  background: var(--color-light-light);
 }
 
 .objectButtonLabel {
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-dark);
+}
+
+.objectButtonHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.objectResolvedIconWrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+  flex-shrink: 0;
+}
+
+.objectResolvedIconWrapper path {
+  fill: var(--color-primary-contrast);
+}
+
+.objectResolvedIcon {
+  width: 14px;
+  height: 14px;
 }
 
 .objectButtonMeta {
   font-size: 0.875rem;
   color: var(--color-medium);
+}
+
+.detailHeader {
+  overflow-wrap: anywhere;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .actionRow {
@@ -57,55 +121,77 @@
 }
 
 .detailCard {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid var(--color-light-tint);
-  border-radius: 12px;
-  background: var(--color-light);
+  gap: 14px;
 }
 
 .detailTitle {
   margin: 0;
-  font-weight: 600;
-  color: var(--color-dark);
+  font-weight: 700;
 }
 
 .fieldList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  max-height: min(42vh, 420px);
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .fieldRow {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-light-tint);
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--color-light-tint);
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  background: white;
 }
 
 .fieldRowDifferent {
-  border-left: 3px solid var(--color-warning);
-  padding-left: 10px;
+  border-left-color: var(--color-warning);
 }
 
-.fieldRow:last-child {
-  padding-bottom: 0;
-  border-bottom: 0;
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .fieldName {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-medium);
-}
-
-.fieldValue {
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: var(--color-dark);
   word-break: break-word;
+}
+
+.fieldBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--color-light);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fieldValuesGrid {
+  display: grid;
+  gap: 10px;
+}
+
+.fieldValueCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--color-light-light);
 }
 
 .fieldValueGroup {
@@ -116,12 +202,50 @@
 
 .fieldValueLabel {
   font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-medium);
+}
+
+.fieldValue {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-dark);
+  word-break: break-word;
+}
+
+.fieldValueMissing {
+  color: var(--color-medium);
+}
+
+.validationSection {
+  gap: 12px;
+}
+
+.validationText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-medium);
+}
+
+.validationError {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-danger);
+}
+
+.emptyState {
+  margin: 0;
+  font-size: 0.95rem;
   color: var(--color-medium);
 }
 
 @media (min-width: 768px) {
   .content {
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
     align-items: start;
+  }
+
+  .fieldValuesGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

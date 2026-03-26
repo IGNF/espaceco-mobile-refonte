@@ -1,64 +1,40 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RefObject } from 'react';
-import type Feature from 'ol/Feature';
 import type Map from 'ol/Map';
-import type { CollabVectorSource, CommunityLayer } from '@ign/mobile-core';
+import type { CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
-import { parseDirectContributionConflict, type DirectContributionConflict } from '@/domain/community/directContributionConflicts';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+import {
+  parseDirectContributionConflict,
+  type DirectContributionConflict,
+  type DirectContributionConflictResolutionSelection,
+} from '@/domain/community/directContributionConflicts';
 import {
   DirectContributionLayerService,
 } from '@/infra/map/directContribution/DirectContributionLayerService';
-import { getAppErrorTranslationKey, type AppError, toAppError } from '@/shared/errors/appError';
+import { getUserFacingErrorMessage, toAppError } from '@/shared/errors/appError';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
-type DirectContributionPendingFeature = Feature & {
-  updates?: Record<string, boolean>;
-};
+function getConflictResolutionCounts(
+  selection: DirectContributionConflictResolutionSelection
+): Record<'force' | 'delete' | 'report', number> {
+  const counts = {
+    force: 0,
+    delete: 0,
+    report: 0,
+  };
 
-function findPendingFeatureByObjectId(
-  source: CollabVectorSource,
-  idName: string,
-  objectId: string | number
-): DirectContributionPendingFeature | null {
-  const pendingFeatures = [
-    ...source.updatedFeatures.getArray(),
-    ...source.deletedFeatures.getArray(),
-    ...source.insertedFeatures.getArray(),
-  ] as DirectContributionPendingFeature[];
+  const conflictKeys = Object.keys(selection.resolutionsByConflictKey);
 
-  return pendingFeatures.find((feature) => {
-    return feature.get(idName) === objectId || feature.getId() === objectId;
-  }) ?? null;
-}
-
-function getConflictLocalData(
-  source: CollabVectorSource,
-  idName: string,
-  objectId: string | number
-): {
-  localObject?: Record<string, unknown>;
-  locallyUpdatedFieldNames?: string[];
-} {
-  const pendingFeature = findPendingFeatureByObjectId(source, idName, objectId);
-  if (!pendingFeature) {
-    return {};
+  for (const conflictKey of conflictKeys) {
+    const choice = selection.resolutionsByConflictKey[conflictKey];
+    if (choice) {
+      counts[choice] ++;
+    }
   }
 
-  return {
-    localObject: pendingFeature.getProperties(),
-    locallyUpdatedFieldNames: Object.keys(pendingFeature.updates ?? {}),
-  };
-}
-
-function getUserFacingErrorMessage(
-  error: AppError,
-  t: (key: string) => string,
-  fallbackKey: string
-): string {
-  return error.message && error.message !== error.translationKey
-    ? error.message
-    : t(getAppErrorTranslationKey(error, fallbackKey));
+  return counts;
 }
 
 interface UseDirectContributionLayersParams {
@@ -72,6 +48,9 @@ interface UseDirectContributionLayersResult {
   submittingByLayerKey: Record<string, boolean>;
   activeConflict: DirectContributionConflict | null;
   clearActiveConflict: () => void;
+  confirmConflictResolutions: (
+    selection: DirectContributionConflictResolutionSelection
+  ) => Promise<boolean>;
   sendLayerDirectContributions: (layerKey: string) => Promise<void>;
   resetLayerDirectContributions: (layerKey: string) => Promise<void>;
 }
@@ -85,6 +64,7 @@ export function useDirectContributionLayers({
   vectorLayers,
 }: UseDirectContributionLayersParams): UseDirectContributionLayersResult {
   const { t } = useTranslation();
+  const { activeCommunity } = useCommunity();
   const [pendingChangesCountByLayerKey, setPendingChangesCountByLayerKey] =
     useState<Record<string, number>>({});
   const [submittingByLayerKey, setSubmittingByLayerKey] =
@@ -178,7 +158,7 @@ export function useDirectContributionLayers({
           ? {
               layerKey,
               layerTitle: layer.title,
-              idName: typeof table.idName === 'string' ? table.idName : 'id',
+              idName: table.idName ?? 'id',
             }
           : null;
       const conflict = conflictContext
@@ -186,18 +166,19 @@ export function useDirectContributionLayers({
         : null;
 
       if (conflict) {
-        const source = layerService.getCollabSource(layerKey);
-        const nextConflict = source
-          ? {
-              ...conflict,
-              conflicts: conflict.conflicts.map((conflictObject) => ({
-                ...conflictObject,
-                ...getConflictLocalData(source, conflict.idName, conflictObject.objectId),
-              })),
-            }
-          : conflict;
+        const enrichedConflict = {
+          ...conflict,
+          conflicts: conflict.conflicts.map((conflictObject) => ({
+            ...conflictObject,
+            ...layerService.getConflictLocalData(
+              layerKey,
+              conflict.idName,
+              conflictObject.objectId
+            ),
+          })),
+        };
 
-        setActiveConflict(nextConflict);
+        setActiveConflict(enrichedConflict);
         return;
       }
 
@@ -268,11 +249,115 @@ export function useDirectContributionLayers({
     }
   }, [layerService, refreshPendingChangesCounts, submittingByLayerKey, t]);
 
+  /**
+   * Applies the chosen legacy conflict actions on the live collaborative source.
+   */
+  const confirmConflictResolutions = useCallback(async (
+    selection: DirectContributionConflictResolutionSelection
+  ): Promise<boolean> => {
+    if (!layerService || !activeConflict || !activeCommunity?.id) {
+      return false;
+    }
+
+    const conflictLayerKey = activeConflict.layerKey;
+    // return false is already submitting
+    if (submittingByLayerKey[conflictLayerKey] === true) {
+      return false;
+    }
+
+    setSubmittingByLayerKey((current) => ({
+      ...current,
+      [conflictLayerKey]: true,
+    }));
+
+    try {
+      const result = await layerService.applyConflictResolutions(
+        activeConflict,
+        selection,
+        {
+          communityId: activeCommunity.id,
+        }
+      );
+      const resolutionCounts = getConflictResolutionCounts(selection);
+      const resolutionSummaryParts: string[] = [];
+
+      setActiveConflict(null);
+
+      if (resolutionCounts.force > 0) {
+        resolutionSummaryParts.push(
+          t('layers.directContribution.conflicts.forceApplied', {
+            count: resolutionCounts.force,
+          })
+        );
+      }
+
+      if (resolutionCounts.delete > 0) {
+        resolutionSummaryParts.push(
+          t('layers.directContribution.conflicts.deleteApplied', {
+            count: resolutionCounts.delete,
+          })
+        );
+      }
+
+      if (result.createdReportCount > 0) {
+        resolutionSummaryParts.push(
+          t('layers.directContribution.conflicts.reportApplied', {
+            count: result.createdReportCount,
+          })
+        );
+      }
+
+      await showToastSafe({
+        text:
+          resolutionSummaryParts.length > 0
+            ? resolutionSummaryParts.join(' · ')
+            : t('layers.directContribution.conflicts.resolutionSuccess'),
+        duration: 'short',
+        position: 'top',
+      });
+
+      return true;
+    } catch (error) {
+      const appError = toAppError(error, {
+        fallbackKind: 'unknown',
+        fallbackTranslationKey: 'layers.directContribution.conflicts.resolutionError',
+      });
+
+      console.error('[DirectContribution] Failed to resolve conflicts', appError);
+      await showToastSafe({
+        text: getUserFacingErrorMessage(
+          appError,
+          t,
+          'layers.directContribution.conflicts.resolutionError'
+        ),
+        duration: 'short',
+        position: 'top',
+      });
+
+      return false;
+    } finally {
+      setSubmittingByLayerKey((current) => {
+        const next = { ...current };
+        delete next[conflictLayerKey];
+        return next;
+      });
+      refreshPendingChangesCounts();
+    }
+  }, [
+    activeCommunity?.id,
+    activeConflict,
+    layerService,
+    refreshPendingChangesCounts,
+    submittingByLayerKey,
+    t,
+  ]);
+
   return {
     pendingChangesCountByLayerKey,
     submittingByLayerKey,
     activeConflict,
     clearActiveConflict,
+    confirmConflictResolutions,
     sendLayerDirectContributions,
     resetLayerDirectContributions,
   };
