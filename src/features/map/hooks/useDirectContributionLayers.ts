@@ -30,7 +30,7 @@ function getConflictResolutionCounts(
   for (const conflictKey of conflictKeys) {
     const choice = selection.resolutionsByConflictKey[conflictKey];
     if (choice) {
-      counts[choice] ++;
+      counts[choice]++;
     }
   }
 
@@ -153,13 +153,15 @@ export function useDirectContributionLayers({
         (candidateLayer) => getCommunityLayerKey(candidateLayer) === layerKey
       );
       const table = layer?.table;
+      const title = (layer?.title && layer.title.length > 0) ? layer.title : (table?.title && table.title.length > 0) ? table.title : '';
+      
       const conflictContext =
         layer && table && typeof table === 'object'
           ? {
-              layerKey,
-              layerTitle: layer.title,
-              idName: table.idName ?? 'id',
-            }
+            layerKey,
+            layerTitle: title,
+            idName: table.idName ?? 'id',
+          }
           : null;
       const conflict = conflictContext
         ? parseDirectContributionConflict(error, conflictContext)

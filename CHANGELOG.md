@@ -13,6 +13,18 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.0.2] - 2026-03-27
+
+### Added
+
+- Ajout des contributions directes avec gestion des conflits
+
+### Changed
+
+### Fixed
+
+- Résolution d'un problème provoquant un chargement à l'ouverture long, qui pouvait faire planter l'application
+
 ## [0.0.1] - 2026-03-23
 
 ### Added

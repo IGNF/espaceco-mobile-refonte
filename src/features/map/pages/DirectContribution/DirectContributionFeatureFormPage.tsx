@@ -32,6 +32,7 @@ import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
+import stickyActions from '@/shared/styles/stickyActions.module.css';
 import styles from './DirectContributionFeatureFormPage.module.css';
 
 interface DirectContributionFeatureFormContentProps {
@@ -387,7 +388,12 @@ function DirectContributionFeatureFormContent({
           </Button>
         </header>
 
-        <main className={styles.content}>
+        <main
+          className={joinCSSClassNames(
+            styles.content,
+            stickyActions.contentWithStickyActions
+          )}
+        >
           <div className={styles.titleSection}>
             <h2 className={joinCSSClassNames(typography.title, styles.title)}>
               {t('layers.directContribution.form.title')}
@@ -434,7 +440,7 @@ function DirectContributionFeatureFormContent({
           </form>
         </main>
 
-        <footer className={styles.actions}>
+        <footer className={joinCSSClassNames(styles.actions, stickyActions.bar)}>
           <Button
             type="button"
             color="primary"

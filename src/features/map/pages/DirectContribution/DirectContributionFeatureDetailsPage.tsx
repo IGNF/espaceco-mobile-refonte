@@ -11,6 +11,7 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import screen from '@/shared/styles/screen.module.css';
+import stickyActions from '@/shared/styles/stickyActions.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './DirectContributionFeatureDetailsPage.module.css';
 
@@ -159,7 +160,13 @@ export function DirectContributionFeatureDetailsPage({
         onClose={onClose}
       />
 
-      <main className={`${screen.screenContainer} ${styles.content}`}>
+      <main
+        className={joinCSSClassNames(
+          screen.screenContainer,
+          styles.content,
+          canEdit && stickyActions.contentWithStickyActions
+        )}
+      >
         <section className={styles.summaryCard}>
           <h2 className={typography.heading1}>
             {candidate.label}
@@ -200,12 +207,15 @@ export function DirectContributionFeatureDetailsPage({
           )}
         </section>
 
-        {canEdit ? (
+      </main>
+
+      {canEdit ? (
+        <footer className={stickyActions.bar}>
           <Button type='button' fullWidth onClick={onEdit}>
             {t('layers.directContribution.details.editButton')}
           </Button>
-        ) : null}
-      </main>
+        </footer>
+      ) : null}
     </SlideUpPage>
   );
 }
