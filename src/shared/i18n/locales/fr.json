@@ -270,6 +270,14 @@
           "cancel": "Annuler"
         }
       },
+      "details": {
+        "headerTitle": "Fiche objet",
+        "editButton": "Editer l'objet",
+        "emptyValue": "-",
+        "noAttributes": "Aucun attribut à afficher.",
+        "yes": "Oui",
+        "no": "Non"
+      },
       "conflicts": {
         "title": "Conflits détectés",
         "subtitle_one": "{{count}} objet est en conflit sur {{layerTitle}}",

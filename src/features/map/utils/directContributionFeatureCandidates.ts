@@ -1,4 +1,4 @@
-import type { Table } from '@ign/mobile-core';
+import type { CommunityLayer, Table } from '@ign/mobile-core';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
@@ -6,6 +6,7 @@ import type OlMap from 'ol/Map';
 import type VectorSource from 'ol/source/Vector';
 import { getUid } from 'ol/util';
 import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 const PRIMARY_LABEL_PROPERTY_NAME_REGEX = /(nom|name|label|titre|title)/i;
 const SECONDARY_LABEL_PROPERTY_NAME_REGEX = /nature/i;
@@ -77,6 +78,7 @@ function getFeatureCandidateLabel(
 
 function buildFeatureCandidate(
   feature: Feature<Geometry>,
+  communityLayer: CommunityLayer,
   table: Table,
   fallbackLabel: string
 ): DirectContributionFeatureCandidate {
@@ -93,10 +95,12 @@ function buildFeatureCandidate(
       : undefined;
 
   return {
-    key: featureIdentifier ?? String(getUid(feature)),
+    key: `${getCommunityLayerKey(communityLayer)}:${featureIdentifier ?? String(getUid(feature))}`,
     label,
     secondaryLabel,
     feature,
+    layer: communityLayer,
+    table,
   };
 }
 
@@ -105,6 +109,7 @@ export interface DirectContributionFeatureCandidatesAtPixelOptions {
   pixel: number[];
   layer: BaseLayer;
   source: VectorSource<Feature<Geometry>>;
+  communityLayer: CommunityLayer;
   table: Table;
   hitTolerance: number;
   fallbackLabel: string;
@@ -113,10 +118,16 @@ export interface DirectContributionFeatureCandidatesAtPixelOptions {
 function addFeatureCandidate(
   candidatesByKey: Map<string, DirectContributionFeatureCandidate>,
   feature: Feature<Geometry>,
+  communityLayer: CommunityLayer,
   table: Table,
   fallbackLabel: string
 ): void {
-  const candidate = buildFeatureCandidate(feature, table, fallbackLabel);
+  const candidate = buildFeatureCandidate(
+    feature,
+    communityLayer,
+    table,
+    fallbackLabel
+  );
   if (candidatesByKey.has(candidate.key)) {
     return;
   }
@@ -179,6 +190,7 @@ export function getDirectContributionFeatureCandidatesAtPixel({
   pixel,
   layer,
   source,
+  communityLayer,
   table,
   hitTolerance,
   fallbackLabel,
@@ -204,6 +216,7 @@ export function getDirectContributionFeatureCandidatesAtPixel({
       addFeatureCandidate(
         candidatesByKey,
         featureLike as Feature<Geometry>,
+        communityLayer,
         table,
         fallbackLabel
       );
@@ -227,7 +240,13 @@ export function getDirectContributionFeatureCandidatesAtPixel({
       continue;
     }
 
-    addFeatureCandidate(candidatesByKey, feature, table, fallbackLabel);
+    addFeatureCandidate(
+      candidatesByKey,
+      feature,
+      communityLayer,
+      table,
+      fallbackLabel
+    );
   }
 
   return Array.from(candidatesByKey.values());

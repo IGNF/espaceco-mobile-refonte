@@ -49,6 +49,7 @@ export interface UseDirectContributionSessionReturn {
   featureCandidates: DirectContributionFeatureCandidate[];
   isFeatureChoiceOpen: boolean;
   startSession: (layerKey: string) => void;
+  startFeatureEdition: (candidate: DirectContributionFeatureCandidate) => void;
   closeSession: () => void;
   triggerToolbarAction: (toolId: string) => void;
   saveFeatureAttributes: (attributes: Record<string, unknown>) => Promise<void>;
@@ -65,6 +66,11 @@ interface DrawInteractionHandlers {
 interface SketchManagerInternals {
   drawInteraction?: Draw | null;
   selectInteraction?: Select | null;
+}
+
+interface PendingFeatureEdition {
+  layerKey: string;
+  feature: Feature<Geometry>;
 }
 
 const DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE = 0;
@@ -139,6 +145,7 @@ export function useDirectContributionSession({
   const drawInteractionRef = useRef<Draw | null>(null);
   const drawHandlersRef = useRef<DrawInteractionHandlers | null>(null);
   const createdFeaturesRef = useRef(new WeakSet<Feature<Geometry>>());
+  const pendingFeatureEditionRef = useRef<PendingFeatureEdition | null>(null);
 
   const activeLayer = useMemo(() => {
     if (!activeLayerKey) {
@@ -278,6 +285,7 @@ export function useDirectContributionSession({
     sketchManagerRef.current?.destroy();
     sketchManagerRef.current = null;
     createdFeaturesRef.current = new WeakSet<Feature<Geometry>>();
+    pendingFeatureEditionRef.current = null;
     unbindDrawInteractionListeners();
     setCurrentMode(DEFAULT_DIRECT_CONTRIBUTION_MODE);
     currentModeRef.current = DEFAULT_DIRECT_CONTRIBUTION_MODE;
@@ -349,6 +357,16 @@ export function useDirectContributionSession({
     sketchManager.setMode(DEFAULT_DIRECT_CONTRIBUTION_MODE);
     bindDrawInteractionListeners();
 
+    const pendingFeatureEdition = pendingFeatureEditionRef.current;
+    if (pendingFeatureEdition?.layerKey === activeLayerKey) {
+      window.requestAnimationFrame(() => {
+        closeFeatureChoice();
+        syncSelectedFeature(pendingFeatureEdition.feature);
+        openFeatureForm(pendingFeatureEdition.feature, 'edit');
+      });
+      pendingFeatureEditionRef.current = null;
+    }
+
     const sourceListenerKeys = [
       activeCollabSource.on('removefeature', (event) => {
         const removedFeature = event.feature as Feature<Geometry> | undefined;
@@ -396,6 +414,7 @@ export function useDirectContributionSession({
         pixel: event.pixel,
         layer: activeCollabLayer,
         source: activeCollabSource,
+        communityLayer: activeLayer,
         table: activeTable,
         hitTolerance: DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE,
         fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
@@ -420,7 +439,19 @@ export function useDirectContributionSession({
 
   const startSession = useCallback(
     (layerKey: string) => {
+      pendingFeatureEditionRef.current = null;
       setActiveLayerKey(layerKey);
+    },
+    []
+  );
+
+  const startFeatureEdition = useCallback(
+    (candidate: DirectContributionFeatureCandidate) => {
+      pendingFeatureEditionRef.current = {
+        layerKey: getCommunityLayerKey(candidate.layer),
+        feature: candidate.feature,
+      };
+      setActiveLayerKey(getCommunityLayerKey(candidate.layer));
     },
     []
   );
@@ -497,10 +528,7 @@ export function useDirectContributionSession({
     (candidateKey: string) => {
       const candidate = featureCandidates.find(
         (currentCandidate) => currentCandidate.key === candidateKey
-      );
-      if (!candidate) {
-        return;
-      }
+      )!;
 
       closeFeatureChoice();
       syncSelectedFeature(candidate.feature);
@@ -546,6 +574,7 @@ export function useDirectContributionSession({
     featureCandidates,
     isFeatureChoiceOpen,
     startSession,
+    startFeatureEdition,
     closeSession,
     triggerToolbarAction,
     saveFeatureAttributes,

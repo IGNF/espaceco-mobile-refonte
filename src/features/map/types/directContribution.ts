@@ -1,3 +1,4 @@
+import type { CommunityLayer, Table } from '@ign/mobile-core';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 
@@ -6,4 +7,6 @@ export interface DirectContributionFeatureCandidate {
   label: string;
   secondaryLabel?: string;
   feature: Feature<Geometry>;
+  layer: CommunityLayer;
+  table: Table;
 }

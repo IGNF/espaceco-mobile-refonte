@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getUid } from "ol/util";
@@ -23,10 +23,12 @@ import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
 
 import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
+import { DirectContributionFeatureDetailsPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureDetailsPage";
 
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
+import { useCommunityFeatureConsultation } from "@/features/map/hooks/useCommunityFeatureConsultation";
 import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContributionLayers";
 import { useDirectContributionSession } from "@/features/map/hooks/useDirectContributionSession";
 import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
@@ -34,6 +36,7 @@ import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapL
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
+import { getCommunityLayerDirectContributionState } from "@/domain/community/directContribution";
 import styles from "./HomePage.module.css";
 import { overlayRoutes } from "@/app/router/routes";
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
@@ -106,6 +109,7 @@ export function HomePage() {
     featureCandidates: directContributionFeatureCandidates,
     isFeatureChoiceOpen: isDirectContributionFeatureChoiceOpen,
     startSession: startDirectContributionSession,
+    startFeatureEdition: startDirectContributionFeatureEdition,
     triggerToolbarAction: triggerDirectContributionToolbarAction,
     saveFeatureAttributes: saveDirectContributionFeatureAttributes,
     cancelFeatureForm: cancelDirectContributionFeatureForm,
@@ -134,6 +138,19 @@ export function HomePage() {
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [newReportType, setNewReportType] = useState<NewReportType>('standard');
+  const {
+    featureCandidates: consultationFeatureCandidates,
+    selectedFeatureCandidate: consultedFeatureCandidate,
+    isFeatureChoiceOpen: isConsultationFeatureChoiceOpen,
+    selectFeatureCandidate: selectConsultedFeatureCandidate,
+    closeFeatureChoice: closeConsultationFeatureChoice,
+    closeFeatureDetails: closeConsultedFeatureDetails,
+    goBackFromFeatureDetails: goBackFromConsultedFeatureDetails,
+  } = useCommunityFeatureConsultation({
+    map,
+    vectorLayers,
+    disabled: isDirectContributionSessionActive || activeConflict !== null,
+  });
 
   const {
     showModal: showOnboarding,
@@ -214,7 +231,7 @@ export function HomePage() {
     }
   };
 
-  const handleEditLayer = (layerKey: string) => {
+  const prepareLayerEdition = (layerKey: string) => {
     setIsLayersPanelOpen(false);
     setIsSearchOpen(false);
 
@@ -225,8 +242,68 @@ export function HomePage() {
       // Editing a hidden layer is confusing and would keep it outside the normal visible-layer mount set.
       setLayerVisibility(layerKey, true);
     }
+  };
 
+  const handleEditLayer = (layerKey: string) => {
+    prepareLayerEdition(layerKey);
     startDirectContributionSession(layerKey);
+  };
+
+  const handleEditConsultedFeature = () => {
+    const candidate = consultedFeatureCandidate!;
+
+    closeConsultedFeatureDetails();
+    prepareLayerEdition(getCommunityLayerKey(candidate.layer));
+    startDirectContributionFeatureEdition(candidate);
+  };
+
+  const consultedFeatureCanEdit = useMemo(() => {
+    if (!consultedFeatureCandidate) {
+      return false;
+    }
+
+    const layerKey = getCommunityLayerKey(consultedFeatureCandidate.layer);
+    const directContributionState = getCommunityLayerDirectContributionState(
+      consultedFeatureCandidate.layer,
+      {
+        pendingChangesCount: pendingChangesCountByLayerKey[layerKey] ?? 0,
+        locked: lockedByLayerKey[layerKey],
+        isSubmitting: submittingByLayerKey[layerKey],
+      }
+    );
+
+    return Boolean(
+      directContributionState?.editable &&
+      !directContributionState.locked &&
+      !directContributionState.isSubmitting
+    );
+  }, [
+    consultedFeatureCandidate,
+    lockedByLayerKey,
+    pendingChangesCountByLayerKey,
+    submittingByLayerKey,
+  ]);
+
+  const activeFeatureChoiceCandidates = isDirectContributionFeatureChoiceOpen
+    ? directContributionFeatureCandidates
+    : consultationFeatureCandidates;
+
+  const handleSelectFeatureCandidate = (candidateKey: string) => {
+    if (isDirectContributionFeatureChoiceOpen) {
+      selectDirectContributionFeatureCandidate(candidateKey);
+      return;
+    }
+
+    selectConsultedFeatureCandidate(candidateKey);
+  };
+
+  const handleCloseFeatureChoice = () => {
+    if (isDirectContributionFeatureChoiceOpen) {
+      closeDirectContributionFeatureChoice();
+      return;
+    }
+
+    closeConsultationFeatureChoice();
   };
 
   const handleLogout = async () => {
@@ -348,11 +425,24 @@ export function HomePage() {
         onCancel={cancelDirectContributionFeatureForm}
       />
 
+      <DirectContributionFeatureDetailsPage
+        isOpen={consultedFeatureCandidate !== null}
+        candidate={consultedFeatureCandidate}
+        canEdit={consultedFeatureCanEdit}
+        onEdit={handleEditConsultedFeature}
+        onBack={
+          consultationFeatureCandidates.length > 1
+            ? goBackFromConsultedFeatureDetails
+            : undefined
+        }
+        onClose={closeConsultedFeatureDetails}
+      />
+
       <DirectContributionFeatureChoiceAlert
-        isOpen={isDirectContributionFeatureChoiceOpen}
-        candidates={directContributionFeatureCandidates}
-        onSelectCandidate={selectDirectContributionFeatureCandidate}
-        onClose={closeDirectContributionFeatureChoice}
+        isOpen={isDirectContributionFeatureChoiceOpen || isConsultationFeatureChoiceOpen}
+        candidates={activeFeatureChoiceCandidates}
+        onSelectCandidate={handleSelectFeatureCandidate}
+        onClose={handleCloseFeatureChoice}
       />
 
       <DirectContributionConflictAlert
