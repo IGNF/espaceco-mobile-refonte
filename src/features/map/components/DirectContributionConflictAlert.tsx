@@ -11,6 +11,7 @@ import {
 import { extractThemeConfigs } from '@/features/report/utils/reportAttributes';
 import { Alert } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
+import { Toggle } from '@/shared/ui/Toggle';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 import inputs from '@/shared/styles/inputs.module.css';
@@ -99,6 +100,7 @@ export function DirectContributionConflictAlert({
   const [selectedReportTheme, setSelectedReportTheme] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [showUnchangedFields, setShowUnchangedFields] = useState(false);
 
   const reportThemeOptions = useMemo(() => {
     const themeConfigs = extractThemeConfigs(
@@ -126,16 +128,27 @@ export function DirectContributionConflictAlert({
   }, [conflict, selectedConflictKey]);
 
   const selectedConflictFieldDiffs = useMemo(() => {
-    if (!selectedConflict) {
+    if (!selectedConflict || !conflict) {
       return [];
     }
 
     return getDirectContributionConflictFieldDiffs(
       selectedConflict.localObject,
       selectedConflict,
-      selectedConflict.locallyUpdatedFieldNames
+      selectedConflict.locallyUpdatedFieldNames,
+      showUnchangedFields,
+      conflict.idName
     );
-  }, [selectedConflict]);
+  }, [conflict, selectedConflict, showUnchangedFields]);
+  const visibleConflictFieldDiffs = useMemo(() => {
+    if (showUnchangedFields) {
+      return selectedConflictFieldDiffs;
+    }
+
+    return selectedConflictFieldDiffs.filter((fieldDiff) => {
+      return fieldDiff.isLocallyUpdated || fieldDiff.state !== 'same';
+    });
+  }, [selectedConflictFieldDiffs, showUnchangedFields]);
 
   const requiresReportTheme = Object.values(resolutionsByConflictKey).some((choice) => {
     return choice === 'report';
@@ -291,10 +304,10 @@ export function DirectContributionConflictAlert({
                   <div className={styles.detailHeader}>
                     <div>
                       <h3 className={joinCSSClassNames(typography.heading2, styles.sectionTitle)}>
-                        {selectedConflict.objectLabel}
+                        {t('layers.directContribution.conflicts.actionsTitle')}
                       </h3>
                       <p className={styles.sectionDescription}>
-                        {t('layers.directContribution.conflicts.comparisonHelp')}
+                        {t('layers.directContribution.conflicts.actionsHelp')}
                       </p>
                     </div>
                   </div>
@@ -328,22 +341,39 @@ export function DirectContributionConflictAlert({
                 </div>
 
                 <div className={joinCSSClassNames(styles.sectionCard, styles.detailCard)}>
-                  <h4 className={joinCSSClassNames(typography.textLarge, styles.detailTitle)}>
-                    {t('layers.directContribution.conflicts.comparisonTitle')}
-                  </h4>
+                  <div className={styles.detailTitleRow}>
+                    <h4 className={joinCSSClassNames(typography.textLarge, styles.detailTitle)}>
+                      {t('layers.directContribution.conflicts.comparisonTitle')}
+                    </h4>
+                    <div className={styles.toggleFieldsControl}>
+                      <Toggle
+                        checked={showUnchangedFields}
+                        onChange={setShowUnchangedFields}
+                        color='primary'
+                      />
+                      <span>
+                        {showUnchangedFields
+                          ? t('layers.directContribution.conflicts.hideUnchangedFields')
+                          : t('layers.directContribution.conflicts.showUnchangedFields')}
+                      </span>
+                    </div>
+                  </div>
 
                   <div className={styles.fieldList}>
-                    {selectedConflictFieldDiffs.length === 0 ? (
+                    {visibleConflictFieldDiffs.length === 0 ? (
                       <p className={styles.emptyState}>
                         {t('layers.directContribution.conflicts.emptyComparison')}
                       </p>
                     ) : (
-                      selectedConflictFieldDiffs.map((fieldDiff) => (
+                      visibleConflictFieldDiffs.map((fieldDiff) => (
                         <div
                           key={fieldDiff.name}
                           className={joinCSSClassNames(
                             styles.fieldRow,
-                            fieldDiff.state === 'different' && styles.fieldRowDifferent
+                            fieldDiff.state === 'same' && styles.fieldRowSame,
+                            fieldDiff.state === 'different' &&
+                              fieldDiff.isServerValueReturned &&
+                              styles.fieldRowDifferent
                           )}
                         >
                           <div className={styles.fieldHeader}>

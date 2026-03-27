@@ -27,6 +27,7 @@ export interface DirectContributionConflictFieldDiff {
   serverValue: unknown;
   state: DirectContributionConflictFieldState;
   isLocallyUpdated: boolean;
+  isServerValueReturned: boolean;
 }
 
 export interface DirectContributionConflictObject {
@@ -70,12 +71,18 @@ function getConflictFieldState(
 function getConflictFieldNames(
   localObject: Record<string, unknown> | null | undefined,
   serverObject: Record<string, unknown>,
-  locallyUpdatedFieldNames: string[]
+  locallyUpdatedFieldNames: string[],
+  includeAllLocalFields: boolean,
+  idName?: string
 ): string[] {
   const fieldNames: string[] = [];
 
   const appendFieldName = (fieldName: string) => {
     if (TECHNICAL_CONFLICT_FIELD_NAMES.has(fieldName)) {
+      return;
+    }
+
+    if (idName && fieldName === idName) {
       return;
     }
 
@@ -93,6 +100,12 @@ function getConflictFieldNames(
 
   for (const fieldName of Object.keys(serverObject)) {
     appendFieldName(fieldName);
+  }
+
+  if (includeAllLocalFields && localObject) {
+    for (const fieldName of Object.keys(localObject)) {
+      appendFieldName(fieldName);
+    }
   }
 
   if (fieldNames.length > 0) {
@@ -173,17 +186,27 @@ export function parseDirectContributionConflict(
 export function getDirectContributionConflictFieldDiffs(
   localObject: Record<string, unknown> | null | undefined,
   conflictObject: DirectContributionConflictObject,
-  locallyUpdatedFieldNames: string[] = []
+  locallyUpdatedFieldNames: string[] = [],
+  includeAllLocalFields = false,
+  idName?: string
 ): DirectContributionConflictFieldDiff[] {
   const locallyUpdatedFieldNameSet = new Set(locallyUpdatedFieldNames);
 
   return getConflictFieldNames(
     localObject,
     conflictObject.serverObject,
-    locallyUpdatedFieldNames
+    locallyUpdatedFieldNames,
+    includeAllLocalFields,
+    idName
   ).map((fieldName) => {
       const localValue = localObject?.[fieldName];
-      const serverValue = conflictObject.serverObject[fieldName];
+      const isServerValueReturned = Object.prototype.hasOwnProperty.call(
+        conflictObject.serverObject,
+        fieldName
+      );
+      const serverValue = isServerValueReturned
+        ? conflictObject.serverObject[fieldName]
+        : undefined;
 
       return {
         name: fieldName,
@@ -191,8 +214,7 @@ export function getDirectContributionConflictFieldDiffs(
         serverValue,
         state: getConflictFieldState(localValue, serverValue),
         isLocallyUpdated: locallyUpdatedFieldNameSet.has(fieldName),
+        isServerValueReturned,
       };
-    }).filter((fieldDiff) => {
-      return fieldDiff.isLocallyUpdated || fieldDiff.state !== 'same';
     });
 }
