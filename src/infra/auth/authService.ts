@@ -1,618 +1,62 @@
-
 import { Browser } from '@capacitor/browser';
-import { App } from '@capacitor/app';
-import { CapacitorHttp } from '@capacitor/core';
-import { Device } from '@capacitor/device';
-import type { PluginListenerHandle } from '@capacitor/core';
-
+import { AuthManager, type AuthTokens as CoreAuthTokens } from '@ign/mobile-core';
 import { Storage } from '@ign/mobile-device';
+
+import { mapApiUserToAppUser, type ApiUserResponse } from '@/domain/user/mappers';
+import type { AuthResult, AuthTokens, RefreshResult } from '@/domain/auth/models';
+import { collabApiClient } from '@/infra/api/collabApiClient';
+import { config } from '@/shared/config/env';
+import { AppError, toAppError } from '@/shared/errors/appError';
 import { storageKey } from '@/shared/constants/storage';
 import i18n from '@/shared/i18n';
-
-import { collabApiClient } from "@/infra/api/collabApiClient";
-import { mapApiUserToAppUser, type ApiUserResponse } from "@/domain/user/mappers";
-import type { AppUser } from "@/domain/user/models";
-import type { AuthResult, AuthTokens, RefreshResult, TokenExchangeResult, TokenResponse } from "@/domain/auth/models";
-import { config } from "@/shared/config/env";
-import { AppError, toAppError } from '@/shared/errors/appError';
-import type { AppErrorKind } from '@/shared/errors/appError';
-
-import { generateCodeChallengeFromVerifier, generateCodeVerifier, getRedirectUri } from "@/shared/utils/auth";
+import { getRedirectUri } from '@/shared/utils/auth';
 import { showToastSafe } from '@/shared/utils/toast';
 
-// Re-export domain types for convenience
-export type { AuthResult, RefreshResult } from "@/domain/auth/models";
+export type { AuthResult, RefreshResult } from '@/domain/auth/models';
 
-function buildAuthError(
-  translationKey: string,
-  options: {
-    kind?: AppErrorKind;
-    message?: string;
-    code?: number | string;
-    retryable?: boolean;
-    cause?: unknown;
-  } = {}
-): AppError {
-  return new AppError({
-    kind: options.kind ?? 'unknown',
-    translationKey,
-    message: options.message,
-    code: options.code,
-    retryable: options.retryable,
-    cause: options.cause,
-  });
-}
+const authManager = new AuthManager({
+  apiBaseUrl: config.api.baseUrl,
+  oAuthBaseUrl: config.oAuth.baseUrl,
+  oAuthClientId: config.oAuth.clientId,
+});
 
-/**
- * Login with email and password.
- * Uses OAuth2 password grant via Keycloak.
- */
-export async function loginWithPassword(email: string, password: string): Promise<AuthResult> {
-  try {
-    collabApiClient.setCredentials(email, password);
-    const response = await collabApiClient.getUser("me");
-    const user = mapApiUserToAppUser(response.data as ApiUserResponse);
-
-    return { success: true, user };
-  } catch (error) {
-    try {
-      collabApiClient.disconnect();
-    } catch (disconnectError) {
-      toAppError(disconnectError, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.loginFailed',
-      });
-    }
-
-    const appError = toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.auth.loginFailed',
-    });
-
-    if (appError.kind === 'unauthorized') {
-      return {
-        success: false,
-        user: null,
-        error: buildAuthError('errors.auth.invalidCredentials', {
-          kind: 'unauthorized',
-          code: appError.code,
-          cause: error,
-          retryable: false,
-        }),
-      };
-    }
-
-    return {
-      success: false,
-      user: null,
-      error: buildAuthError('errors.auth.loginFailed', {
-        kind: appError.kind,
-        code: appError.code,
-        message: appError.message,
-        cause: error,
-        retryable: appError.retryable,
-      }),
-    };
-  }
-}
-
-/**
- * Login with OAuth using PKCE flow.
- * On mobile (iOS/Android), uses native app URL listeners.
- * On web, redirects to the OAuth provider and handles callback via /auth/callback route.
- */
-export async function loginWithOAuth(): Promise<AuthResult> {
-  try {
-    const clearTempCodeVerifier = async () => {
-      try {
-        await Storage.remove(storageKey('temp_code_verifier'));
-      } catch (error) {
-        toAppError(error, {
-          fallbackKind: 'unknown',
-          fallbackTranslationKey: 'errors.auth.codeVerifierMissing',
-        });
-      }
-    };
-
-    // Generate PKCE values
-    const codeVerifier = generateCodeVerifier();
-    const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);
-
-    // Store code verifier for later use in token exchange
-    await Storage.set(storageKey('temp_code_verifier'), codeVerifier);
-
-    const redirectUri = await getRedirectUri();
-    console.log('loginWithOAuth => redirectUri', redirectUri);
-
-    const authUrl = `${config.oAuth.baseUrl}/auth?` + new URLSearchParams({
-      client_id: config.oAuth.clientId,
-      redirect_uri: redirectUri,
-      response_type: 'code',
-      scope: 'openid profile email',
-      code_challenge: codeChallenge,
-      code_challenge_method: 'S256',
-    }).toString();
-
-    // Check platform
-    const deviceInfo = await Device.getInfo();
-    const isWeb = deviceInfo.platform === 'web';
-
-    if (isWeb) {
-      // On web, redirect to OAuth provider directly
-      // The callback will be handled by the /auth/callback route
-      window.location.href = authUrl;
-      // Return a pending result - the actual auth will complete after redirect
-      return {
-        success: false,
-        user: null,
-        error: buildAuthError('errors.auth.oauthRedirect', {
-          kind: 'unknown',
-          retryable: false,
-        })
-      };
-    }
-
-    // Mobile flow: use native app URL listeners
-    return new Promise((resolve) => {
-      let appUrlListener: PluginListenerHandle | null = null;
-      let browserFinishedListener: PluginListenerHandle | null = null;
-      let settled = false;
-      let ignoreBrowserFinished = false;
-
-      const settle = (result: AuthResult) => {
-        if (settled) {
-          return;
-        }
-
-        settled = true;
-        void appUrlListener?.remove();
-        void browserFinishedListener?.remove();
-        resolve(result);
-      };
-
-      const handleCallback = async ({ url }: { url: string }) => {
-        // Only handle our redirect URI
-        if (!url.startsWith(redirectUri.split('?')[0])) {
-          return;
-        }
-
-        ignoreBrowserFinished = true;
-        void appUrlListener?.remove();
-        void Browser.close();
-
-        try {
-          const urlObject = new URL(url);
-          const code = urlObject.searchParams.get('code');
-          const error = urlObject.searchParams.get('error');
-
-          if (error) {
-            await clearTempCodeVerifier();
-            settle({
-              success: false,
-              user: null,
-              error: buildAuthError('errors.auth.oauthCallbackFailed', {
-                kind: 'unknown',
-                message: error,
-                retryable: false,
-              }),
-            });
-            return;
-          }
-
-          if (!code) {
-            await clearTempCodeVerifier();
-            settle({
-              success: false,
-              user: null,
-              error: buildAuthError('errors.auth.noAuthorizationCode', {
-                kind: 'validation',
-                retryable: false,
-              }),
-            });
-            return;
-          }
-
-          // Exchange code for tokens
-          const tokenResult = await exchangeCodeForTokens(code, redirectUri);
-          if (!tokenResult.success || !tokenResult.tokens) {
-            settle({ success: false, user: null, error: tokenResult.error });
-            return;
-          }
-
-          // Fetch user info
-          const accessToken = await getStoredAccessToken();
-          if (!accessToken) {
-            settle({
-              success: false,
-              user: null,
-              error: buildAuthError('errors.auth.noAccessTokenAfterExchange'),
-            });
-            return;
-          }
-
-          collabApiClient.setExternalToken(
-            tokenResult.tokens.accessToken,
-            tokenResult.tokens.refreshToken,
-            tokenResult.tokens.expiresIn,
-            tokenResult.tokens.refreshExpiresIn
-          );
-
-          const user = await fetchUserInfo();
-          if (!user) {
-            settle({
-              success: false,
-              user: null,
-              error: buildAuthError('errors.auth.failedToFetchUserInfo'),
-            });
-            return;
-          }
-
-          settle({ success: true, user });
-        } catch (err) {
-          await clearTempCodeVerifier();
-          settle({
-            success: false,
-            user: null,
-            error: toAppError(err, {
-              fallbackKind: 'unknown',
-              fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
-            }),
-          });
-        }
-      };
-
-      void (async () => {
-        try {
-          appUrlListener = await App.addListener('appUrlOpen', handleCallback);
-          browserFinishedListener = await Browser.addListener('browserFinished', async () => {
-            if (ignoreBrowserFinished) {
-              return;
-            }
-
-            await clearTempCodeVerifier();
-            settle({
-              success: false,
-              user: null,
-              error: buildAuthError('errors.auth.oauthCallbackFailed', {
-                kind: 'validation',
-                code: 'oauth_cancelled',
-                message: 'Browser closed by user',
-                retryable: false,
-              }),
-            });
-          });
-          await Browser.open({ url: authUrl });
-        } catch (error) {
-          await clearTempCodeVerifier();
-          settle({
-            success: false,
-            user: null,
-            error: toAppError(error, {
-              fallbackKind: 'unknown',
-              fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
-            }),
-          });
-        }
-      })();
-    });
-  } catch (error) {
-    try {
-      await Storage.remove(storageKey('temp_code_verifier'));
-    } catch { }
-    return {
-      success: false,
-      user: null,
-      error: toAppError(error, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
-      }),
-    };
-  }
-}
-
-/**
- * Handle OAuth callback on web platform.
- * Called by the /auth/callback route after redirect from OAuth provider.
- */
-export async function handleOAuthCallback(code: string): Promise<AuthResult> {
-  try {
-    const redirectUri = await getRedirectUri();
-
-    // Exchange code for tokens
-    const tokenResult = await exchangeCodeForTokens(code, redirectUri);
-    if (!tokenResult.success || !tokenResult.tokens) {
-      return { success: false, user: null, error: tokenResult.error };
-    }
-
-    // Fetch user info
-    const accessToken = await getStoredAccessToken();
-    if (!accessToken) {
-      return {
-        success: false,
-        user: null,
-        error: buildAuthError('errors.auth.noAccessTokenAfterExchange'),
-      };
-    }
-
-    collabApiClient.setExternalToken(
-      tokenResult.tokens.accessToken,
-      tokenResult.tokens.refreshToken,
-      tokenResult.tokens.expiresIn,
-      tokenResult.tokens.refreshExpiresIn
-    );
-
-    const user = await fetchUserInfo();
-    if (!user) {
-      return {
-        success: false,
-        user: null,
-        error: buildAuthError('errors.auth.failedToFetchUserInfo'),
-      };
-    }
-
-    return { success: true, user };
-  } catch (err) {
-    try {
-      await Storage.remove(storageKey('temp_code_verifier'));
-    } catch (cleanupError) {
-      toAppError(cleanupError, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
-      });
-    }
-    return {
-      success: false,
-      user: null,
-      error: toAppError(err, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.oauthCallbackFailed',
-      }),
-    };
-  }
-}
-
-/**
- * Exchange authorization code for tokens
- */
-async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<TokenExchangeResult> {
-  try {
-    const codeVerifier = await Storage.get(storageKey('temp_code_verifier'));
-
-    if (!codeVerifier) {
-      return {
-        success: false,
-        error: buildAuthError('errors.auth.codeVerifierMissing', {
-          kind: 'validation',
-          retryable: false,
-        }),
-      };
-    }
-
-    const tokenUrl = `${config.oAuth.baseUrl}/token`;
-
-    // Use CapacitorHttp to bypass CORS restrictions
-    const response = await CapacitorHttp.post({
-      url: tokenUrl,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      data: new URLSearchParams({
-        grant_type: 'authorization_code',
-        client_id: config.oAuth.clientId,
-        code,
-        redirect_uri: redirectUri,
-        code_verifier: codeVerifier,
-      }).toString(),
-    });
-
-    if (response.status >= 400) {
-      throw new Error(`Token exchange failed: ${JSON.stringify(response.data)}`);
-    }
-
-    console.log('exchangeCodeForTokens => response.data', response.data);
-
-    // Store tokens
-    await storeTokens(response.data as TokenResponse);
-
-    // Clean up temporary storage
-    try {
-      await Storage.remove(storageKey('temp_code_verifier'));
-    } catch (cleanupError) {
-      toAppError(cleanupError, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.tokenExchangeFailed',
-      });
-    }
-
-    const authTokens: AuthTokens = {
-      accessToken: response.data.access_token,
-      refreshToken: response.data.refresh_token,
-      expiresIn: response.data.expires_in,
-      refreshExpiresIn: response.data.refresh_expires_in,
-    };
-
-    return { success: true, tokens: authTokens };
-  } catch (err) {
-    try {
-      await Storage.remove(storageKey('temp_code_verifier'));
-    } catch (cleanupError) {
-      toAppError(cleanupError, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.tokenExchangeFailed',
-      });
-    }
-    return {
-      success: false,
-      error: toAppError(err, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.tokenExchangeFailed',
-      }),
-    };
-  }
-}
-
-/**
- * Fetch user info from the collab API using the OAuth access token
- */
-async function fetchUserInfo(): Promise<AppUser | null> {
-  try {
-    const response = await collabApiClient.user.get("me");
-    console.log('fetchUserInfo => response', response);
-
-    if (response.status >= 400) {
-      return null;
-    }
-
-    const userData = response.data as ApiUserResponse;
-    return mapApiUserToAppUser(userData);
-  } catch (error) {
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.auth.failedToFetchUserInfo',
-    });
-    return null;
-  }
-}
-
-/**
- * Store tokens and expiry dates in storage
- */
-async function storeTokens(tokens: TokenResponse): Promise<void> {
-  console.log('storeTokens => tokens', tokens);
+async function storeTokens(tokens: CoreAuthTokens): Promise<void> {
   const now = Date.now();
 
-  // Calculate expiry timestamps (expires_in is in seconds)
-  const accessTokenExpiresAt = now + (tokens.expires_in * 1000);
+  await Storage.set(storageKey('access_token'), tokens.accessToken);
 
-  await Storage.set(storageKey('access_token'), tokens.access_token);
-  await Storage.set(storageKey('access_token_expires_at'), accessTokenExpiresAt.toString());
-
-  if (tokens.refresh_token) {
-    await Storage.set(storageKey('refresh_token'), tokens.refresh_token);
-
-    if (tokens.refresh_expires_in) {
-      const refreshTokenExpiresAt = now + (tokens.refresh_expires_in * 1000);
-      await Storage.set(storageKey('refresh_token_expires_at'), refreshTokenExpiresAt.toString());
-    }
+  if (tokens.expiresIn) {
+    await Storage.set(storageKey('access_token_expires_at'), String(now + (tokens.expiresIn * 1000)));
+  } else {
+    await Storage.remove(storageKey('access_token_expires_at'));
   }
 
-  if (tokens.id_token) {
-    await Storage.set(storageKey('id_token'), tokens.id_token);
+  if (tokens.refreshToken) {
+    await Storage.set(storageKey('refresh_token'), tokens.refreshToken);
+  } else {
+    await Storage.remove(storageKey('refresh_token'));
   }
-}
 
-/**
- * Refresh the access token using the stored refresh token
- */
-export async function refreshAccessToken(): Promise<RefreshResult> {
-  try {
-    const refreshToken = await Storage.get(storageKey('refresh_token'));
+  if (tokens.refreshToken && tokens.refreshExpiresIn) {
+    await Storage.set(storageKey('refresh_token_expires_at'), String(now + (tokens.refreshExpiresIn * 1000)));
+  } else {
+    await Storage.remove(storageKey('refresh_token_expires_at'));
+  }
 
-    if (!refreshToken) {
-      return {
-        success: false,
-        error: buildAuthError('errors.auth.refreshTokenMissing', {
-          kind: 'unauthorized',
-          retryable: false,
-        }),
-      };
-    }
-
-    // Check if refresh token is expired
-    const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
-    if (refreshExpiresAt && Date.now() >= parseInt(refreshExpiresAt, 10)) {
-      void showToastSafe({
-        text: i18n.t('login.sessionExpired'),
-        duration: "short",
-        position: "top"
-      });
-      return {
-        success: false,
-        error: buildAuthError('errors.auth.refreshTokenExpired', {
-          kind: 'unauthorized',
-          retryable: false,
-        }),
-      };
-    }
-
-    const tokenUrl = `${config.oAuth.baseUrl}/token`;
-
-    const response = await CapacitorHttp.post({
-      url: tokenUrl,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      data: new URLSearchParams({
-        grant_type: 'refresh_token',
-        client_id: config.oAuth.clientId,
-        refresh_token: refreshToken,
-      }).toString(),
-    });
-
-    if (response.status >= 400) {
-      throw new Error(`Token refresh failed: ${JSON.stringify(response.data)}`);
-    }
-
-    const tokens = response.data as TokenResponse;
-    await storeTokens(tokens);
-
-    const authTokens: AuthTokens = {
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresIn: tokens.expires_in,
-      refreshExpiresIn: tokens.refresh_expires_in,
-    };
-
-    return { success: true, tokens: authTokens };
-  } catch (err) {
-    return {
-      success: false,
-      error: toAppError(err, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.tokenRefreshFailed',
-      }),
-    };
+  if (tokens.idToken) {
+    await Storage.set(storageKey('id_token'), tokens.idToken);
+  } else {
+    await Storage.remove(storageKey('id_token'));
   }
 }
 
-/**
- * Check if the access token is expired or about to expire
- * @param bufferSeconds - Consider token expired this many seconds before actual expiry (default: 60)
- */
-export async function isAccessTokenExpired(bufferSeconds: number = 60): Promise<boolean> {
-  try {
-    const expiresAt = await Storage.get(storageKey('access_token_expires_at'));
-
-    if (!expiresAt) {
-      return true; // No expiry stored, consider expired
-    }
-
-    const expiryTime = parseInt(expiresAt, 10);
-    const bufferMs = bufferSeconds * 1000;
-
-    return Date.now() >= (expiryTime - bufferMs);
-  } catch (error) {
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.auth.tokenRefreshFailed',
-    });
-    return true;
-  }
-}
-
-/**
- * Get the stored access token
- */
-export async function getStoredAccessToken(): Promise<string | null> {
-  try {
-    return await Storage.get(storageKey('access_token'));
-  } catch (error) {
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.auth.noAccessTokenAfterExchange',
-    });
-    return null;
-  }
+function setExternalToken(tokens: AuthTokens): void {
+  collabApiClient.setExternalToken(
+    tokens.accessToken,
+    tokens.refreshToken ?? '',
+    tokens.expiresIn,
+    tokens.refreshExpiresIn
+  );
 }
 
 function clearInMemoryAuthState(): void {
@@ -632,104 +76,348 @@ function clearInMemoryAuthState(): void {
 }
 
 async function clearStoredAuthState(): Promise<void> {
-  await Promise.all([
-    Storage.remove(storageKey('access_token')),
-    Storage.remove(storageKey('access_token_expires_at')),
-    Storage.remove(storageKey('refresh_token')),
-    Storage.remove(storageKey('refresh_token_expires_at')),
-    Storage.remove(storageKey('id_token')),
-    Storage.remove(storageKey('temp_code_verifier')),
-  ]);
+  const keys = ['access_token', 'access_token_expires_at', 'refresh_token', 'refresh_token_expires_at', 'id_token', 'temp_code_verifier'];
+  await Promise.all(keys.map(key => Storage.remove(storageKey(key))));
 }
 
-async function revokeToken(token: string): Promise<void> {
-  if (!token || token.length === 0) {
-    return;
-  }
-
+export async function loginWithPassword(email: string, password: string): Promise<AuthResult> {
   try {
-    await CapacitorHttp.post({
-      url: `${config.oAuth.baseUrl}/revoke`,
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
+    const result = await authManager.loginWithPassword(email, password);
+
+    if (!result.success || !result.user) {
+      try {
+        collabApiClient.disconnect();
+      } catch {
+        // The client can already be disconnected.
+      }
+
+      if (result.error?.message === 'Unauthorized') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.invalidCredentials', retryable: false, cause: result.error }),
+        };
+      }
+
+      return {
+        success: false,
+        user: null,
+        error: toAppError(result.error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.loginFailed' }),
+      };
+    }
+
+    collabApiClient.setCredentials(email, password);
+
+    return {
+      success: true,
+      user: {
+        ...result.user,
+        avatarUrl: result.user.avatar,
+        description: result.user.description,
       },
-      data: new URLSearchParams({
-        client_id: config.oAuth.clientId,
-        token,
-      }).toString(),
-    });
+    };
   } catch (error) {
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.global.unknown',
-    });
+    try {
+      collabApiClient.disconnect();
+    } catch {
+      // The client can already be disconnected.
+    }
+
+    return {
+      success: false,
+      user: null,
+      error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.loginFailed' }),
+    };
   }
 }
 
-/**
- * Logout and clear credentials.
- * Clears local session state first so logout still completes even if the
- * revoke request is slow, fails, or the app is backgrounded immediately after.
- * Token revocation remains best-effort.
- */
-export async function logout(): Promise<void> {
+export async function loginWithOAuth(): Promise<AuthResult> {
   try {
-    const [accessToken, refreshToken] = await Promise.all([
-      Storage.get(storageKey('access_token')),
-      Storage.get(storageKey('refresh_token')),
-    ]);
+    const redirectUri = await getRedirectUri();
+    const result = await authManager.loginWithOAuth(redirectUri);
 
-    clearInMemoryAuthState();
-    await clearStoredAuthState();
+    if (!result.success) {
+      if (result.error?.message === 'OAuth redirect') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.oauthRedirect', retryable: false, cause: result.error }),
+        };
+      }
 
-    void revokeToken(accessToken);
-    void revokeToken(refreshToken);
+      if (result.error?.message === 'Code verifier missing') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'validation', translationKey: 'errors.auth.codeVerifierMissing', retryable: false, cause: result.error }),
+        };
+      }
+
+      if (result.error?.message === 'No authorization code') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'validation', translationKey: 'errors.auth.noAuthorizationCode', retryable: false, cause: result.error }),
+        };
+      }
+
+      if (result.error?.message === 'Token exchange failed') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.tokenExchangeFailed', retryable: false, cause: result.error }),
+        };
+      }
+
+      return {
+        success: false,
+        user: null,
+        error: toAppError(result.error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
+      };
+    }
+
+    if (!result.user) {
+      return {
+        success: false,
+        user: null,
+        error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.failedToFetchUserInfo', retryable: false }),
+      };
+    }
+
+    if (!result.tokens?.accessToken) {
+      return {
+        success: false,
+        user: null,
+        error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.noAccessTokenAfterExchange', retryable: false }),
+      };
+    }
+
+    await storeTokens(result.tokens);
+    setExternalToken(result.tokens);
+
+    return {
+      success: true,
+      user: {
+        ...result.user,
+        avatarUrl: result.user.avatar,
+        description: result.user.description,
+      },
+    };
   } catch (error) {
-    clearInMemoryAuthState();
-    throw toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.global.unknown',
-    });
+    return {
+      success: false,
+      user: null,
+      error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
+    };
+  } finally {
+    try {
+      await Browser.close();
+    } catch {
+      // The browser can already be closed.
+    }
   }
 }
 
-/**
- * Get the current user if logged in
- */
+export async function handleOAuthCallback(code: string): Promise<AuthResult> {
+  try {
+    const redirectUri = await getRedirectUri();
+    const result = await authManager.completeOAuthCallback(code, redirectUri);
+
+    if (!result.success) {
+      if (result.error?.message === 'Code verifier missing') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'validation', translationKey: 'errors.auth.codeVerifierMissing', retryable: false, cause: result.error }),
+        };
+      }
+
+      if (result.error?.message === 'Token exchange failed') {
+        return {
+          success: false,
+          user: null,
+          error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.tokenExchangeFailed', retryable: false, cause: result.error }),
+        };
+      }
+
+      return {
+        success: false,
+        user: null,
+        error: toAppError(result.error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
+      };
+    }
+
+    if (!result.user) {
+      return {
+        success: false,
+        user: null,
+        error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.failedToFetchUserInfo', retryable: false }),
+      };
+    }
+
+    if (!result.tokens?.accessToken) {
+      return {
+        success: false,
+        user: null,
+        error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.noAccessTokenAfterExchange', retryable: false }),
+      };
+    }
+
+    await storeTokens(result.tokens);
+    setExternalToken(result.tokens);
+
+    return {
+      success: true,
+      user: {
+        ...result.user,
+        avatarUrl: result.user.avatar,
+        description: result.user.description,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      user: null,
+      error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
+    };
+  }
+}
+
+export async function refreshAccessToken(): Promise<RefreshResult> {
+  try {
+    const refreshToken = await Storage.get(storageKey('refresh_token'));
+
+    if (!refreshToken) {
+      return {
+        success: false,
+        error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.refreshTokenMissing', retryable: false }),
+      };
+    }
+
+    const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
+    if (refreshExpiresAt && Date.now() >= parseInt(refreshExpiresAt, 10)) {
+      void showToastSafe({
+        text: i18n.t('login.sessionExpired'),
+        duration: 'short',
+        position: 'top',
+      });
+
+      return {
+        success: false,
+        error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.refreshTokenExpired', retryable: false }),
+      };
+    }
+
+    const result = await authManager.refreshAccessToken(refreshToken);
+
+    if (!result.success || !result.tokens) {
+      if (result.error?.message === 'Refresh token expired') {
+        void showToastSafe({
+          text: i18n.t('login.sessionExpired'),
+          duration: 'short',
+          position: 'top',
+        });
+
+        return {
+          success: false,
+          error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.refreshTokenExpired', retryable: false, cause: result.error }),
+        };
+      }
+
+      if (result.error?.message === 'Refresh token missing') {
+        return {
+          success: false,
+          error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.refreshTokenMissing', retryable: false, cause: result.error }),
+        };
+      }
+
+      return {
+        success: false,
+        error: toAppError(result.error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.tokenRefreshFailed' }),
+      };
+    }
+
+    await storeTokens(result.tokens);
+
+    const tokens: AuthTokens = {
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+      expiresIn: result.tokens.expiresIn,
+      refreshExpiresIn: result.tokens.refreshExpiresIn,
+    };
+
+    return {
+      success: true,
+      tokens,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.tokenRefreshFailed' }),
+    };
+  }
+}
+
+export async function isAccessTokenExpired(bufferSeconds: number = 60): Promise<boolean> {
+  try {
+    const expiresAt = await Storage.get(storageKey('access_token_expires_at'));
+
+    if (!expiresAt) {
+      return true;
+    }
+
+    return Date.now() >= (parseInt(expiresAt, 10) - (bufferSeconds * 1000));
+  } catch (error) {
+    toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.tokenRefreshFailed' });
+    return true;
+  }
+}
+
+export async function getStoredAccessToken(): Promise<string | null> {
+  try {
+    return await Storage.get(storageKey('access_token'));
+  } catch (error) {
+    toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.noAccessTokenAfterExchange' });
+    return null;
+  }
+}
+
+export async function logout(): Promise<void> {
+  const [accessToken, refreshToken] = await Promise.all([
+    Storage.get(storageKey('access_token')),
+    Storage.get(storageKey('refresh_token')),
+  ]);
+
+  clearInMemoryAuthState();
+  await clearStoredAuthState();
+  await authManager.logout(accessToken ?? '', refreshToken ?? '');
+}
+
 export async function getCurrentUser(): Promise<AuthResult> {
   if (collabApiClient.isConnected() === false) {
     return {
       success: false,
       user: null,
-      error: buildAuthError('errors.auth.notAuthenticated', {
-        kind: 'unauthorized',
-        retryable: false,
-      }),
+      error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.notAuthenticated', retryable: false }),
     };
   }
 
   try {
-    const response = await collabApiClient.user.get("me");
-    const user = mapApiUserToAppUser(response.data as ApiUserResponse);
-    return { success: true, user };
+    const response = await collabApiClient.user.get('me');
+
+    return {
+      success: true,
+      user: mapApiUserToAppUser(response.data as ApiUserResponse),
+    };
   } catch (error) {
     return {
       success: false,
       user: null,
-      error: toAppError(error, {
-        fallbackKind: 'unknown',
-        fallbackTranslationKey: 'errors.auth.currentUserFailed',
-      }),
+      error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.currentUserFailed' }),
     };
   }
 }
 
-/**
- * Restore tokens from storage into the collabApiClient.
- * Should be called on app startup to re-hydrate the client after a page refresh.
- * Handles token expiry: if access token is expired, attempts refresh.
- * Returns true if a valid session was restored.
- */
 export async function restoreSession(): Promise<boolean> {
   try {
     const accessToken = await Storage.get(storageKey('access_token'));
@@ -739,61 +427,52 @@ export async function restoreSession(): Promise<boolean> {
       return false;
     }
 
-    const expired = await isAccessTokenExpired();
-
-    if (!expired && accessToken) {
-      // Access token is still valid, restore it
+    if (accessToken && !(await isAccessTokenExpired())) {
       const expiresAt = await Storage.get(storageKey('access_token_expires_at'));
       const refreshExpiresAt = await Storage.get(storageKey('refresh_token_expires_at'));
       const now = Date.now();
 
-      const expiresIn = expiresAt ? Math.floor((parseInt(expiresAt, 10) - now) / 1000) : 0;
-      const refreshExpiresIn = refreshExpiresAt ? Math.floor((parseInt(refreshExpiresAt, 10) - now) / 1000) : 0;
+      setExternalToken({
+        accessToken,
+        refreshToken: refreshToken ?? '',
+        expiresIn: expiresAt ? Math.max(0, Math.floor((parseInt(expiresAt, 10) - now) / 1000)) : 0,
+        refreshExpiresIn: refreshExpiresAt
+          ? Math.max(0, Math.floor((parseInt(refreshExpiresAt, 10) - now) / 1000))
+          : 0,
+      });
 
-      collabApiClient.setExternalToken(accessToken, refreshToken || '', expiresIn, refreshExpiresIn);
       return true;
     }
 
-    // Access token expired, try to refresh
-    if (refreshToken) {
-      const refreshResult = await refreshAccessToken();
-      if (refreshResult.success && refreshResult.tokens) {
-        collabApiClient.setExternalToken(
-          refreshResult.tokens.accessToken,
-          refreshResult.tokens.refreshToken,
-          refreshResult.tokens.expiresIn,
-          refreshResult.tokens.refreshExpiresIn
-        );
-        return true;
-      }
+    if (!refreshToken) {
+      return false;
     }
 
-    // No valid session could be restored
-    return false;
+    const refreshResult = await refreshAccessToken();
+
+    if (!refreshResult.success || !refreshResult.tokens) {
+      return false;
+    }
+
+    setExternalToken(refreshResult.tokens);
+    return true;
   } catch (error) {
     clearInMemoryAuthState();
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.global.unknown',
-    });
+    toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
     return false;
   }
 }
 
-/**
- * Check if there's a valid session
- */
 export async function isSessionValid(): Promise<boolean> {
-  if (collabApiClient.isConnected() === false) return false;
+  if (collabApiClient.isConnected() === false) {
+    return false;
+  }
 
   try {
-    await collabApiClient.getUser("me");
+    await collabApiClient.getUser('me');
     return true;
   } catch (error) {
-    toAppError(error, {
-      fallbackKind: 'unknown',
-      fallbackTranslationKey: 'errors.auth.currentUserFailed',
-    });
+    toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.currentUserFailed' });
     return false;
   }
 }
