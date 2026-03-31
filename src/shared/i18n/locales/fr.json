@@ -16,7 +16,8 @@
     "forgotPassword": "Mot de passe oublié ?",
     "submit": "Se connecter",
     "continueWithoutAccount": "Continuer sans compte",
-    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter."
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "restoringSession": "Restauration de votre session..."
   },
   "errors": {
     "global": {

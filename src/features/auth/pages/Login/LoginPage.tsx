@@ -4,6 +4,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
+import { Loading } from '@/shared/ui/Loading';
 import { getAppErrorTranslationKey, isAppError } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";
@@ -35,7 +36,13 @@ export function LoginPage() {
 	}, [hasInitialAuthCheckCompleted, isAuthenticated, navigate]);
 
 	if (!hasInitialAuthCheckCompleted || isAuthenticated) {
-		return null;
+		return (
+			<div className={styles.container + " " + screen.screenContainer}>
+				<div className={styles.content + " " + styles.loadingContent}>
+					<Loading size='large' label={t('login.restoringSession')} />
+				</div>
+			</div>
+		);
 	}
 
 	const handleLogin = async (e: React.FormEvent) => {

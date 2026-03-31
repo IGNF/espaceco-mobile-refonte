@@ -2,6 +2,18 @@
   margin-top: 1.75rem;
 }
 
+.content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.loadingContent {
+  min-height: 70dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .form {
 	display: flex;
 	flex-direction: column;
