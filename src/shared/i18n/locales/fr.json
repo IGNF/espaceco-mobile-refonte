@@ -625,6 +625,10 @@
       }
     }
   },
+  "myCommunities": {
+    "title": "Mes groupes",
+    "subtitle": "Groupe actif"
+  },
   "about": {
     "title": "À propos",
     "subtitle": "de l'Espace collaboratif IGN"

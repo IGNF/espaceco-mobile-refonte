@@ -21,6 +21,7 @@ import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditRepo
 import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
 import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
+import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
 
 import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import { DirectContributionFeatureDetailsPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureDetailsPage";
@@ -449,8 +450,8 @@ export function HomePage() {
         key={
           activeConflict
             ? `${activeConflict.layerKey}-${activeConflict.conflicts
-                .map((conflict) => conflict.key)
-                .join('-')}`
+              .map((conflict) => conflict.key)
+              .join('-')}`
             : 'direct-contribution-conflict'
         }
         isOpen={activeConflict !== null}
@@ -509,6 +510,10 @@ export function HomePage() {
         reportType={newReportType}
         map={map}
         onSearchPanelVisibilityChange={setIsSearchOpen}
+      />
+      <MyCommunitiesSelectionPage
+        isOpen={activeOverlay === '/my-communities'}
+        onClose={handleCloseOverlay}
       />
       <AboutPage
         isOpen={activeOverlay === '/about'}
