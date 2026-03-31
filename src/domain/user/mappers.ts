@@ -20,7 +20,7 @@ export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
 		firstName: apiUser.firstName,
 		lastName: apiUser.lastName,
 		username: apiUser.username,
-		avatarUrl: apiUser.avatar,
+		avatar: apiUser.avatar,
 		description: apiUser.description,
     communities: apiUser.communities || [],
 		communities_member: apiUser.communities_member || [],

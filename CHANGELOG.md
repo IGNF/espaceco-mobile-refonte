@@ -13,6 +13,17 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.0.3] - 2026-xx-xx
+
+### Added
+
+### Changed
+
+- Le module d'authentification a été externalisé dans le package mobile-core. La refonte utilise maintenant l'auth depuis ce package, et non plus localement.
+
+### Fixed
+
+
 ## [0.0.2] - 2026-03-27
 
 ### Added

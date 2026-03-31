@@ -1,16 +1,16 @@
 PODS:
   - Capacitor (8.0.0):
     - CapacitorCordova
-  - CapacitorApp (8.0.0):
+  - CapacitorApp (8.1.0):
     - Capacitor
-  - CapacitorBrowser (8.0.0):
+  - CapacitorBrowser (8.0.3):
     - Capacitor
   - CapacitorCamera (8.0.0):
     - Capacitor
   - CapacitorCommunityKeepAwake (8.0.0):
     - Capacitor
   - CapacitorCordova (8.0.0)
-  - CapacitorDevice (8.0.0):
+  - CapacitorDevice (8.0.2):
     - Capacitor
   - CapacitorFilesystem (8.0.0):
     - Capacitor
@@ -87,12 +87,12 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: 79e40e5e76f852965dce30406c65253fa154e24a
-  CapacitorApp: cfa0120a1f3a6f69d4d37d3041782aa5c5167d0b
-  CapacitorBrowser: 7452c73a202716d9c9035e5dbe5c5d8d07737f22
+  CapacitorApp: a4d8d936cc4390859a3766f141048abe55d4076f
+  CapacitorBrowser: f42210052d25867e64cda9ee28906ca830835ebe
   CapacitorCamera: 05ac5bd4499ed4b8cf5358d1b4a874b385de7b4d
   CapacitorCommunityKeepAwake: 2dffdfe2c56a49b15bef37da2e1a7bf5a8675989
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
-  CapacitorDevice: 56baac70d6493c42756676d521e99eea5cc83e71
+  CapacitorDevice: b50f119138a2b69a1e9213f4468d1e75e4239cca
   CapacitorFilesystem: 608bca984a5b6b2cba85a2972ea22974a37659d8
   CapacitorGeolocation: a8381371f7b460e6be569576557285e70f0c9d6c
   CapacitorInappbrowser: 419fca64e69be39249eee70958ebfd0dc0ff2490

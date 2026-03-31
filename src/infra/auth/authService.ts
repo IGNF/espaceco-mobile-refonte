@@ -110,11 +110,7 @@ export async function loginWithPassword(email: string, password: string): Promis
 
     return {
       success: true,
-      user: {
-        ...result.user,
-        avatarUrl: result.user.avatar,
-        description: result.user.description,
-      },
+      user: result.user
     };
   } catch (error) {
     try {
@@ -137,42 +133,26 @@ export async function loginWithOAuth(): Promise<AuthResult> {
     const result = await authManager.loginWithOAuth(redirectUri);
 
     if (!result.success) {
-      if (result.error?.message === 'OAuth redirect') {
-        return {
-          success: false,
-          user: null,
-          error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.oauthRedirect', retryable: false, cause: result.error }),
-        };
+      let translationKey = 'errors.auth.oauthCallbackFailed';
+      switch (result.error?.message) {
+        case 'OAuth redirect':
+          translationKey = 'errors.auth.oauthRedirect';
+          break;
+        case 'Code verifier missing':
+          translationKey = 'errors.auth.codeVerifierMissing';
+          break;
+        case 'No authorization code':
+          translationKey = 'errors.auth.noAuthorizationCode';
+          break;
+        case 'Token exchange failed':
+          translationKey = 'errors.auth.tokenExchangeFailed';
+          break;
+        default:
       }
-
-      if (result.error?.message === 'Code verifier missing') {
-        return {
-          success: false,
-          user: null,
-          error: new AppError({ kind: 'validation', translationKey: 'errors.auth.codeVerifierMissing', retryable: false, cause: result.error }),
-        };
-      }
-
-      if (result.error?.message === 'No authorization code') {
-        return {
-          success: false,
-          user: null,
-          error: new AppError({ kind: 'validation', translationKey: 'errors.auth.noAuthorizationCode', retryable: false, cause: result.error }),
-        };
-      }
-
-      if (result.error?.message === 'Token exchange failed') {
-        return {
-          success: false,
-          user: null,
-          error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.tokenExchangeFailed', retryable: false, cause: result.error }),
-        };
-      }
-
       return {
         success: false,
         user: null,
-        error: toAppError(result.error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
+        error: new AppError({ kind: 'unknown', translationKey, retryable: false, cause: result.error }),
       };
     }
 
@@ -183,7 +163,6 @@ export async function loginWithOAuth(): Promise<AuthResult> {
         error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.failedToFetchUserInfo', retryable: false }),
       };
     }
-
     if (!result.tokens?.accessToken) {
       return {
         success: false,
@@ -197,11 +176,7 @@ export async function loginWithOAuth(): Promise<AuthResult> {
 
     return {
       success: true,
-      user: {
-        ...result.user,
-        avatarUrl: result.user.avatar,
-        description: result.user.description,
-      },
+      user: result.user
     };
   } catch (error) {
     return {
@@ -218,6 +193,11 @@ export async function loginWithOAuth(): Promise<AuthResult> {
   }
 }
 
+/**
+ * This function is used to handle the OAuth callback, *only* on web platform, because unlike mobile platforms, the redirection is done in a new browser tab, so we need to handle the callback manually.
+ * @param code - The authorization code received from the OAuth provider
+ * @returns {AuthResult} - The result of the OAuth callback
+ */
 export async function handleOAuthCallback(code: string): Promise<AuthResult> {
   try {
     const redirectUri = await getRedirectUri();
@@ -268,11 +248,7 @@ export async function handleOAuthCallback(code: string): Promise<AuthResult> {
 
     return {
       success: true,
-      user: {
-        ...result.user,
-        avatarUrl: result.user.avatar,
-        description: result.user.description,
-      },
+      user: result.user
     };
   } catch (error) {
     return {
@@ -394,17 +370,8 @@ export async function logout(): Promise<void> {
 }
 
 export async function getCurrentUser(): Promise<AuthResult> {
-  if (collabApiClient.isConnected() === false) {
-    return {
-      success: false,
-      user: null,
-      error: new AppError({ kind: 'unauthorized', translationKey: 'errors.auth.notAuthenticated', retryable: false }),
-    };
-  }
-
   try {
     const response = await collabApiClient.user.get('me');
-
     return {
       success: true,
       user: mapApiUserToAppUser(response.data as ApiUserResponse),
@@ -469,7 +436,7 @@ export async function isSessionValid(): Promise<boolean> {
   }
 
   try {
-    await collabApiClient.getUser('me');
+    await collabApiClient.user.get('me');
     return true;
   } catch (error) {
     toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.currentUserFailed' });
