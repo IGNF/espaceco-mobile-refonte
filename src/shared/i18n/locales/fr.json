@@ -1,4 +1,7 @@
 {
+  "common": {
+    "loading": "Chargement..."
+  },
   "welcome": {
     "title": "Bienvenue",
     "subtitle": "sur l'Espace collaboratif IGN",
@@ -49,7 +52,7 @@
     }
   },
   "communitySelection": {
-    "title": "Profil actif",
+    "title": "Groupe actif",
     "subtitle": "de votre Espace collaboratif IGN",
     "description": "Vous pouvez choisir un groupe pour faire des signalements dans ce groupe et de consulter son guichet. Vous pouvez changer de groupe à tout moment dans mes groupes.",
     "validate": "Valider",
@@ -58,7 +61,7 @@
   },
   "home": {
     "title": "Espace collaboratif",
-    "subtitle": "Profil actif",
+    "subtitle": "Groupe actif",
     "welcome": "Bienvenue sur l'application",
     "logout": "Déconnexion",
     "tabs": {
@@ -156,7 +159,7 @@
   },
   "settings": {
     "headerTitle": "Paramètres",
-    "headerSubtitle": "Profil actif",
+    "headerSubtitle": "Groupe actif",
     "gps": {
       "title": "Source GPS",
       "description": "Choisissez la source de géolocalisation utilisée par l'application pour le centrage carte et la saisie de trace.",
@@ -203,7 +206,7 @@
     "userId": "Identifiant d'utilisateur :",
     "userDescription": "Description :",
     "notProvided": "Non renseignée",
-    "activeProfile": "Profil actif"
+    "activeProfile": "Groupe actif"
   },
   "logout": {
     "headerTitle": "Déconnexion",
@@ -327,7 +330,7 @@
       "form": {
         "headerTitleCreate": "Création d'un objet",
         "headerTitleEdit": "Modification d'un objet",
-        "headerSubtitle": "Profil actif",
+        "headerSubtitle": "Groupe actif",
         "title": "Attributs",
         "back": "Retour",
         "close": "Fermer",
@@ -384,7 +387,7 @@
     },
     "groupReports": {
       "headerTitle": "Signalements du groupe",
-      "headerSubtitle": "Profil actif",
+      "headerSubtitle": "Groupe actif",
       "title": "Signalements",
       "description": "du groupe",
       "loadingReports": "Chargement des signalements...",
@@ -396,7 +399,7 @@
     },
     "myReports": {
       "headerTitle": "Mes signalements en cours",
-      "headerSubtitle": "Profil actif",
+      "headerSubtitle": "Groupe actif",
       "title": "Mes signalements en cours",
       "description": "faits sur l'Espace collaboratif IGN mobile",
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
@@ -407,7 +410,7 @@
     },
     "filters": {
       "headerTitle": "Filtrer",
-      "headerSubtitle": "Profil actif",
+      "headerSubtitle": "Groupe actif",
       "title": "Filtrer",
       "description": "les signalements",
       "eraseFilters": "Effacer les filtres",
@@ -438,7 +441,7 @@
     "createOrEdit": {
       "headerTitleCreate": "Nouveau signalement",
       "headerTitleEdit": "Modifier le signalement",
-      "headerSubtitle": "Profil actif",
+      "headerSubtitle": "Groupe actif",
       "titleCreate": "Nouveau",
       "titleEdit": "Modifier",
       "subtitleCreate": "signalement sur l'Espace collaboratif IGN",
@@ -551,7 +554,7 @@
     },
     "details": {
       "headerTitle": "Fiche du signalement",
-      "headerSubtitle": "Profil actif",
+      "headerSubtitle": "Groupe actif",
       "title": "Fiche",
       "subtitle": "du signalement n°",
       "identifier": "Identifiant",

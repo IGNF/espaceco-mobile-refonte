@@ -23,8 +23,11 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Le module d'authentification a été externalisé dans le package mobile-core. La refonte utilise maintenant l'auth depuis ce package, et non plus localement.
+- Remplacement des libellés "Profil actif" par "Groupe" (voir ticket #5)
 
 ### Fixed
+
+- Lors de la sélection du groupe, un text "common.loading" s'affichait brièvement à l'appui sur le bouton. C'est corrigé. (voir ticket #5)
 
 
 ## [0.0.2] - 2026-03-27
