@@ -9,6 +9,7 @@ import type { Community } from '@ign/mobile-core';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 
 interface UseCommunitySelectionResult {
+  activeCommunity: Community | null;
   communities: Community[];
   selectedCommunityId: number | null;
   isLoading: boolean;
@@ -20,6 +21,7 @@ interface UseCommunitySelectionResult {
 
 export function useCommunitySelection(): UseCommunitySelectionResult {
   const {
+    activeCommunity,
     communities: contextCommunities,
     setActiveCommunity,
     isLoading: contextLoading
@@ -32,8 +34,8 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   useEffect(() => {
     if (contextLoading) return;
 
-    setSelectedCommunityId(contextCommunities[0]?.id ?? null);
-  }, [contextLoading, contextCommunities]);
+    setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0]?.id ?? null);
+  }, [contextLoading, contextCommunities, activeCommunity]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
@@ -61,6 +63,7 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   }, [selectedCommunityId, setActiveCommunity]);
 
   return {
+    activeCommunity,
     communities: contextCommunities,
     selectedCommunityId,
     isLoading: contextLoading,
