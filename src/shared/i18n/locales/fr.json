@@ -627,7 +627,20 @@
   },
   "myCommunities": {
     "title": "Mes groupes",
-    "subtitle": "Groupe actif"
+    "headerSubtitle": "Groupe actif",
+    "subtitle": "sur l'Espace collaboratif IGN",
+    "description": "Vous pouvez voir et gérer vos groupes ainsi que rejoindre d'autres groupes sur",
+    "espaceCo": "Espace collaboratif",
+    "switch": "Changer pour ce groupe",
+    "join": "Rejoindre un autre groupe",
+    "noCommunities": "Vous n'avez accès à aucun groupe pour le moment.",
+    "confirm": {
+      "title": "Changement du profil actif",
+      "message": "Vous êtes sur le point d'activer le profil du groupe {{communityName}}.",
+      "warning": "Attention, les signalements non envoyés peuvent être perdus.",
+      "confirm": "Changer",
+      "cancel": "Annuler"
+    }
   },
   "about": {
     "title": "À propos",

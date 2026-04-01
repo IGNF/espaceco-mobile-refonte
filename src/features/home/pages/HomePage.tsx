@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getUid } from "ol/util";
@@ -10,6 +10,7 @@ import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { SearchPanel } from "@/features/search/components/SearchPanel";
+import { useCommunity } from "@/features/community/hooks/useCommunity";
 
 // PAGES //
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
@@ -58,6 +59,7 @@ export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { setActiveCommunity } = useCommunity();
   const {
     mapElementRef,
     mapRef,
@@ -139,6 +141,8 @@ export function HomePage() {
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [newReportType, setNewReportType] = useState<NewReportType>('standard');
+  const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
+  const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
   const {
     featureCandidates: consultationFeatureCandidates,
     selectedFeatureCandidate: consultedFeatureCandidate,
@@ -196,6 +200,18 @@ export function HomePage() {
 
   const handleCloseOverlay = () => {
     setActiveOverlay(null);
+  };
+
+  const handleConfirmCommunityChange = async (communityId: number) => {
+    setHasObservedCommunitySwitchLoading(false);
+    setIsCommunitySwitchLoading(true);
+    setActiveOverlay(null);
+
+    try {
+      await setActiveCommunity(communityId);
+    } catch {
+      setIsCommunitySwitchLoading(false);
+    }
   };
 
   const handleNewReportStandard = () => {
@@ -317,14 +333,42 @@ export function HomePage() {
     }
   };
 
+  const isAppDataLoading =
+    isLayersLoading ||
+    isVectorLayersLoading;
+
   const { showInitialLoadingOverlay } = useInitialAppLoading({
     isMapReady,
     hasInitialCenterCompleted,
-    isAppDataLoading:
-      isLayersLoading ||
-      isVectorLayersLoading,
+    isAppDataLoading,
   });
-  const shouldShowOnboarding = showOnboarding && !showInitialLoadingOverlay;
+
+  const isHomeLoadingOverlayVisible =
+    showInitialLoadingOverlay || isCommunitySwitchLoading;
+
+  useEffect(() => {
+    if (!isCommunitySwitchLoading || !hasObservedCommunitySwitchLoading || isAppDataLoading) {
+      if (isAppDataLoading) {
+        setHasObservedCommunitySwitchLoading(true);
+      }
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsCommunitySwitchLoading(false);
+      setHasObservedCommunitySwitchLoading(false);
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    hasObservedCommunitySwitchLoading,
+    isAppDataLoading,
+    isCommunitySwitchLoading,
+  ]);
+
+  const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
 
   return (
     <div className={styles.container}>
@@ -514,6 +558,7 @@ export function HomePage() {
       <MyCommunitiesSelectionPage
         isOpen={activeOverlay === '/my-communities'}
         onClose={handleCloseOverlay}
+        onConfirmCommunityChange={handleConfirmCommunityChange}
       />
       <AboutPage
         isOpen={activeOverlay === '/about'}
@@ -523,7 +568,7 @@ export function HomePage() {
         isOpen={activeOverlay === '/help'}
         onClose={handleCloseOverlay}
       />
-      <HomeLoadingOverlay isVisible={showInitialLoadingOverlay} />
+      <HomeLoadingOverlay isVisible={isHomeLoadingOverlayVisible} />
     </div>
   );
 }

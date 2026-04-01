@@ -1,0 +1,60 @@
+.page {
+  min-height: calc(100dvh - var(--safe-top, 0px) - var(--safe-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.descriptionSection {
+  margin: 24px 0 32px;
+}
+
+.description {
+  margin: 0;
+}
+
+.communitiesList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.emptyState {
+  margin: 0;
+  color: var(--color-medium-shade);
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar {
+  margin-top: auto;
+}
+
+.confirmContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.confirmText {
+  margin: 0;
+  color: var(--color-dark);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+}
