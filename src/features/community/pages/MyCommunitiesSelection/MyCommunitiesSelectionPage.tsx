@@ -33,6 +33,7 @@ export function MyCommunitiesSelectionPage({
   const {
     activeCommunity,
     communities,
+    activeMemberCommunityIds,
     selectedCommunityId,
     isLoading,
     selectCommunity,
@@ -60,7 +61,6 @@ export function MyCommunitiesSelectionPage({
         <PageHeader
           title={t("myCommunities.title")}
           subtitle={activeCommunity?.name ?? t("myCommunities.headerSubtitle")}
-          showBackButton
           onBack={handleClose}
           onClose={handleClose}
         />
@@ -86,6 +86,7 @@ export function MyCommunitiesSelectionPage({
               {communities.map((community) => (
                 <CommunityRow
                   key={community.id}
+                  isUserActiveMember={activeMemberCommunityIds.has(community.id)}
                   community={community}
                   isSelected={selectedCommunityId === community.id}
                   onSelect={selectCommunity}

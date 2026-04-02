@@ -109,3 +109,21 @@
   text-underline-offset: 0.2rem;
   cursor: pointer;
 }
+
+.confirmContent {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.confirmText {
+  margin: 0;
+  color: var(--color-dark);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+}

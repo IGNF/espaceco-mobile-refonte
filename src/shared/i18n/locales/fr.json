@@ -634,6 +634,7 @@
     "switch": "Changer pour ce groupe",
     "join": "Rejoindre un autre groupe",
     "noCommunities": "Vous n'avez accès à aucun groupe pour le moment.",
+    "pendingApproval": "En attente d'approbation",
     "confirm": {
       "title": "Changement du profil actif",
       "message": "Vous êtes sur le point d'activer le profil du groupe {{communityName}}.",
@@ -647,17 +648,26 @@
     "headerSubtitle": "Profil actif",
     "title": "Tous les groupes",
     "subtitle": "de l'Espace collaboratif IGN",
-    "description": "Pour rejoindre un autre groupe vous devez envoyer une demande au groupe.",
+    "description": "Pour rejoindre un autre groupe, envoyez une demande au groupe ou rejoignez directement les groupes ouverts.",
     "loading": "Chargement des groupes...",
     "error": "Une erreur est survenue lors du chargement des groupes.",
     "empty": "Aucun groupe n'a été trouvé.",
     "countSingular": "Groupe",
     "countPlural": "Groupes",
     "join": "Rejoindre",
+    "joinRequested": "Votre demande a bien été envoyée.",
+    "joinAccepted": "Vous avez rejoint ce groupe.",
+    "joinError": "Impossible d'envoyer votre demande pour le moment.",
     "noMoreCommunities": "Il n'y a plus de groupes à charger.",
     "search": "Rechercher un groupe",
     "searchPlaceholder": "Rechercher un groupe",
-    "resetSearch": "Réinitialiser la recherche"
+    "resetSearch": "Réinitialiser la recherche",
+    "confirm": {
+      "title": "Rejoindre un groupe",
+      "message": "Voulez vous rejoindre le groupe {{communityName}} ?",
+      "confirm": "Rejoindre",
+      "cancel": "Annuler"
+    }
   },
   "about": {
     "title": "À propos",

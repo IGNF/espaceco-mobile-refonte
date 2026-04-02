@@ -7,13 +7,14 @@ import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
 import inputs from "@/shared/styles/inputs.module.css";
 import styles from "./CommunityFirstSelectionPage.module.css";
+import type { CommunityMember } from "@ign/mobile-core";
 
 export function CommunityFirstSelectionPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 
 	const {
-		communities,
+		activeCommunities,
 		selectedCommunityId,
 		isLoading,
 		// error,
@@ -61,7 +62,7 @@ export function CommunityFirstSelectionPage() {
 					{t("communitySelection.description")}
 				</p>
 
-				{communities.length === 0 ? (
+				{activeCommunities && activeCommunities.length === 0 ? (
 					<div className={styles.warningCallout}>
 						<div className={styles.warningCalloutTitle}>
 							<svg
@@ -92,9 +93,9 @@ export function CommunityFirstSelectionPage() {
 								value={selectedCommunityId ?? ""}
 								onChange={handleSelectChange}
 							>
-								{communities.map((community) => (
-									<option key={community.id} value={community.id}>
-										{community.name}
+								{activeCommunities && activeCommunities.map((community: CommunityMember) => (
+									<option key={community.community_id} value={community.community_id}>
+										{community.community_name}
 									</option>
 								))}
 							</select>

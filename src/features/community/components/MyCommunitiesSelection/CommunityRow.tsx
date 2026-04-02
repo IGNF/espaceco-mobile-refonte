@@ -1,24 +1,32 @@
 import type { AppCommunity } from "@/domain/community/models";
 import { joinCSSClassNames } from "@/shared/utils/join";
 import styles from "./CommunityRow.module.css";
+import { useTranslation } from "react-i18next";
 
 export interface CommunityRowProps {
+  isUserActiveMember: boolean;
   community: AppCommunity;
   isSelected: boolean;
   onSelect: (communityId: number) => void;
 }
 
-export function CommunityRow({ community, isSelected, onSelect }: CommunityRowProps) {
+export function CommunityRow({ isUserActiveMember, community, isSelected, onSelect }: CommunityRowProps) {
+  const { t } = useTranslation();
+
   return (
     <button
       type="button"
-      className={joinCSSClassNames(styles.row, isSelected && styles.rowSelected)}
-      onClick={() => onSelect(community.id)}
+      className={joinCSSClassNames(styles.row, isSelected && styles.rowSelected, !isUserActiveMember && styles.rowPending)}
+      onClick={() => isUserActiveMember && onSelect(community.id)}
       aria-pressed={isSelected}
     >
-      <span className={styles.radio} aria-hidden="true">
-        <span className={styles.radioInner} />
-      </span>
+      {
+        isUserActiveMember && (
+          <span className={styles.radio} aria-hidden="true">
+            <span className={styles.radioInner} />
+          </span>
+        )
+      }
 
       {community.logo_url ? (
         <img src={community.logo_url} alt="" className={styles.logo} />
@@ -28,7 +36,14 @@ export function CommunityRow({ community, isSelected, onSelect }: CommunityRowPr
         </span>
       )}
 
-      <span className={styles.name}>{community.name}</span>
+      <span className={styles.info}>
+        <span className={styles.name}>{community.name}</span>
+        {
+          !isUserActiveMember && (
+            <span className={styles.memberStatus}>{t("myCommunities.pendingApproval")}</span>
+          )
+        }
+      </span>
     </button>
   );
 }
