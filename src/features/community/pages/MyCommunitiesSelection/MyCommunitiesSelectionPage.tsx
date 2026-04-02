@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { EXTERNAL_LINKS } from "@/shared/constants/externalLinks";
 import { useMyCommunities } from "@/features/community/hooks/MyCommunities/useMyCommunities";
+import { AllCommunitiesPage } from "@/features/community/pages/AllCommunities/AllCommunitiesPage";
 import { CommunityRow } from "@/features/community/components/MyCommunitiesSelection/CommunityRow";
 import { Alert } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
@@ -27,6 +28,7 @@ export function MyCommunitiesSelectionPage({
   onConfirmCommunityChange,
 }: MyCommunitiesSelectionPageProps) {
   const { t } = useTranslation();
+  const [isAllCommunitiesOpen, setIsAllCommunitiesOpen] = useState(false);
   const [isConfirmAlertOpen, setIsConfirmAlertOpen] = useState(false);
   const {
     activeCommunity,
@@ -40,6 +42,7 @@ export function MyCommunitiesSelectionPage({
   const selectedCommunity = communities.find((community) => community.id === selectedCommunityId) ?? null;
 
   const handleClose = () => {
+    setIsAllCommunitiesOpen(false);
     setIsConfirmAlertOpen(false);
     resetSelection();
     onClose();
@@ -104,7 +107,7 @@ export function MyCommunitiesSelectionPage({
               {t("myCommunities.switch")}
             </Button>
 
-            <Button fullWidth variant="outline" disabled>
+            <Button fullWidth variant="outline" onClick={() => setIsAllCommunitiesOpen(true)}>
               {t("myCommunities.join")}
             </Button>
           </div>
@@ -144,6 +147,11 @@ export function MyCommunitiesSelectionPage({
           </div>
         </div>
       </Alert>
+
+      <AllCommunitiesPage
+        isOpen={isAllCommunitiesOpen}
+        onClose={() => setIsAllCommunitiesOpen(false)}
+      />
     </SlideUpPage>
   );
 }
