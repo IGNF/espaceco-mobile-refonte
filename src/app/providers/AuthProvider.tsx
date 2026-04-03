@@ -86,6 +86,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(user);
   }, []);
 
+  const refreshCurrentUser = useCallback(async () => {
+    if (!user || user.isAnonymous) {
+      return null;
+    }
+
+    const result = await authService.getCurrentUser();
+    if (result.success && result.user) {
+      await userStorage.saveUser(result.user);
+      setUser(result.user);
+      return result.user;
+    }
+
+    return null;
+  }, [user]);
+
 	const continueWithoutAccount = useCallback(async () => {
 		setIsLoading(true);
 		try {
@@ -135,6 +150,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 				loginWithPassword,
         loginWithOAuth,
         setUserFromOAuthCallback,
+        refreshCurrentUser,
 				logout,
 				continueWithoutAccount,
 			}}

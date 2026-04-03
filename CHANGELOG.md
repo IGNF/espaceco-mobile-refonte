@@ -17,6 +17,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Un utilisateur peut maintenant changer de groupe via la page Mes Groupes
+- Un utilisateur peut maintemander demander à rejoindre un groupe via la page Mes Groupes
 - L'app affiche maintenant un loader à l'ouverture, pour éviter un écran blanc de quelques secondes
 - L'app pré-sélectionne automatiquement le dernier groupe sélectionné, lors de la page de sélection après login (voir ticket #5)
 
@@ -24,6 +26,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - Le module d'authentification a été externalisé dans le package mobile-core. La refonte utilise maintenant l'auth depuis ce package, et non plus localement.
 - Remplacement des libellés "Profil actif" par "Groupe" (voir ticket #5)
+- Ajustements de style dans divers endroits de l'app
 
 ### Fixed
 

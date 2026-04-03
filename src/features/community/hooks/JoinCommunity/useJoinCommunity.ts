@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { collabApiClient } from "@/infra/api";
 import type { AppCommunity } from "@/domain/community/models";
 
@@ -15,7 +16,8 @@ interface UseJoinCommunityResult {
 }
 
 export function useJoinCommunity(): UseJoinCommunityResult {
-  const { user } = useAuth();
+  const { user, refreshCurrentUser } = useAuth();
+  const { refreshCommunities } = useCommunity();
   const [isJoining, setIsJoining] = useState(false);
 
   const joinCommunity = useCallback(async (community: AppCommunity): Promise<JoinCommunityStatus> => {
@@ -33,11 +35,16 @@ export function useJoinCommunity(): UseJoinCommunityResult {
         || member.role === "admin"
         || (!member.role && joinsDirectlyByCommunityRules);
 
+      const updatedUser = await refreshCurrentUser();
+      if (updatedUser) {
+        await refreshCommunities();
+      }
+
       return joinsDirectly ? "joined" : "pending";
     } finally {
       setIsJoining(false);
     }
-  }, [user]);
+  }, [refreshCommunities, refreshCurrentUser, user]);
 
   return {
     joinCommunity,

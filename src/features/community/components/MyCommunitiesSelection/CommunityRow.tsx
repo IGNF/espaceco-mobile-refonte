@@ -1,6 +1,7 @@
 import type { AppCommunity } from "@/domain/community/models";
 import { joinCSSClassNames } from "@/shared/utils/join";
 import styles from "./CommunityRow.module.css";
+import membershipStyles from "@/features/community/styles/communityMembership.module.css";
 import { useTranslation } from "react-i18next";
 
 export interface CommunityRowProps {
@@ -36,11 +37,11 @@ export function CommunityRow({ isUserActiveMember, community, isSelected, onSele
         </span>
       )}
 
-      <span className={styles.info}>
-        <span className={styles.name}>{community.name}</span>
+      <span className={membershipStyles.communityInfo}>
+        <span className={membershipStyles.communityName}>{community.name}</span>
         {
           !isUserActiveMember && (
-            <span className={styles.memberStatus}>{t("myCommunities.pendingApproval")}</span>
+            <span className={membershipStyles.memberStatus}>{t("myCommunities.pendingApproval")}</span>
           )
         }
       </span>

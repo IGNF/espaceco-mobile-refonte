@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAllCommunities } from "@/features/community/hooks/AllCommunities/useAllCommunities";
+import { useCommunityMembership } from "@/features/community/hooks/useCommunityMembership";
 import { useJoinCommunity } from "@/features/community/hooks/JoinCommunity/useJoinCommunity";
-import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { Alert } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
 import { Loading } from "@/shared/ui/Loading";
@@ -14,6 +14,7 @@ import { showToastSafe } from "@/shared/utils/toast";
 import listStyles from "@/features/report/pages/reportsListPage.module.css";
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
+import membershipStyles from "@/features/community/styles/communityMembership.module.css";
 import styles from "./AllCommunitiesPage.module.css";
 
 export interface AllCommunitiesPageProps {
@@ -29,8 +30,8 @@ export function AllCommunitiesPage({ isOpen, onClose }: AllCommunitiesPageProps)
   const [requestedCommunityIds, setRequestedCommunityIds] = useState<number[]>([]);
   const [joinedCommunityIds, setJoinedCommunityIds] = useState<number[]>([]);
   const { communities, isLoading, isLoadingMore, error, hasMore, loadMore } = useAllCommunities(isOpen, appliedSearchTerm);
+  const { activeMemberCommunityIds, pendingMemberCommunityIds } = useCommunityMembership();
   const { joinCommunity, isJoining } = useJoinCommunity();
-  const { communities: userCommunities } = useCommunity();
   const sentinelRef = useRef<HTMLDivElement>(null);
   const selectedCommunity = communities.find((community) => community.id === selectedCommunityId) ?? null;
 
@@ -63,8 +64,6 @@ export function AllCommunitiesPage({ isOpen, onClose }: AllCommunitiesPageProps)
       }
 
       setSelectedCommunityId(null);
-
-      console.log('joinStatus', joinStatus);
 
       await showToastSafe({
         text: t(joinStatus === "joined" ? "allCommunities.joinAccepted" : "allCommunities.joinRequested"),
@@ -129,32 +128,40 @@ export function AllCommunitiesPage({ isOpen, onClose }: AllCommunitiesPageProps)
         </p>
 
         <div className={listStyles.reportList}>
-          {communities.map((community) => (
-            <div key={community.id} className={styles.communityRow}>
-              {community.logo_url ? (
-                <img src={community.logo_url} alt="" className={styles.communityLogo} />
-              ) : (
-                <span className={styles.communityLogoFallback} aria-hidden="true">
-                  {community.name.charAt(0).toUpperCase()}
+          {communities.map((community) => {
+            const isActiveMember = activeMemberCommunityIds.has(community.id) || joinedCommunityIds.includes(community.id);
+            const isPendingApproval = pendingMemberCommunityIds.has(community.id) || requestedCommunityIds.includes(community.id);
+
+            return (
+              <div key={community.id} className={styles.communityRow}>
+                {community.logo_url ? (
+                  <img src={community.logo_url} alt="" className={styles.communityLogo} />
+                ) : (
+                  <span className={styles.communityLogoFallback} aria-hidden="true">
+                    {community.name.charAt(0).toUpperCase()}
+                  </span>
+                )}
+
+                <span className={membershipStyles.communityInfo}>
+                  <span className={membershipStyles.communityName}>{community.name}</span>
+                  {isPendingApproval && (
+                    <span className={membershipStyles.memberStatus}>{t("myCommunities.pendingApproval")}</span>
+                  )}
                 </span>
-              )}
 
-              <span className={styles.communityName}>{community.name}</span>
-
-              {!userCommunities.some((userCommunity) => userCommunity.id === community.id)
-                && !requestedCommunityIds.includes(community.id)
-                && !joinedCommunityIds.includes(community.id) && (
-                <Button
-                  variant="solid"
-                  color="primary"
-                  className={styles.joinButton}
-                  onClick={() => setSelectedCommunityId(community.id)}
-                >
-                  {t("allCommunities.join")}
-                </Button>
-              )}
-            </div>
-          ))}
+                {!isActiveMember && !isPendingApproval && (
+                  <Button
+                    variant="solid"
+                    color="primary"
+                    className={styles.joinButton}
+                    onClick={() => setSelectedCommunityId(community.id)}
+                  >
+                    {t("allCommunities.join")}
+                  </Button>
+                )}
+              </div>
+            );
+          })}
 
           <div ref={sentinelRef} className={listStyles.sentinel} />
 
