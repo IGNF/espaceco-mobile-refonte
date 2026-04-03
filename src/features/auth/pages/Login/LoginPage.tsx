@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
 import { Loading } from '@/shared/ui/Loading';
 import { getAppErrorTranslationKey, isAppError } from '@/shared/errors/appError';
+import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
@@ -118,7 +119,7 @@ export function LoginPage() {
 					</div> */}
 					<div className={styles.forgotPasswordLinkContainer}>
 						<ExternalLink
-							href={t("login.forgotPassword")}
+							href={EXTERNAL_LINKS.GEOPF_SSO_RESET_CREDENTIALS}
 							className={styles.forgotPasswordLink}
 						>
 							{t("login.forgotPassword")}
