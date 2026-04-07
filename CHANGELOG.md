@@ -13,14 +13,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.3] - 2026-xx-xx
+## [0.0.3] - 2026-04-07
 
 ### Added
 
 - Un utilisateur peut maintenant changer de groupe via la page Mes Groupes
 - Un utilisateur peut maintemander demander à rejoindre un groupe via la page Mes Groupes
 - L'app affiche maintenant un loader à l'ouverture, pour éviter un écran blanc de quelques secondes
-- L'app pré-sélectionne automatiquement le dernier groupe sélectionné, lors de la page de sélection après login (voir ticket #5)
+- L'app pré-sélectionne automatiquement le dernier groupe actif, lors de la page de sélection après login (voir ticket #5)
 - Ajout du lien "Mot de passe oublié"
 
 ### Changed
@@ -32,7 +32,6 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - Lors de la sélection du groupe, un text "common.loading" s'affichait brièvement à l'appui sur le bouton. C'est corrigé. (voir ticket #5)
-
 
 ## [0.0.2] - 2026-03-27
 
