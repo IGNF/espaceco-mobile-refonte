@@ -1,11 +1,12 @@
 import { createContext } from 'react';
 import type { Extent } from 'ol/extent';
 import type {
-  OfflineCommunityPackage,
+  OfflineCommunityCache,
   OfflineDownloadProgress,
   OfflineMode,
+  OfflineCacheDraftInput,
   OfflineModeState,
-  OfflinePackageDownloadInput,
+  OfflineCacheDownloadInput,
   OfflineZone,
 } from '@/domain/offline/models';
 import type { AppError } from '@/shared/errors/appError';
@@ -15,18 +16,22 @@ export interface OfflineContextType extends OfflineModeState {
   isDownloading: boolean;
   downloadProgress: OfflineDownloadProgress | null;
   downloadError: AppError | null;
-  packages: OfflineCommunityPackage[];
+  caches: OfflineCommunityCache[];
   refresh: () => Promise<void>;
   setOfflineMode: (mode: OfflineMode) => Promise<void>;
   saveZone: (name: string, extents: Extent | Extent[]) => Promise<OfflineZone>;
   appendZoneExtent: (name: string, extent: Extent) => Promise<OfflineZone>;
   deleteZone: (name: string) => Promise<void>;
-  downloadCommunityPackage: (
-    input: OfflinePackageDownloadInput
-  ) => Promise<OfflineCommunityPackage>;
-  refreshCommunityPackage: (communityId: number) => Promise<OfflineCommunityPackage>;
+  saveCommunityCacheDraft: (
+    input: OfflineCacheDraftInput
+  ) => Promise<OfflineCommunityCache | null>;
+  downloadCommunityCache: (
+    input: OfflineCacheDownloadInput
+  ) => Promise<OfflineCommunityCache>;
+  refreshCommunityCache: (communityId: number) => Promise<OfflineCommunityCache>;
   cancelOfflineDownload: () => void;
-  deleteCommunityPackage: (communityId: number) => Promise<void>;
+  deleteCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<void>;
+  deleteCommunityCache: (communityId: number) => Promise<void>;
 }
 
 export const OfflineContext = createContext<OfflineContextType | null>(null);

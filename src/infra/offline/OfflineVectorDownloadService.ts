@@ -7,7 +7,7 @@ import type { Extent } from 'ol/extent';
 import type TileGrid from 'ol/tilegrid/TileGrid';
 import type {
   OfflineDownloadProgress,
-  OfflinePackageLayer,
+  OfflineCacheLayer,
 } from '@/domain/offline/models';
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import {
@@ -18,12 +18,14 @@ import {
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 import { AppError } from '@/shared/errors/appError';
+import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 interface OfflineVectorDownloadParams {
   communityId: number;
   layers: CommunityLayer[];
   extents: Extent[];
+  excludedExtents?: Extent[];
   onProgress?: (progress: OfflineDownloadProgress) => void;
 }
 
@@ -36,6 +38,7 @@ interface OfflineVectorDeleteParams {
   communityId: number;
   layers: OfflineVectorDeleteLayer[];
   extents: Extent[];
+  excludedExtents?: Extent[];
 }
 
 interface PreparedOfflineLayer {
@@ -49,8 +52,6 @@ interface PreparedOfflineLayer {
 
 export const OFFLINE_DOWNLOAD_CANCELLED_CODE = 'offline_download_cancelled';
 
-const OFFLINE_DOWNLOAD_CANCELLED_MESSAGE = 'Offline download cancelled';
-
 /**
  * Downloads collaborative vector tiles into the local feature cache.
  * The service keeps the flow sequential on purpose to stay predictable and easy to debug.
@@ -62,12 +63,42 @@ export class OfflineVectorDownloadService {
     this.cancelRequested = true;
   }
 
-  async downloadPackage(
+  countTiles(params: {
+    communityId: number;
+    layers: CommunityLayer[];
+    extents: Extent[];
+    excludedExtents?: Extent[];
+  }): number {
+    const preparedLayers = params.layers.map((layer) =>
+      this.prepareLayer(
+        params.communityId,
+        layer,
+        params.extents,
+        undefined,
+        params.excludedExtents
+      )
+    );
+
+    let totalTileCount = 0;
+    for (const preparedLayer of preparedLayers) {
+      totalTileCount += preparedLayer.tileExtents.length;
+    }
+
+    return totalTileCount;
+  }
+
+  async downloadCache(
     params: OfflineVectorDownloadParams
-  ): Promise<OfflinePackageLayer[]> {
+  ): Promise<OfflineCacheLayer[]> {
     this.cancelRequested = false;
     const preparedLayers = params.layers.map((layer) =>
-      this.prepareLayer(params.communityId, layer, params.extents)
+      this.prepareLayer(
+        params.communityId,
+        layer,
+        params.extents,
+        undefined,
+        params.excludedExtents
+      )
     );
 
     let totalTileCount = 0;
@@ -77,7 +108,7 @@ export class OfflineVectorDownloadService {
 
     let downloadedTileCount = 0;
     params.onProgress?.({
-      currentLayerTitle: preparedLayers[0]!.layer.title,
+      currentLayerTitle: getCommunityLayerTitle(preparedLayers[0]!.layer),
       downloadedTileCount,
       totalTileCount,
       percent: 0,
@@ -96,7 +127,7 @@ export class OfflineVectorDownloadService {
 
           downloadedTileCount += 1;
           params.onProgress?.({
-            currentLayerTitle: preparedLayer.layer.title,
+            currentLayerTitle: getCommunityLayerTitle(preparedLayer.layer),
             downloadedTileCount,
             totalTileCount,
             percent: Math.round((downloadedTileCount / totalTileCount) * 100),
@@ -115,16 +146,17 @@ export class OfflineVectorDownloadService {
   }
 
   /**
-   * Deletes the cached feature files generated for one offline package.
-   * It recomputes the same tile keys as the download flow to target only that package data.
+   * Deletes the cached feature files generated for one offline cache.
+   * It recomputes the same tile keys as the download flow to target only that cache data.
    */
-  async deletePackageData(params: OfflineVectorDeleteParams): Promise<void> {
-    const preparedLayers = params.layers.map((packageLayer) =>
+  async deleteCacheData(params: OfflineVectorDeleteParams): Promise<void> {
+    const preparedLayers = params.layers.map((cacheLayer) =>
       this.prepareLayer(
         params.communityId,
-        packageLayer.layer,
+        cacheLayer.layer,
         params.extents,
-        packageLayer.cacheNamespace
+        cacheLayer.cacheNamespace,
+        params.excludedExtents
       )
     );
 
@@ -152,7 +184,13 @@ export class OfflineVectorDownloadService {
    * Builds a temporary collaborative source dedicated to offline download or deletion.
    * This source is never mounted on the live map; it only reuses the loader/cache logic.
    */
-  private prepareLayer(communityId: number, layer: CommunityLayer, extents: Extent[], cacheNamespaceOverride?: string): PreparedOfflineLayer {
+  private prepareLayer(
+    communityId: number,
+    layer: CommunityLayer,
+    extents: Extent[],
+    cacheNamespaceOverride?: string,
+    excludedExtents: Extent[] = []
+  ): PreparedOfflineLayer {
     const table = layer.table as Table;
     const layerKey = getCommunityLayerKey(layer);
     const tileZoom = getTableTileZoom(layer);
@@ -177,7 +215,7 @@ export class OfflineVectorDownloadService {
       cacheNamespace: source.getCacheNamespace(),
       source,
       resolution,
-      tileExtents: this.getTileExtents(tileGrid, tileZoom, extents),
+      tileExtents: this.getTileExtents(tileGrid, tileZoom, extents, excludedExtents),
     };
   }
 
@@ -188,16 +226,24 @@ export class OfflineVectorDownloadService {
   private getTileExtents(
     tileGrid: TileGrid,
     tileZoom: number,
-    extents: Extent[]
+    extents: Extent[],
+    excludedExtents: Extent[] = []
   ): Extent[] {
+    const excludedTileKeys = new Set<string>();
     const tileKeys = new Set<string>();
     const tileExtents: Extent[] = [];
+
+    for (const extent of excludedExtents) {
+      tileGrid.forEachTileCoord(extent, tileZoom, (tileCoord) => {
+        excludedTileKeys.add(tileCoord.join('-'));
+      });
+    }
 
     for (const extent of extents) {
       tileGrid.forEachTileCoord(extent, tileZoom, (tileCoord) => {
         const tileKey = tileCoord.join('-');
 
-        if (tileKeys.has(tileKey)) {
+        if (excludedTileKeys.has(tileKey) || tileKeys.has(tileKey)) {
           return;
         }
 
@@ -224,7 +270,7 @@ export class OfflineVectorDownloadService {
         },
         () => {
           reject(
-            new AppError({ kind: 'network', translationKey: 'errors.global.network', message: `Failed to download tile ${tileExtent.join(',')}` })
+            new AppError({ kind: 'network', translationKey: 'errors.global.network' })
           );
         }
       );
@@ -236,6 +282,6 @@ export class OfflineVectorDownloadService {
       return;
     }
 
-    throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: OFFLINE_DOWNLOAD_CANCELLED_MESSAGE, code: OFFLINE_DOWNLOAD_CANCELLED_CODE, retryable: false });
+    throw new AppError({ kind: 'validation', translationKey: 'offline.status.cancelled', code: OFFLINE_DOWNLOAD_CANCELLED_CODE, retryable: false });
   }
 }

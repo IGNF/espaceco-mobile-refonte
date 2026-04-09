@@ -145,6 +145,7 @@
     "guichet": {
       "title": "Guichet",
       "guichet": "Guichet",
+      "modeHorsLigne": "Mode hors ligne",
       "aPropos": "À propos du guichet"
     },
     "monCompte": {
@@ -156,6 +157,95 @@
     "parametres": "Paramètres",
     "aide": "Aide",
     "aPropos": "À propos"
+  },
+  "offline": {
+    "title": "Mode hors ligne",
+    "subtitle": "Groupe actif",
+    "status": {
+      "title": "État du cache",
+      "allowed": "Le mode hors ligne est autorisé pour ce groupe.",
+      "forbidden": "Le mode hors ligne n'est pas autorisé pour ce groupe.",
+      "empty": "Aucun cache hors ligne n'est encore téléchargé.",
+      "pending": "Cache en attente de chargement",
+      "pendingLayers": "{{count}} couche(s) sélectionnée(s)",
+      "loaded": "Cache téléchargé",
+      "layers": "{{count}} couche(s) téléchargée(s)",
+      "zones": "{{count}} zone(s) utilisée(s)",
+      "updatedAt": "Dernière mise à jour : {{value}}",
+      "loading": "Téléchargement en cours",
+      "progress": "{{current}} / {{total}} tuiles ({{percent}} %)",
+      "currentLayer": "Couche en cours : {{title}}",
+      "cancel": "Annuler le téléchargement",
+      "cancelled": "Téléchargement hors ligne annulé."
+    },
+    "zones": {
+      "title": "Zones",
+      "description": "Créez des zones personnalisées ou par sélection d'objets, puis utilisez-les pour charger ou enrichir le cache.",
+      "newZone": "Nouvelle zone",
+      "newZoneDialogTitle": "Définir la zone",
+      "nameLabel": "Nom de la zone",
+      "namePlaceholder": "Ex. Secteur nord",
+      "definitionType": "Définition",
+      "customMode": "Personnalisée",
+      "objectMode": "Par sélection d'objets",
+      "layerLabel": "Couche de sélection",
+      "noPolygonLayer": "Aucune couche polygonale n'est disponible pour la sélection d'objets.",
+      "addToCache": "Ajouter au cache",
+      "delete": "Supprimer",
+      "empty": "Aucune zone enregistrée.",
+      "extentCount": "{{count}} emprise(s)",
+      "inCache": "Déjà utilisée par le cache actuel"
+    },
+    "layers": {
+      "title": "Couches",
+      "description": "Choisissez les couches collaboratives à télécharger pour ce groupe.",
+      "empty": "Aucune couche collaborative éligible.",
+      "loaded": "Déjà chargée",
+      "pending": "En attente de chargement",
+      "appendWarning": "Les couches sélectionnées seront chargées immédiatement dans le cache actuel.",
+      "delete": "Supprimer",
+      "deleteSuccess": "Couche supprimée du cache hors ligne.",
+      "noAddableLayer": "Toutes les couches éligibles sont déjà dans le cache."
+    },
+    "cache": {
+      "title": "Cache",
+      "selection": "{{layers}} couche(s) et {{zones}} zone(s) sélectionnée(s)",
+      "loadedDetails": "{{layers}} couche(s) et {{zones}} zone(s) actuellement dans le cache",
+      "addLayers": "Ajouter des couches",
+      "chooseZone": "Choisir une zone",
+      "download": "Charger",
+      "refresh": "Rafraîchir",
+      "delete": "Supprimer",
+      "downloadSuccess": "Téléchargement hors ligne terminé.",
+      "zoneAddedSuccess": "Zone ajoutée au cache hors ligne.",
+      "layersAddedSuccess": "Couches ajoutées au cache hors ligne.",
+      "refreshSuccess": "Cache hors ligne rafraîchi.",
+      "deleteSuccess": "Cache hors ligne supprimé."
+    },
+    "dialog": {
+      "cancel": "Annuler",
+      "continue": "Continuer",
+      "validate": "Valider"
+    },
+    "editor": {
+      "title": "Édition de zone",
+      "customDescription": "Déplacez-vous sur la carte puis ajoutez l'emprise visible à la zone.",
+      "selectDescription": "Touchez un ou plusieurs objets de la couche {{layer}}, puis ajoutez-les à la zone.",
+      "defaultLayer": "couche sélectionnée",
+      "defaultObject": "Objet",
+      "chooseObject": "Choisir un objet",
+      "savedExtents": "Emprises ajoutées",
+      "selectedObjects": "Objets sélectionnés",
+      "centerOnPosition": "Centrer sur ma position",
+      "addVisibleExtent": "Ajouter la vue",
+      "addSelectedObjects": "Ajouter la sélection",
+      "validate": "Valider",
+      "cancel": "Fermer"
+    },
+    "toasts": {
+      "zoneCreated": "Zone enregistrée.",
+      "zoneDeleted": "Zone supprimée."
+    }
   },
   "settings": {
     "headerTitle": "Paramètres",

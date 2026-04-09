@@ -23,6 +23,7 @@ import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReport
 import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
+import { OfflineManagementPage } from "@/features/offline/pages/OfflineManagementPage";
 
 import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import { DirectContributionFeatureDetailsPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureDetailsPage";
@@ -140,6 +141,7 @@ export function HomePage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
+  const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [newReportType, setNewReportType] = useState<NewReportType>('standard');
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
@@ -154,7 +156,10 @@ export function HomePage() {
   } = useCommunityFeatureConsultation({
     map,
     vectorLayers,
-    disabled: isDirectContributionSessionActive || activeConflict !== null,
+    disabled:
+      isDirectContributionSessionActive ||
+      activeConflict !== null ||
+      activeOverlay === '/offline',
   });
 
   const {
@@ -192,6 +197,10 @@ export function HomePage() {
 
   const handleMenuNavigate = (route: string) => {
     if (isOverlayRoute(route)) {
+      if (route === '/offline') {
+        setOfflineOverlayKey((value) => value + 1);
+      }
+
       setActiveOverlay(route);
     } else {
       navigate(route);
@@ -559,6 +568,16 @@ export function HomePage() {
         isOpen={activeOverlay === '/my-communities'}
         onClose={handleCloseOverlay}
         onConfirmCommunityChange={handleConfirmCommunityChange}
+      />
+      <OfflineManagementPage
+        key={offlineOverlayKey}
+        isOpen={activeOverlay === '/offline'}
+        onClose={handleCloseOverlay}
+        map={map}
+        vectorLayers={vectorLayers}
+        onSetLayerVisibility={setLayerVisibility}
+        onCenterOnUserLocation={centerOnUserLocation}
+        isLocating={isLocating}
       />
       <AboutPage
         isOpen={activeOverlay === '/about'}

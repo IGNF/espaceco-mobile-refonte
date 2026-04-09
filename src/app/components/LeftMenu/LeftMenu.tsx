@@ -53,6 +53,7 @@ const menuGroups: MenuGroup[] = [
     icon: IconGuichet,
     items: [
       { id: "guichet", labelKey: "leftMenu.guichet.guichet", route: "/community-selection" },
+      { id: "modeHorsLigne", labelKey: "leftMenu.guichet.modeHorsLigne", route: "/offline" },
       { id: "aProposGuichet", labelKey: "leftMenu.guichet.aPropos", route: "/about-community" },
     ],
   },
@@ -84,7 +85,6 @@ const standaloneItems: StandaloneItem[] = [
 export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
-  console.log('from left menu => activeCommunity', activeCommunity);
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])
   );

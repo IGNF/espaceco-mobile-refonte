@@ -62,6 +62,7 @@ export const overlayRoutes = [
   '/report-details',
   '/new-report-choice',
   '/create-or-edit-report',
+  '/offline',
   '/about-reports',
   '/about',
   '/help'

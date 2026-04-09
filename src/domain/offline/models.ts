@@ -9,16 +9,21 @@ export interface OfflineZone {
   extents: Extent[];
 }
 
-export interface OfflinePackageLayer {
+export interface OfflineCacheLayer {
   layerKey: string;
   layer: CommunityLayer;
   cacheNamespace?: string;
 }
 
-export interface OfflinePackageDownloadInput {
+export interface OfflineCacheDownloadInput {
   communityId: number;
   layers: CommunityLayer[];
   zoneNames: string[];
+}
+
+export interface OfflineCacheDraftInput {
+  communityId: number;
+  layers: CommunityLayer[];
 }
 
 export interface OfflineDownloadProgress {
@@ -28,12 +33,12 @@ export interface OfflineDownloadProgress {
   percent: number;
 }
 
-export interface OfflineCommunityPackage {
+export interface OfflineCommunityCache {
   id: string;
   communityId: number;
   communityName?: string;
   layerKeys: string[];
-  layers: OfflinePackageLayer[];
+  layers: OfflineCacheLayer[];
   zoneNames: string[];
   extent?: Extent;
   extents: Extent[];
@@ -55,6 +60,6 @@ export interface OfflineModeState {
   isOfflineAllowed: boolean;
   hasOfflineData: boolean;
   canEnableOffline: boolean;
-  activeCommunityPackage: OfflineCommunityPackage | null;
+  activeCommunityCache: OfflineCommunityCache | null;
   zones: OfflineZone[];
 }

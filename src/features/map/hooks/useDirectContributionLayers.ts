@@ -13,6 +13,7 @@ import {
   DirectContributionLayerService,
 } from '@/infra/map/directContribution/DirectContributionLayerService';
 import { getUserFacingErrorMessage, toAppError } from '@/shared/errors/appError';
+import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
@@ -153,7 +154,7 @@ export function useDirectContributionLayers({
         (candidateLayer) => getCommunityLayerKey(candidateLayer) === layerKey
       );
       const table = layer?.table;
-      const title = (layer?.title && layer.title.length > 0) ? layer.title : (table?.title && table.title.length > 0) ? table.title : '';
+      const title = layer ? getCommunityLayerTitle(layer) : '';
       
       const conflictContext =
         layer && table && typeof table === 'object'
