@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { PluginListenerHandle } from '@capacitor/core';
+import type { CommunityLayer } from '@ign/mobile-core';
 import type { Extent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
 import {
-  type OfflineCommunityPackage,
+  type OfflineCommunityCache,
   type OfflineDownloadProgress,
   type OfflineMode,
   type OfflineNetworkStatus,
-  type OfflinePackageDownloadInput,
+  type OfflineCacheDraftInput,
+  type OfflineCacheDownloadInput,
+  type OfflineCacheLayer,
   type OfflineZone,
 } from '@/domain/offline/models';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { OfflinePackageRepository } from '@/infra/offline/OfflinePackageRepository';
+import { OfflineCacheRepository } from '@/infra/offline/OfflineCacheRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';
 import {
   OFFLINE_DOWNLOAD_CANCELLED_CODE,
@@ -19,13 +22,14 @@ import {
 } from '@/infra/offline/OfflineVectorDownloadService';
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { OfflineContext } from './OfflineContext';
 
 interface OfflineProviderProps {
   children: ReactNode;
 }
 
-const offlinePackageRepository = new OfflinePackageRepository();
+const offlineCacheRepository = new OfflineCacheRepository();
 const offlineModeRepository = new OfflineModeRepository();
 const offlineZonesRepository = new OfflineZonesRepository();
 const offlineVectorDownloadService = new OfflineVectorDownloadService();
@@ -58,23 +62,27 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [requestedMode, setRequestedModeState] = useState<OfflineMode>('online');
   const [network, setNetwork] = useState<OfflineNetworkStatus>(DEFAULT_NETWORK_STATUS);
   const [zones, setZones] = useState<OfflineZone[]>([]);
-  const [packages, setPackages] = useState<OfflineCommunityPackage[]>([]);
+  const [caches, setCaches] = useState<OfflineCommunityCache[]>([]);
 
+  /**
+   * Reloads the persisted offline state used by the provider.
+   * This keeps repositories as the source of truth after each write operation.
+   */
   const refresh = useCallback(async () => {
     setIsLoading(true);
 
     try {
-      const [nextRequestedMode, nextNetworkStatus, nextZones, nextPackages] = await Promise.all([
+      const [nextRequestedMode, nextNetworkStatus, nextZones, nextCaches] = await Promise.all([
         offlineModeRepository.getRequestedMode(),
         getNetworkStatus(),
         offlineZonesRepository.listZones(),
-        offlinePackageRepository.listPackages(),
+        offlineCacheRepository.listCaches(),
       ]);
 
       setRequestedModeState(nextRequestedMode);
       setNetwork(nextNetworkStatus);
       setZones(nextZones);
-      setPackages(nextPackages);
+      setCaches(nextCaches);
     } finally {
       setIsLoading(false);
     }
@@ -118,13 +126,13 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     };
   }, []);
 
-  const activeCommunityPackage =
+  const activeCommunityCache =
     activeCommunityId == null
       ? null
-      : packages.find((offlinePackage) => offlinePackage.communityId === activeCommunityId) ?? null;
+      : caches.find((offlineCache) => offlineCache.communityId === activeCommunityId) ?? null;
 
   const isOfflineAllowed = activeCommunity?.offline_allowed !== false;
-  const hasOfflineData = activeCommunityPackage?.loaded === true;
+  const hasOfflineData = activeCommunityCache?.loaded === true;
   const canEnableOffline = isOfflineAllowed && hasOfflineData;
   const mode: OfflineMode =
     requestedMode === 'offline' && canEnableOffline ? 'offline' : 'online';
@@ -132,20 +140,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const setOfflineMode = useCallback(
     async (nextMode: OfflineMode) => {
       if (nextMode === 'offline' && !canEnableOffline) {
-        throw new AppError({
-          kind: 'validation',
-          translationKey: 'errors.global.validation',
-          message: 'Offline mode cannot be enabled without a loaded offline package',
-          retryable: false,
-        });
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Offline mode cannot be enabled without a loaded offline cache', retryable: false });
       }
 
       if (nextMode === 'online' && requestedMode === 'offline' && !network.connected) {
-        throw new AppError({
-          kind: 'network',
-          translationKey: 'errors.global.network',
-          message: 'A network connection is required to switch back online',
-        });
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to switch back online' });
       }
 
       const persistedMode = await offlineModeRepository.saveRequestedMode(nextMode);
@@ -171,12 +170,65 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     await refresh();
   }, [refresh]);
 
-  const downloadCommunityPackage = useCallback(
+  /**
+   * Saves the pre-load cache definition created by "Ajouter des couches".
+   * At this stage the cache exists logically, but no zone has been downloaded yet.
+   */
+  const saveCommunityCacheDraft = useCallback(
+    async ({
+      communityId,
+      layers,
+    }: OfflineCacheDraftInput): Promise<OfflineCommunityCache | null> => {
+      if (activeCommunityId === communityId && !isOfflineAllowed) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Offline mode is not allowed for the active community', retryable: false });
+      }
+
+      const existingDraftCache = await offlineCacheRepository.getCache(communityId);
+
+      if (layers.length === 0) {
+        if (existingDraftCache) {
+          await offlineCacheRepository.deleteCache(communityId);
+          await refresh();
+        }
+
+        return null;
+      }
+
+      const savedLayers = layers.map((layer) => ({
+        layerKey: getCommunityLayerKey(layer),
+        layer,
+      }));
+      const savedCache: OfflineCommunityCache = {
+        id: `community-${communityId}`,
+        communityId,
+        communityName:
+          activeCommunityId === communityId
+            ? activeCommunity?.name
+            : existingDraftCache?.communityName,
+        layerKeys: savedLayers.map((layer) => layer.layerKey),
+        layers: savedLayers,
+        zoneNames: [],
+        extents: [],
+        loaded: false,
+      };
+
+      await offlineCacheRepository.saveCache(savedCache);
+      await refresh();
+      return savedCache;
+    },
+    [activeCommunity?.name, activeCommunityId, isOfflineAllowed, refresh]
+  );
+
+  /**
+   * Downloads or extends one community cache.
+   * The flow stays additive: new zones only fetch missing tiles, and new layers are loaded on the current cache extents.
+   */
+  const downloadCommunityCache = useCallback(
     async ({
       communityId,
       layers,
       zoneNames,
-    }: OfflinePackageDownloadInput): Promise<OfflineCommunityPackage> => {
+    }: OfflineCacheDownloadInput): Promise<OfflineCommunityCache> => {
       if (isDownloading) {
         throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
       }
@@ -189,67 +241,180 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Offline mode is not allowed for the active community', retryable: false });
       }
 
-      const extents = await offlineZonesRepository.getExtents(zoneNames);
-      const unionExtent = await offlineZonesRepository.getUnionExtent(zoneNames);
+      const existingCache = await offlineCacheRepository.getCache(communityId);
 
-      if (extents.length === 0 || !unionExtent) {
+      if (!existingCache && layers.length === 0) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'At least one offline layer is required to download data', retryable: false });
+      }
+
+      const nextZoneNames = existingCache ? [...existingCache.zoneNames] : [];
+      for (const zoneName of zoneNames) {
+        if (!nextZoneNames.includes(zoneName)) {
+          nextZoneNames.push(zoneName);
+        }
+      }
+
+      const nextExtents = await offlineZonesRepository.getExtents(nextZoneNames);
+      const nextUnionExtent = await offlineZonesRepository.getUnionExtent(nextZoneNames);
+
+      if (nextExtents.length === 0 || !nextUnionExtent) {
         throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'At least one offline zone is required to download data', retryable: false });
       }
 
-      const existingPackage = await offlinePackageRepository.getPackage(communityId);
       const communityName =
         activeCommunityId === communityId
           ? activeCommunity?.name
-          : existingPackage?.communityName;
-      const partialPackageLayers = layers.map((layer) => ({ layer }));
+          : existingCache?.communityName;
+
+      const newZoneNames = existingCache ? zoneNames.filter((zoneName) => !existingCache.zoneNames.includes(zoneName)) : zoneNames;
+      const newZoneExtents = newZoneNames.length === 0 ? [] : await offlineZonesRepository.getExtents(newZoneNames);
+      const existingLayerKeys = existingCache?.layerKeys ?? [];
+      const newLayers = layers.filter(
+        (layer) => !existingLayerKeys.includes(getCommunityLayerKey(layer))
+      );
+
+      if (existingCache && newZoneExtents.length === 0 && newLayers.length === 0) {
+        return existingCache;
+      }
+
+      const steps: Array<{
+        layers: CommunityLayer[];
+        deleteLayers: Array<{ layer: CommunityLayer; cacheNamespace?: string }>;
+        extents: Extent[];
+        excludedExtents?: Extent[];
+        tileCount: number;
+        collectSavedLayers: boolean;
+      }> = [];
+
+      if (existingCache) {
+        const existingLayers = existingCache.layers.map((cacheLayer) => cacheLayer.layer);
+
+        if (existingLayers.length > 0 && newZoneExtents.length > 0) {
+          steps.push({
+            layers: existingLayers,
+            deleteLayers: existingCache.layers,
+            extents: newZoneExtents,
+            excludedExtents: existingCache.extents,
+            tileCount: offlineVectorDownloadService.countTiles({
+              communityId,
+              layers: existingLayers,
+              extents: newZoneExtents,
+              excludedExtents: existingCache.extents,
+            }),
+            collectSavedLayers: existingCache.loaded !== true,
+          });
+        }
+
+        if (newLayers.length > 0) {
+          steps.push({
+            layers: newLayers,
+            deleteLayers: newLayers.map((layer) => ({ layer })),
+            extents: nextExtents,
+            tileCount: offlineVectorDownloadService.countTiles({
+              communityId,
+              layers: newLayers,
+              extents: nextExtents,
+            }),
+            collectSavedLayers: true,
+          });
+        }
+      } else {
+        steps.push({
+          layers,
+          deleteLayers: layers.map((layer) => ({ layer })),
+          extents: nextExtents,
+          tileCount: offlineVectorDownloadService.countTiles({
+            communityId,
+            layers,
+            extents: nextExtents,
+          }),
+          collectSavedLayers: true,
+        });
+      }
+
+      const cleanupSteps: Array<{
+        layers: Array<{ layer: CommunityLayer; cacheNamespace?: string }>;
+        extents: Extent[];
+        excludedExtents?: Extent[];
+      }> = [];
 
       setIsDownloading(true);
       setDownloadError(null);
       setDownloadProgress(null);
 
       try {
-        if (existingPackage) {
-          await offlineVectorDownloadService.deletePackageData({
-            communityId,
-            layers: existingPackage.layers,
-            extents: existingPackage.extents,
+        let totalTileCount = 0;
+        for (const step of steps) {
+          totalTileCount += step.tileCount;
+        }
+        let progressOffset = 0;
+        const savedLayers: OfflineCacheLayer[] =
+          existingCache?.loaded === true
+            ? [...existingCache.layers]
+            : [];
+
+        for (const step of steps) {
+          cleanupSteps.push({
+            layers: step.deleteLayers,
+            extents: step.extents,
+            excludedExtents: step.excludedExtents,
           });
-          await offlinePackageRepository.deletePackage(communityId);
+
+          const downloadedLayers = await offlineVectorDownloadService.downloadCache({
+            communityId,
+            layers: step.layers,
+            extents: step.extents,
+            excludedExtents: step.excludedExtents,
+            onProgress: (progress) => {
+              const downloadedTileCount = progressOffset + progress.downloadedTileCount;
+
+              setDownloadProgress({
+                currentLayerTitle: progress.currentLayerTitle,
+                downloadedTileCount,
+                totalTileCount,
+                percent:
+                  totalTileCount === 0
+                    ? 100
+                    : Math.round((downloadedTileCount / totalTileCount) * 100),
+              });
+            },
+          });
+
+          if (step.collectSavedLayers) {
+            savedLayers.push(...downloadedLayers);
+          }
+
+          progressOffset += step.tileCount;
         }
 
-        const savedLayers = await offlineVectorDownloadService.downloadPackage({
-          communityId,
-          layers,
-          extents,
-          onProgress: (progress) => {
-            setDownloadProgress(progress);
-          },
-        });
         const now = new Date().toISOString();
-        const savedPackage: OfflineCommunityPackage = {
+        const savedCache: OfflineCommunityCache = {
           id: `community-${communityId}`,
           communityId,
           communityName,
           layerKeys: savedLayers.map((layer) => layer.layerKey),
           layers: savedLayers,
-          zoneNames,
-          extent: unionExtent,
-          extents,
+          zoneNames: nextZoneNames,
+          extent: nextUnionExtent,
+          extents: nextExtents,
           loaded: true,
-          loadedAt: existingPackage?.loadedAt ?? now,
+          loadedAt: existingCache?.loadedAt ?? now,
           lastRefreshAt: now,
         };
 
-        await offlinePackageRepository.savePackage(savedPackage);
+        await offlineCacheRepository.saveCache(savedCache);
         await refresh();
-        return savedPackage;
+        return savedCache;
       } catch (error) {
         try {
-          await offlineVectorDownloadService.deletePackageData({
-            communityId,
-            layers: partialPackageLayers,
-            extents,
-          });
+          for (const step of cleanupSteps) {
+            await offlineVectorDownloadService.deleteCacheData({
+              communityId,
+              layers: step.layers,
+              extents: step.extents,
+              excludedExtents: step.excludedExtents,
+            });
+          }
         } catch (cleanupError) {
           console.error('[Offline] Failed to clean partial download data', cleanupError);
         }
@@ -276,36 +441,98 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     ]
   );
 
-  const refreshCommunityPackage = useCallback(
-    async (communityId: number): Promise<OfflineCommunityPackage> => {
-      const offlinePackage = (await offlinePackageRepository.getPackage(communityId))!;
+  /**
+   * Refresh currently means "delete then redownload" for the whole cache.
+   * This keeps the behavior simple until an incremental refresh strategy is added.
+   */
+  const refreshCommunityCache = useCallback(
+    async (communityId: number): Promise<OfflineCommunityCache> => {
+      if (isDownloading) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
+      }
 
-      return await downloadCommunityPackage({
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+      }
+
+      if (activeCommunityId === communityId && !isOfflineAllowed) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Offline mode is not allowed for the active community', retryable: false });
+      }
+
+      const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
+
+      await offlineVectorDownloadService.deleteCacheData({
         communityId,
-        layers: offlinePackage.layers.map((packageLayer) => packageLayer.layer),
-        zoneNames: offlinePackage.zoneNames,
+        layers: offlineCache.layers,
+        extents: offlineCache.extents,
+      });
+      await offlineCacheRepository.deleteCache(communityId);
+
+      return await downloadCommunityCache({
+        communityId,
+        layers: offlineCache.layers.map((cacheLayer) => cacheLayer.layer),
+        zoneNames: offlineCache.zoneNames,
       });
     },
-    [downloadCommunityPackage]
+    [activeCommunityId, downloadCommunityCache, isDownloading, isOfflineAllowed, network.connected]
   );
 
   const cancelOfflineDownload = useCallback(() => {
     offlineVectorDownloadService.cancel();
   }, []);
 
-  const deleteCommunityPackage = useCallback(async (communityId: number) => {
+  /**
+   * Removes one layer from the community cache.
+   * If it was the last layer, the whole cache definition is removed as well.
+   */
+  const deleteCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string) => {
     if (isDownloading) {
       throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Cannot delete offline data while a download is running', retryable: false });
     }
 
-    const offlinePackage = (await offlinePackageRepository.getPackage(communityId))!;
+    const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
+    const nextLayers = offlineCache.layers.filter((layer) => layer.layerKey !== layerKey);
 
-    await offlineVectorDownloadService.deletePackageData({
-      communityId,
-      layers: offlinePackage.layers,
-      extents: offlinePackage.extents,
+    if (offlineCache.loaded) {
+      const deletedLayer = offlineCache.layers.find((layer) => layer.layerKey === layerKey)!;
+
+      await offlineVectorDownloadService.deleteCacheData({
+        communityId,
+        layers: [deletedLayer],
+        extents: offlineCache.extents,
+      });
+    }
+
+    if (nextLayers.length === 0) {
+      await offlineCacheRepository.deleteCache(communityId);
+      await refresh();
+      return;
+    }
+
+    await offlineCacheRepository.saveCache({
+      ...offlineCache,
+      layerKeys: nextLayers.map((layer) => layer.layerKey),
+      layers: nextLayers,
     });
-    await offlinePackageRepository.deletePackage(communityId);
+    await refresh();
+  }, [isDownloading, refresh]);
+
+  /**
+   * Deletes both the downloaded data and the persisted cache metadata for one community.
+   */
+  const deleteCommunityCache = useCallback(async (communityId: number) => {
+    if (isDownloading) {
+      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Cannot delete offline data while a download is running', retryable: false });
+    }
+
+    const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
+
+    await offlineVectorDownloadService.deleteCacheData({
+      communityId,
+      layers: offlineCache.layers,
+      extents: offlineCache.extents,
+    });
+    await offlineCacheRepository.deleteCache(communityId);
     await refresh();
   }, [isDownloading, refresh]);
 
@@ -317,22 +544,24 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     isOfflineAllowed,
     hasOfflineData,
     canEnableOffline,
-    activeCommunityPackage,
+    activeCommunityCache,
     zones,
     isLoading,
     isDownloading,
     downloadProgress,
     downloadError,
-    packages,
+    caches,
     refresh,
     setOfflineMode,
     saveZone,
     appendZoneExtent,
     deleteZone,
-    downloadCommunityPackage,
-    refreshCommunityPackage,
+    saveCommunityCacheDraft,
+    downloadCommunityCache,
+    refreshCommunityCache,
     cancelOfflineDownload,
-    deleteCommunityPackage,
+    deleteCommunityCacheLayer,
+    deleteCommunityCache,
   };
 
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
