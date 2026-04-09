@@ -79,7 +79,7 @@ function getLayerOpacity(layer: CommunityLayer): number | undefined {
   return typeof layer.opacity === 'number' ? layer.opacity : undefined;
 }
 
-function getTableWfsUrl(layer: CommunityLayer): string | undefined {
+export function getTableWfsUrl(layer: CommunityLayer): string | undefined {
   const table = layer.table;
   if (!table || typeof table !== 'object') return undefined;
 
@@ -90,7 +90,7 @@ function getTableWfsUrl(layer: CommunityLayer): string | undefined {
   return undefined;
 }
 
-function getTableTileZoom(layer: CommunityLayer): number {
+export function getTableTileZoom(layer: CommunityLayer): number {
   const table = layer.table;
 
   if (!table || typeof table !== 'object') return 13;
@@ -100,7 +100,7 @@ function getTableTileZoom(layer: CommunityLayer): number {
   return Number.isFinite(tileZoom) ? tileZoom : 13;
 }
 
-function getLayerMaxFeatures(layer: CommunityLayer): number {
+export function getLayerMaxFeatures(layer: CommunityLayer): number {
   const tileZoom = getTableTileZoom(layer);
 
   // Lower-zoom collaborative tiles cover a much larger area, so a smaller cap keeps slow environments responsive.
@@ -115,7 +115,9 @@ function getLayerMaxFeatures(layer: CommunityLayer): number {
   return 5000;
 }
 
-function getLayerOutputFormat(layer: CommunityLayer): 'CSV' | 'JSON' | undefined {
+export function getLayerOutputFormat(
+  layer: CommunityLayer
+): 'CSV' | 'JSON' | undefined {
   return layer.format === 'CSV' || layer.format === 'JSON'
     ? layer.format
     : undefined;

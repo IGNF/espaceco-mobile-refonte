@@ -15,6 +15,19 @@ export interface OfflinePackageLayer {
   cacheNamespace?: string;
 }
 
+export interface OfflinePackageDownloadInput {
+  communityId: number;
+  layers: CommunityLayer[];
+  zoneNames: string[];
+}
+
+export interface OfflineDownloadProgress {
+  currentLayerTitle: string;
+  downloadedTileCount: number;
+  totalTileCount: number;
+  percent: number;
+}
+
 export interface OfflineCommunityPackage {
   id: string;
   communityId: number;

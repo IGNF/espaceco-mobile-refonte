@@ -4,15 +4,21 @@ import type { Extent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
 import {
   type OfflineCommunityPackage,
+  type OfflineDownloadProgress,
   type OfflineMode,
   type OfflineNetworkStatus,
+  type OfflinePackageDownloadInput,
   type OfflineZone,
 } from '@/domain/offline/models';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { OfflinePackageRepository } from '@/infra/offline/OfflinePackageRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';
+import {
+  OFFLINE_DOWNLOAD_CANCELLED_CODE,
+  OfflineVectorDownloadService,
+} from '@/infra/offline/OfflineVectorDownloadService';
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
-import { AppError } from '@/shared/errors/appError';
+import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
 import { OfflineContext } from './OfflineContext';
 
 interface OfflineProviderProps {
@@ -22,6 +28,7 @@ interface OfflineProviderProps {
 const offlinePackageRepository = new OfflinePackageRepository();
 const offlineModeRepository = new OfflineModeRepository();
 const offlineZonesRepository = new OfflineZonesRepository();
+const offlineVectorDownloadService = new OfflineVectorDownloadService();
 
 const DEFAULT_NETWORK_STATUS: OfflineNetworkStatus = {
   connected: true,
@@ -44,6 +51,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const { activeCommunity } = useCommunity();
   const activeCommunityId = activeCommunity?.id ?? null;
   const [isLoading, setIsLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<OfflineDownloadProgress | null>(null);
+  const [downloadError, setDownloadError] = useState<AppError | null>(null);
   const [requestedMode, setRequestedModeState] = useState<OfflineMode>('online');
   const [network, setNetwork] = useState<OfflineNetworkStatus>(DEFAULT_NETWORK_STATUS);
   const [zones, setZones] = useState<OfflineZone[]>([]);
@@ -160,19 +171,143 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     await refresh();
   }, [refresh]);
 
-  const saveCommunityPackage = useCallback(
-    async (offlinePackage: OfflineCommunityPackage) => {
-      const savedPackage = await offlinePackageRepository.savePackage(offlinePackage);
-      await refresh();
-      return savedPackage;
+  const downloadCommunityPackage = useCallback(
+    async ({
+      communityId,
+      layers,
+      zoneNames,
+    }: OfflinePackageDownloadInput): Promise<OfflineCommunityPackage> => {
+      if (isDownloading) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
+      }
+
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+      }
+
+      if (activeCommunityId === communityId && !isOfflineAllowed) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Offline mode is not allowed for the active community', retryable: false });
+      }
+
+      const extents = await offlineZonesRepository.getExtents(zoneNames);
+      const unionExtent = await offlineZonesRepository.getUnionExtent(zoneNames);
+
+      if (extents.length === 0 || !unionExtent) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'At least one offline zone is required to download data', retryable: false });
+      }
+
+      const existingPackage = await offlinePackageRepository.getPackage(communityId);
+      const communityName =
+        activeCommunityId === communityId
+          ? activeCommunity?.name
+          : existingPackage?.communityName;
+      const partialPackageLayers = layers.map((layer) => ({ layer }));
+
+      setIsDownloading(true);
+      setDownloadError(null);
+      setDownloadProgress(null);
+
+      try {
+        if (existingPackage) {
+          await offlineVectorDownloadService.deletePackageData({
+            communityId,
+            layers: existingPackage.layers,
+            extents: existingPackage.extents,
+          });
+          await offlinePackageRepository.deletePackage(communityId);
+        }
+
+        const savedLayers = await offlineVectorDownloadService.downloadPackage({
+          communityId,
+          layers,
+          extents,
+          onProgress: (progress) => {
+            setDownloadProgress(progress);
+          },
+        });
+        const now = new Date().toISOString();
+        const savedPackage: OfflineCommunityPackage = {
+          id: `community-${communityId}`,
+          communityId,
+          communityName,
+          layerKeys: savedLayers.map((layer) => layer.layerKey),
+          layers: savedLayers,
+          zoneNames,
+          extent: unionExtent,
+          extents,
+          loaded: true,
+          loadedAt: existingPackage?.loadedAt ?? now,
+          lastRefreshAt: now,
+        };
+
+        await offlinePackageRepository.savePackage(savedPackage);
+        await refresh();
+        return savedPackage;
+      } catch (error) {
+        try {
+          await offlineVectorDownloadService.deletePackageData({
+            communityId,
+            layers: partialPackageLayers,
+            extents,
+          });
+        } catch (cleanupError) {
+          console.error('[Offline] Failed to clean partial download data', cleanupError);
+        }
+
+        if (isAppError(error) && error.code === OFFLINE_DOWNLOAD_CANCELLED_CODE) {
+          throw error;
+        }
+
+        const appError = toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
+        setDownloadError(appError);
+        throw appError;
+      } finally {
+        setIsDownloading(false);
+        setDownloadProgress(null);
+      }
     },
-    [refresh]
+    [
+      activeCommunity?.name,
+      activeCommunityId,
+      isDownloading,
+      isOfflineAllowed,
+      network.connected,
+      refresh,
+    ]
   );
 
+  const refreshCommunityPackage = useCallback(
+    async (communityId: number): Promise<OfflineCommunityPackage> => {
+      const offlinePackage = (await offlinePackageRepository.getPackage(communityId))!;
+
+      return await downloadCommunityPackage({
+        communityId,
+        layers: offlinePackage.layers.map((packageLayer) => packageLayer.layer),
+        zoneNames: offlinePackage.zoneNames,
+      });
+    },
+    [downloadCommunityPackage]
+  );
+
+  const cancelOfflineDownload = useCallback(() => {
+    offlineVectorDownloadService.cancel();
+  }, []);
+
   const deleteCommunityPackage = useCallback(async (communityId: number) => {
+    if (isDownloading) {
+      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Cannot delete offline data while a download is running', retryable: false });
+    }
+
+    const offlinePackage = (await offlinePackageRepository.getPackage(communityId))!;
+
+    await offlineVectorDownloadService.deletePackageData({
+      communityId,
+      layers: offlinePackage.layers,
+      extents: offlinePackage.extents,
+    });
     await offlinePackageRepository.deletePackage(communityId);
     await refresh();
-  }, [refresh]);
+  }, [isDownloading, refresh]);
 
   const value = {
     mode,
@@ -185,13 +320,18 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     activeCommunityPackage,
     zones,
     isLoading,
+    isDownloading,
+    downloadProgress,
+    downloadError,
     packages,
     refresh,
     setOfflineMode,
     saveZone,
     appendZoneExtent,
     deleteZone,
-    saveCommunityPackage,
+    downloadCommunityPackage,
+    refreshCommunityPackage,
+    cancelOfflineDownload,
     deleteCommunityPackage,
   };
 

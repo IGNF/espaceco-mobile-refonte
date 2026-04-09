@@ -60,18 +60,10 @@ export class OfflineZonesRepository {
    * Returns one bounding box covering every extent from the selected zones.
    */
   async getUnionExtent(names: string[]): Promise<Extent | null> {
-    if (names.length === 0) {
-      return null;
-    }
-
-    return await extentManager.getAllInOneExtent(names);
+    return names.length === 0 ? null : await extentManager.getAllInOneExtent(names);
   }
 
   async getExtents(names: string[]): Promise<Extent[]> {
-    if (names.length === 0) {
-      return [];
-    }
-
-    return await extentManager.getAllExtents(names);
+    return names.length === 0 ? [] : await extentManager.getAllExtents(names);
   }
 }
