@@ -22,6 +22,7 @@ import { serializeDirectContributionDocumentAttributes } from '@/infra/map/direc
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
+import { getCommunityLayerGeometryType } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 export type DirectContributionFeatureFormMode = 'create' | 'edit';
@@ -76,33 +77,6 @@ interface PendingFeatureEdition {
 const DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE = 0;
 // Keep the actual selection strict, but widen the object choice search a bit so overlapping nearby features are easier to disambiguate on touch screens.
 const DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE = 16;
-
-function getGeometryTypeFromTable(
-  layer: CommunityLayer | null
-): 'Point' | 'LineString' | 'Polygon' | null {
-  const table = layer?.table;
-  if (!table) {
-    return null;
-  }
-
-  const geometryColumn = table.columns[table.geometryName] as
-    | { type?: unknown }
-    | undefined;
-  const rawType =
-    typeof geometryColumn?.type === 'string' ? geometryColumn.type : '';
-
-  if (/point/i.test(rawType)) {
-    return 'Point';
-  }
-  if (/line/i.test(rawType)) {
-    return 'LineString';
-  }
-  if (/polygon/i.test(rawType)) {
-    return 'Polygon';
-  }
-
-  return null;
-}
 
 // Draw actions should only be enabled for the geometry type supported by the edited layer. Non-draw tools stay enabled.
 function isCompatibleDrawAction(
@@ -159,7 +133,7 @@ export function useDirectContributionSession({
   }, [activeLayerKey, vectorLayers]);
 
   const activeGeometryType = useMemo(
-    () => getGeometryTypeFromTable(activeLayer),
+    () => getCommunityLayerGeometryType(activeLayer),
     [activeLayer]
   );
 
