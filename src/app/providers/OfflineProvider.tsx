@@ -477,6 +477,65 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     [activeCommunityId, downloadCommunityCache, isDownloading, isOfflineAllowed, network.connected]
   );
 
+  /**
+   * Refreshes one loaded layer in place on the current cache extents.
+   * This keeps the rest of the cache untouched while replacing that layer's downloaded tiles.
+   */
+  const refreshCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string): Promise<OfflineCommunityCache> => {
+    if (isDownloading) {
+      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
+    }
+
+    if (!network.connected) {
+      throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+    }
+
+    const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
+    const cacheLayer = offlineCache.layers.find((layer) => layer.layerKey === layerKey)!;
+
+    setIsDownloading(true);
+    setDownloadError(null);
+    setDownloadProgress(null);
+
+    try {
+      const [refreshedLayer] = await offlineVectorDownloadService.downloadCache({
+        communityId,
+        layers: [cacheLayer.layer],
+        extents: offlineCache.extents,
+        onProgress: (progress) => {
+          setDownloadProgress(progress);
+        },
+      });
+
+      const nextLayers = offlineCache.layers.map((layer) =>
+        layer.layerKey === layerKey ? refreshedLayer : layer
+      );
+      const nextCache: OfflineCommunityCache = {
+        ...offlineCache,
+        layerKeys: nextLayers.map((layer) => layer.layerKey),
+        layers: nextLayers,
+        lastRefreshAt: new Date().toISOString(),
+      };
+
+      await offlineCacheRepository.saveCache(nextCache);
+      await refresh();
+      return nextCache;
+    } catch (error) {
+      if (isAppError(error) && error.code === OFFLINE_DOWNLOAD_CANCELLED_CODE) {
+        throw error;
+      }
+
+      const appError = toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
+      setDownloadError(appError);
+      throw appError;
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(null);
+    }
+  },
+    [isDownloading, network.connected, refresh]
+  );
+
   const cancelOfflineDownload = useCallback(() => {
     offlineVectorDownloadService.cancel();
   }, []);
@@ -559,6 +618,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     saveCommunityCacheDraft,
     downloadCommunityCache,
     refreshCommunityCache,
+    refreshCommunityCacheLayer,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,

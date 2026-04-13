@@ -36,16 +36,29 @@
   gap: 0.5rem;
 }
 
+.modeCard,
 .cacheSummary {
   display: grid;
   gap: 0.2rem;
 }
 
+.modeCard,
 .cacheSummary,
 .progressSection {
   padding: 0.75rem;
   border-radius: 0.6rem;
   background: var(--color-light-tint);
+}
+
+.modeCard {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.modeInfo {
+  display: grid;
+  gap: 0.2rem;
 }
 
 .progressSection {
@@ -170,6 +183,11 @@
   height: 1.1rem;
 }
 
+.rowActionGlyph {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
 .rowActionIcon path {
   fill: currentColor;
 }
@@ -187,6 +205,11 @@
 .dialogList {
   display: grid;
   gap: 0.6rem;
+}
+
+.dialogToggle {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .dialogActions {

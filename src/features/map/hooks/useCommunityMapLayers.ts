@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
-import type { CommunityLayer } from '@ign/mobile-core';
+import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
+import type { OfflineMode } from '@/domain/offline/models';
 import type Map from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import type LayerGroup from 'ol/layer/Group';
@@ -12,24 +13,10 @@ import {
 } from '@/infra/map/openlayers/vectorLayers';
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 
 interface UseCommunityMapLayersResult {
   isVectorLayersLoading: boolean;
-}
-
-interface ObservableLayerSource {
-  on(type: string, listener: (event: unknown) => void): void;
-  un(type: string, listener: (event: unknown) => void): void;
-}
-
-function getObservableLayerSource(layer: BaseLayer): ObservableLayerSource | null {
-  const source = (
-    layer as BaseLayer & {
-      getSource?: () => ObservableLayerSource | null | undefined;
-    }
-  ).getSource?.();
-
-  return source ?? null;
 }
 
 function syncLayerDisplayState(
@@ -71,7 +58,8 @@ function replaceLayerGroupContent(
 
 function syncCommunityVectorLayerGroup(
   layerGroup: LayerGroup,
-  vectorLayers: CommunityLayer[]
+  vectorLayers: CommunityLayer[],
+  isOfflineMode: boolean
 ): void {
   const existingLayersByKey = new globalThis.Map<string, BaseLayer>();
 
@@ -89,7 +77,7 @@ function syncCommunityVectorLayerGroup(
     let olLayer: BaseLayer | null | undefined = existingLayersByKey.get(layerKey);
 
     if (!olLayer) {
-      olLayer = createCommunityVectorLayer(communityLayer, collabApiClient);
+      olLayer = createCommunityVectorLayer(communityLayer, collabApiClient, isOfflineMode);
     }
 
     if (!olLayer) {
@@ -97,6 +85,11 @@ function syncCommunityVectorLayerGroup(
     }
 
     syncLayerDisplayState(olLayer, communityLayer);
+
+    if (olLayer instanceof CollabVectorLayer) {
+      olLayer.setOnline(!isOfflineMode);
+    }
+
     orderedLayers.push(olLayer);
   }
 
@@ -116,9 +109,11 @@ export function useCommunityMapLayers(
   mapRef: RefObject<Map | null>,
   geoportailLayers: CommunityLayer[],
   vectorLayers: CommunityLayer[],
-  isMapReady: boolean
+  isMapReady: boolean,
+  mode: OfflineMode
 ): UseCommunityMapLayersResult {
   const [isVectorLayersLoading, setIsVectorLayersLoading] = useState(false);
+  const isOfflineMode = mode === 'offline';
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -144,8 +139,8 @@ export function useCommunityMapLayers(
     const guichet = findLayerGroupByName(map, 'guichet');
     if (!guichet) return;
 
-    syncCommunityVectorLayerGroup(guichet, vectorLayers);
-  }, [isMapReady, mapRef, vectorLayers]);
+    syncCommunityVectorLayerGroup(guichet, vectorLayers, isOfflineMode);
+  }, [isMapReady, isOfflineMode, mapRef, vectorLayers]);
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -158,6 +153,9 @@ export function useCommunityMapLayers(
 
     const loadingByLayerKey: Record<string, boolean> = {};
     const cleanupTasks: Array<() => void> = [];
+    const layerTitleByKey = new globalThis.Map(
+      vectorLayers.map((layer) => [getCommunityLayerKey(layer), getCommunityLayerTitle(layer)])
+    );
 
     const setLayerLoadingState = (layerKey: string, isLoading: boolean) => {
       if (isLoading) {
@@ -171,17 +169,44 @@ export function useCommunityMapLayers(
 
     for (const layer of guichet.getLayers().getArray()) {
       const layerKey = getCommunityLayerKeyFromOlLayer(layer);
-      const source = getObservableLayerSource(layer);
+      const layerTitle = layerKey ? layerTitleByKey.get(layerKey) ?? layerKey : '';
+      const loadSource =
+        isOfflineMode && layer instanceof CollabVectorLayer ? 'offline cache' : 'api';
+
+      /**
+       * BaseLayer does not expose getSource() in its public type, but the mounted vector layers do.
+       * Narrow it locally so we can subscribe to the load events used by the global map spinner.
+       */
+      const source = (
+        layer as BaseLayer & {
+          getSource?: () => {
+            on(type: 'loadstart' | 'loadend', listener: (event: unknown) => void): void;
+            un(type: 'loadstart' | 'loadend', listener: (event: unknown) => void): void;
+          } | null | undefined;
+        }
+      ).getSource?.();
+
       if (!layerKey || !source) {
         continue;
       }
 
       const handleLoadStart = () => {
+        console.log('[OFFLINE_MODE][useCommunityMapLayers] layer load start', {
+          layerKey,
+          layerTitle,
+          source: loadSource,
+        });
         setLayerLoadingState(layerKey, true);
       };
 
       const handleLoadEnd = (event: unknown) => {
         const remains = (event as { remains?: unknown } | undefined)?.remains;
+        console.log('[OFFLINE_MODE][useCommunityMapLayers] layer load end', {
+          layerKey,
+          layerTitle,
+          source: loadSource,
+          remains,
+        });
         setLayerLoadingState(layerKey, typeof remains === 'number' ? remains > 0 : false);
       };
 
@@ -200,7 +225,7 @@ export function useCommunityMapLayers(
 
       setIsVectorLayersLoading(false);
     };
-  }, [isMapReady, mapRef, vectorLayers]);
+  }, [isMapReady, isOfflineMode, mapRef, vectorLayers]);
 
   return {
     isVectorLayersLoading,

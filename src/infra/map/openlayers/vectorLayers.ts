@@ -7,12 +7,16 @@ import {
 } from '@ign/mobile-core';
 import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 import { stripQueryParams } from '@/shared/utils/query';
-import { USE_LAYER_FEATURE_CACHE_WHEN_ONLINE } from '@/shared/constants/map';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 
+/**
+ * Builds the runtime OpenLayers layer used on the map from a community-layer definition.
+ * Collaborative layers start directly in online or offline mode depending on the current app mode.
+ */
 export function createCommunityVectorLayer(
   layer: CommunityLayer,
-  apiClient: ApiClient
+  apiClient: ApiClient,
+  isOfflineMode: boolean
 ): BaseLayer | null {
   const geoservice = layer.geoservice;
   if (geoservice && (geoservice.type as string)?.toUpperCase() === 'WFS') {
@@ -20,7 +24,7 @@ export function createCommunityVectorLayer(
       geoservice,
       visibility: getLayerVisibility(layer),
       opacity: getLayerOpacity(layer),
-      useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
+      useCacheWhenOnline: false,
     } as any, cacheStorage as any);
     // Keep a link back to the originating CommunityLayer for layer-panel actions.
     applyCommunityLayerMetadata(wfsLayer, layer);
@@ -31,8 +35,6 @@ export function createCommunityVectorLayer(
   if (layer.table && wfsUrl) {
     const table = layer.table;
     const cacheUrl = `${layer.database ?? table.database ?? ''}:${table.name}`;
-    const online =
-      typeof navigator === 'undefined' ? true : navigator.onLine;
 
     const collabLayer = new CollabVectorLayer(
       {
@@ -46,9 +48,9 @@ export function createCommunityVectorLayer(
       {
         tileZoom: getTableTileZoom(layer),
         maxFeatures: getLayerMaxFeatures(layer),
-        online,
+        online: !isOfflineMode,
         outputFormat: getLayerOutputFormat(layer),
-        useCacheWhenOnline: USE_LAYER_FEATURE_CACHE_WHEN_ONLINE,
+        useCacheWhenOnline: false,
         cache: cacheStorage,
       } as any
     );

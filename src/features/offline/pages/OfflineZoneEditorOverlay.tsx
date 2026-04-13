@@ -17,7 +17,9 @@ import type { DirectContributionFeatureCandidate } from '@/features/map/types/di
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
+import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 
+import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconGeolocation from '@/shared/assets/icons/icon-geolocation.svg?react';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
@@ -91,8 +93,10 @@ export function OfflineZoneEditorOverlay({
   const [choiceCandidates, setChoiceCandidates] = useState<
     DirectContributionFeatureCandidate[]
   >([]);
+  const [isGuichetGroupVisible, setIsGuichetGroupVisible] = useState(false);
   const overlayLayerRef = useRef<VectorLayer<VectorSource<Feature<Geometry>>> | null>(null);
   const selectionFrameRef = useRef<HTMLDivElement | null>(null);
+  const previousGuichetGroupVisibilityRef = useRef<boolean | null>(null);
 
   useEffect(() => {
     if (!isOpen || !map) {
@@ -204,6 +208,25 @@ export function OfflineZoneEditorOverlay({
     };
   }, [isOpen, layer, map, mode, t]);
 
+  useEffect(() => {
+    if (!isOpen || !map || mode !== 'custom') {
+      return;
+    }
+
+    const guichetLayerGroup = findLayerGroupByName(map, 'guichet');
+    if (!guichetLayerGroup) {
+      return;
+    }
+
+    previousGuichetGroupVisibilityRef.current = guichetLayerGroup.getVisible();
+    guichetLayerGroup.setVisible(false);
+
+    return () => {
+      guichetLayerGroup.setVisible(previousGuichetGroupVisibilityRef.current ?? true);
+      previousGuichetGroupVisibilityRef.current = null;
+    };
+  }, [isOpen, map, mode]);
+
   function getVisibleExtent() {
     return map?.getSize() ? map.getView().calculateExtent(map.getSize()) : null;
   }
@@ -257,6 +280,21 @@ export function OfflineZoneEditorOverlay({
     await onSave(nextExtents);
   }
 
+  function toggleMapLayers() {
+    if (!map) {
+      return;
+    }
+
+    const guichetLayerGroup = findLayerGroupByName(map, 'guichet');
+    if (!guichetLayerGroup) {
+      return;
+    }
+
+    const nextVisibility = !guichetLayerGroup.getVisible();
+    guichetLayerGroup.setVisible(nextVisibility);
+    setIsGuichetGroupVisible(nextVisibility);
+  }
+
   // Can add curent selection if the mode is 'personnalisée' and the map is not null, or if the mode is 'Par sélection d'objets' and there are selected candidates.
   const canAddCurrentSelection = mode === 'custom' ? map !== null : selectedCandidates.length > 0;
 
@@ -283,11 +321,29 @@ export function OfflineZoneEditorOverlay({
               <IconGeolocation className={styles.centerIcon} />
             </button>
           )}
+          <button
+            type='button'
+            className={styles.visibilityButton}
+            onClick={toggleMapLayers}
+            aria-label={
+              isGuichetGroupVisible
+                ? t('offline.editor.hideLayers')
+                : t('offline.editor.showLayers')
+            }
+            title={
+              isGuichetGroupVisible
+                ? t('offline.editor.hideLayers')
+                : t('offline.editor.showLayers')
+            }
+          >
+            <IconEye className={styles.visibilityIcon} />
+            {!isGuichetGroupVisible && <span className={styles.visibilitySlash} aria-hidden='true' />}
+          </button>
         </>
       )}
 
       <div className={styles.headerCard}>
-        <div>
+        <div className={styles.headerCardContent}>
           <p className={styles.eyebrow}>{t('offline.editor.title')}</p>
           <h2 className={styles.title}>{zoneName}</h2>
           <p className={`${typography.caption} ${styles.subtitle}`}>
@@ -299,9 +355,11 @@ export function OfflineZoneEditorOverlay({
           </p>
         </div>
 
-        <Button variant='ghost' color='dark' onClick={onCancel}>
-          {t('offline.editor.cancel')}
-        </Button>
+        <div className={styles.headerCardActions}>
+          <Button variant='solid' color='light' onClick={onCancel}>
+            {t('offline.editor.cancel')}
+          </Button>
+        </div>
       </div>
 
       {choiceCandidates.length > 1 && (

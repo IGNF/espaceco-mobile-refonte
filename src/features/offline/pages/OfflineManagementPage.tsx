@@ -11,6 +11,7 @@ import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/Checkbox';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { Toggle } from '@/shared/ui/Toggle';
 import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import { getUserFacingErrorMessage } from '@/shared/errors/appError';
@@ -61,18 +62,22 @@ export function OfflineManagementPage({
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
   const {
+    mode,
     activeCommunityId,
     activeCommunityCache,
     isOfflineAllowed,
+    hasOfflineData,
     zones,
     isDownloading,
     downloadProgress,
     downloadError,
+    setOfflineMode,
     saveZone,
     deleteZone,
     saveCommunityCacheDraft,
     downloadCommunityCache,
     refreshCommunityCache,
+    refreshCommunityCacheLayer,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,
@@ -113,13 +118,16 @@ export function OfflineManagementPage({
     hasCurrentCacheLayers &&
     hasZones &&
     isIdle;
-  const canRefresh = hasActiveCommunity && hasLoadedCache && isIdle;
+  const canRefresh = hasActiveCommunity && hasLoadedCache && isOfflineAllowed && isIdle;
   const canDeleteCache = hasActiveCommunity && hasCurrentCache && isIdle;
   const canOpenLayerPicker =
     isOfflineAllowed &&
     isIdle &&
     (hasLoadedCache ? hasAddableLayers : hasEligibleLayers);
+  const canToggleOfflineMode = hasOfflineData && isOfflineAllowed && isIdle;
   const layerPickerLayers = layerPickerMode === 'loaded-cache' ? addableLayers : eligibleLayers;
+  const areAllLayerPickerLayersSelected =
+    layerPickerLayers.length > 0 && layerPickerKeys.length === layerPickerLayers.length;
   const currentZoneEditorLayer = zoneEditorState?.layerKey
     ? eligibleLayers.find((layer) => getCommunityLayerKey(layer) === zoneEditorState.layerKey) ?? null
     : null;
@@ -223,6 +231,12 @@ export function OfflineManagementPage({
       current.includes(layerKey)
         ? current.filter((key) => key !== layerKey)
         : [...current, layerKey]
+    );
+  }
+
+  function handleToggleAllLayerPickerLayers(checked: boolean) {
+    setLayerPickerKeys(
+      checked ? layerPickerLayers.map((layer) => getCommunityLayerKey(layer)) : []
     );
   }
 
@@ -371,6 +385,34 @@ export function OfflineManagementPage({
     }
   }
 
+  async function handleRefreshLayer(layerKey: string) {
+    try {
+      await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
+      await showToastSafe({
+        text: t('offline.layers.refreshSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
+  async function handleToggleOfflineMode(checked: boolean) {
+    try {
+      await setOfflineMode(checked ? 'offline' : 'online');
+      await showToastSafe({
+        text: checked
+          ? t('offline.mode.offlineEnabled')
+          : t('offline.mode.onlineEnabled'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
   if (zoneEditorState && isOpen) {
     return (
       <OfflineZoneEditorOverlay
@@ -402,6 +444,25 @@ export function OfflineManagementPage({
             <h2 className={styles.sectionTitle}>{t('offline.status.title')}</h2>
 
             <div className={styles.statusCard}>
+              {hasOfflineData && isOfflineAllowed && (
+                <div className={styles.modeCard}>
+                  <div className={styles.modeInfo}>
+                    <p className={styles.summaryTitle}>
+                      {mode === 'offline'
+                        ? t('offline.mode.offline')
+                        : t('offline.mode.online')}
+                    </p>
+                  </div>
+
+                  <Toggle
+                    checked={mode === 'offline'}
+                    onChange={(checked) => void handleToggleOfflineMode(checked)}
+                    color='primary'
+                    disabled={!canToggleOfflineMode}
+                  />
+                </div>
+              )}
+
               {hasLoadedCache ? (
                 <div className={styles.cacheSummary}>
                   <p className={styles.summaryTitle}>{t('offline.status.loaded')}</p>
@@ -577,6 +638,18 @@ export function OfflineManagementPage({
                       </div>
 
                       <div className={styles.rowActions}>
+                        {isLoaded && (
+                          <button
+                            type='button'
+                            className={`${styles.rowIconButton} ${styles.rowIconButtonSecondary}`}
+                            onClick={() => void handleRefreshLayer(layerKey)}
+                            disabled={isDownloading || !isOfflineAllowed}
+                            aria-label={t('offline.layers.refresh')}
+                            title={t('offline.layers.refresh')}
+                          >
+                            <span className={styles.rowActionGlyph}>↻</span>
+                          </button>
+                        )}
                         <button
                           type='button'
                           className={`${styles.rowIconButton} ${styles.rowIconButtonDanger}`}
@@ -759,6 +832,17 @@ export function OfflineManagementPage({
           )}
 
           <div className={styles.dialogList}>
+            {layerPickerLayers.length > 0 && (
+              <div className={styles.dialogToggle}>
+                <Toggle
+                  checked={areAllLayerPickerLayersSelected}
+                  onChange={handleToggleAllLayerPickerLayers}
+                  label={t('offline.layers.selectAll')}
+                  color='primary'
+                />
+              </div>
+            )}
+
             {layerPickerLayers.map((layer) => {
               const layerKey = getCommunityLayerKey(layer);
 

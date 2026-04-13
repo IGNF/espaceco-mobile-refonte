@@ -178,6 +178,12 @@
       "cancel": "Annuler le téléchargement",
       "cancelled": "Téléchargement hors ligne annulé."
     },
+    "mode": {
+      "online": "Mode en ligne",
+      "offline": "Mode hors ligne",
+      "onlineEnabled": "Retour au mode en ligne.",
+      "offlineEnabled": "Mode hors ligne activé."
+    },
     "zones": {
       "title": "Zones",
       "description": "Créez des zones personnalisées ou par sélection d'objets, puis utilisez-les pour charger ou enrichir le cache.",
@@ -202,6 +208,9 @@
       "empty": "Aucune couche collaborative éligible.",
       "loaded": "Déjà chargée",
       "pending": "En attente de chargement",
+      "selectAll": "Tout sélectionner",
+      "refresh": "Rafraîchir la couche",
+      "refreshSuccess": "Couche hors ligne rafraîchie.",
       "appendWarning": "Les couches sélectionnées seront chargées immédiatement dans le cache actuel.",
       "delete": "Supprimer",
       "deleteSuccess": "Couche supprimée du cache hors ligne.",
@@ -237,6 +246,8 @@
       "savedExtents": "Emprises ajoutées",
       "selectedObjects": "Objets sélectionnés",
       "centerOnPosition": "Centrer sur ma position",
+      "showLayers": "Afficher les couches de la carte",
+      "hideLayers": "Masquer les couches de la carte",
       "addVisibleExtent": "Ajouter la vue",
       "addSelectedObjects": "Ajouter la sélection",
       "validate": "Valider",

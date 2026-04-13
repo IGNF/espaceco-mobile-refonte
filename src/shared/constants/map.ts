@@ -43,12 +43,6 @@ export const LAYER_CACHE_TTL_MS = 5 * 60 * 1000;
 export const LAYER_CACHE_KEY_PREFIX = 'community-layers:';
 
 /**
- * Enable feature-cache reads even while online for collaborative vector layers.
- * Set to false to keep legacy offline-only cache reads.
- */
-export const USE_LAYER_FEATURE_CACHE_WHEN_ONLINE = true;
-
-/**
  * Maximum duration for initial app/map loading before showing an error toast.
  */
 export const APP_LOADING_TIMEOUT_MS = 20 * 1000;

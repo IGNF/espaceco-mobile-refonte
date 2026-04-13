@@ -17,7 +17,7 @@
 
 .centerButton {
   position: absolute;
-  top: calc(var(--safe-top, 0px) + 126px);
+  top: calc(var(--safe-top, 0px) + 15%);
   right: 24px;
   z-index: 1;
   pointer-events: auto;
@@ -29,13 +29,49 @@
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
 }
 
+.visibilityButton {
+  position: absolute;
+  top: calc(var(--safe-top, 0px) + 21%);
+  right: 24px;
+  z-index: 1;
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+}
+
 .centerIcon {
   width: 30px;
   height: 30px;
 }
 
+.visibilityIcon {
+  width: 26px;
+  height: 26px;
+}
+
 .centerIcon path {
   fill: var(--color-dark);
+}
+
+.visibilityIcon path {
+  fill: var(--color-dark);
+}
+
+.visibilitySlash {
+  position: absolute;
+  width: 30px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--color-danger);
+  transform: rotate(-35deg);
 }
 
 .headerCard,
@@ -55,10 +91,19 @@
 .headerCard {
   top: calc(var(--safe-top, 0px) + 16px);
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem;
+}
+
+.headerCardContent {
+  flex: 4;
+}
+
+.headerCardActions {
+  flex: 1;
+  text-align: center;
 }
 
 .eyebrow {
@@ -161,6 +206,11 @@
 
   .centerButton {
     top: 40px;
+    right: 40px;
+  }
+
+  .visibilityButton {
+    top: 96px;
     right: 40px;
   }
 

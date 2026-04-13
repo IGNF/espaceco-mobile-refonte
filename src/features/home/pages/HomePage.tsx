@@ -11,6 +11,7 @@ import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
 import { SearchPanel } from "@/features/search/components/SearchPanel";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
+import { useOffline } from "@/features/offline/hooks/useOffline";
 
 // PAGES //
 import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInformationsPage";
@@ -61,6 +62,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { setActiveCommunity } = useCommunity();
+  const { mode: offlineMode, activeCommunityCache } = useOffline();
   const {
     mapElementRef,
     mapRef,
@@ -83,7 +85,7 @@ export function HomePage() {
     setLayerOpacity,
     setGroupLayerOrder,
     setLayerDirectContributionLock,
-  } = useLayers();
+  } = useLayers(offlineMode, activeCommunityCache);
   useSignalementMapLayers(
     mapRef,
     signalementLayerVisibility,
@@ -134,7 +136,8 @@ export function HomePage() {
     mapRef,
     geoportailLayers,
     mountedVectorLayers,
-    isMapReady
+    isMapReady,
+    offlineMode
   );
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);

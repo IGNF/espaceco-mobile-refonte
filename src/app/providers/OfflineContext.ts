@@ -22,13 +22,10 @@ export interface OfflineContextType extends OfflineModeState {
   saveZone: (name: string, extents: Extent | Extent[]) => Promise<OfflineZone>;
   appendZoneExtent: (name: string, extent: Extent) => Promise<OfflineZone>;
   deleteZone: (name: string) => Promise<void>;
-  saveCommunityCacheDraft: (
-    input: OfflineCacheDraftInput
-  ) => Promise<OfflineCommunityCache | null>;
-  downloadCommunityCache: (
-    input: OfflineCacheDownloadInput
-  ) => Promise<OfflineCommunityCache>;
+  saveCommunityCacheDraft: (input: OfflineCacheDraftInput) => Promise<OfflineCommunityCache | null>;
+  downloadCommunityCache: (input: OfflineCacheDownloadInput) => Promise<OfflineCommunityCache>;
   refreshCommunityCache: (communityId: number) => Promise<OfflineCommunityCache>;
+  refreshCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<OfflineCommunityCache>;
   cancelOfflineDownload: () => void;
   deleteCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<void>;
   deleteCommunityCache: (communityId: number) => Promise<void>;
