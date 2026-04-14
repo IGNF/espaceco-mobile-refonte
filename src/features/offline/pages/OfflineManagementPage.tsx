@@ -20,6 +20,7 @@ import {
   getCommunityLayerTitle,
 } from '@/shared/utils/communityLayer';
 import { formatDateTime } from '@/shared/utils/date';
+import { scrollToTop } from '@/shared/utils/scroll';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import screen from '@/shared/styles/screen.module.css';
@@ -294,6 +295,7 @@ export function OfflineManagementPage({
    */
   async function loadCacheForZone(zoneName: string) {
     try {
+      scrollToTop();
       await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: currentCacheLayers,
@@ -342,6 +344,7 @@ export function OfflineManagementPage({
 
   async function handleRefreshCache() {
     try {
+      scrollToTop();
       await refreshCommunityCache(activeCommunityId!);
       await showToastSafe({
         text: t('offline.cache.refreshSuccess'),
@@ -387,6 +390,7 @@ export function OfflineManagementPage({
 
   async function handleRefreshLayer(layerKey: string) {
     try {
+      scrollToTop();
       await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
       await showToastSafe({
         text: t('offline.layers.refreshSuccess'),
@@ -572,27 +576,29 @@ export function OfflineManagementPage({
 
                       <div className={styles.rowActions}>
                         {hasLoadedCache && !isInCache && (
-                          <button
-                            type='button'
-                            className={`${styles.rowIconButton} ${styles.rowIconButtonSecondary}`}
+                          <Button
+                            iconOnly
+                            color='secondary'
+                            variant='outline'
                             onClick={() => void handleAddZoneToCache(zone.name)}
                             disabled={isDownloading}
                             aria-label={t('offline.zones.addToCache')}
                             title={t('offline.zones.addToCache')}
                           >
                             <IconAdd className={styles.rowActionIcon} />
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          type='button'
-                          className={`${styles.rowIconButton} ${styles.rowIconButtonDanger}`}
+                        <Button
+                          iconOnly
+                          color='danger'
+                          variant='outline'
                           onClick={() => void handleDeleteZone(zone.name)}
                           disabled={isDownloading}
                           aria-label={t('offline.zones.delete')}
                           title={t('offline.zones.delete')}
                         >
                           <IconDelete className={styles.rowActionIcon} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );
@@ -639,27 +645,29 @@ export function OfflineManagementPage({
 
                       <div className={styles.rowActions}>
                         {isLoaded && (
-                          <button
-                            type='button'
-                            className={`${styles.rowIconButton} ${styles.rowIconButtonSecondary}`}
+                          <Button
+                            iconOnly
+                            color='secondary'
+                            variant='outline'
                             onClick={() => void handleRefreshLayer(layerKey)}
                             disabled={isDownloading || !isOfflineAllowed}
                             aria-label={t('offline.layers.refresh')}
                             title={t('offline.layers.refresh')}
                           >
                             <span className={styles.rowActionGlyph}>↻</span>
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          type='button'
-                          className={`${styles.rowIconButton} ${styles.rowIconButtonDanger}`}
+                        <Button
+                          iconOnly
+                          color='danger'
+                          variant='outline'
                           onClick={() => void handleDeleteLayer(layerKey)}
                           disabled={isDownloading}
                           aria-label={t('offline.layers.delete')}
                           title={t('offline.layers.delete')}
                         >
                           <IconDelete className={styles.rowActionIcon} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   );

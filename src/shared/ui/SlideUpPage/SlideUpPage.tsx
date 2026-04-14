@@ -65,7 +65,7 @@ export function SlideUpPage({ children, isOpen, className, level = 1, fullPage =
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
 
 	const content = (
-		<div className={classNames} style={{ zIndex }}>
+		<div className={classNames} style={{ zIndex }} data-scroll-root='true'>
 			<div className={innerClassNames}>
 				{children}
 			</div>

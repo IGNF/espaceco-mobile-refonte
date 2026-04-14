@@ -84,7 +84,7 @@ export function Alert({
 					<IconClose className={styles.closeIcon} />
 				</button>
 
-				<div className={styles.content}>
+				<div className={styles.content} data-scroll-root='true'>
 					<h2 className={typography.heading2}>{title}</h2>
 					{subtitle && <p className={typography.body}>{subtitle}</p>}
 

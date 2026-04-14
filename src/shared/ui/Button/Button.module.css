@@ -23,6 +23,16 @@
 	width: 100% !important;
 }
 
+.iconOnly {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+
 /* Color mappings - set CSS variables per color */
 .primary {
 	--btn-color: var(--color-primary);
@@ -105,6 +115,15 @@
 }
 .outline:hover:not(:disabled) {
 	background-color: var(--btn-light);
+}
+
+.iconOnly.outline {
+  background-color: white;
+  border-color: rgba(var(--btn-rgb), 0.24);
+}
+
+.iconOnly.outline:hover:not(:disabled) {
+  background-color: rgba(var(--btn-rgb), 0.08);
 }
 
 /* Ghost variant */

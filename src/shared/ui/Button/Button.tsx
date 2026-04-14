@@ -21,6 +21,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   fullWidth?: boolean;
   loading?: boolean;
+  iconOnly?: boolean;
 }
 
 export function Button({
@@ -29,6 +30,7 @@ export function Button({
   variant = 'solid',
   fullWidth = false,
   loading = false,
+  iconOnly = false,
   className,
   disabled,
   ...rest
@@ -38,6 +40,7 @@ export function Button({
     styles[color],
     styles[variant],
     fullWidth ? styles.fullWidth : '',
+    iconOnly ? styles.iconOnly : '',
     className
   );
 
