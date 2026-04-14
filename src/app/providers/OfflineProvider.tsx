@@ -198,6 +198,18 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         layerKey: getCommunityLayerKey(layer),
         layer,
       }));
+
+      if (
+        existingDraftCache &&
+        existingDraftCache.loaded === false &&
+        existingDraftCache.layerKeys.length === savedLayers.length &&
+        existingDraftCache.layerKeys.every(
+          (layerKey, index) => layerKey === savedLayers[index]?.layerKey
+        )
+      ) {
+        return existingDraftCache;
+      }
+
       const savedCache: OfflineCommunityCache = {
         id: `community-${communityId}`,
         communityId,

@@ -240,7 +240,7 @@ export function useLayers(
     setHydratedUserId(userId);
   }, [userId]);
 
-  const fetchLayers = useCallback(async (forceRefresh = false) => {
+  const loadOfflineLayers = useCallback(async () => {
     setHydratedCommunityId(null);
     setHydratedUserId(null);
     setError(null);
@@ -255,23 +255,46 @@ export function useLayers(
     setIsLoading(true);
 
     try {
-      if (mode === 'offline') {
-        const offlineLayers =
-          activeCommunityCache?.layers.map((cacheLayer) => cacheLayer.layer) ?? [];
+      const offlineLayers =
+        activeCommunityCache?.layers.map((cacheLayer) => cacheLayer.layer) ?? [];
 
-        console.log('[OFFLINE_MODE][useLayers] loading community layers from offline cache', {
-          communityId: activeCommunityId,
-          layerKeys: offlineLayers.map((layer) => getCommunityLayerKey(layer)),
-          layerTitles: offlineLayers.map((layer) => getCommunityLayerTitle(layer)),
-        });
+      console.log('[OFFLINE_MODE][useLayers] loading community layers from offline cache', {
+        communityId: activeCommunityId,
+        layerKeys: offlineLayers.map((layer) => getCommunityLayerKey(layer)),
+        layerTitles: offlineLayers.map((layer) => getCommunityLayerTitle(layer)),
+      });
 
-        await hydrateLayers(
-          activeCommunityId,
-          offlineLayers
-        );
-        return;
-      }
+      await hydrateLayers(activeCommunityId, offlineLayers);
+    } catch (err) {
+      console.error('Failed to fetch layers:', err);
+      setError('Failed to fetch layers');
+      setLayers([]);
+      resetLayerPreferences();
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    activeCommunityCache,
+    activeCommunityId,
+    hydrateLayers,
+    resetLayerPreferences,
+  ]);
 
+  const fetchOnlineLayers = useCallback(async (forceRefresh = false) => {
+    setHydratedCommunityId(null);
+    setHydratedUserId(null);
+    setError(null);
+
+    if (!activeCommunityId) {
+      setIsLoading(false);
+      setLayers([]);
+      resetLayerPreferences();
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
       console.log('[OFFLINE_MODE][useLayers] loading community layers from API', {
         communityId: activeCommunityId,
         forceRefresh,
@@ -296,17 +319,16 @@ export function useLayers(
     } finally {
       setIsLoading(false);
     }
-  }, [
-    activeCommunityCache,
-    activeCommunityId,
-    hydrateLayers,
-    mode,
-    resetLayerPreferences,
-  ]);
+  }, [activeCommunityId, hydrateLayers, resetLayerPreferences]);
 
   useEffect(() => {
-    fetchLayers();
-  }, [fetchLayers]);
+    if (mode === 'offline') {
+      void loadOfflineLayers();
+      return;
+    }
+
+    void fetchOnlineLayers();
+  }, [fetchOnlineLayers, loadOfflineLayers, mode]);
 
   useEffect(() => {
     if (
@@ -338,7 +360,13 @@ export function useLayers(
     userId,
   ]);
 
-  const refetchLayers = useCallback(() => fetchLayers(true), [fetchLayers]);
+  const refetchLayers = useCallback(() => {
+    if (mode === 'offline') {
+      return loadOfflineLayers();
+    }
+
+    return fetchOnlineLayers(true);
+  }, [fetchOnlineLayers, loadOfflineLayers, mode]);
 
   const setLayerDirectContributionLock = useCallback((layerKey: string, locked: boolean) => {
     setLockedByLayerKey((previous) => {

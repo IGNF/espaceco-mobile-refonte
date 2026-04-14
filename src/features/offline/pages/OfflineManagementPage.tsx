@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { CommunityLayer } from '@ign/mobile-core';
 import type Map from 'ol/Map';
 import type { Extent } from 'ol/extent';
@@ -91,6 +91,12 @@ export function OfflineManagementPage({
   const [layerPickerMode, setLayerPickerMode] = useState<LayerPickerMode | null>(null);
   const [layerPickerKeys, setLayerPickerKeys] = useState<string[]>([]);
   const [isLoadZoneDialogOpen, setIsLoadZoneDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (isDownloading) {
+      scrollToTop();
+    }
+  }, [isDownloading]);
 
   const eligibleLayers = vectorLayers.filter((layer) => getTableWfsUrl(layer) !== undefined);
   const polygonLayers = eligibleLayers.filter(
@@ -295,13 +301,12 @@ export function OfflineManagementPage({
    */
   async function loadCacheForZone(zoneName: string) {
     try {
-      scrollToTop();
+      setIsLoadZoneDialogOpen(false);
       await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: currentCacheLayers,
         zoneNames: [zoneName],
       });
-      setIsLoadZoneDialogOpen(false);
       await showToastSafe({
         text: t('offline.cache.downloadSuccess'),
         duration: 'short',
@@ -327,6 +332,7 @@ export function OfflineManagementPage({
    */
   async function handleAddZoneToCache(zoneName: string) {
     try {
+      setIsLoadZoneDialogOpen(false);
       await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: [],
@@ -344,7 +350,6 @@ export function OfflineManagementPage({
 
   async function handleRefreshCache() {
     try {
-      scrollToTop();
       await refreshCommunityCache(activeCommunityId!);
       await showToastSafe({
         text: t('offline.cache.refreshSuccess'),
@@ -390,7 +395,6 @@ export function OfflineManagementPage({
 
   async function handleRefreshLayer(layerKey: string) {
     try {
-      scrollToTop();
       await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
       await showToastSafe({
         text: t('offline.layers.refreshSuccess'),
