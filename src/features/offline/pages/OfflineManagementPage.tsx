@@ -5,15 +5,12 @@ import type { Extent } from 'ol/extent';
 import { useTranslation } from 'react-i18next';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useOffline } from '@/features/offline/hooks/useOffline';
+import {
+  getOfflineGeoportailLayerOptions,
+} from '@/infra/map/openlayers/geoportailLayers';
 import { getTableWfsUrl } from '@/infra/map/openlayers/vectorLayers';
-import { Alert } from '@/shared/ui/Alert';
-import { Button } from '@/shared/ui/Button';
-import { Checkbox } from '@/shared/ui/Checkbox';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
-import { Toggle } from '@/shared/ui/Toggle';
-import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
-import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import { getUserFacingErrorMessage } from '@/shared/errors/appError';
 import {
   getCommunityLayerGeometryType,
@@ -23,19 +20,26 @@ import { formatDateTime } from '@/shared/utils/date';
 import { scrollToTop } from '@/shared/utils/scroll';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
 import screen from '@/shared/styles/screen.module.css';
-import inputs from '@/shared/styles/inputs.module.css';
-import typography from '@/shared/styles/typography.module.css';
 import {
   OfflineZoneEditorOverlay,
   type OfflineZoneEditorMode,
 } from './OfflineZoneEditorOverlay';
 import styles from './OfflineManagementPage.module.css';
+import { EXPERT_MODE } from '@/shared/constants/global';
+import { OfflineStatusSection } from '@/features/offline/components/OfflineManager/OfflineStatusSection';
+import { OfflineZonesSection } from '@/features/offline/components/OfflineManager/OfflineZonesSection';
+import { OfflineLayersSection } from '@/features/offline/components/OfflineManager/OfflineLayersSection';
+import { OfflineCacheSection } from '@/features/offline/components/OfflineManager/OfflineCacheSection';
+import { OfflineRasterSection } from '@/features/offline/components/OfflineManager/OfflineRasterSection';
+import { OfflineDialogs } from '@/features/offline/components/OfflineManager/OfflineDialogs';
 
 type LayerPickerMode = 'draft-cache' | 'loaded-cache';
 type DeleteAlertState =
   | { kind: 'zone'; zoneName: string }
   | { kind: 'layer'; layerKey: string }
+  | { kind: 'raster-map'; mapId: string }
   | { kind: 'cache' };
 
 interface ZoneEditorState {
@@ -43,6 +47,11 @@ interface ZoneEditorState {
   mode: OfflineZoneEditorMode;
   layerKey: string | null;
   restoreLayerVisibility: boolean;
+}
+
+interface RasterZoneDialogState {
+  mapId: string;
+  mode: 'load' | 'append';
 }
 
 interface OfflineManagementPageProps {
@@ -74,6 +83,7 @@ export function OfflineManagementPage({
     activeCommunityCache,
     isOfflineAllowed,
     hasOfflineData,
+    rasterMaps,
     zones,
     isDownloading,
     downloadProgress,
@@ -85,9 +95,14 @@ export function OfflineManagementPage({
     downloadCommunityCache,
     refreshCommunityCache,
     refreshCommunityCacheLayer,
+    saveOfflineRasterMapDraft,
+    downloadOfflineRasterMap,
+    refreshOfflineRasterMap,
+    setOfflineRasterMapVisibility,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,
+    deleteOfflineRasterMap,
   } = useOffline();
   const [isNewZoneDialogOpen, setIsNewZoneDialogOpen] = useState(false);
   const [newZoneName, setNewZoneName] = useState('');
@@ -97,6 +112,12 @@ export function OfflineManagementPage({
   const [layerPickerMode, setLayerPickerMode] = useState<LayerPickerMode | null>(null);
   const [layerPickerKeys, setLayerPickerKeys] = useState<string[]>([]);
   const [isLoadZoneDialogOpen, setIsLoadZoneDialogOpen] = useState(false);
+  const [isNewRasterMapDialogOpen, setIsNewRasterMapDialogOpen] = useState(false);
+  const [newRasterMapName, setNewRasterMapName] = useState('');
+  const [newRasterMapLayerName, setNewRasterMapLayerName] = useState<string>(DEFAULT_GEOPORTAIL_LAYERS[0]);
+  const [newRasterMapMinZoom, setNewRasterMapMinZoom] = useState(15);
+  const [newRasterMapMaxZoom, setNewRasterMapMaxZoom] = useState(15);
+  const [rasterZoneDialog, setRasterZoneDialog] = useState<RasterZoneDialogState | null>(null);
   const [deleteAlert, setDeleteAlert] = useState<DeleteAlertState | null>(null);
 
   useEffect(() => {
@@ -127,6 +148,16 @@ export function OfflineManagementPage({
   const hasPendingChanges = Object.values(pendingChangesCountByLayerKey).some(
     (count) => count > 0
   );
+  const geoportailLayerOptions = getOfflineGeoportailLayerOptions();
+  const rasterScaleOptions = [
+    { value: 18, label: t('offline.raster.scaleStreet') },
+    { value: 17, label: t('offline.raster.scaleDistrict') },
+    { value: 15, label: t('offline.raster.scaleCity') },
+    { value: 13, label: t('offline.raster.scaleAround') },
+    { value: 12, label: t('offline.raster.scaleDepartment') },
+    { value: 10, label: t('offline.raster.scaleRegion') },
+    { value: 7, label: t('offline.raster.scaleCountry') },
+  ];
   const isIdle = !isDownloading;
   const canLoadInitialCache =
     hasActiveCommunity &&
@@ -151,6 +182,17 @@ export function OfflineManagementPage({
   const layerToDelete = deleteAlert?.kind === 'layer'
     ? currentCacheLayers.find((layer) => getCommunityLayerKey(layer) === deleteAlert.layerKey) ?? null
     : null;
+  const rasterMapToDelete = deleteAlert?.kind === 'raster-map'
+    ? rasterMaps.find((rasterMap) => rasterMap.id === deleteAlert.mapId) ?? null
+    : null;
+  const rasterMapForZoneDialog = rasterZoneDialog
+    ? rasterMaps.find((rasterMap) => rasterMap.id === rasterZoneDialog.mapId) ?? null
+    : null;
+  const rasterZoneDialogZones = zones.filter((zone) =>
+    rasterZoneDialog?.mode === 'append' && rasterMapForZoneDialog
+      ? !rasterMapForZoneDialog.zoneNames.includes(zone.name)
+      : true
+  );
 
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({
@@ -231,6 +273,114 @@ export function OfflineManagementPage({
     await handleDeleteZone(zoneName);
   }
 
+  function openNewRasterMapDialog() {
+    setNewRasterMapName(`Carte #${rasterMaps.length + 1}`);
+    setNewRasterMapLayerName(DEFAULT_GEOPORTAIL_LAYERS[0]);
+    setNewRasterMapMinZoom(15);
+    setNewRasterMapMaxZoom(15);
+    setIsNewRasterMapDialogOpen(true);
+  }
+
+  async function handleValidateNewRasterMap() {
+    try {
+      const savedRasterMap = await saveOfflineRasterMapDraft({
+        name: newRasterMapName.trim(),
+        layerName: newRasterMapLayerName,
+        minZoom: EXPERT_MODE
+          ? Math.min(newRasterMapMinZoom, newRasterMapMaxZoom)
+          : newRasterMapMaxZoom,
+        maxZoom: EXPERT_MODE
+          ? Math.max(newRasterMapMinZoom, newRasterMapMaxZoom)
+          : newRasterMapMaxZoom,
+      });
+
+      setIsNewRasterMapDialogOpen(false);
+
+      if (zones.length === 0) {
+        await showToastSafe({
+          text: t('offline.raster.mapCreated'),
+          duration: 'short',
+          position: 'bottom',
+        });
+        return;
+      }
+
+      if (zones.length === 1) {
+        await handleDownloadRasterMap(savedRasterMap.id, zones[0].name);
+        return;
+      }
+
+      setRasterZoneDialog({
+        mapId: savedRasterMap.id,
+        mode: 'load',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
+  async function handleDownloadRasterMap(mapId: string, zoneName: string) {
+    try {
+      setRasterZoneDialog(null);
+      const offlineRasterMap = await downloadOfflineRasterMap(mapId, zoneName);
+      await showToastSafe({
+        text: offlineRasterMap.loadedAt
+          ? t('offline.raster.downloadSuccess')
+          : t('offline.raster.mapCreated'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
+  function openRasterZoneDialog(mapId: string, mode: 'load' | 'append') {
+    if (zones.length === 1) {
+      void handleDownloadRasterMap(mapId, zones[0].name);
+      return;
+    }
+
+    setRasterZoneDialog({
+      mapId,
+      mode,
+    });
+  }
+
+  async function handleRefreshRasterMap(mapId: string) {
+    try {
+      await refreshOfflineRasterMap(mapId);
+      await showToastSafe({
+        text: t('offline.raster.refreshSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
+  async function handleToggleRasterMapVisibility(mapId: string, visible: boolean) {
+    try {
+      await setOfflineRasterMapVisibility(mapId, visible);
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
+  async function handleDeleteRasterMap(mapId: string) {
+    try {
+      await deleteOfflineRasterMap(mapId);
+      await showToastSafe({
+        text: t('offline.raster.deleteSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    }
+  }
+
   function getDeleteAlertTitle(): string {
     if (deleteAlert?.kind === 'zone') {
       return t('offline.zones.confirmDeleteTitle');
@@ -238,6 +388,10 @@ export function OfflineManagementPage({
 
     if (deleteAlert?.kind === 'layer') {
       return t('offline.layers.confirmDeleteTitle');
+    }
+
+    if (deleteAlert?.kind === 'raster-map') {
+      return t('offline.raster.confirmDeleteTitle');
     }
 
     // Whole cache
@@ -261,6 +415,12 @@ export function OfflineManagementPage({
       });
     }
 
+    if (deleteAlert?.kind === 'raster-map') {
+      return t('offline.raster.confirmDeleteMessage', {
+        name: rasterMapToDelete?.name,
+      });
+    }
+
     // Whole cache
     return t('offline.cache.confirmDeleteMessage');
   }
@@ -271,6 +431,10 @@ export function OfflineManagementPage({
     }
     else if (deleteAlert?.kind === 'layer') {
       await confirmDeleteLayer(deleteAlert.layerKey);
+    }
+    else if (deleteAlert?.kind === 'raster-map') {
+      setDeleteAlert(null);
+      await handleDeleteRasterMap(deleteAlert.mapId);
     }
     else { // Whole cache
       await confirmDeleteCache();
@@ -531,483 +695,127 @@ export function OfflineManagementPage({
         />
 
         <main className={`${screen.screenContainer} ${styles.content}`}>
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t('offline.status.title')}</h2>
+          <OfflineStatusSection
+            mode={mode}
+            hasOfflineData={hasOfflineData}
+            isOfflineAllowed={isOfflineAllowed}
+            canToggleOfflineMode={canToggleOfflineMode}
+            hasLoadedCache={hasLoadedCache}
+            activeCommunityCache={activeCommunityCache}
+            refreshedAt={refreshedAt}
+            isDownloading={isDownloading}
+            downloadProgress={downloadProgress}
+            inlineError={inlineError}
+            onToggleOfflineMode={(checked) => void handleToggleOfflineMode(checked)}
+            onCancelDownload={cancelOfflineDownload}
+          />
 
-            <div className={styles.statusCard}>
-              {hasOfflineData && isOfflineAllowed && (
-                <div className={styles.modeCard}>
-                  <div className={styles.modeInfo}>
-                    <p className={styles.summaryTitle}>
-                      {mode === 'offline'
-                        ? t('offline.mode.offline')
-                        : t('offline.mode.online')}
-                    </p>
-                  </div>
+          <OfflineZonesSection
+            zones={zones}
+            activeCommunityCache={activeCommunityCache}
+            hasLoadedCache={hasLoadedCache}
+            isDownloading={isDownloading}
+            onOpenNewZoneDialog={openNewZoneDialog}
+            onAddZoneToCache={(zoneName) => void handleAddZoneToCache(zoneName)}
+            onRequestDeleteZone={(zoneName) => setDeleteAlert({ kind: 'zone', zoneName })}
+          />
 
-                  <Toggle
-                    checked={mode === 'offline'}
-                    onChange={(checked) => void handleToggleOfflineMode(checked)}
-                    color='primary'
-                    disabled={!canToggleOfflineMode}
-                  />
-                </div>
-              )}
+          <OfflineLayersSection
+            currentCacheLayers={currentCacheLayers}
+            hasLoadedCache={hasLoadedCache}
+            selectedLayerKeys={selectedLayerKeys}
+            isOfflineAllowed={isOfflineAllowed}
+            isDownloading={isDownloading}
+            canOpenLayerPicker={canOpenLayerPicker}
+            onOpenLayerPicker={openLayerPicker}
+            onRefreshLayer={(layerKey) => void handleRefreshLayer(layerKey)}
+            onRequestDeleteLayer={(layerKey) => setDeleteAlert({ kind: 'layer', layerKey })}
+          />
 
-              {hasLoadedCache ? (
-                <div className={styles.cacheSummary}>
-                  <p className={styles.summaryTitle}>{t('offline.status.loaded')}</p>
-                  <span className={typography.caption + ' ' + styles.summaryValue}>
-                    {t('offline.status.layers', {
-                      count: activeCommunityCache.layers.length,
-                    })}
-                  </span>
-                  <span className={typography.caption + ' ' + styles.summaryValue}>
-                    {t('offline.status.zones', {
-                      count: activeCommunityCache.zoneNames.length,
-                    })}
-                  </span>
-                  {refreshedAt && (
-                    <span className={typography.caption + ' ' + styles.summaryValue}>
-                      {t('offline.status.updatedAt', { value: refreshedAt })}
-                    </span>
-                  )}
-                </div>
-              ) : activeCommunityCache ? (
-                <div className={styles.cacheSummary}>
-                  <p className={styles.summaryTitle}>{t('offline.status.pending')}</p>
-                  <p className={typography.caption}>
-                    {t('offline.status.pendingLayers', {
-                      count: activeCommunityCache.layers.length,
-                    })}
-                  </p>
-                </div>
-              ) : (
-                <p className={typography.caption}>{t('offline.status.empty')}</p>
-              )}
-            </div>
+          <OfflineCacheSection
+            hasLoadedCache={hasLoadedCache}
+            currentLayerCount={currentCacheLayers.length}
+            zoneCount={zones.length}
+            loadedLayerCount={activeCommunityCache?.layers.length ?? 0}
+            loadedZoneCount={activeCommunityCache?.zoneNames.length ?? 0}
+            canLoadInitialCache={canLoadInitialCache}
+            canRefresh={canRefresh}
+            canDeleteCache={canDeleteCache}
+            isDownloading={isDownloading}
+            onOpenLoadDialog={handleOpenLoadDialog}
+            onRefreshCache={() => void handleRefreshCache()}
+            onRequestDeleteCache={() => setDeleteAlert({ kind: 'cache' })}
+          />
 
-            {isDownloading && downloadProgress && (
-              <div className={styles.progressSection}>
-                <p className={styles.summaryTitle}>{t('offline.status.loading')}</p>
-                <div className={styles.progressBar} aria-hidden='true'>
-                  <div
-                    className={styles.progressFill}
-                    style={{ width: `${downloadProgress.percent}%` }}
-                  />
-                </div>
-                <p className={typography.caption}>
-                  {t('offline.status.progress', {
-                    current: downloadProgress.downloadedTileCount,
-                    total: downloadProgress.totalTileCount,
-                    percent: downloadProgress.percent,
-                  })}
-                </p>
-                <p className={typography.caption}>
-                  {t('offline.status.currentLayer', {
-                    title: downloadProgress.currentLayerTitle,
-                  })}
-                </p>
-                <div className={styles.progressActions}>
-                  <Button
-                    variant='ghost'
-                    color='danger'
-                    onClick={cancelOfflineDownload}
-                  >
-                    {t('offline.status.cancel')}
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {inlineError && <p className={`${inputs.error} ${styles.error}`}>{inlineError}</p>}
-          </section>
-
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 className={styles.sectionTitle}>{t('offline.zones.title')}</h2>
-                <p className={`${typography.caption} ${styles.sectionDescription}`}>
-                  {t('offline.zones.description')}
-                </p>
-              </div>
-
-              <Button onClick={openNewZoneDialog} disabled={isDownloading}>
-                {t('offline.zones.newZone')}
-              </Button>
-            </div>
-
-            {zones.length === 0 ? (
-              <p className={typography.caption}>{t('offline.zones.empty')}</p>
-            ) : (
-              <div className={styles.list}>
-                {zones.map((zone) => {
-                  const isInCache =
-                    activeCommunityCache?.zoneNames.includes(zone.name) ?? false;
-
-                  return (
-                    <div key={zone.name} className={styles.listRow}>
-                      <div className={styles.listMain}>
-                        <p className={styles.rowTitle}>{zone.name}</p>
-                        <p className={typography.caption}>
-                          {t('offline.zones.extentCount', {
-                            count: zone.extents.length,
-                          })}
-                        </p>
-                        {isInCache && (
-                          <p className={styles.lockedNote}>
-                            {t('offline.zones.inCache')}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className={styles.rowActions}>
-                        {hasLoadedCache && !isInCache && (
-                          <Button
-                            iconOnly
-                            color='secondary'
-                            variant='outline'
-                            onClick={() => void handleAddZoneToCache(zone.name)}
-                            disabled={isDownloading}
-                            aria-label={t('offline.zones.addToCache')}
-                            title={t('offline.zones.addToCache')}
-                          >
-                            <IconAdd className={styles.rowActionIcon} />
-                          </Button>
-                        )}
-                        <Button
-                          iconOnly
-                          color='danger'
-                          variant='outline'
-                          onClick={() => setDeleteAlert({ kind: 'zone', zoneName: zone.name })}
-                          disabled={isDownloading}
-                          aria-label={t('offline.zones.delete')}
-                          title={t('offline.zones.delete')}
-                        >
-                          <IconDelete className={styles.rowActionIcon} />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div>
-                <h2 className={styles.sectionTitle}>{t('offline.layers.title')}</h2>
-                <p className={`${typography.caption} ${styles.sectionDescription}`}>
-                  {t('offline.layers.description')}
-                </p>
-              </div>
-
-              <Button
-                onClick={openLayerPicker}
-                disabled={!canOpenLayerPicker}
-              >
-                {t('offline.cache.addLayers')}
-              </Button>
-            </div>
-
-            {currentCacheLayers.length === 0 ? (
-              <p className={typography.caption}>{t('offline.layers.empty')}</p>
-            ) : (
-              <div className={styles.list}>
-                {currentCacheLayers.map((layer) => {
-                  const layerKey = getCommunityLayerKey(layer);
-                  const isLoaded = hasLoadedCache && selectedLayerKeys.includes(layerKey);
-
-                  return (
-                    <div key={layerKey} className={styles.listRow}>
-                      <div className={styles.listMain}>
-                        <p className={styles.rowTitle}>{getCommunityLayerTitle(layer)}</p>
-                        <p className={typography.caption}>
-                          {isLoaded
-                            ? t('offline.layers.loaded')
-                            : t('offline.layers.pending')}
-                        </p>
-                      </div>
-
-                      <div className={styles.rowActions}>
-                        {isLoaded && (
-                          <Button
-                            iconOnly
-                            color='secondary'
-                            variant='outline'
-                            onClick={() => void handleRefreshLayer(layerKey)}
-                            disabled={isDownloading || !isOfflineAllowed}
-                            aria-label={t('offline.layers.refresh')}
-                            title={t('offline.layers.refresh')}
-                          >
-                            <span className={styles.rowActionGlyph}>↻</span>
-                          </Button>
-                        )}
-                        <Button
-                          iconOnly
-                          color='danger'
-                          variant='outline'
-                          onClick={() => setDeleteAlert({ kind: 'layer', layerKey })}
-                          disabled={isDownloading}
-                          aria-label={t('offline.layers.delete')}
-                          title={t('offline.layers.delete')}
-                        >
-                          <IconDelete className={styles.rowActionIcon} />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <section className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t('offline.cache.title')}</h2>
-
-            {!hasLoadedCache ? (
-              <p className={`${typography.caption} ${styles.sectionDescription}`}>
-                {t('offline.cache.selection', {
-                  layers: currentCacheLayers.length,
-                  zones: zones.length,
-                })}
-              </p>
-            ) : (
-              <p className={`${typography.caption} ${styles.sectionDescription}`}>
-                {t('offline.cache.loadedDetails', {
-                  layers: activeCommunityCache.layers.length,
-                  zones: activeCommunityCache.zoneNames.length,
-                })}
-              </p>
-            )}
-
-            <div className={styles.cacheActions}>
-              {!hasLoadedCache && (
-                <Button
-                  fullWidth
-                  onClick={handleOpenLoadDialog}
-                  disabled={!canLoadInitialCache}
-                  loading={isDownloading}
-                >
-                  {t('offline.cache.download')}
-                </Button>
-              )}
-              {hasLoadedCache && (
-                <Button
-                  fullWidth
-                  color='secondary'
-                  variant='outline'
-                  onClick={handleRefreshCache}
-                  disabled={!canRefresh}
-                >
-                  {t('offline.cache.refresh')}
-                </Button>
-              )}
-              <Button
-                fullWidth
-                color='danger'
-                variant='ghost'
-                onClick={() => setDeleteAlert({ kind: 'cache' })}
-                disabled={!canDeleteCache}
-              >
-                {t('offline.cache.delete')}
-              </Button>
-            </div>
-          </section>
+          <OfflineRasterSection
+            rasterMaps={rasterMaps}
+            zones={zones}
+            rasterScaleOptions={rasterScaleOptions}
+            isDownloading={isDownloading}
+            onOpenNewRasterMapDialog={openNewRasterMapDialog}
+            onToggleRasterMapVisibility={(mapId, visible) => void handleToggleRasterMapVisibility(mapId, visible)}
+            onOpenRasterZoneDialog={openRasterZoneDialog}
+            onRefreshRasterMap={(mapId) => void handleRefreshRasterMap(mapId)}
+            onRequestDeleteRasterMap={(mapId) => setDeleteAlert({ kind: 'raster-map', mapId })}
+          />
         </main>
       </SlideUpPage>
 
-      <Alert
-        isOpen={isNewZoneDialogOpen}
-        onClose={() => setIsNewZoneDialogOpen(false)}
-        title={t('offline.zones.newZoneDialogTitle')}
-      >
-        <div className={styles.dialogContent}>
-          <label className={inputs.field}>
-            <span className={inputs.label}>{t('offline.zones.nameLabel')}</span>
-            <input
-              type='text'
-              className={inputs.input}
-              value={newZoneName}
-              onChange={(event) => setNewZoneName(event.target.value)}
-              placeholder={t('offline.zones.namePlaceholder')}
-            />
-          </label>
-
-          <fieldset className={styles.fieldset}>
-            <legend className={`${inputs.label} ${styles.legend}`}>
-              {t('offline.zones.definitionType')}
-            </legend>
-
-            <label className={styles.radioOption}>
-              <input
-                type='radio'
-                checked={newZoneMode === 'custom'}
-                onChange={() => setNewZoneMode('custom')}
-              />
-              <span>{t('offline.zones.customMode')}</span>
-            </label>
-
-            <label className={styles.radioOption}>
-              <input
-                type='radio'
-                checked={newZoneMode === 'select-obj'}
-                onChange={() => setNewZoneMode('select-obj')}
-                disabled={!hasPolygonLayer}
-              />
-              <span>{t('offline.zones.objectMode')}</span>
-            </label>
-          </fieldset>
-
-          {newZoneMode === 'select-obj' && (
-            <>
-              {!hasPolygonLayer ? (
-                <p className={typography.caption}>{t('offline.zones.noPolygonLayer')}</p>
-              ) : (
-                <label className={inputs.field}>
-                  <span className={inputs.label}>{t('offline.zones.layerLabel')}</span>
-                  <select
-                    className={inputs.select}
-                    value={newZoneLayerKey}
-                    onChange={(event) => setNewZoneLayerKey(event.target.value)}
-                  >
-                    {polygonLayers.map((layer) => (
-                      <option
-                        key={getCommunityLayerKey(layer)}
-                        value={getCommunityLayerKey(layer)}
-                      >
-                        {getCommunityLayerTitle(layer)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              )}
-            </>
-          )}
-
-          <div className={styles.dialogActions}>
-            <Button
-              variant='outline'
-              color='secondary'
-              onClick={() => setIsNewZoneDialogOpen(false)}
-            >
-              {t('offline.dialog.cancel')}
-            </Button>
-            <Button
-              onClick={startZoneEditor}
-              disabled={
-                newZoneName.trim().length === 0 ||
-                (newZoneMode === 'select-obj' && !newZoneLayerKey)
-              }
-            >
-              {t('offline.dialog.continue')}
-            </Button>
-          </div>
-        </div>
-      </Alert>
-
-      <Alert
-        isOpen={layerPickerMode !== null}
-        onClose={closeLayerPicker}
-        title={t('offline.cache.addLayers')}
-        subtitle={
-          layerPickerMode === 'loaded-cache'
-            ? t('offline.layers.appendWarning')
-            : undefined
-        }
-      >
-        <div className={styles.dialogContent}>
-          {layerPickerMode === 'loaded-cache' && addableLayers.length === 0 && (
-            <p className={typography.caption}>{t('offline.layers.noAddableLayer')}</p>
-          )}
-
-          {layerPickerMode === 'draft-cache' && eligibleLayers.length === 0 && (
-            <p className={typography.caption}>{t('offline.layers.empty')}</p>
-          )}
-
-          <div className={styles.dialogList}>
-            {layerPickerLayers.length > 0 && (
-              <div className={styles.dialogToggle}>
-                <Toggle
-                  checked={areAllLayerPickerLayersSelected}
-                  onChange={handleToggleAllLayerPickerLayers}
-                  label={t('offline.layers.selectAll')}
-                  color='primary'
-                />
-              </div>
-            )}
-
-            {layerPickerLayers.map((layer) => {
-              const layerKey = getCommunityLayerKey(layer);
-
-              return (
-                <Checkbox
-                  key={layerKey}
-                  label={getCommunityLayerTitle(layer)}
-                  checked={layerPickerKeys.includes(layerKey)}
-                  onChange={() => toggleLayerPickerKey(layerKey)}
-                />
-              );
-            })}
-          </div>
-
-          <div className={styles.dialogActions}>
-            <Button
-              variant='outline'
-              color='secondary'
-              onClick={closeLayerPicker}
-            >
-              {t('offline.dialog.cancel')}
-            </Button>
-            <Button onClick={() => void handleValidateLayerPicker()}>
-              {t('offline.dialog.validate')}
-            </Button>
-          </div>
-        </div>
-      </Alert>
-
-      <Alert
-        isOpen={isLoadZoneDialogOpen}
-        onClose={() => setIsLoadZoneDialogOpen(false)}
-        title={t('offline.cache.chooseZone')}
-      >
-        <div className={styles.dialogContent}>
-          <div className={styles.dialogList}>
-            {zones.map((zone) => (
-              <Button
-                key={zone.name}
-                fullWidth
-                variant='outline'
-                color='secondary'
-                onClick={() => void loadCacheForZone(zone.name)}
-              >
-                {zone.name}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Alert>
-
-      <Alert
-        isOpen={deleteAlert !== null}
-        onClose={() => setDeleteAlert(null)}
-        title={getDeleteAlertTitle()}
-        subtitle={getDeleteAlertSubtitle()}
-        buttons={[
-          {
-            label: t('offline.dialog.delete'),
-            onClick: () => {
-              void confirmDeleteAlert();
-            },
-            color: 'danger',
-          },
-          {
-            label: t('offline.dialog.cancel'),
-            onClick: () => setDeleteAlert(null),
-            variant: 'outline',
-          },
-        ]}
+      <OfflineDialogs
+        isNewZoneDialogOpen={isNewZoneDialogOpen}
+        newZoneName={newZoneName}
+        newZoneMode={newZoneMode}
+        newZoneLayerKey={newZoneLayerKey}
+        hasPolygonLayer={hasPolygonLayer}
+        polygonLayers={polygonLayers}
+        onCloseNewZoneDialog={() => setIsNewZoneDialogOpen(false)}
+        onChangeNewZoneName={setNewZoneName}
+        onChangeNewZoneMode={setNewZoneMode}
+        onChangeNewZoneLayerKey={setNewZoneLayerKey}
+        onStartZoneEditor={startZoneEditor}
+        layerPickerMode={layerPickerMode}
+        addableLayers={addableLayers}
+        eligibleLayers={eligibleLayers}
+        layerPickerLayers={layerPickerLayers}
+        layerPickerKeys={layerPickerKeys}
+        areAllLayerPickerLayersSelected={areAllLayerPickerLayersSelected}
+        onCloseLayerPicker={closeLayerPicker}
+        onToggleAllLayerPickerLayers={handleToggleAllLayerPickerLayers}
+        onToggleLayerPickerKey={toggleLayerPickerKey}
+        onValidateLayerPicker={() => void handleValidateLayerPicker()}
+        isLoadZoneDialogOpen={isLoadZoneDialogOpen}
+        zones={zones}
+        onCloseLoadZoneDialog={() => setIsLoadZoneDialogOpen(false)}
+        onLoadCacheForZone={(zoneName) => void loadCacheForZone(zoneName)}
+        isNewRasterMapDialogOpen={isNewRasterMapDialogOpen}
+        newRasterMapName={newRasterMapName}
+        newRasterMapLayerName={newRasterMapLayerName}
+        newRasterMapMinZoom={newRasterMapMinZoom}
+        newRasterMapMaxZoom={newRasterMapMaxZoom}
+        geoportailLayerOptions={geoportailLayerOptions}
+        rasterScaleOptions={rasterScaleOptions}
+        isExpertMode={EXPERT_MODE}
+        onCloseNewRasterMapDialog={() => setIsNewRasterMapDialogOpen(false)}
+        onChangeNewRasterMapName={setNewRasterMapName}
+        onChangeNewRasterMapLayerName={setNewRasterMapLayerName}
+        onChangeNewRasterMapMinZoom={setNewRasterMapMinZoom}
+        onChangeNewRasterMapMaxZoom={setNewRasterMapMaxZoom}
+        onValidateNewRasterMap={() => void handleValidateNewRasterMap()}
+        isRasterZoneDialogOpen={rasterZoneDialog !== null}
+        rasterZoneDialogMode={rasterZoneDialog?.mode ?? null}
+        rasterZoneDialogSubtitle={rasterMapForZoneDialog?.name}
+        rasterZoneDialogZones={rasterZoneDialogZones}
+        onCloseRasterZoneDialog={() => setRasterZoneDialog(null)}
+        onSelectRasterZone={(zoneName) => {
+          void handleDownloadRasterMap(rasterZoneDialog!.mapId, zoneName);
+        }}
+        isDeleteAlertOpen={deleteAlert !== null}
+        deleteAlertTitle={getDeleteAlertTitle()}
+        deleteAlertSubtitle={getDeleteAlertSubtitle()}
+        onCloseDeleteAlert={() => setDeleteAlert(null)}
+        onConfirmDeleteAlert={() => {
+          void confirmDeleteAlert();
+        }}
       />
     </>
   );
