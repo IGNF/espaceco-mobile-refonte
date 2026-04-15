@@ -33,6 +33,10 @@ import {
 import styles from './OfflineManagementPage.module.css';
 
 type LayerPickerMode = 'draft-cache' | 'loaded-cache';
+type DeleteAlertState =
+  | { kind: 'zone'; zoneName: string }
+  | { kind: 'layer'; layerKey: string }
+  | { kind: 'cache' };
 
 interface ZoneEditorState {
   name: string;
@@ -46,6 +50,7 @@ interface OfflineManagementPageProps {
   onClose: () => void;
   map: Map | null;
   vectorLayers: CommunityLayer[];
+  pendingChangesCountByLayerKey: Record<string, number>;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onCenterOnUserLocation?: () => Promise<void>;
   isLocating?: boolean;
@@ -56,6 +61,7 @@ export function OfflineManagementPage({
   onClose,
   map,
   vectorLayers,
+  pendingChangesCountByLayerKey,
   onSetLayerVisibility,
   onCenterOnUserLocation,
   isLocating = false,
@@ -91,6 +97,7 @@ export function OfflineManagementPage({
   const [layerPickerMode, setLayerPickerMode] = useState<LayerPickerMode | null>(null);
   const [layerPickerKeys, setLayerPickerKeys] = useState<string[]>([]);
   const [isLoadZoneDialogOpen, setIsLoadZoneDialogOpen] = useState(false);
+  const [deleteAlert, setDeleteAlert] = useState<DeleteAlertState | null>(null);
 
   useEffect(() => {
     if (isDownloading) {
@@ -117,6 +124,9 @@ export function OfflineManagementPage({
   const hasZones = zones.length > 0;
   const hasEligibleLayers = eligibleLayers.length > 0;
   const hasAddableLayers = addableLayers.length > 0;
+  const hasPendingChanges = Object.values(pendingChangesCountByLayerKey).some(
+    (count) => count > 0
+  );
   const isIdle = !isDownloading;
   const canLoadInitialCache =
     hasActiveCommunity &&
@@ -137,6 +147,9 @@ export function OfflineManagementPage({
     layerPickerLayers.length > 0 && layerPickerKeys.length === layerPickerLayers.length;
   const currentZoneEditorLayer = zoneEditorState?.layerKey
     ? eligibleLayers.find((layer) => getCommunityLayerKey(layer) === zoneEditorState.layerKey) ?? null
+    : null;
+  const layerToDelete = deleteAlert?.kind === 'layer'
+    ? currentCacheLayers.find((layer) => getCommunityLayerKey(layer) === deleteAlert.layerKey) ?? null
     : null;
 
   async function showOfflineError(error: unknown): Promise<void> {
@@ -210,6 +223,57 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    }
+  }
+
+  async function confirmDeleteZone(zoneName: string) {
+    setDeleteAlert(null);
+    await handleDeleteZone(zoneName);
+  }
+
+  function getDeleteAlertTitle(): string {
+    if (deleteAlert?.kind === 'zone') {
+      return t('offline.zones.confirmDeleteTitle');
+    }
+
+    if (deleteAlert?.kind === 'layer') {
+      return t('offline.layers.confirmDeleteTitle');
+    }
+
+    // Whole cache
+    return t('offline.cache.confirmDeleteTitle');
+  }
+
+  function getDeleteAlertSubtitle(): string {
+    if (deleteAlert?.kind === 'zone') {
+      return t('offline.zones.confirmDeleteMessage', { name: deleteAlert.zoneName });
+    }
+
+    if (deleteAlert?.kind === 'layer') {
+      if (currentCacheLayers.length === 1) {
+        return t('offline.layers.confirmDeleteLastLayerMessage', {
+          title: getCommunityLayerTitle(layerToDelete!),
+        });
+      }
+
+      return t('offline.layers.confirmDeleteMessage', {
+        title: getCommunityLayerTitle(layerToDelete!),
+      });
+    }
+
+    // Whole cache
+    return t('offline.cache.confirmDeleteMessage');
+  }
+
+  async function confirmDeleteAlert() {
+    if (deleteAlert?.kind === 'zone') {
+      await confirmDeleteZone(deleteAlert.zoneName);
+    }
+    else if (deleteAlert?.kind === 'layer') {
+      await confirmDeleteLayer(deleteAlert.layerKey);
+    }
+    else { // Whole cache
+      await confirmDeleteCache();
     }
   }
 
@@ -349,6 +413,15 @@ export function OfflineManagementPage({
   }
 
   async function handleRefreshCache() {
+    if (hasPendingChanges) {
+      await showToastSafe({
+        text: t('offline.cache.refreshBlockedPendingChanges'),
+        duration: 'short',
+        position: 'bottom',
+      });
+      return;
+    }
+
     try {
       await refreshCommunityCache(activeCommunityId!);
       await showToastSafe({
@@ -374,6 +447,11 @@ export function OfflineManagementPage({
     }
   }
 
+  async function confirmDeleteCache() {
+    setDeleteAlert(null);
+    await handleDeleteCache();
+  }
+
   const refreshedAt = activeCommunityCache?.lastRefreshAt ? formatDateTime(new Date(activeCommunityCache.lastRefreshAt)) : null;
   const inlineError = downloadError ? getUserFacingErrorMessage(downloadError, t, 'errors.global.unknown') : null;
 
@@ -391,6 +469,11 @@ export function OfflineManagementPage({
     } catch (error) {
       await showOfflineError(error);
     }
+  }
+
+  async function confirmDeleteLayer(layerKey: string) {
+    setDeleteAlert(null);
+    await handleDeleteLayer(layerKey);
   }
 
   async function handleRefreshLayer(layerKey: string) {
@@ -596,7 +679,7 @@ export function OfflineManagementPage({
                           iconOnly
                           color='danger'
                           variant='outline'
-                          onClick={() => void handleDeleteZone(zone.name)}
+                          onClick={() => setDeleteAlert({ kind: 'zone', zoneName: zone.name })}
                           disabled={isDownloading}
                           aria-label={t('offline.zones.delete')}
                           title={t('offline.zones.delete')}
@@ -665,7 +748,7 @@ export function OfflineManagementPage({
                           iconOnly
                           color='danger'
                           variant='outline'
-                          onClick={() => void handleDeleteLayer(layerKey)}
+                          onClick={() => setDeleteAlert({ kind: 'layer', layerKey })}
                           disabled={isDownloading}
                           aria-label={t('offline.layers.delete')}
                           title={t('offline.layers.delete')}
@@ -725,7 +808,7 @@ export function OfflineManagementPage({
                 fullWidth
                 color='danger'
                 variant='ghost'
-                onClick={handleDeleteCache}
+                onClick={() => setDeleteAlert({ kind: 'cache' })}
                 disabled={!canDeleteCache}
               >
                 {t('offline.cache.delete')}
@@ -905,6 +988,27 @@ export function OfflineManagementPage({
           </div>
         </div>
       </Alert>
+
+      <Alert
+        isOpen={deleteAlert !== null}
+        onClose={() => setDeleteAlert(null)}
+        title={getDeleteAlertTitle()}
+        subtitle={getDeleteAlertSubtitle()}
+        buttons={[
+          {
+            label: t('offline.dialog.delete'),
+            onClick: () => {
+              void confirmDeleteAlert();
+            },
+            color: 'danger',
+          },
+          {
+            label: t('offline.dialog.cancel'),
+            onClick: () => setDeleteAlert(null),
+            variant: 'outline',
+          },
+        ]}
+      />
     </>
   );
 }

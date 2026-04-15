@@ -578,6 +578,7 @@ export function HomePage() {
         onClose={handleCloseOverlay}
         map={map}
         vectorLayers={vectorLayers}
+        pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
         onSetLayerVisibility={setLayerVisibility}
         onCenterOnUserLocation={centerOnUserLocation}
         isLocating={isLocating}

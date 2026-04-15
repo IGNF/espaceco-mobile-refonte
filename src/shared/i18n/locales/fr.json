@@ -198,6 +198,8 @@
       "noPolygonLayer": "Aucune couche polygonale n'est disponible pour la sélection d'objets.",
       "addToCache": "Ajouter au cache",
       "delete": "Supprimer",
+      "confirmDeleteTitle": "Supprimer la zone",
+      "confirmDeleteMessage": "Voulez-vous supprimer la zone {{name}} ?",
       "empty": "Aucune zone enregistrée.",
       "extentCount": "{{count}} emprise(s)",
       "inCache": "Déjà utilisée par le cache actuel"
@@ -213,6 +215,9 @@
       "refreshSuccess": "Couche hors ligne rafraîchie.",
       "appendWarning": "Les couches sélectionnées seront chargées immédiatement dans le cache actuel.",
       "delete": "Supprimer",
+      "confirmDeleteTitle": "Supprimer la couche",
+      "confirmDeleteMessage": "Voulez-vous supprimer la couche {{title}} du cache hors ligne ?",
+      "confirmDeleteLastLayerMessage": "La couche {{title}} est la dernière du cache. Le cache hors ligne sera supprimé.",
       "deleteSuccess": "Couche supprimée du cache hors ligne.",
       "noAddableLayer": "Toutes les couches éligibles sont déjà dans le cache."
     },
@@ -228,12 +233,16 @@
       "downloadSuccess": "Téléchargement hors ligne terminé.",
       "zoneAddedSuccess": "Zone ajoutée au cache hors ligne.",
       "layersAddedSuccess": "Couches ajoutées au cache hors ligne.",
+      "refreshBlockedPendingChanges": "Impossible de rafraîchir le cache car des modifications sont en cours sur une des couches.",
       "refreshSuccess": "Cache hors ligne rafraîchi.",
+      "confirmDeleteTitle": "Supprimer le cache",
+      "confirmDeleteMessage": "Voulez-vous supprimer tout le cache hors ligne de ce groupe ?",
       "deleteSuccess": "Cache hors ligne supprimé."
     },
     "dialog": {
       "cancel": "Annuler",
       "continue": "Continuer",
+      "delete": "Supprimer",
       "validate": "Valider"
     },
     "editor": {
