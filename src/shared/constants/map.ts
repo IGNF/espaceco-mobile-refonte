@@ -26,6 +26,12 @@ export const DEFAULT_GEOPORTAIL_LAYERS = [
 	GEOPORTAIL_LAYERS.MAPS,
 ] as const;
 
+export const GEOPORTAIL_LAYER_TITLES: Record<string, string> = {
+	[GEOPORTAIL_LAYERS.MAPS]: 'Cartes IGN',
+	[GEOPORTAIL_LAYERS.PLAN_IGN]: 'Plan IGN',
+	[GEOPORTAIL_LAYERS.ORTHOPHOTOS]: 'Photographies aériennes',
+};
+
 /**
  * Geoportail server configuration
  */

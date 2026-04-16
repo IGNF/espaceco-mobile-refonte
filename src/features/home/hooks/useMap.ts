@@ -20,6 +20,7 @@ import {
 
 interface UseMapOptions {
 	centerOnUserLocation?: boolean;
+  skipGeoportailCapabilities?: boolean;
 }
 
 interface UseMapReturn {
@@ -33,7 +34,10 @@ interface UseMapReturn {
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
-	const { centerOnUserLocation: shouldCenterOnMount = true } = options;
+	const {
+    centerOnUserLocation: shouldCenterOnMount = true,
+    skipGeoportailCapabilities = false,
+  } = options;
 
 	const mapElementRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<Map | null>(null);
@@ -98,12 +102,13 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 		async function initMap() {
 			if (!mapElementRef.current || !mounted) return;
 
-			// Load Geoportail capabilities before creating layers
-			try {
-				await initGeoportailCapabilities();
-			} catch (error) {
-				console.error("Failed to load Geoportail capabilities:", error);
-			}
+			if (!skipGeoportailCapabilities) {
+        try {
+          await initGeoportailCapabilities();
+        } catch (error) {
+          console.error("Failed to load Geoportail capabilities:", error);
+        }
+      }
 
 			if (!mounted || !mapElementRef.current) return;
 
@@ -174,7 +179,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			setMap(null);
 			setIsMapReady(false);
 		};
-	}, []);
+	}, [skipGeoportailCapabilities]);
 
 	// Center on user location on mount
 	useEffect(() => {

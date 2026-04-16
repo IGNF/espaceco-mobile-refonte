@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { PluginListenerHandle } from '@capacitor/core';
 import type { CommunityLayer } from '@ign/mobile-core';
 import type { Extent } from 'ol/extent';
+import { boundingExtent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
 import {
   type OfflineCommunityCache,
@@ -11,19 +12,21 @@ import {
   type OfflineCacheDraftInput,
   type OfflineCacheDownloadInput,
   type OfflineCacheLayer,
+  type OfflineRasterMap,
+  type OfflineRasterMapDraftInput,
   type OfflineZone,
 } from '@/domain/offline/models';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { OfflineCacheRepository } from '@/infra/offline/OfflineCacheRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';
-import {
-  OFFLINE_DOWNLOAD_CANCELLED_CODE,
-  OfflineVectorDownloadService,
-} from '@/infra/offline/OfflineVectorDownloadService';
+import { OfflineRasterMapRepository } from '@/infra/offline/OfflineRasterMapRepository';
+import { OfflineRasterDownloadService } from '@/infra/offline/OfflineRasterDownloadService';
+import { OfflineVectorDownloadService } from '@/infra/offline/OfflineVectorDownloadService';
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { OfflineContext } from './OfflineContext';
+import { OFFLINE_DOWNLOAD_CANCELLED_CODE, OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
 
 interface OfflineProviderProps {
   children: ReactNode;
@@ -31,7 +34,9 @@ interface OfflineProviderProps {
 
 const offlineCacheRepository = new OfflineCacheRepository();
 const offlineModeRepository = new OfflineModeRepository();
+const offlineRasterMapRepository = new OfflineRasterMapRepository();
 const offlineZonesRepository = new OfflineZonesRepository();
+const offlineRasterDownloadService = new OfflineRasterDownloadService();
 const offlineVectorDownloadService = new OfflineVectorDownloadService();
 
 const DEFAULT_NETWORK_STATUS: OfflineNetworkStatus = {
@@ -63,6 +68,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [network, setNetwork] = useState<OfflineNetworkStatus>(DEFAULT_NETWORK_STATUS);
   const [zones, setZones] = useState<OfflineZone[]>([]);
   const [caches, setCaches] = useState<OfflineCommunityCache[]>([]);
+  const [rasterMaps, setRasterMaps] = useState<OfflineRasterMap[]>([]);
 
   /**
    * Reloads the persisted offline state used by the provider.
@@ -72,17 +78,19 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     setIsLoading(true);
 
     try {
-      const [nextRequestedMode, nextNetworkStatus, nextZones, nextCaches] = await Promise.all([
+      const [nextRequestedMode, nextNetworkStatus, nextZones, nextCaches, nextRasterMaps] = await Promise.all([
         offlineModeRepository.getRequestedMode(),
         getNetworkStatus(),
         offlineZonesRepository.listZones(),
         offlineCacheRepository.listCaches(),
+        offlineRasterMapRepository.listMaps(),
       ]);
 
       setRequestedModeState(nextRequestedMode);
       setNetwork(nextNetworkStatus);
       setZones(nextZones);
       setCaches(nextCaches);
+      setRasterMaps(nextRasterMaps);
     } finally {
       setIsLoading(false);
     }
@@ -132,10 +140,9 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       : caches.find((offlineCache) => offlineCache.communityId === activeCommunityId) ?? null;
 
   const isOfflineAllowed = activeCommunity?.offline_allowed !== false;
-  const hasOfflineData = activeCommunityCache?.loaded === true;
+  const hasOfflineData = activeCommunityCache?.loaded === true || rasterMaps.some((rasterMap) => rasterMap.loaded);
   const canEnableOffline = isOfflineAllowed && hasOfflineData;
-  const mode: OfflineMode =
-    requestedMode === 'offline' && canEnableOffline ? 'offline' : 'online';
+  const mode: OfflineMode = requestedMode === 'offline' && canEnableOffline ? 'offline' : 'online';
 
   const setOfflineMode = useCallback(
     async (nextMode: OfflineMode) => {
@@ -241,10 +248,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       layers,
       zoneNames,
     }: OfflineCacheDownloadInput): Promise<OfflineCommunityCache> => {
-      if (isDownloading) {
-        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
-      }
-
       if (!network.connected) {
         throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
       }
@@ -446,7 +449,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     [
       activeCommunity?.name,
       activeCommunityId,
-      isDownloading,
       isOfflineAllowed,
       network.connected,
       refresh,
@@ -459,10 +461,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    */
   const refreshCommunityCache = useCallback(
     async (communityId: number): Promise<OfflineCommunityCache> => {
-      if (isDownloading) {
-        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
-      }
-
       if (!network.connected) {
         throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
       }
@@ -486,7 +484,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         zoneNames: offlineCache.zoneNames,
       });
     },
-    [activeCommunityId, downloadCommunityCache, isDownloading, isOfflineAllowed, network.connected]
+    [activeCommunityId, downloadCommunityCache, isOfflineAllowed, network.connected]
   );
 
   /**
@@ -494,10 +492,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    * This keeps the rest of the cache untouched while replacing that layer's downloaded tiles.
    */
   const refreshCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string): Promise<OfflineCommunityCache> => {
-    if (isDownloading) {
-      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'An offline download is already running', retryable: false });
-    }
-
     if (!network.connected) {
       throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
     }
@@ -545,10 +539,182 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       setDownloadProgress(null);
     }
   },
-    [isDownloading, network.connected, refresh]
+    [network.connected, refresh]
+  );
+
+  /**
+   * Saves the metadata of one offline raster map before any tiles are downloaded.
+   */
+  const saveOfflineRasterMapDraft = useCallback(
+    async ({
+      name,
+      layerName,
+      minZoom,
+      maxZoom,
+    }: OfflineRasterMapDraftInput): Promise<OfflineRasterMap> => {
+      const savedRasterMap: OfflineRasterMap = {
+        id: crypto.randomUUID(),
+        name,
+        layerName,
+        minZoom,
+        maxZoom,
+        zoneNames: [],
+        extents: [],
+        visible: true,
+        loaded: false,
+      };
+
+      await offlineRasterMapRepository.saveMap(savedRasterMap);
+      await refresh();
+      return savedRasterMap;
+    },
+    [refresh]
+  );
+
+  /**
+   * Downloads one raster map for one selected zone.
+   * If the map already exists, the zone is added incrementally to the downloaded raster tiles.
+   */
+  const downloadOfflineRasterMap = useCallback(
+    async (mapId: string, zoneName: string): Promise<OfflineRasterMap> => {
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+      }
+
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+      const nextZoneNames = offlineRasterMap.zoneNames.includes(zoneName) ? offlineRasterMap.zoneNames : [...offlineRasterMap.zoneNames, zoneName];
+      const nextExtents = await offlineZonesRepository.getExtents(nextZoneNames);
+      const nextUnionExtent = await offlineZonesRepository.getUnionExtent(nextZoneNames);
+
+      if (nextExtents.length === 0 || !nextUnionExtent) {
+        throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'At least one offline zone is required to download data', retryable: false });
+      }
+
+      const excludedExtents = offlineRasterMap.loaded ? offlineRasterMap.extents : undefined;
+      const totalTileCount = offlineRasterDownloadService.countTiles({
+        rasterMap: offlineRasterMap,
+        extents: nextExtents,
+        excludedExtents,
+      });
+
+      setIsDownloading(true);
+      setDownloadError(null);
+      setDownloadProgress(null);
+
+      try {
+        await offlineRasterDownloadService.downloadMap({
+          rasterMap: offlineRasterMap,
+          extents: nextExtents,
+          excludedExtents,
+          onProgress: (progress) => {
+            setDownloadProgress(progress);
+          },
+        });
+
+        const now = new Date().toISOString();
+        const savedRasterMap: OfflineRasterMap = {
+          ...offlineRasterMap,
+          zoneNames: nextZoneNames,
+          extent: nextUnionExtent,
+          extents: nextExtents,
+          loaded: true,
+          loadedAt: offlineRasterMap.loadedAt ?? now,
+          lastRefreshAt: now,
+          visible: offlineRasterMap.visible,
+        };
+
+        if (totalTileCount === 0) {
+          setDownloadProgress({
+            currentLayerTitle: offlineRasterMap.name,
+            downloadedTileCount: 0,
+            totalTileCount: 0,
+            percent: 100,
+          });
+        }
+
+        await offlineRasterMapRepository.saveMap(savedRasterMap);
+        await refresh();
+        return savedRasterMap;
+      } catch (error) {
+        if (isAppError(error) && error.code === OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE) {
+          throw error;
+        }
+
+        const appError = toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
+        setDownloadError(appError);
+        throw appError;
+      } finally {
+        setIsDownloading(false);
+        setDownloadProgress(null);
+      }
+    },
+    [network.connected, refresh]
+  );
+
+  /**
+   * Redownloads the current extents of one raster offline map in place.
+   */
+  const refreshOfflineRasterMap = useCallback(
+    async (mapId: string): Promise<OfflineRasterMap> => {
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+      }
+
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+
+      setIsDownloading(true);
+      setDownloadError(null);
+      setDownloadProgress(null);
+
+      try {
+        await offlineRasterDownloadService.downloadMap({
+          rasterMap: offlineRasterMap,
+          extents: offlineRasterMap.extents,
+          onProgress: (progress) => {
+            setDownloadProgress(progress);
+          },
+        });
+
+        const nextRasterMap: OfflineRasterMap = {
+          ...offlineRasterMap,
+          extent: offlineRasterMap.extent ?? boundingExtent(offlineRasterMap.extents),
+          lastRefreshAt: new Date().toISOString(),
+        };
+
+        await offlineRasterMapRepository.saveMap(nextRasterMap);
+        await refresh();
+        return nextRasterMap;
+      } catch (error) {
+        if (isAppError(error) && error.code === OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE) {
+          throw error;
+        }
+
+        const appError = toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
+        setDownloadError(appError);
+        throw appError;
+      } finally {
+        setIsDownloading(false);
+        setDownloadProgress(null);
+      }
+    },
+    [network.connected, refresh]
+  );
+
+  const setOfflineRasterMapVisibility = useCallback(
+    async (mapId: string, visible: boolean): Promise<void> => {
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+
+      await offlineRasterMapRepository.saveMap({
+        ...offlineRasterMap,
+        visible,
+      });
+      await refresh();
+    },
+    [refresh]
   );
 
   const cancelOfflineDownload = useCallback(() => {
+    offlineRasterDownloadService.cancel();
     offlineVectorDownloadService.cancel();
   }, []);
 
@@ -557,10 +723,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    * If it was the last layer, the whole cache definition is removed as well.
    */
   const deleteCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string) => {
-    if (isDownloading) {
-      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Cannot delete offline data while a download is running', retryable: false });
-    }
-
     const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
     const nextLayers = offlineCache.layers.filter((layer) => layer.layerKey !== layerKey);
 
@@ -586,16 +748,12 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       layers: nextLayers,
     });
     await refresh();
-  }, [isDownloading, refresh]);
+  }, [refresh]);
 
   /**
    * Deletes both the downloaded data and the persisted cache metadata for one community.
    */
   const deleteCommunityCache = useCallback(async (communityId: number) => {
-    if (isDownloading) {
-      throw new AppError({ kind: 'validation', translationKey: 'errors.global.validation', message: 'Cannot delete offline data while a download is running', retryable: false });
-    }
-
     const offlineCache = (await offlineCacheRepository.getCache(communityId))!;
 
     await offlineVectorDownloadService.deleteCacheData({
@@ -605,7 +763,16 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     });
     await offlineCacheRepository.deleteCache(communityId);
     await refresh();
-  }, [isDownloading, refresh]);
+  }, [refresh]);
+
+  /**
+   * Deletes one raster map definition and all its downloaded tiles.
+   */
+  const deleteOfflineRasterMap = useCallback(async (mapId: string) => {
+    await offlineRasterDownloadService.deleteMapData(mapId);
+    await offlineRasterMapRepository.deleteMap(mapId);
+    await refresh();
+  }, [refresh]);
 
   const value = {
     mode,
@@ -616,6 +783,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     hasOfflineData,
     canEnableOffline,
     activeCommunityCache,
+    rasterMaps,
     zones,
     isLoading,
     isDownloading,
@@ -631,9 +799,14 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     downloadCommunityCache,
     refreshCommunityCache,
     refreshCommunityCacheLayer,
+    saveOfflineRasterMapDraft,
+    downloadOfflineRasterMap,
+    refreshOfflineRasterMap,
+    setOfflineRasterMapVisibility,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,
+    deleteOfflineRasterMap,
   };
 
   return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;

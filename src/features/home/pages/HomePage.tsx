@@ -35,6 +35,7 @@ import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayer
 import { useCommunityFeatureConsultation } from "@/features/map/hooks/useCommunityFeatureConsultation";
 import { useDirectContributionLayers } from "@/features/map/hooks/useDirectContributionLayers";
 import { useDirectContributionSession } from "@/features/map/hooks/useDirectContributionSession";
+import { useOfflineRasterMapLayers } from "@/features/map/hooks/useOfflineRasterMapLayers";
 import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
@@ -62,7 +63,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { setActiveCommunity } = useCommunity();
-  const { mode: offlineMode, activeCommunityCache } = useOffline();
+  const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
   const {
     mapElementRef,
     mapRef,
@@ -71,7 +72,10 @@ export function HomePage() {
     isLocating,
     isMapReady,
     hasInitialCenterCompleted,
-  } = useMap();
+  } = useMap({
+    centerOnUserLocation: offlineMode !== 'offline',
+    skipGeoportailCapabilities: offlineMode === 'offline',
+  });
   const {
     layers,
     geoportailLayers,
@@ -91,7 +95,8 @@ export function HomePage() {
     signalementLayerVisibility,
     signalementLayerOpacity,
     signalementLayerOrder,
-    isMapReady
+    isMapReady,
+    offlineMode
   );
   const {
     pendingChangesCountByLayerKey,
@@ -139,6 +144,7 @@ export function HomePage() {
     isMapReady,
     offlineMode
   );
+  useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -347,7 +353,7 @@ export function HomePage() {
 
   const isAppDataLoading =
     isLayersLoading ||
-    isVectorLayersLoading;
+    (offlineMode !== 'offline' && isVectorLayersLoading);
 
   const { showInitialLoadingOverlay } = useInitialAppLoading({
     isMapReady,
@@ -530,67 +536,89 @@ export function HomePage() {
       />
 
       {/* Overlay pages */}
-      <MyInformationsPage
-        isOpen={activeOverlay === '/my-informations'}
-        onClose={handleCloseOverlay}
-      />
-      <SettingsPage
-        isOpen={activeOverlay === '/settings'}
-        onClose={handleCloseOverlay}
-      />
-      <LogoutPage
-        isOpen={activeOverlay === '/logout-verification'}
-        onClose={handleCloseOverlay}
-        handleLogout={handleLogout}
-      />
-      <GroupReportsPage
-        isOpen={activeOverlay === '/group-reports'}
-        onClose={handleCloseOverlay}
-      />
-      <MyReportsPage
-        isOpen={activeOverlay === '/my-reports'}
-        onClose={handleCloseOverlay}
-        map={map}
-        onSearchPanelVisibilityChange={setIsSearchOpen}
-      />
-      <NewReportPage
-        isOpen={activeOverlay === '/new-report-choice'}
-        onClose={handleCloseOverlay}
-        onSelectStandard={handleNewReportStandard}
-        onSelectTrace={handleNewReportTrace}
-      />
-      <CreateOrEditReportPage
-        isOpen={activeOverlay === '/create-or-edit-report'}
-        onClose={handleCloseOverlay}
-        mode="create"
-        reportType={newReportType}
-        map={map}
-        onSearchPanelVisibilityChange={setIsSearchOpen}
-      />
-      <MyCommunitiesSelectionPage
-        isOpen={activeOverlay === '/my-communities'}
-        onClose={handleCloseOverlay}
-        onConfirmCommunityChange={handleConfirmCommunityChange}
-      />
-      <OfflineManagementPage
-        key={offlineOverlayKey}
-        isOpen={activeOverlay === '/offline'}
-        onClose={handleCloseOverlay}
-        map={map}
-        vectorLayers={vectorLayers}
-        pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
-        onSetLayerVisibility={setLayerVisibility}
-        onCenterOnUserLocation={centerOnUserLocation}
-        isLocating={isLocating}
-      />
-      <AboutPage
-        isOpen={activeOverlay === '/about'}
-        onClose={handleCloseOverlay}
-      />
-      <HelpPage
-        isOpen={activeOverlay === '/help'}
-        onClose={handleCloseOverlay}
-      />
+      {activeOverlay === '/my-informations' && (
+        <MyInformationsPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
+      {activeOverlay === '/settings' && (
+        <SettingsPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
+      {activeOverlay === '/logout-verification' && (
+        <LogoutPage
+          isOpen
+          onClose={handleCloseOverlay}
+          handleLogout={handleLogout}
+        />
+      )}
+      {activeOverlay === '/group-reports' && (
+        <GroupReportsPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
+      {activeOverlay === '/my-reports' && (
+        <MyReportsPage
+          isOpen
+          onClose={handleCloseOverlay}
+          map={map}
+          onSearchPanelVisibilityChange={setIsSearchOpen}
+        />
+      )}
+      {activeOverlay === '/new-report-choice' && (
+        <NewReportPage
+          isOpen
+          onClose={handleCloseOverlay}
+          onSelectStandard={handleNewReportStandard}
+          onSelectTrace={handleNewReportTrace}
+        />
+      )}
+      {activeOverlay === '/create-or-edit-report' && (
+        <CreateOrEditReportPage
+          isOpen
+          onClose={handleCloseOverlay}
+          mode="create"
+          reportType={newReportType}
+          map={map}
+          onSearchPanelVisibilityChange={setIsSearchOpen}
+        />
+      )}
+      {activeOverlay === '/my-communities' && (
+        <MyCommunitiesSelectionPage
+          isOpen
+          onClose={handleCloseOverlay}
+          onConfirmCommunityChange={handleConfirmCommunityChange}
+        />
+      )}
+      {activeOverlay === '/offline' && (
+        <OfflineManagementPage
+          key={offlineOverlayKey}
+          isOpen
+          onClose={handleCloseOverlay}
+          map={map}
+          vectorLayers={vectorLayers}
+          pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
+          onSetLayerVisibility={setLayerVisibility}
+          onCenterOnUserLocation={centerOnUserLocation}
+          isLocating={isLocating}
+        />
+      )}
+      {activeOverlay === '/about' && (
+        <AboutPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
+      {activeOverlay === '/help' && (
+        <HelpPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
       <HomeLoadingOverlay isVisible={isHomeLoadingOverlayVisible} />
     </div>
   );

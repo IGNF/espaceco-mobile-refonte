@@ -20,6 +20,7 @@ import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 import { AppError } from '@/shared/errors/appError';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { OFFLINE_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
 
 interface OfflineVectorDownloadParams {
   communityId: number;
@@ -49,8 +50,6 @@ interface PreparedOfflineLayer {
   resolution: number;
   tileExtents: Extent[];
 }
-
-export const OFFLINE_DOWNLOAD_CANCELLED_CODE = 'offline_download_cancelled';
 
 /**
  * Downloads collaborative vector tiles into the local feature cache.

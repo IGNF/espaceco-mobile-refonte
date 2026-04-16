@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { useAuth } from "../../hooks/useAuth";
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useOffline } from '@/features/offline/hooks/useOffline';
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
 import { Loading } from '@/shared/ui/Loading';
@@ -17,11 +19,15 @@ export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
+  const { network, isLoading: isOfflineLoading } = useOffline();
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [hasInitialAuthCheckCompleted, setHasInitialAuthCheckCompleted] = useState(() => !isAuthLoading);
+  const hasStartupContextCompleted =
+    !isAuthenticated || (!isCommunityLoading && !isOfflineLoading);
 
 	useEffect(() => {
 		if (!isAuthLoading) {
@@ -31,12 +37,24 @@ export function LoginPage() {
 
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
-		if (hasInitialAuthCheckCompleted && isAuthenticated) {
+		if (hasInitialAuthCheckCompleted && hasStartupContextCompleted && isAuthenticated) {
+      if (!network.connected && activeCommunity) {
+        navigate('/home', { replace: true });
+        return;
+      }
+
 			navigate("/community-selection", { replace: true });
 		}
-	}, [hasInitialAuthCheckCompleted, isAuthenticated, navigate]);
+	}, [
+    activeCommunity,
+    hasInitialAuthCheckCompleted,
+    hasStartupContextCompleted,
+    isAuthenticated,
+    navigate,
+    network.connected,
+  ]);
 
-	if (!hasInitialAuthCheckCompleted || isAuthenticated) {
+	if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || isAuthenticated) {
 		return (
 			<div className={styles.container + " " + screen.screenContainer}>
 				<div className={styles.content + " " + styles.loadingContent}>

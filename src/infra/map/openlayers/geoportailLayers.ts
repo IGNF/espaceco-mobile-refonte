@@ -1,9 +1,6 @@
 import LayerGroup from 'ol/layer/Group';
 import ol_layer_Geoportail from 'ol-ext/layer/Geoportail';
-import {
-  DEFAULT_GEOPORTAIL_LAYERS,
-  GEOPORTAIL_SERVER,
-} from '@/shared/constants/map';
+import { DEFAULT_GEOPORTAIL_LAYERS, GEOPORTAIL_LAYER_TITLES, GEOPORTAIL_SERVER } from '@/shared/constants/map';
 import type { CommunityLayer } from '@ign/mobile-core';
 
 export interface GeoportailLayerConfig {
@@ -48,6 +45,20 @@ function hasCapability(layerName: string): boolean {
   return layerName in GeoportailClass.capabilities;
 }
 
+export function getGeoportailLayerTitle(layerName: string): string {
+  return GEOPORTAIL_LAYER_TITLES[layerName] ?? layerName;
+}
+
+export function getOfflineGeoportailLayerOptions(): Array<{
+  name: string;
+  title: string;
+}> {
+  return DEFAULT_GEOPORTAIL_LAYERS.map((layerName) => ({
+    name: layerName,
+    title: getGeoportailLayerTitle(layerName),
+  }));
+}
+
 /**
  * Create Geoportail layers from enriched community layer data.
  * Only creates layers whose names exist in the loaded capabilities.
@@ -55,10 +66,8 @@ function hasCapability(layerName: string): boolean {
 export function createCommunityGeoportailLayers(
   layers: CommunityLayer[]
 ): ol_layer_Geoportail[] {
-  console.log('createCommunityGeoportailLayers', layers);
   return layers
     .filter((layer) => {
-      console.log('layer', layer);
       const name = layer.geoservice?.layers;
       if (!name) return false;
       if (!hasCapability(name)) {
@@ -68,7 +77,6 @@ export function createCommunityGeoportailLayers(
       return true;
     })
     .map((layer) => {
-      console.log('createGeoportailLayer', layer);
       return createGeoportailLayer({
         name: layer.geoservice?.layers ?? '',
         visible: layer.visible ?? false,
@@ -80,7 +88,6 @@ export function createCommunityGeoportailLayers(
 export function createGeoportailLayerGroup(
   layerNames: readonly string[] = DEFAULT_GEOPORTAIL_LAYERS
 ): LayerGroup {
-  console.log('createGeoportailLayerGroup', layerNames);
   const layers = layerNames.map((name, index) =>
     createGeoportailLayer({
       name,

@@ -26,6 +26,13 @@ export interface OfflineCacheDraftInput {
   layers: CommunityLayer[];
 }
 
+export interface OfflineRasterMapDraftInput {
+  name: string;
+  layerName: string;
+  minZoom: number;
+  maxZoom: number;
+}
+
 export interface OfflineDownloadProgress {
   currentLayerTitle: string;
   downloadedTileCount: number;
@@ -47,6 +54,21 @@ export interface OfflineCommunityCache {
   lastRefreshAt?: string;
 }
 
+export interface OfflineRasterMap {
+  id: string;
+  name: string;
+  layerName: string;
+  minZoom: number;
+  maxZoom: number;
+  zoneNames: string[];
+  extent?: Extent;
+  extents: Extent[];
+  visible: boolean;
+  loaded: boolean;
+  loadedAt?: string;
+  lastRefreshAt?: string;
+}
+
 export interface OfflineNetworkStatus {
   connected: boolean;
   connectionType: ConnectionType;
@@ -61,5 +83,6 @@ export interface OfflineModeState {
   hasOfflineData: boolean;
   canEnableOffline: boolean;
   activeCommunityCache: OfflineCommunityCache | null;
+  rasterMaps: OfflineRasterMap[];
   zones: OfflineZone[];
 }

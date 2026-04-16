@@ -14,6 +14,7 @@ import { fromLonLat, transformExtent } from 'ol/proj';
 import { Style, Stroke } from 'ol/style';
 import { ReportSource, type Report } from '@ign/mobile-core';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import type { OfflineMode } from '@/domain/offline/models';
 import type {
   SignalementLayerKey,
   SignalementLayerOpacity,
@@ -131,9 +132,11 @@ export function useSignalementMapLayers(
   signalementLayerVisibility: SignalementLayerVisibility,
   signalementLayerOpacity: SignalementLayerOpacity,
   signalementLayerOrder: SignalementLayerKey[],
-  isMapReady: boolean
+  isMapReady: boolean,
+  mode: OfflineMode
 ) {
   const { activeCommunity } = useCommunity();
+  const isOfflineMode = mode === 'offline';
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -175,62 +178,64 @@ export function useSignalementMapLayers(
     });
     croquisLayer.setVisible(true);
 
-    const remoteReportsSource = new VectorSource({
-      strategy: bboxStrategy,
-      loader: async (extent, _resolution, projection, success, failure) => {
-        try {
-          const mapProjectionCode = (projection as Projection).getCode();
-          const extent4326 = transformExtent(
-            extent,
-            mapProjectionCode,
-            WGS84_PROJECTION
-          );
-          const reports = await reportSource.loadReports(extent4326);
-          const loadedFeatures = await reportSource.loadFeatures(
-            reports,
-            projection as Projection
-          );
-          const normalizedFeatures = deduplicateFeatures(
-            loadedFeatures.map(copyReportProperties)
-          );
-          const knownFeatureIds = new Set(
-            remoteReportsSource
-              .getFeatures()
-              .map((feature) => feature.getId())
-              .filter((featureId): featureId is string | number => featureId !== undefined)
-              .map((featureId) => String(featureId))
-          );
+    const remoteReportsSource = isOfflineMode
+      ? new VectorSource()
+      : new VectorSource({
+          strategy: bboxStrategy,
+          loader: async (extent, _resolution, projection, success, failure) => {
+            try {
+              const mapProjectionCode = (projection as Projection).getCode();
+              const extent4326 = transformExtent(
+                extent,
+                mapProjectionCode,
+                WGS84_PROJECTION
+              );
+              const reports = await reportSource.loadReports(extent4326);
+              const loadedFeatures = await reportSource.loadFeatures(
+                reports,
+                projection as Projection
+              );
+              const normalizedFeatures = deduplicateFeatures(
+                loadedFeatures.map(copyReportProperties)
+              );
+              const knownFeatureIds = new Set(
+                remoteReportsSource
+                  .getFeatures()
+                  .map((feature) => feature.getId())
+                  .filter((featureId): featureId is string | number => featureId !== undefined)
+                  .map((featureId) => String(featureId))
+              );
 
-          const featuresToAdd = normalizedFeatures.filter((feature) => {
-            const featureId = feature.getId();
-            if (featureId === undefined) {
-              return true;
+              const featuresToAdd = normalizedFeatures.filter((feature) => {
+                const featureId = feature.getId();
+                if (featureId === undefined) {
+                  return true;
+                }
+
+                const key = String(featureId);
+                if (knownFeatureIds.has(key)) {
+                  return false;
+                }
+
+                knownFeatureIds.add(key);
+                return true;
+              });
+
+              if (featuresToAdd.length > 0) {
+                remoteReportsSource.addFeatures(featuresToAdd);
+              }
+
+              if (success) {
+                success(featuresToAdd);
+              }
+            } catch (error) {
+              console.error('[Signalements] Failed to load reports layer', error);
+              if (failure) {
+                failure();
+              }
             }
-
-            const key = String(featureId);
-            if (knownFeatureIds.has(key)) {
-              return false;
-            }
-
-            knownFeatureIds.add(key);
-            return true;
-          });
-
-          if (featuresToAdd.length > 0) {
-            remoteReportsSource.addFeatures(featuresToAdd);
-          }
-
-          if (success) {
-            success(featuresToAdd);
-          }
-        } catch (error) {
-          console.error('[Signalements] Failed to load reports layer', error);
-          if (failure) {
-            failure();
-          }
-        }
-      },
-    });
+          },
+        });
 
     const clusteredReportsSource = new Cluster({
       source: remoteReportsSource,
@@ -280,7 +285,7 @@ export function useSignalementMapLayers(
     return () => {
       cancelled = true;
     };
-  }, [activeCommunity?.id, isMapReady, mapRef]);
+  }, [activeCommunity?.id, isMapReady, isOfflineMode, mapRef]);
 
   useEffect(() => {
     if (!isMapReady) return;

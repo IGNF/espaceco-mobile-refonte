@@ -1,9 +1,10 @@
 import { useState, useCallback, useEffect, type ReactNode } from "react";
+import { Network } from '@ign/mobile-device';
 import { AuthContext } from "./AuthContext";
 import * as authService from "@/infra/auth";
 import type { AppUser } from "@/domain/user/models";
 import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
-import { toAppError } from '@/shared/errors/appError';
+import { isAppError, toAppError } from '@/shared/errors/appError';
 
 const userStorage = new UserStorageAdapter();
 
@@ -36,11 +37,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
 						if (result.success && result.user) {
 							await userStorage.saveUser(result.user);
 							setUser(result.user);
+						} else if (isAppError(result.error) && result.error.kind === 'network') {
+							// When the app starts fully offline, keep the cached identity so offline mode remains usable.
+							setUser(storedUser);
 						} else {
 							await userStorage.clearUser();
 						}
 					} else {
-						await userStorage.clearUser();
+						const networkStatus = await Network.getStatus().catch(() => ({ connected: true }));
+						if (networkStatus.connected) {
+							await userStorage.clearUser();
+						} else {
+							setUser(storedUser);
+						}
 					}
 				}
 			} catch {
