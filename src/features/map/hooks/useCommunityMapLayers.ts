@@ -86,8 +86,11 @@ function syncCommunityVectorLayerGroup(
 
     const canReuseLayer =
       olLayer &&
-      olLayer.get('offlineRuntimeMode') === desiredRuntimeMode &&
-      (olLayer.get('offlineCacheNamespace') ?? null) === (desiredCacheNamespace ?? null);
+      (!(olLayer instanceof CollabVectorLayer) ||
+        (
+          olLayer.get('offlineRuntimeMode') === desiredRuntimeMode &&
+          (olLayer.get('offlineCacheNamespace') ?? null) === (desiredCacheNamespace ?? null)
+        ));
 
     if (!canReuseLayer) {
       olLayer = createCommunityVectorLayer(
@@ -103,10 +106,6 @@ function syncCommunityVectorLayerGroup(
     }
 
     syncLayerDisplayState(olLayer, communityLayer);
-
-    if (olLayer instanceof CollabVectorLayer) {
-      olLayer.setOnline(!isOfflineMode);
-    }
 
     orderedLayers.push(olLayer);
   }

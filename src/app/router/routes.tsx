@@ -10,7 +10,7 @@ import { AuthCallbackPage } from "@/features/auth/pages/AuthCallback/AuthCallbac
 
 /** Community routes **/
 import { CommunityFirstSelectionPage } from "@/features/community/pages/CommunityFirstSelection/CommunityFirstSelectionPage";
-import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
+// import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
 
 export const router = createBrowserRouter([
   {
@@ -42,10 +42,10 @@ export const router = createBrowserRouter([
         path: "/community-selection",
         element: <CommunityFirstSelectionPage />,
       },
-      {
-        path: "/about-community",
-        element: <AboutCommunityPage />,
-      },
+      // {
+      //   path: "/about-community",
+      //   element: <AboutCommunityPage />,
+      // },
     ],
   },
 ]);
@@ -56,6 +56,7 @@ export const overlayRoutes = [
   '/settings',
   '/logout-verification', 
   '/my-communities',
+  '/about-community',
   /* Report routes */
   '/group-reports',
   '/my-reports',
