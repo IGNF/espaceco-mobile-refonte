@@ -13,6 +13,17 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.0.4] - 2026-04-xx
+
+### Added
+
+- Support du more hors ligne (téléchargement de zones, couches, fonds de carte ; switch online/offline ; gestion du cache)
+- Pages 'À propos du guichet'
+
+### Changed
+
+### Fixed
+
 ## [0.0.3] - 2026-04-07
 
 ### Added

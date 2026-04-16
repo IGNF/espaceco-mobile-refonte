@@ -25,6 +25,7 @@ import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
 import { OfflineManagementPage } from "@/features/offline/pages/OfflineManagementPage";
+import { AboutCommunityPage } from "@/features/community/pages/AboutCommunity/AboutCommunityPage";
 
 import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureFormPage";
 import { DirectContributionFeatureDetailsPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureDetailsPage";
@@ -606,6 +607,12 @@ export function HomePage() {
           onSetLayerVisibility={setLayerVisibility}
           onCenterOnUserLocation={centerOnUserLocation}
           isLocating={isLocating}
+        />
+      )}
+      {activeOverlay === '/about-community' && (
+        <AboutCommunityPage
+          isOpen
+          onClose={handleCloseOverlay}
         />
       )}
       {activeOverlay === '/about' && (
