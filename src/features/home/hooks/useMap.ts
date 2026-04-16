@@ -41,6 +41,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 
 	const mapElementRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<Map | null>(null);
+  const skipGeoportailCapabilitiesOnInitRef = useRef(skipGeoportailCapabilities);
 	const [map, setMap] = useState<Map | null>(null);
 	const [isLocating, setIsLocating] = useState(false);
 	const [isMapReady, setIsMapReady] = useState(false);
@@ -102,7 +103,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 		async function initMap() {
 			if (!mapElementRef.current || !mounted) return;
 
-			if (!skipGeoportailCapabilities) {
+			if (!skipGeoportailCapabilitiesOnInitRef.current) {
         try {
           await initGeoportailCapabilities();
         } catch (error) {
@@ -179,7 +180,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			setMap(null);
 			setIsMapReady(false);
 		};
-	}, [skipGeoportailCapabilities]);
+	}, []);
 
 	// Center on user location on mount
 	useEffect(() => {

@@ -147,6 +147,7 @@ export function useLayers(
   const [error, setError] = useState<string | null>(null);
   const [hydratedCommunityId, setHydratedCommunityId] = useState<number | null>(null);
   const [hydratedUserId, setHydratedUserId] = useState<number | null>(null);
+  const [hydratedMode, setHydratedMode] = useState<OfflineMode | null>(null);
 
   const resetLayerPreferences = useCallback(() => {
     setSignalementLayerVisibility({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY });
@@ -212,7 +213,11 @@ export function useLayers(
    * Applies the saved layer-panel preferences to the current layer source.
    * 'baseLayers' can come either from the live API or from the persisted offline cache snapshot.
    */
-  const hydrateLayers = useCallback(async (communityId: number, baseLayers: CommunityLayer[]) => {
+  const hydrateLayers = useCallback(async (
+    communityId: number,
+    baseLayers: CommunityLayer[],
+    hydratedFromMode: OfflineMode
+  ) => {
     const savedConfiguration = await loadLayersConfiguration(communityId, userId);
     const {
       layers: nextLayers,
@@ -238,11 +243,13 @@ export function useLayers(
     setSignalementLayerOrder(nextSignalementLayerOrder);
     setHydratedCommunityId(communityId);
     setHydratedUserId(userId);
+    setHydratedMode(hydratedFromMode);
   }, [userId]);
 
   const loadOfflineLayers = useCallback(async () => {
     setHydratedCommunityId(null);
     setHydratedUserId(null);
+    setHydratedMode(null);
     setError(null);
 
     if (!activeCommunityId) {
@@ -264,7 +271,7 @@ export function useLayers(
         layerTitles: offlineLayers.map((layer) => getCommunityLayerTitle(layer)),
       });
 
-      await hydrateLayers(activeCommunityId, offlineLayers);
+      await hydrateLayers(activeCommunityId, offlineLayers, 'offline');
     } catch (err) {
       console.error('Failed to fetch layers:', err);
       setError('Failed to fetch layers');
@@ -283,6 +290,7 @@ export function useLayers(
   const fetchOnlineLayers = useCallback(async (forceRefresh = false) => {
     setHydratedCommunityId(null);
     setHydratedUserId(null);
+    setHydratedMode(null);
     setError(null);
 
     if (!activeCommunityId) {
@@ -310,7 +318,7 @@ export function useLayers(
         layerTitles: enrichedLayers.map((layer) => getCommunityLayerTitle(layer)),
       });
 
-      await hydrateLayers(activeCommunityId, enrichedLayers);
+      await hydrateLayers(activeCommunityId, enrichedLayers, 'online');
     } catch (err) {
       console.error('Failed to fetch layers:', err);
       setError('Failed to fetch layers');
@@ -332,6 +340,8 @@ export function useLayers(
 
   useEffect(() => {
     if (
+      mode === 'offline' ||
+      hydratedMode !== 'online' ||
       !activeCommunityId ||
       hydratedCommunityId !== activeCommunityId ||
       hydratedUserId !== userId
@@ -351,9 +361,11 @@ export function useLayers(
   }, [
     activeCommunityId,
     hydratedCommunityId,
+    hydratedMode,
     hydratedUserId,
     layers,
     lockedByLayerKey,
+    mode,
     signalementLayerOpacity,
     signalementLayerOrder,
     signalementLayerVisibility,
