@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
 import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
-import type { OfflineMode } from '@/domain/offline/models';
+import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
 import type Map from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import type LayerGroup from 'ol/layer/Group';
@@ -59,7 +59,8 @@ function replaceLayerGroupContent(
 function syncCommunityVectorLayerGroup(
   layerGroup: LayerGroup,
   vectorLayers: CommunityLayer[],
-  isOfflineMode: boolean
+  isOfflineMode: boolean,
+  activeCommunityCache: OfflineCommunityCache | null
 ): void {
   const existingLayersByKey = new globalThis.Map<string, BaseLayer>();
 
@@ -74,10 +75,27 @@ function syncCommunityVectorLayerGroup(
 
   for (const communityLayer of vectorLayers) {
     const layerKey = getCommunityLayerKey(communityLayer);
+    const offlineCacheLayer = activeCommunityCache?.layers.find(
+      (cacheLayer) => cacheLayer.layerKey === layerKey
+    );
+    const desiredCacheNamespace = isOfflineMode
+      ? offlineCacheLayer?.cacheNamespace
+      : undefined;
+    const desiredRuntimeMode = isOfflineMode ? 'offline' : 'online';
     let olLayer: BaseLayer | null | undefined = existingLayersByKey.get(layerKey);
 
-    if (!olLayer) {
-      olLayer = createCommunityVectorLayer(communityLayer, collabApiClient, isOfflineMode);
+    const canReuseLayer =
+      olLayer &&
+      olLayer.get('offlineRuntimeMode') === desiredRuntimeMode &&
+      (olLayer.get('offlineCacheNamespace') ?? null) === (desiredCacheNamespace ?? null);
+
+    if (!canReuseLayer) {
+      olLayer = createCommunityVectorLayer(
+        communityLayer,
+        collabApiClient,
+        isOfflineMode,
+        desiredCacheNamespace
+      );
     }
 
     if (!olLayer) {
@@ -110,7 +128,8 @@ export function useCommunityMapLayers(
   geoportailLayers: CommunityLayer[],
   vectorLayers: CommunityLayer[],
   isMapReady: boolean,
-  mode: OfflineMode
+  mode: OfflineMode,
+  activeCommunityCache: OfflineCommunityCache | null
 ): UseCommunityMapLayersResult {
   const [isVectorLayersLoading, setIsVectorLayersLoading] = useState(false);
   const isOfflineMode = mode === 'offline';
@@ -139,8 +158,13 @@ export function useCommunityMapLayers(
     const guichet = findLayerGroupByName(map, 'guichet');
     if (!guichet) return;
 
-    syncCommunityVectorLayerGroup(guichet, vectorLayers, isOfflineMode);
-  }, [isMapReady, isOfflineMode, mapRef, vectorLayers]);
+    syncCommunityVectorLayerGroup(
+      guichet,
+      vectorLayers,
+      isOfflineMode,
+      activeCommunityCache
+    );
+  }, [activeCommunityCache, isMapReady, isOfflineMode, mapRef, vectorLayers]);
 
   useEffect(() => {
     if (!isMapReady) return;

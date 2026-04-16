@@ -16,7 +16,8 @@ import { cacheStorage } from '@/infra/storage/cacheStorage';
 export function createCommunityVectorLayer(
   layer: CommunityLayer,
   apiClient: ApiClient,
-  isOfflineMode: boolean
+  isOfflineMode: boolean,
+  cacheNamespace?: string
 ): BaseLayer | null {
   const geoservice = layer.geoservice;
   if (geoservice && (geoservice.type as string)?.toUpperCase() === 'WFS') {
@@ -44,6 +45,7 @@ export function createCommunityVectorLayer(
         client: apiClient,
         table,
         cacheUrl,
+        cacheNamespace,
       },
       {
         tileZoom: getTableTileZoom(layer),
@@ -67,6 +69,8 @@ export function createCommunityVectorLayer(
 
     // Direct contribution actions resolve the live OL layer from this metadata.
     applyCommunityLayerMetadata(collabLayer, layer);
+    collabLayer.set('offlineRuntimeMode', isOfflineMode ? 'offline' : 'online');
+    collabLayer.set('offlineCacheNamespace', cacheNamespace ?? null);
     return collabLayer;
   }
 

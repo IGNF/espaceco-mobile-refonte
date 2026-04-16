@@ -142,7 +142,8 @@ export function HomePage() {
     geoportailLayers,
     mountedVectorLayers,
     isMapReady,
-    offlineMode
+    offlineMode,
+    activeCommunityCache
   );
   useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);
 
