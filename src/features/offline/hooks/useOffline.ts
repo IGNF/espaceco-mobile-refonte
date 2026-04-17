@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+
 import { OfflineContext, type OfflineContextType } from '@/app/providers/OfflineContext';
 
 export function useOffline(): OfflineContextType {

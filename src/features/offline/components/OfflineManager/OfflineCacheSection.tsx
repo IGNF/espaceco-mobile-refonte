@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '@/shared/ui/Button';
-import typography from '@/shared/styles/typography.module.css';
+
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
+
+import { Button } from '@/shared/ui/Button';
+
+import typography from '@/shared/styles/typography.module.css';
 
 interface OfflineCacheSectionProps {
   hasLoadedCache: boolean;

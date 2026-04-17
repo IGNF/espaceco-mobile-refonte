@@ -1,10 +1,16 @@
 import { useTranslation } from 'react-i18next';
+
 import type { CommunityLayer } from '@ign/mobile-core';
+
 import { Button } from '@/shared/ui/Button';
+
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
-import typography from '@/shared/styles/typography.module.css';
+
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
+
+import typography from '@/shared/styles/typography.module.css';
+
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
 interface OfflineLayersSectionProps {

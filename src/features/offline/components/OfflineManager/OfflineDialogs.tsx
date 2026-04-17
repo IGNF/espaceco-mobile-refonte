@@ -1,15 +1,22 @@
 import { useTranslation } from 'react-i18next';
+
 import type { CommunityLayer } from '@ign/mobile-core';
+
 import { Alert } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/Checkbox';
 import { Toggle } from '@/shared/ui/Toggle';
+
 import type { OfflineZone } from '@/domain/offline/models';
+
 import type { OfflineZoneEditorMode } from '@/features/offline/pages/OfflineZoneEditorOverlay';
+
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
+
 import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
+
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
 interface RasterScaleOption {
