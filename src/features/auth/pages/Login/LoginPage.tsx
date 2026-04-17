@@ -1,14 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+
 import { useAuth } from "../../hooks/useAuth";
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useOffline } from '@/features/offline/hooks/useOffline';
+
+import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
+
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
 import { Loading } from '@/shared/ui/Loading';
+
 import { getAppErrorTranslationKey, isAppError } from '@/shared/errors/appError';
-import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";

@@ -51,10 +51,10 @@ import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import type { ReportType } from "@/domain/report/models";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
-type NewReportType = 'standard' | 'trace';
 
 function isOverlayRoute(route: string): route is OverlayRoute {
   return overlayRoutes.includes(route as OverlayRoute);
@@ -154,7 +154,7 @@ export function HomePage() {
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
-  const [newReportType, setNewReportType] = useState<NewReportType>('standard');
+  const [newReportType, setReportType] = useState<ReportType>('standard');
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
   const {
@@ -236,7 +236,7 @@ export function HomePage() {
   };
 
   const handleNewReportStandard = () => {
-    setNewReportType('standard');
+    setReportType('standard');
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {
@@ -245,7 +245,7 @@ export function HomePage() {
   };
 
   const handleNewReportTrace = () => {
-    setNewReportType('trace');
+    setReportType('trace');
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {

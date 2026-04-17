@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - Support du more hors ligne (téléchargement de zones, couches, fonds de carte ; switch online/offline ; gestion du cache)
 - Pages 'À propos du guichet'
+- Pages 'À propos des signalements'
 
 ### Changed
 

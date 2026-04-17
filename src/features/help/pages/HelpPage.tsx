@@ -1,6 +1,7 @@
+import { useTranslation } from "react-i18next";
+
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SlideUpPage } from "@/shared/ui/SlideUpPage";
-import { useTranslation } from "react-i18next";
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';

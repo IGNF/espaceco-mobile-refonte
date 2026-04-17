@@ -1,12 +1,15 @@
 import { useTranslation } from 'react-i18next';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 
-import styles from './NewReportPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+
+import styles from './NewReportPage.module.css';
 
 export interface NewReportPageProps {
   isOpen: boolean;

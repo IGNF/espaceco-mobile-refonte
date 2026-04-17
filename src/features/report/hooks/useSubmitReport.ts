@@ -1,12 +1,18 @@
 import { useState, useCallback } from 'react';
+
+import { get as getProjection } from 'ol/proj';
+
 import type { Report } from '@ign/mobile-core';
 import { ReportManager } from '@ign/mobile-core';
-import { get as getProjection } from 'ol/proj';
+
 import { collabApiClient } from '@/infra/api';
-import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
+
+import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import type { AppReport } from '@/domain/report/models';
+
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
+
 import { ReportSubmitError, toReportSubmitError } from '@/features/report/errors/reportSubmitError';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
 import {

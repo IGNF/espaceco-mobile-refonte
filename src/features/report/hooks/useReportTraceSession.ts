@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import VectorLayer from 'ol/layer/Vector';
@@ -7,6 +8,9 @@ import { unByKey } from 'ol/Observable';
 import VectorSource from 'ol/source/Vector';
 import type { EventsKey } from 'ol/events';
 import GeolocationDraw, { type GeolocationDrawEvent } from 'ol-ext/interaction/GeolocationDraw';
+
+import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
+
 import {
   DEFAULT_TRACE_RECORDING_SETTINGS,
   DEFAULT_TRACE_TRANSPORT_MODE,
@@ -19,14 +23,15 @@ import {
   type TraceRecordingSettings,
   type TraceTransportMode,
 } from '@/features/report/constants/reportTrace.constants';
-import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
-import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
-import { createAudioPlayer, playAudioOnce, type AudioPlayer } from '@/shared/utils/audioPlayer';
 import {
   calculateTraceStats,
   findLineStringFeature,
   getLineStringGeometry,
 } from '@/features/report/utils/traceGeometry';
+
+import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
+
+import { createAudioPlayer, playAudioOnce, type AudioPlayer } from '@/shared/utils/audioPlayer';
 
 export interface UseReportTraceSessionOptions {
   /** OpenLayers map instance used to attach layer + interaction. */

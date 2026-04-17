@@ -1,17 +1,17 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReportStatus, type Report, type ReportPhoto } from '@ign/mobile-core';
+
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
+
+import type { Position } from '@/platform/device/geolocation';
+
+import { ReportStatus, type Report, type ReportPhoto } from '@ign/mobile-core';
+
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Capacitor } from '@capacitor/core';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { ReportStorageAdapter } from '@/infra/storage';
-import type { CommunityThemeConfig, CommunityThemeAttribute } from '@/domain/community/models';
-import type { AppReport } from '@/domain/report/models';
-import type { Position } from '@/platform/device/geolocation';
-import { MAX_REPORT_PHOTOS } from '@/shared/constants/report';
 import {
   buildReportObjectKey,
   getReportFeatureKind,
@@ -21,21 +21,29 @@ import {
 } from '@/features/report/utils/reportObjects';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
 import { extractThemeConfigs } from '@/features/report/utils/reportAttributes';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+
+import { ReportStorageAdapter } from '@/infra/storage';
+
+import type { CommunityThemeConfig, CommunityThemeAttribute } from '@/domain/community/models';
+import type { AppReport, ReportType } from '@/domain/report/models';
+
+import { MAX_REPORT_PHOTOS } from '@/shared/constants/report';
+
 import { useSubmitReport } from './useSubmitReport';
 
 export type ReportFormMode = 'create' | 'edit';
-export type ReportCreationType = 'standard' | 'trace';
 
 export interface UseReportFormOptions {
   mode: ReportFormMode;
   report?: AppReport | null;
   position: Position | null;
   isOpen?: boolean;
-  reportType?: ReportCreationType;
+  reportType?: ReportType;
 }
 
 export interface UseReportFormReturn {
-  reportType: ReportCreationType;
+  reportType: ReportType;
   themes: CommunityThemeConfig[];
   currentAttributes: CommunityThemeAttribute[];
   selectedTheme: string;
@@ -167,7 +175,7 @@ export function useReportForm({
     () => extractThemeConfigs(user?.communities_member, activeCommunity?.id),
     [user?.communities_member, activeCommunity?.id]
   );
-  const resolvedReportType: ReportCreationType = reportType ?? 'standard';
+  const resolvedReportType: ReportType = reportType ?? 'standard';
 
   const [selectedTheme, setSelectedThemeRaw] = useState<string>('');
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});

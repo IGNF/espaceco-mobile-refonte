@@ -1,13 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+
+import type { CommunityMember } from "@ign/mobile-core";
+
 import { useCommunitySelection } from "../../hooks/CommunityFirstSelection/useCommunitySelection";
+
 import { Button } from "@/shared/ui/Button";
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
 import inputs from "@/shared/styles/inputs.module.css";
 import styles from "./CommunityFirstSelectionPage.module.css";
-import type { CommunityMember } from "@ign/mobile-core";
 
 export function CommunityFirstSelectionPage() {
 	const { t } = useTranslation();

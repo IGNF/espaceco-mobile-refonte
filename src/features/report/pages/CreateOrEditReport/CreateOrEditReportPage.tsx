@@ -19,7 +19,7 @@ import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { useReportForm, type ReportCreationType } from '@/features/report/hooks/useReportForm';
+import { useReportForm } from '@/features/report/hooks/useReportForm';
 import { useReportSketchSession } from '@/features/report/hooks/useReportSketchSession';
 import { useReportTraceSession } from '@/features/report/hooks/useReportTraceSession';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
@@ -35,7 +35,7 @@ import {
   getSketchToolActionById,
   SKETCH_TOOL_DEFINITIONS,
 } from '@/features/report/constants/reportSketch.constants';
-import type { AppReport } from '@/domain/report/models';
+import type { AppReport, MapPickerMode, ReportType } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
 
 import IconSave from '@/shared/assets/icons/icon-save.svg?react';
@@ -47,6 +47,7 @@ import styles from './CreateOrEditReportPage.module.css';
 import buttonStyles from '@/shared/ui/Button/Button.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+import { NON_SELECTABLE_LAYER_NAMES } from '@/shared/constants/report';
 
 export type ReportPageMode = 'create' | 'edit';
 
@@ -54,7 +55,7 @@ export interface CreateOrEditReportPageProps {
   isOpen: boolean;
   onClose: () => void;
   mode: ReportPageMode;
-  reportType?: ReportCreationType;
+  reportType?: ReportType;
   report?: AppReport | null;
   onBack?: () => void;
   level?: number;
@@ -62,16 +63,12 @@ export interface CreateOrEditReportPageProps {
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
 }
 
-type MapPickerMode = 'none' | 'position' | 'object' | 'sketch' | 'trace';
-
 interface PickedMapObjectCandidate {
   key: string;
   label: string;
   layerTitle: string;
   feature: Feature<Geometry>;
 }
-
-const NON_SELECTABLE_LAYER_NAMES = new Set(['MesSignalements', 'Croquis', 'Signalements']);
 
 function getLayerName(layer: BaseLayer | null | undefined): string {
   if (!layer) return 'layer';
@@ -109,7 +106,7 @@ export function CreateOrEditReportPage({
   const { activeCommunity } = useCommunity();
   const isEditMode = mode === 'edit';
   const isDraftReport = report?.status === ReportStatus.Draft;
-  const resolvedReportType: ReportCreationType = reportType ?? 'standard';
+  const resolvedReportType: ReportType = reportType ?? 'standard';
   const isTraceReport = resolvedReportType === 'trace';
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [mapPickerMode, setMapPickerMode] = useState<MapPickerMode>('none');

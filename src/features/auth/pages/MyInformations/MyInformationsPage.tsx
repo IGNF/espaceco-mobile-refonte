@@ -1,14 +1,18 @@
 import { useTranslation } from 'react-i18next';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { ExternalLink } from '@/shared/ui/ExternalLink';
+
 import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
 import { joinTruthy } from '@/shared/utils/join';
-import typography from '@/shared/styles/typography.module.css';
-import styles from './MyInformationsPage.module.css';
 
-import { useCommunity } from '@/features/community/hooks/useCommunity';
+import typography from '@/shared/styles/typography.module.css';
+
+import styles from './MyInformationsPage.module.css';
 
 export interface MyInformationsPageProps {
 	isOpen: boolean;

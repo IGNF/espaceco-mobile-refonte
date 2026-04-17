@@ -1,11 +1,13 @@
+import { useTranslation } from "react-i18next";
+
 import { SlideUpPage } from "@/shared/ui/SlideUpPage";
 import { PageHeader } from "@/shared/ui/PageHeader";
+import { Button } from "@/shared/ui/Button";
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
+
 import styles from "./LogoutPage.module.css";
-import { useTranslation } from "react-i18next";
-import { Button } from "@/shared/ui/Button";
 
 export interface LogoutPageProps {
 	isOpen: boolean;

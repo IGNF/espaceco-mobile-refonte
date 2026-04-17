@@ -1,25 +1,35 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type OlMap from 'ol/Map';
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
-import { PageHeader } from '@/shared/ui/PageHeader';
-import { Alert } from '@/shared/ui/Alert';
+
+import { ReportStatus } from '@ign/mobile-core';
+
 import type { AppReport } from '@/domain/report/models';
-import { ReportStatus, ClosedReportStatus } from '@ign/mobile-core';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
 import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
-import { getAppErrorTranslationKey } from '@/shared/errors/appError';
+import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
+
+import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
+
+import { ALL_REPLY_STATUS_OPTIONS, CLOSED_STATUSES } from '@/shared/constants/report';
+import { showToastSafe } from '@/shared/utils/toast';
 import { getStatusColor } from '@/shared/utils/reportStatus';
 import { formatDateTime } from '@/shared/utils/date';
 import { parsePointGeometry } from '@/shared/utils/geometry';
-import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
-import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
+import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import { Button } from '@/shared/ui/Button';
+
+import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { Alert } from '@/shared/ui/Alert';
+
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
@@ -30,23 +40,8 @@ import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import buttonStyles from '@/shared/ui/Button/Button.module.css';
-import { showToastSafe } from '@/shared/utils/toast';
 
 const reportStorage = new ReportStorageAdapter();
-
-const CLOSED_STATUSES = Object.values(ClosedReportStatus) as string[];
-
-const ALL_REPLY_STATUS_OPTIONS: ReportStatus[] = [
-  ReportStatus.Submit,
-  ReportStatus.Pending,
-  ReportStatus.Pending_Qualification,
-  ReportStatus.Pending_Entry,
-  ReportStatus.Pending_Validation,
-  ReportStatus.Valid,
-  ReportStatus.Valid_Already_Treated,
-  ReportStatus.Reject,
-  ReportStatus.Reject_Irrelevant,
-];
 
 export interface ReportDetailsPageProps {
   isOpen: boolean;

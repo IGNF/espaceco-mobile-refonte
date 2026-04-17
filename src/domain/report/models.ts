@@ -1,5 +1,9 @@
 import type { Report, ReportStatus } from '@ign/mobile-core';
 
+export type ReportType = 'standard' | 'trace';
+
+export type MapPickerMode = 'none' | 'position' | 'object' | 'sketch' | 'trace';
+
 export interface ReportSyncMetadata {
   serverId?: number;
   photosToSend?: boolean;

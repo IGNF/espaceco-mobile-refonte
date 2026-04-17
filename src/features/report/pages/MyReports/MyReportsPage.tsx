@@ -1,18 +1,23 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import type OlMap from 'ol/Map';
-import { useMyReports } from '@/features/report/hooks/useMyReports';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
-import { PageHeader } from '@/shared/ui/PageHeader';
+import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
+
+import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { PageHeader } from '@/shared/ui/PageHeader';
+
 import type { AppReport } from '@/domain/report/models';
 
-import styles from '../reportsListPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from "@/shared/styles/typography.module.css";
+
+import styles from '../reportsListPage.module.css';
 
 export interface MyReportsPageProps {
   isOpen?: boolean;

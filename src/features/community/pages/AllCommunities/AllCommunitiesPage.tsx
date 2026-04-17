@@ -1,20 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import { useAllCommunities } from "@/features/community/hooks/AllCommunities/useAllCommunities";
 import { useCommunityMembership } from "@/features/community/hooks/useCommunityMembership";
 import { useJoinCommunity } from "@/features/community/hooks/JoinCommunity/useJoinCommunity";
+
+import listStyles from "@/features/report/pages/reportsListPage.module.css";
+import membershipStyles from "@/features/community/styles/communityMembership.module.css";
+
 import { Alert } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
 import { Loading } from "@/shared/ui/Loading";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SlideUpPage } from "@/shared/ui/SlideUpPage";
+
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
+
 import { showToastSafe } from "@/shared/utils/toast";
 
-import listStyles from "@/features/report/pages/reportsListPage.module.css";
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
-import membershipStyles from "@/features/community/styles/communityMembership.module.css";
 import styles from "./AllCommunitiesPage.module.css";
 
 export interface AllCommunitiesPageProps {

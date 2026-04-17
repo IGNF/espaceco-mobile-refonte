@@ -1,8 +1,12 @@
 import { useState, useCallback } from 'react';
+
+import type { ReportStatus } from '@ign/mobile-core';
+
 import { collabApiClient } from '@/infra/api';
+
 import { mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import type { AppReport } from '@/domain/report/models';
-import type { ReportStatus } from '@ign/mobile-core';
+
 import type { AppError } from '@/shared/errors/appError';
 import { toAppError } from '@/shared/errors/appError';
 

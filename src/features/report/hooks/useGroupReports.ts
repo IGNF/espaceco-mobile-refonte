@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+
 import { collabApiClient } from '@/infra/api';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import { mapApiReportsToAppReports, type ApiReportResponse } from '@/domain/report/mappers';
 

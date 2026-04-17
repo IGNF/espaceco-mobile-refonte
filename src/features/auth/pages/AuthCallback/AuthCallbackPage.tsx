@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
+
 import { useAuth } from "../../hooks/useAuth";
+
 import { handleOAuthCallback } from "@/infra/auth/authService";
+
 import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";

@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+
 import { EXTERNAL_LINKS } from "@/shared/constants/externalLinks";
+
 import { useMyCommunities } from "@/features/community/hooks/MyCommunities/useMyCommunities";
 import { AllCommunitiesPage } from "@/features/community/pages/AllCommunities/AllCommunitiesPage";
 import { CommunityRow } from "@/features/community/components/MyCommunitiesSelection/CommunityRow";
+
 import { Alert } from "@/shared/ui/Alert";
 import { Button } from "@/shared/ui/Button";
 import { ExternalLink } from "@/shared/ui/ExternalLink";
 import { PageHeader } from "@/shared/ui/PageHeader";
 import { SlideUpPage } from "@/shared/ui/SlideUpPage";
 import { joinCSSClassNames } from "@/shared/utils/join";
-
 import screen from "@/shared/styles/screen.module.css";
 import stickyActions from "@/shared/styles/stickyActions.module.css";
 import typography from "@/shared/styles/typography.module.css";
+
 import styles from "./MyCommunitiesSelectionPage.module.css";
 
 export interface MyCommunitiesSelectionPageProps {
