@@ -1,17 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { RefObject } from 'react';
-import type Map from 'ol/Map';
-import type { CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
+
+import type Map from 'ol/Map';
+
+import type { CommunityLayer } from '@ign/mobile-core';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 import {
   parseDirectContributionConflict,
   type DirectContributionConflict,
   type DirectContributionConflictResolutionSelection,
 } from '@/domain/community/directContributionConflicts';
-import {
-  DirectContributionLayerService,
-} from '@/infra/map/directContribution/DirectContributionLayerService';
+
+import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
+
 import { getUserFacingErrorMessage, toAppError } from '@/shared/errors/appError';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { showToastSafe } from '@/shared/utils/toast';
@@ -155,7 +159,7 @@ export function useDirectContributionLayers({
       );
       const table = layer?.table;
       const title = layer ? getCommunityLayerTitle(layer) : '';
-      
+
       const conflictContext =
         layer && table && typeof table === 'object'
           ? {

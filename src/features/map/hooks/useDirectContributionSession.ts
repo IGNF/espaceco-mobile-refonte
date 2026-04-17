@@ -1,27 +1,32 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  SketchManager,
-  type CommunityLayer,
-  type InteractionMode,
-  type Table,
-} from '@ign/mobile-core';
+import { useTranslation } from 'react-i18next';
+
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type Draw from 'ol/interaction/Draw';
 import type Select from 'ol/interaction/Select';
 import type OlMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
-import { useTranslation } from 'react-i18next';
+
+import {
+  SketchManager,
+  type CommunityLayer,
+  type InteractionMode,
+  type Table,
+} from '@ign/mobile-core';
+
 import type { MapToolbarItem } from '@/features/map/components/MapToolbar';
 import {
   DEFAULT_DIRECT_CONTRIBUTION_MODE,
   DIRECT_CONTRIBUTION_TOOL_DEFINITIONS,
   getDirectContributionToolActionById,
 } from '@/features/map/constants/directContributionSession.constants';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
+import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
+
 import { serializeDirectContributionDocumentAttributes } from '@/infra/map/directContribution/directContributionDocuments';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
-import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
+
 import { getCommunityLayerGeometryType } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 

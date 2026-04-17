@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { CommunityLayer } from '@ign/mobile-core';
-import type OlMap from 'ol/Map';
 import { useTranslation } from 'react-i18next';
-import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
-import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
-import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
-const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
+import type OlMap from 'ol/Map';
+
+import type { CommunityLayer } from '@ign/mobile-core';
+
+import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
+
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
+import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
+
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE } from '@/shared/constants/map';
 
 export interface UseCommunityFeatureConsultationOptions {
   map: OlMap | null;
   vectorLayers: CommunityLayer[];
   disabled?: boolean;
 }
-
 export interface UseCommunityFeatureConsultationReturn {
   featureCandidates: DirectContributionFeatureCandidate[];
   selectedFeatureCandidate: DirectContributionFeatureCandidate | null;

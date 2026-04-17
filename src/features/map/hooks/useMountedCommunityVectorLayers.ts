@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
+
 import type { CommunityLayer } from '@ign/mobile-core';
+
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 interface UseMountedCommunityVectorLayersParams {

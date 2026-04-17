@@ -13,7 +13,7 @@ import type Geometry from 'ol/geom/Geometry';
 import type Map from 'ol/Map';
 import type { Extent } from 'ol/extent';
 
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';

@@ -1,21 +1,25 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DragDropProvider } from '@dnd-kit/react';
 import { useTranslation } from 'react-i18next';
+
+import { DragDropProvider } from '@dnd-kit/react';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
+
 import type {
   LayerGroupDetails,
   LayerGroupId,
   LayerGroupItem,
 } from '@/features/map/types/layerGroups';
-import { Alert } from '@/shared/ui/Alert/Alert';
-import { clampNumber } from '@/shared/utils/number';
 import {
   areOrdersEqual,
   moveStringKey,
   orderItemsByStringKey,
 } from '@/features/map/utils/order';
 import { LayerGroupDetailsSortableItem } from '@/features/map/components/LayerGroupDetailsSortableItem';
+
+import { Alert } from '@/shared/ui/Alert/Alert';
+import { clampNumber } from '@/shared/utils/number';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';

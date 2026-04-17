@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { RefObject } from 'react';
+
 import type OlMap from 'ol/Map';
 import LayerGroup from 'ol/layer/Group';
 import type BaseLayer from 'ol/layer/Base';
@@ -12,35 +13,28 @@ import { bbox as bboxStrategy } from 'ol/loadingstrategy';
 import type Projection from 'ol/proj/Projection';
 import { fromLonLat, transformExtent } from 'ol/proj';
 import { Style, Stroke } from 'ol/style';
+
 import { ReportSource, type Report } from '@ign/mobile-core';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import type { OfflineMode } from '@/domain/offline/models';
 import type {
   SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility
-} from '@/features/map/types/signalementLayers';
-import {
-  SIGNAL_LAYER_KEYS,
-  normalizeSignalementLayerOrder,
-} from '@/features/map/types/signalementLayers';
+} from '@/features/map/constants/signalementLayers.constants';
+import { SIGNAL_LAYER_KEYS, normalizeSignalementLayerOrder } from '@/features/map/constants/signalementLayers.constants';
+
+import type { OfflineMode } from '@/domain/offline/models';
+
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
+
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { clampNumber } from '@/shared/utils/number';
 import { WGS84_PROJECTION } from '@/shared/constants/projections';
-
-const SIGNAL_GROUP_NAME = 'signalementGroup';
-const LAYER_NAME_MES_SIGNALEMENTS = 'MesSignalements';
-const LAYER_NAME_CROQUIS = 'Croquis';
-const LAYER_NAME_SIGNALEMENTS = 'Signalements';
-const LAYER_NAME_BY_SIGNALEMENT_KEY: Record<SignalementLayerKey, string> = {
-  [SIGNAL_LAYER_KEYS.mesSignalements]: LAYER_NAME_MES_SIGNALEMENTS,
-  [SIGNAL_LAYER_KEYS.croquis]: LAYER_NAME_CROQUIS,
-  [SIGNAL_LAYER_KEYS.signalements]: LAYER_NAME_SIGNALEMENTS,
-};
+import { SIGNAL_GROUP_NAME, LAYER_NAME_MES_SIGNALEMENTS, LAYER_NAME_CROQUIS, LAYER_NAME_SIGNALEMENTS, LAYER_NAME_BY_SIGNALEMENT_KEY } from '@/features/map/constants/signalementLayers.constants';
 
 const CROQUIS_STYLE = new Style({
   stroke: new Stroke({
@@ -181,61 +175,61 @@ export function useSignalementMapLayers(
     const remoteReportsSource = isOfflineMode
       ? new VectorSource()
       : new VectorSource({
-          strategy: bboxStrategy,
-          loader: async (extent, _resolution, projection, success, failure) => {
-            try {
-              const mapProjectionCode = (projection as Projection).getCode();
-              const extent4326 = transformExtent(
-                extent,
-                mapProjectionCode,
-                WGS84_PROJECTION
-              );
-              const reports = await reportSource.loadReports(extent4326);
-              const loadedFeatures = await reportSource.loadFeatures(
-                reports,
-                projection as Projection
-              );
-              const normalizedFeatures = deduplicateFeatures(
-                loadedFeatures.map(copyReportProperties)
-              );
-              const knownFeatureIds = new Set(
-                remoteReportsSource
-                  .getFeatures()
-                  .map((feature) => feature.getId())
-                  .filter((featureId): featureId is string | number => featureId !== undefined)
-                  .map((featureId) => String(featureId))
-              );
+        strategy: bboxStrategy,
+        loader: async (extent, _resolution, projection, success, failure) => {
+          try {
+            const mapProjectionCode = (projection as Projection).getCode();
+            const extent4326 = transformExtent(
+              extent,
+              mapProjectionCode,
+              WGS84_PROJECTION
+            );
+            const reports = await reportSource.loadReports(extent4326);
+            const loadedFeatures = await reportSource.loadFeatures(
+              reports,
+              projection as Projection
+            );
+            const normalizedFeatures = deduplicateFeatures(
+              loadedFeatures.map(copyReportProperties)
+            );
+            const knownFeatureIds = new Set(
+              remoteReportsSource
+                .getFeatures()
+                .map((feature) => feature.getId())
+                .filter((featureId): featureId is string | number => featureId !== undefined)
+                .map((featureId) => String(featureId))
+            );
 
-              const featuresToAdd = normalizedFeatures.filter((feature) => {
-                const featureId = feature.getId();
-                if (featureId === undefined) {
-                  return true;
-                }
-
-                const key = String(featureId);
-                if (knownFeatureIds.has(key)) {
-                  return false;
-                }
-
-                knownFeatureIds.add(key);
+            const featuresToAdd = normalizedFeatures.filter((feature) => {
+              const featureId = feature.getId();
+              if (featureId === undefined) {
                 return true;
-              });
-
-              if (featuresToAdd.length > 0) {
-                remoteReportsSource.addFeatures(featuresToAdd);
               }
 
-              if (success) {
-                success(featuresToAdd);
+              const key = String(featureId);
+              if (knownFeatureIds.has(key)) {
+                return false;
               }
-            } catch (error) {
-              console.error('[Signalements] Failed to load reports layer', error);
-              if (failure) {
-                failure();
-              }
+
+              knownFeatureIds.add(key);
+              return true;
+            });
+
+            if (featuresToAdd.length > 0) {
+              remoteReportsSource.addFeatures(featuresToAdd);
             }
-          },
-        });
+
+            if (success) {
+              success(featuresToAdd);
+            }
+          } catch (error) {
+            console.error('[Signalements] Failed to load reports layer', error);
+            if (failure) {
+              failure();
+            }
+          }
+        },
+      });
 
     const clusteredReportsSource = new Cluster({
       source: remoteReportsSource,

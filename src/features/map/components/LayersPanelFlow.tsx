@@ -8,7 +8,7 @@ import type {
   SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility
-} from '@/features/map/types/signalementLayers';
+} from '@/features/map/constants/signalementLayers.constants';
 
 export interface LayersPanelFlowProps {
   isOpen: boolean;

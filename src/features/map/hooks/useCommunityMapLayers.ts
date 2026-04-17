@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import type { RefObject } from 'react';
-import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
-import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
+
 import type Map from 'ol/Map';
 import type BaseLayer from 'ol/layer/Base';
 import type LayerGroup from 'ol/layer/Group';
+
+import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
+
+import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
+
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { getCommunityLayerKeyFromOlLayer } from '@/infra/map/openlayers/layerMetadata';
-import {
-  createCommunityVectorLayer,
-} from '@/infra/map/openlayers/vectorLayers';
+import { createCommunityVectorLayer } from '@/infra/map/openlayers/vectorLayers';
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
+
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 

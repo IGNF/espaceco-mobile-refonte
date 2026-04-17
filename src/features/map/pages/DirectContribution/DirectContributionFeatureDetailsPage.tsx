@@ -1,11 +1,15 @@
-import type { Table, TableColumn } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
+
+import type { Table, TableColumn } from '@ign/mobile-core';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
+
 import {
   toDirectContributionDocumentValue,
   toDirectContributionLikeValue,
 } from '@/domain/community/directContributionForm';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
@@ -13,6 +17,7 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import screen from '@/shared/styles/screen.module.css';
 import stickyActions from '@/shared/styles/stickyActions.module.css';
 import typography from '@/shared/styles/typography.module.css';
+
 import styles from './DirectContributionFeatureDetailsPage.module.css';
 
 type DetailSelectValues = string[] | Record<string, string | number | boolean | null>;

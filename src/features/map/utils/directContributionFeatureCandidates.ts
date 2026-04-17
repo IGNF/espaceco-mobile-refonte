@@ -5,7 +5,7 @@ import type BaseLayer from 'ol/layer/Base';
 import type OlMap from 'ol/Map';
 import type VectorSource from 'ol/source/Vector';
 import { getUid } from 'ol/util';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 const PRIMARY_LABEL_PROPERTY_NAME_REGEX = /(nom|name|label|titre|title)/i;

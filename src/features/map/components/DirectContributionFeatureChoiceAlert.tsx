@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Alert } from '@/shared/ui/Alert';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContribution';
+import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
 
 import styles from './DirectContributionFeatureChoiceAlert.module.css';
 

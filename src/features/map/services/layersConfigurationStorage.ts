@@ -1,14 +1,16 @@
 import { Storage } from '@ign/mobile-device';
 import type { CommunityLayer } from '@ign/mobile-core';
+
 import { storageKey } from '@/shared/constants/storage';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
+
 import type {
   SignalementLayerKey,
   SignalementLayerOpacity,
   SignalementLayerVisibility,
-} from '@/features/map/types/signalementLayers';
-import { normalizeSignalementLayerOrder } from '@/features/map/types/signalementLayers';
+} from '@/features/map/constants/signalementLayers.constants';
+import { normalizeSignalementLayerOrder } from '@/features/map/constants/signalementLayers.constants';
 
 const LAYERS_CONFIGURATION_STORAGE_KEY = 'LAYERS_CONFIGURATION';
 

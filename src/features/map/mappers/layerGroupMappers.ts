@@ -1,10 +1,12 @@
 import type { CommunityLayer } from '@ign/mobile-core';
+
 import type {
   LayerGroupDetails,
   LayerGroupDirectContributionState,
   LayerGroupItem,
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
+
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
 

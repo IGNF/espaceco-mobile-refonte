@@ -46,6 +46,22 @@ export function isSignalementLayerKey(value: unknown): value is SignalementLayer
   return typeof value === 'string' && SIGNAL_LAYER_KEY_SET.has(value as SignalementLayerKey);
 }
 
+export const DEFAULT_SIGNALEMENT_LAYER_OPACITY: SignalementLayerOpacity = {
+  [SIGNAL_LAYER_KEYS.mesSignalements]: 1,
+  [SIGNAL_LAYER_KEYS.croquis]: 1,
+  [SIGNAL_LAYER_KEYS.signalements]: 1,
+};
+
+export const SIGNAL_GROUP_NAME = 'signalementGroup';
+export const LAYER_NAME_MES_SIGNALEMENTS = 'MesSignalements';
+export const LAYER_NAME_CROQUIS = 'Croquis';
+export const LAYER_NAME_SIGNALEMENTS = 'Signalements';
+export const LAYER_NAME_BY_SIGNALEMENT_KEY: Record<SignalementLayerKey, string> = {
+  [SIGNAL_LAYER_KEYS.mesSignalements]: LAYER_NAME_MES_SIGNALEMENTS,
+  [SIGNAL_LAYER_KEYS.croquis]: LAYER_NAME_CROQUIS,
+  [SIGNAL_LAYER_KEYS.signalements]: LAYER_NAME_SIGNALEMENTS,
+};
+
 export function normalizeSignalementLayerOrder(
   value: unknown
 ): SignalementLayerKey[] {

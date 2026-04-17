@@ -1,29 +1,26 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+
 import type { CommunityLayer } from '@ign/mobile-core';
-import type {
-  OfflineCommunityCache,
-  OfflineMode,
-} from '@/domain/offline/models';
+
+import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
 import {
   fetchCommunityLayers,
   filterGeoportailLayers,
   filterVectorLayers,
 } from '@/infra/api/layerService';
-import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+
+import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   type SignalementLayerKey,
   type SignalementLayerOpacity,
   type SignalementLayerVisibility,
-  SIGNAL_LAYER_KEYS,
   DEFAULT_SIGNALEMENT_LAYER_ORDER,
   DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
   isSignalementLayerKey,
   normalizeSignalementLayerOrder,
-} from '@/features/map/types/signalementLayers';
+} from '@/features/map/constants/signalementLayers.constants';
 import type { LayerGroupId } from '@/features/map/types/layerGroups';
-import { clampNumber } from '@/shared/utils/number';
 import {
   loadLayersConfiguration,
   saveLayersConfiguration,
@@ -33,13 +30,11 @@ import {
   orderItemsByStringKey,
   uniqueOrderedStrings,
 } from '@/features/map/utils/order';
-import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 
-const DEFAULT_SIGNALEMENT_LAYER_OPACITY: SignalementLayerOpacity = {
-  [SIGNAL_LAYER_KEYS.mesSignalements]: 1,
-  [SIGNAL_LAYER_KEYS.croquis]: 1,
-  [SIGNAL_LAYER_KEYS.signalements]: 1,
-};
+import { clampNumber } from '@/shared/utils/number';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
+import { DEFAULT_SIGNALEMENT_LAYER_OPACITY } from '@/features/map/constants/signalementLayers.constants';
 
 function getDefaultSignalementLayerOpacity(): SignalementLayerOpacity {
   return { ...DEFAULT_SIGNALEMENT_LAYER_OPACITY };

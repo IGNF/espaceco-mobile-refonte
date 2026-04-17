@@ -4,6 +4,8 @@ export const DEFAULT_MAP_FOCUS_ZOOM = 13;
 export const DEFAULT_MAP_SEARCH_ZOOM = 16;
 export const DEFAULT_MAP_SHOW_SCALELINE = true;
 
+export const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
+
 /**
  * Geoportail API key for public services
  * @see https://geoservices.ign.fr/services-web-experts

@@ -1,11 +1,15 @@
 import { useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { getUid } from 'ol/util';
-import type { Table } from '@ign/mobile-core';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import { useTranslation } from 'react-i18next';
+
+import type { Table } from '@ign/mobile-core';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 import {
   applyDirectContributionAsyncFieldEffects,
   applyDirectContributionFieldEffects,
@@ -22,6 +26,7 @@ import {
   toDirectContributionLikeValue,
   validateAndNormalizeDirectContributionFieldValue,
 } from '@/domain/community/directContributionForm';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { Button } from '@/shared/ui/Button';
 import { toStringArrayFieldValue, toStringFieldValue } from '@/shared/utils/coercion';
@@ -33,6 +38,7 @@ import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import stickyActions from '@/shared/styles/stickyActions.module.css';
+
 import styles from './DirectContributionFeatureFormPage.module.css';
 
 interface DirectContributionFeatureFormContentProps {

@@ -1,7 +1,10 @@
 import { useMemo } from 'react';
-import type { CommunityLayer } from '@ign/mobile-core';
 import { useTranslation } from 'react-i18next';
+
+import type { CommunityLayer } from '@ign/mobile-core';
+
 import { getCommunityLayerDirectContributionState } from '@/domain/community/directContribution';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type {
   LayerGroupDetails,
@@ -18,7 +21,7 @@ import {
   type SignalementLayerOpacity,
   type SignalementLayerVisibility,
   normalizeSignalementLayerOrder,
-} from '@/features/map/types/signalementLayers';
+} from '@/features/map/constants/signalementLayers.constants';
 
 interface UseLayerGroupsParams {
   layers: CommunityLayer[];

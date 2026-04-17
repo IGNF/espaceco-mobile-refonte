@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import type { RefObject } from 'react';
+
 import type Map from 'ol/Map';
+
 import type { OfflineMode, OfflineRasterMap } from '@/domain/offline/models';
+
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { createOfflineRasterLayer } from '@/infra/map/openlayers/offlineRasterLayers';
 
