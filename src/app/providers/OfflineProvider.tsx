@@ -8,7 +8,6 @@ import {
   type OfflineCommunityCache,
   type OfflineDownloadProgress,
   type OfflineMode,
-  type OfflineNetworkStatus,
   type OfflineCacheDraftInput,
   type OfflineCacheDownloadInput,
   type OfflineCacheLayer,
@@ -16,6 +15,7 @@ import {
   type OfflineRasterMapDraftInput,
   type OfflineZone,
 } from '@/domain/offline/models';
+import type { OfflineNetworkStatus } from '@/app/providers/OfflineContext';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { OfflineCacheRepository } from '@/infra/offline/OfflineCacheRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';

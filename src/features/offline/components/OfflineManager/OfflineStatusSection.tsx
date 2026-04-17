@@ -4,10 +4,13 @@ import type {
   OfflineDownloadProgress,
   OfflineMode,
 } from '@/domain/offline/models';
+
 import { Button } from '@/shared/ui/Button';
+import { Toggle } from '@/shared/ui/Toggle';
+
 import typography from '@/shared/styles/typography.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
-import { Toggle } from '@/shared/ui/Toggle';
+
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
 interface OfflineStatusSectionProps {

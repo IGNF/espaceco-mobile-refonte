@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import type { ConnectionType } from '@capacitor/network';
 import type { Extent } from 'ol/extent';
 import type {
   OfflineCommunityCache,
@@ -7,11 +8,28 @@ import type {
   OfflineCacheDraftInput,
   OfflineRasterMap,
   OfflineRasterMapDraftInput,
-  OfflineModeState,
   OfflineCacheDownloadInput,
   OfflineZone,
 } from '@/domain/offline/models';
 import type { AppError } from '@/shared/errors/appError';
+
+export interface OfflineNetworkStatus {
+  connected: boolean;
+  connectionType: ConnectionType;
+}
+
+export interface OfflineModeState {
+  mode: OfflineMode;
+  requestedMode: OfflineMode;
+  network: OfflineNetworkStatus;
+  activeCommunityId: number | null;
+  isOfflineAllowed: boolean;
+  hasOfflineData: boolean;
+  canEnableOffline: boolean;
+  activeCommunityCache: OfflineCommunityCache | null;
+  rasterMaps: OfflineRasterMap[];
+  zones: OfflineZone[];
+}
 
 export interface OfflineContextType extends OfflineModeState {
   isLoading: boolean;

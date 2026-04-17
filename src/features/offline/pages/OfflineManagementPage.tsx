@@ -1,39 +1,44 @@
 import { useEffect, useState } from 'react';
-import type { CommunityLayer } from '@ign/mobile-core';
+import { useTranslation } from 'react-i18next';
+
 import type Map from 'ol/Map';
 import type { Extent } from 'ol/extent';
-import { useTranslation } from 'react-i18next';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+
+import type { CommunityLayer } from '@ign/mobile-core';
+
 import { useOffline } from '@/features/offline/hooks/useOffline';
-import {
-  getOfflineGeoportailLayerOptions,
-} from '@/infra/map/openlayers/geoportailLayers';
-import { getTableWfsUrl } from '@/infra/map/openlayers/vectorLayers';
-import { PageHeader } from '@/shared/ui/PageHeader';
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
-import { getUserFacingErrorMessage } from '@/shared/errors/appError';
-import {
-  getCommunityLayerGeometryType,
-  getCommunityLayerTitle,
-} from '@/shared/utils/communityLayer';
-import { formatDateTime } from '@/shared/utils/date';
-import { scrollToTop } from '@/shared/utils/scroll';
-import { showToastSafe } from '@/shared/utils/toast';
-import { getCommunityLayerKey } from '@/shared/utils/layerKey';
-import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
-import screen from '@/shared/styles/screen.module.css';
-import {
-  OfflineZoneEditorOverlay,
-  type OfflineZoneEditorMode,
-} from './OfflineZoneEditorOverlay';
-import styles from './OfflineManagementPage.module.css';
-import { EXPERT_MODE } from '@/shared/constants/global';
 import { OfflineStatusSection } from '@/features/offline/components/OfflineManager/OfflineStatusSection';
 import { OfflineZonesSection } from '@/features/offline/components/OfflineManager/OfflineZonesSection';
 import { OfflineLayersSection } from '@/features/offline/components/OfflineManager/OfflineLayersSection';
 import { OfflineCacheSection } from '@/features/offline/components/OfflineManager/OfflineCacheSection';
 import { OfflineRasterSection } from '@/features/offline/components/OfflineManager/OfflineRasterSection';
 import { OfflineDialogs } from '@/features/offline/components/OfflineManager/OfflineDialogs';
+
+import { getOfflineGeoportailLayerOptions } from '@/infra/map/openlayers/geoportailLayers';
+import { getTableWfsUrl } from '@/infra/map/openlayers/vectorLayers';
+
+import { PageHeader } from '@/shared/ui/PageHeader';
+import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+
+import { getUserFacingErrorMessage } from '@/shared/errors/appError';
+
+import { getCommunityLayerGeometryType, getCommunityLayerTitle } from '@/shared/utils/communityLayer';
+import { formatDateTime } from '@/shared/utils/date';
+import { scrollToTop } from '@/shared/utils/scroll';
+import { showToastSafe } from '@/shared/utils/toast';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+
+import { EXPERT_MODE } from '@/shared/constants/global';
+
+import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
+
+import screen from '@/shared/styles/screen.module.css';
+
+import type { OfflineZoneEditorMode } from '@/domain/offline/models';
+import { OfflineZoneEditorOverlay } from './OfflineZoneEditorOverlay';
+
+import styles from './OfflineManagementPage.module.css';
 
 type LayerPickerMode = 'draft-cache' | 'loaded-cache';
 type DeleteAlertState =

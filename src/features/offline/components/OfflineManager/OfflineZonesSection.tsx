@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import type {
-  OfflineCommunityCache,
-  OfflineZone,
-} from '@/domain/offline/models';
+
+import type { OfflineCommunityCache, OfflineZone } from '@/domain/offline/models';
+
 import { Button } from '@/shared/ui/Button';
+
 import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
+
 import typography from '@/shared/styles/typography.module.css';
+
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
 interface OfflineZonesSectionProps {

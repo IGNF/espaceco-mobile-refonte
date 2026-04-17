@@ -1,8 +1,9 @@
-import type { ConnectionType } from '@capacitor/network';
 import type { CommunityLayer } from '@ign/mobile-core';
 import type { Extent } from 'ol/extent';
 
 export type OfflineMode = 'online' | 'offline';
+
+export type OfflineZoneEditorMode = 'custom' | 'select-obj';
 
 export interface OfflineZone {
   name: string;
@@ -24,6 +25,11 @@ export interface OfflineCacheDownloadInput {
 export interface OfflineCacheDraftInput {
   communityId: number;
   layers: CommunityLayer[];
+}
+
+export interface RasterScaleOption {
+  value: number;
+  label: string;
 }
 
 export interface OfflineRasterMapDraftInput {
@@ -69,20 +75,3 @@ export interface OfflineRasterMap {
   lastRefreshAt?: string;
 }
 
-export interface OfflineNetworkStatus {
-  connected: boolean;
-  connectionType: ConnectionType;
-}
-
-export interface OfflineModeState {
-  mode: OfflineMode;
-  requestedMode: OfflineMode;
-  network: OfflineNetworkStatus;
-  activeCommunityId: number | null;
-  isOfflineAllowed: boolean;
-  hasOfflineData: boolean;
-  canEnableOffline: boolean;
-  activeCommunityCache: OfflineCommunityCache | null;
-  rasterMaps: OfflineRasterMap[];
-  zones: OfflineZone[];
-}

@@ -1,21 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import type {
-  OfflineRasterMap,
-  OfflineZone,
-} from '@/domain/offline/models';
+
+import type { OfflineRasterMap, OfflineZone, RasterScaleOption } from '@/domain/offline/models';
+
 import { Button } from '@/shared/ui/Button';
+
 import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import typography from '@/shared/styles/typography.module.css';
-import { formatDateTime } from '@/shared/utils/date';
-import { getGeoportailLayerTitle } from '@/infra/map/openlayers/geoportailLayers';
-import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
-interface RasterScaleOption {
-  value: number;
-  label: string;
-}
+import { formatDateTime } from '@/shared/utils/date';
+
+import { getGeoportailLayerTitle } from '@/infra/map/openlayers/geoportailLayers';
+
+import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
 
 interface OfflineRasterSectionProps {
   rasterMaps: OfflineRasterMap[];

@@ -30,7 +30,7 @@ import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './OfflineZoneEditorOverlay.module.css';
 
-export type OfflineZoneEditorMode = 'custom' | 'select-obj';
+import type { OfflineZoneEditorMode } from '@/domain/offline/models';
 
 interface OfflineZoneEditorOverlayProps {
   isOpen: boolean;
