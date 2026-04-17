@@ -58,13 +58,13 @@ export const overlayRoutes = [
   '/my-communities',
   '/about-community',
   /* Report routes */
+  '/about-reports',
   '/group-reports',
   '/my-reports',
   '/report-details',
   '/new-report-choice',
   '/create-or-edit-report',
   '/offline',
-  '/about-reports',
   '/about',
   '/help'
 ] as const;
