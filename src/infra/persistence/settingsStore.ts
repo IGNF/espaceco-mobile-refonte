@@ -1,8 +1,7 @@
 import { Storage } from '@ign/mobile-device';
-import {
-  DEFAULT_TRACE_RECORDING_SETTINGS,
-  type TraceRecordingSettings,
-} from '@/features/report/constants/reportTrace.constants';
+
+import { DEFAULT_TRACE_RECORDING_SETTINGS, type TraceRecordingSettings } from '@/features/report/constants/reportTrace.constants';
+
 import { storageKey } from '@/shared/constants/storage';
 import { toRawObject } from '@/shared/utils/coercion';
 import { readNonNegativeNumber } from '@/shared/utils/number';

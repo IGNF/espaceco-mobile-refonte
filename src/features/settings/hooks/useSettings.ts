@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
+
 import {
   EspaceCo_GpsSource,
   type GpsSourceErrorCode,
   type GpsSourceInfo,
   type GpsSourceType,
 } from '@/platform/device/gpsSource';
+
 import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
+
 import {
   DEFAULT_TRACE_RECORDING_SETTINGS,
   type TraceRecordingSettings,
 } from '@/features/report/constants/reportTrace.constants';
+
 import { isNonNegativeFinite, parseDecimalInput } from '@/shared/utils/number';
 
 export interface UseSettingsReturn {

@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
+
 import { showToastSafe } from '@/shared/utils/toast';
+
 import { useSettings } from '@/features/settings/hooks/useSettings';
+
 import IconAngleDown from '@/shared/assets/icons/icon-angle-down.svg?react';
 import screen from '@/shared/styles/screen.module.css';
 import inputs from '@/shared/styles/inputs.module.css';

@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFirstRun } from '../hooks/useFirstRun';
 import { useTranslation } from 'react-i18next';
 import { Trans } from 'react-i18next';
+
+import { useFirstRun } from '../hooks/useFirstRun';
+
 import { Button } from '@/shared/ui/Button';
+
+import welcomeIllustration from '../assets/welcome-illustration.svg';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+
 import styles from './WelcomePage.module.css';
-import welcomeIllustration from '../assets/welcome-illustration.svg';
 
 export function WelcomePage() {
   const { t } = useTranslation();

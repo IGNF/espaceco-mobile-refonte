@@ -3,30 +3,29 @@ import {
   CollabVectorSource,
   ReportStatus,
 } from '@ign/mobile-core';
-import type { AppReport } from '@/domain/report/models';
+
 import type Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import { getCenter } from 'ol/extent';
 import { transform } from 'ol/proj';
+
+import type { AppReport } from '@/domain/report/models';
 import type {
   DirectContributionConflict,
   DirectContributionConflictObject,
   DirectContributionConflictResolutionSelection,
 } from '@/domain/community/directContributionConflicts';
+
 import { AppError } from '@/shared/errors/appError';
+
+import { WEB_MERCATOR_PROJECTION, WGS84_PROJECTION } from '@/shared/constants/projections';
+
 import { ReportStorageAdapter } from '@/infra/storage';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
-import {
-  getCommunityLayerKeyFromOlLayer,
-} from '@/infra/map/openlayers/layerMetadata';
-import {
-  applyReportObjectMetadata,
-} from '@/features/report/utils/reportObjects';
-import {
-  WEB_MERCATOR_PROJECTION,
-  WGS84_PROJECTION,
-} from '@/shared/constants/projections';
+import { getCommunityLayerKeyFromOlLayer } from '@/infra/map/openlayers/layerMetadata';
+
+import { applyReportObjectMetadata } from '@/features/report/utils/reportObjects';
 
 const GUICHET_LAYER_GROUP_NAME = 'guichet';
 const DIRECT_CONTRIBUTION_SOURCE_EVENT_TYPES = ['editchange', 'saveend'] as const;

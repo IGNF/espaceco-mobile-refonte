@@ -1,12 +1,7 @@
-/**
- * Community API
- *
- * Handles fetching communities from the backend
- */
+import { config } from '@/shared/config/env';
 import type { Community } from '@ign/mobile-core';
 
-// TODO: Replace with actual API base URL from environment
-const API_BASE_URL = import.meta.env.VITE_BASE_API_URL || 'https://espacecollaboratif.ign.fr/api';
+const API_BASE_URL = config.api.baseUrl;
 
 export interface FetchCommunitiesParams {
   userId?: number;

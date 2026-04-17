@@ -1,21 +1,14 @@
-import {
-  CollabVectorSource,
-  type CommunityLayer,
-  type Table,
-} from '@ign/mobile-core';
+import { CollabVectorSource, type CommunityLayer, type Table } from '@ign/mobile-core';
+
 import type { Extent } from 'ol/extent';
 import type TileGrid from 'ol/tilegrid/TileGrid';
-import type {
-  OfflineDownloadProgress,
-  OfflineCacheLayer,
-} from '@/domain/offline/models';
+
+import type { OfflineDownloadProgress, OfflineCacheLayer } from '@/domain/offline/models';
+
 import { collabApiClient } from '@/infra/api/collabApiClient';
-import {
-  getLayerMaxFeatures,
-  getLayerOutputFormat,
-  getTableTileZoom,
-} from '@/infra/map/openlayers/vectorLayers';
+import { getLayerMaxFeatures, getLayerOutputFormat, getTableTileZoom } from '@/infra/map/openlayers/vectorLayers';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
+
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 import { AppError } from '@/shared/errors/appError';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';

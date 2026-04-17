@@ -1,10 +1,13 @@
 import { Browser } from '@capacitor/browser';
+
 import { AuthManager, type AuthTokens as CoreAuthTokens } from '@ign/mobile-core';
 import { Storage } from '@ign/mobile-device';
 
 import { mapApiUserToAppUser, type ApiUserResponse } from '@/domain/user/mappers';
 import type { AuthResult, AuthTokens, RefreshResult } from '@/domain/auth/models';
+
 import { collabApiClient } from '@/infra/api/collabApiClient';
+
 import { config } from '@/shared/config/env';
 import { AppError, toAppError } from '@/shared/errors/appError';
 import { storageKey } from '@/shared/constants/storage';
