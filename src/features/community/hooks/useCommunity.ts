@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+
 import { CommunityContext, type CommunityContextType } from '@/app/providers/CommunityContext';
 
 export function useCommunity(): CommunityContextType {

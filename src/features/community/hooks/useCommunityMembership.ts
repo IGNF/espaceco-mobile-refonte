@@ -1,5 +1,7 @@
 import { useMemo } from "react";
+
 import type { CommunityMember } from "@ign/mobile-core";
+
 import { useAuth } from "@/features/auth/hooks/useAuth";
 
 export function useCommunityMembership() {

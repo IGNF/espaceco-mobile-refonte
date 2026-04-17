@@ -21,6 +21,7 @@ import { showToastSafe } from "@/shared/utils/toast";
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
 import styles from "./AllCommunitiesPage.module.css";
+import type { JoinCommunityStatus } from "@/shared/constants/community";
 
 export interface AllCommunitiesPageProps {
   isOpen: boolean;
@@ -60,7 +61,7 @@ export function AllCommunitiesPage({ isOpen, onClose }: AllCommunitiesPageProps)
 
   const handleJoinRequest = async () => {
     try {
-      const joinStatus = await joinCommunity(selectedCommunity!);
+      const joinStatus: JoinCommunityStatus = await joinCommunity(selectedCommunity!);
 
       if (joinStatus === "joined") {
         setJoinedCommunityIds((previousCommunityIds) => [...previousCommunityIds, selectedCommunityId!]);

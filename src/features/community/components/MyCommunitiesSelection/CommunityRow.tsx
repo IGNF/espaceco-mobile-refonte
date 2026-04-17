@@ -1,8 +1,12 @@
-import type { AppCommunity } from "@/domain/community/models";
-import { joinCSSClassNames } from "@/shared/utils/join";
-import styles from "./CommunityRow.module.css";
-import membershipStyles from "@/features/community/styles/communityMembership.module.css";
 import { useTranslation } from "react-i18next";
+
+import type { AppCommunity } from "@/domain/community/models";
+
+import membershipStyles from "@/features/community/styles/communityMembership.module.css";
+
+import { joinCSSClassNames } from "@/shared/utils/join";
+
+import styles from "./CommunityRow.module.css";
 
 export interface CommunityRowProps {
   isUserActiveMember: boolean;

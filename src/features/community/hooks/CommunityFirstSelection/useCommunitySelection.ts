@@ -5,7 +5,9 @@
  * Uses the CommunityContext for state management and persistence.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
+
 import type { Community, CommunityMember } from '@ign/mobile-core';
+
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 

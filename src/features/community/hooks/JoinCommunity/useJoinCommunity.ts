@@ -1,10 +1,13 @@
 import { useCallback, useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { useCommunity } from "@/features/community/hooks/useCommunity";
+
 import { collabApiClient } from "@/infra/api";
+
 import type { AppCommunity } from "@/domain/community/models";
 
-type JoinCommunityStatus = "joined" | "pending";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useCommunity } from "@/features/community/hooks/useCommunity";
+
+import type { JoinCommunityStatus } from "@/shared/constants/community";
 
 interface MemberResponse {
   role?: string;
