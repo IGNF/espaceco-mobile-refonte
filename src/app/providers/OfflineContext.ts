@@ -6,6 +6,7 @@ import type {
   OfflineDownloadProgress,
   OfflineMode,
   OfflineCacheDraftInput,
+  OfflineRasterDownloadPreview,
   OfflineRasterMap,
   OfflineRasterMapDraftInput,
   OfflineCacheDownloadInput,
@@ -48,6 +49,7 @@ export interface OfflineContextType extends OfflineModeState {
   refreshCommunityCache: (communityId: number) => Promise<OfflineCommunityCache>;
   refreshCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<OfflineCommunityCache>;
   saveOfflineRasterMapDraft: (input: OfflineRasterMapDraftInput) => Promise<OfflineRasterMap>;
+  previewOfflineRasterMapDownload: (mapId: string, zoneName: string) => Promise<OfflineRasterDownloadPreview>;
   downloadOfflineRasterMap: (mapId: string, zoneName: string) => Promise<OfflineRasterMap>;
   refreshOfflineRasterMap: (mapId: string) => Promise<OfflineRasterMap>;
   setOfflineRasterMapVisibility: (mapId: string, visible: boolean) => Promise<void>;

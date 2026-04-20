@@ -14,6 +14,7 @@ import { Storage, FileSystem } from '@ign/mobile-device';
 import type Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
 import { storageKey } from '../../shared/constants/storage';
+import { blobToBase64 } from '../../shared/utils/blob';
 import {
   WEB_MERCATOR_PROJECTION,
   WGS84_PROJECTION,
@@ -27,16 +28,6 @@ const REPORT_FEATURE_SERIALIZATION_OPTIONS = {
   featureProjection: WEB_MERCATOR_PROJECTION,
   dataProjection: WGS84_PROJECTION,
 } as const;
-
-async function blobToBase64(blob: Blob): Promise<string> {
-  const bytes = new Uint8Array(await blob.arrayBuffer());
-  let binary = '';
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-  }
-  return btoa(binary);
-}
 
 function base64ToBlob(base64Data: string, mimeType: string): Blob {
   const byteCharacters = atob(base64Data);

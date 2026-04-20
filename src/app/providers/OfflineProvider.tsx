@@ -11,6 +11,7 @@ import {
   type OfflineCacheDraftInput,
   type OfflineCacheDownloadInput,
   type OfflineCacheLayer,
+  type OfflineRasterDownloadPreview,
   type OfflineRasterMap,
   type OfflineRasterMapDraftInput,
   type OfflineZone,
@@ -572,6 +573,28 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   );
 
   /**
+   * Builds the user-facing preview shown before launching a raster download.
+   */
+  const previewOfflineRasterMapDownload = useCallback(
+    async (mapId: string, zoneName: string): Promise<OfflineRasterDownloadPreview> => {
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to estimate offline data' });
+      }
+
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+      const nextZoneNames = offlineRasterMap.zoneNames.includes(zoneName) ? offlineRasterMap.zoneNames : [...offlineRasterMap.zoneNames, zoneName];
+      const nextExtents = await offlineZonesRepository.getExtents(nextZoneNames);
+
+      return offlineRasterDownloadService.estimateDownload({
+        rasterMap: offlineRasterMap,
+        extents: nextExtents,
+        excludedExtents: offlineRasterMap.loaded ? offlineRasterMap.extents : undefined,
+      });
+    },
+    [network.connected]
+  );
+
+  /**
    * Downloads one raster map for one selected zone.
    * If the map already exists, the zone is added incrementally to the downloaded raster tiles.
    */
@@ -800,6 +823,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     refreshCommunityCache,
     refreshCommunityCacheLayer,
     saveOfflineRasterMapDraft,
+    previewOfflineRasterMapDownload,
     downloadOfflineRasterMap,
     refreshOfflineRasterMap,
     setOfflineRasterMapVisibility,

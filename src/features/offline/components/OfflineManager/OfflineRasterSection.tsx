@@ -81,10 +81,14 @@ export function OfflineRasterSection({
                     {getGeoportailLayerTitle(rasterMap.layerName)}
                   </p>
                   <p className={typography.caption}>
-                    {t('offline.raster.zoomRange', {
-                      min: minScaleLabel,
-                      max: maxScaleLabel,
-                    })}
+                    {rasterMap.minZoom === rasterMap.maxZoom
+                      ? t('offline.raster.zoomSingle', {
+                        value: maxScaleLabel,
+                      })
+                      : t('offline.raster.zoomRange', {
+                        min: minScaleLabel,
+                        max: maxScaleLabel,
+                      })}
                   </p>
                   <p className={typography.caption}>
                     {rasterMap.loaded

@@ -5,14 +5,20 @@ import type { CommunityLayer } from '@ign/mobile-core';
 import { Alert } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import { Checkbox } from '@/shared/ui/Checkbox';
+import { Loading } from '@/shared/ui/Loading';
 import { Toggle } from '@/shared/ui/Toggle';
 
-import type { OfflineZone, RasterScaleOption } from '@/domain/offline/models';
+import type {
+  OfflineRasterDownloadPreview,
+  OfflineZone,
+  RasterScaleOption,
+} from '@/domain/offline/models';
 
 import type { OfflineZoneEditorMode } from '@/domain/offline/models';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
+import { formatDurationFromMs } from '@/shared/utils/date';
 
 import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
@@ -63,8 +69,14 @@ interface OfflineDialogsProps {
   rasterZoneDialogMode: 'load' | 'append' | null;
   rasterZoneDialogSubtitle?: string;
   rasterZoneDialogZones: OfflineZone[];
+  isRasterPreviewLoading: boolean;
+  rasterDownloadPreview: OfflineRasterDownloadPreview | null;
+  rasterDownloadPreviewMapName: string | null;
+  rasterDownloadPreviewZoneName: string | null;
   onCloseRasterZoneDialog: () => void;
   onSelectRasterZone: (zoneName: string) => void;
+  onCloseRasterDownloadPreview: () => void;
+  onConfirmRasterDownloadPreview: () => void;
   isDeleteAlertOpen: boolean;
   deleteAlertTitle: string;
   deleteAlertSubtitle: string;
@@ -116,8 +128,14 @@ export function OfflineDialogs({
   rasterZoneDialogMode,
   rasterZoneDialogSubtitle,
   rasterZoneDialogZones,
+  isRasterPreviewLoading,
+  rasterDownloadPreview,
+  rasterDownloadPreviewMapName,
+  rasterDownloadPreviewZoneName,
   onCloseRasterZoneDialog,
   onSelectRasterZone,
+  onCloseRasterDownloadPreview,
+  onConfirmRasterDownloadPreview,
   isDeleteAlertOpen,
   deleteAlertTitle,
   deleteAlertSubtitle,
@@ -394,6 +412,13 @@ export function OfflineDialogs({
         subtitle={rasterZoneDialogSubtitle}
       >
         <div className={styles.dialogContent}>
+          {isRasterPreviewLoading && (
+            <Loading
+              size='small'
+              label={t('offline.raster.previewLoading')}
+            />
+          )}
+
           <div className={styles.dialogList}>
             {rasterZoneDialogZones.map((zone) => (
               <Button
@@ -401,6 +426,7 @@ export function OfflineDialogs({
                 fullWidth
                 variant='outline'
                 color='secondary'
+                disabled={isRasterPreviewLoading}
                 onClick={() => onSelectRasterZone(zone.name)}
               >
                 {zone.name}
@@ -408,6 +434,51 @@ export function OfflineDialogs({
             ))}
           </div>
         </div>
+      </Alert>
+
+      {/* Preview the raster download before the user starts the real tile download. */}
+      <Alert
+        isOpen={rasterDownloadPreview !== null}
+        onClose={onCloseRasterDownloadPreview}
+        title={t('offline.raster.previewTitle')}
+        subtitle={t('offline.raster.previewSubtitle', {
+          map: rasterDownloadPreviewMapName,
+          zone: rasterDownloadPreviewZoneName,
+        })}
+        buttons={[
+          {
+            label: t('offline.raster.download'),
+            onClick: onConfirmRasterDownloadPreview,
+          },
+          {
+            label: t('offline.dialog.cancel'),
+            onClick: onCloseRasterDownloadPreview,
+            variant: 'outline',
+          },
+        ]}
+      >
+        {rasterDownloadPreview && (
+          <div className={styles.dialogContent}>
+            <p className={typography.body}>
+              {t('offline.raster.previewTileCount', {
+                count: rasterDownloadPreview.tileCount,
+              })}
+            </p>
+            <p className={typography.body}>
+              {t('offline.raster.previewSize', {
+                value: rasterDownloadPreview.estimatedSizeMb.toLocaleString('fr-FR', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                }),
+              })}
+            </p>
+            <p className={typography.body}>
+              {t('offline.raster.previewTime', {
+                value: formatDurationFromMs(rasterDownloadPreview.estimatedTimeMs),
+              })}
+            </p>
+          </div>
+        )}
       </Alert>
 
       <Alert

@@ -15,6 +15,7 @@ import { Feature } from 'ol';
 import GeoJSON from 'ol/format/GeoJSON';
 import { Storage, FileSystem } from '@ign/mobile-device';
 import { storageKey } from '../../shared/constants/storage';
+import { blobToBase64 } from '../../shared/utils/blob';
 
 const CACHE_DIR = 'tiles';
 const FEATURES_DIR = 'features';
@@ -34,10 +35,13 @@ export class CacheStorageAdapter implements ICacheStorage {
 
   async saveTile(key: string, data: Blob): Promise<void> {
     const path = `${CACHE_DIR}/${key}`;
+    const base64Data = await blobToBase64(data);
+
     await FileSystem.writeFile({
       path,
-      data,
+      data: base64Data,
       directory: 'CACHE',
+      encoding: 'base64',
       recursive: true,
     });
   }

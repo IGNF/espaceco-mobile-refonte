@@ -9,7 +9,11 @@ import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 import { GEOPORTAIL_SERVER } from '@/shared/constants/map';
 import { OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
 
-import type { OfflineDownloadProgress, OfflineRasterMap } from '@/domain/offline/models';
+import type {
+  OfflineDownloadProgress,
+  OfflineRasterDownloadPreview,
+  OfflineRasterMap,
+} from '@/domain/offline/models';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { getOfflineRasterTileKey } from '@/infra/map/openlayers/offlineRasterLayers';
 
@@ -31,6 +35,43 @@ export class OfflineRasterDownloadService {
     excludedExtents?: Extent[];
   }): number {
     return this.getTileEntries(params).length;
+  }
+
+  /**
+   * Estimates a raster download by counting all target tiles and sampling one real tile request.
+   */
+  async estimateDownload(params: {
+    rasterMap: OfflineRasterMap;
+    extents: Extent[];
+    excludedExtents?: Extent[];
+  }): Promise<OfflineRasterDownloadPreview> {
+    const tileEntries = this.getTileEntries(params);
+    const tileCount = tileEntries.length;
+
+    if (tileCount === 0) {
+      return {
+        tileCount: 0,
+        estimatedSizeMb: 0,
+        estimatedTimeMs: 0,
+      };
+    }
+
+    const sampleTile = tileEntries[0]!;
+    const startedAt = Date.now();
+    const response = await fetch(sampleTile.url);
+
+    if (!response.ok) {
+      throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: `Raster tile estimate failed with status ${response.status}` });
+    }
+
+    const blob = await response.blob();
+    const elapsedMs = Math.max(Date.now() - startedAt, 1);
+
+    return {
+      tileCount,
+      estimatedSizeMb: Math.round((tileCount * blob.size / 1024 / 1024) * 10) / 10,
+      estimatedTimeMs: tileCount * elapsedMs,
+    };
   }
 
   async downloadMap(params: {

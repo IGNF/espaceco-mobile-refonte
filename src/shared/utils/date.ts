@@ -26,3 +26,17 @@ export function formatTime(date: Date): string {
 export function formatDateTime(date: Date): string {
 	return `${formatDate(date)} ${formatTime(date)}`;
 }
+
+/**
+ * Formats an approximate duration expressed in milliseconds for short user-facing estimates.
+ */
+export function formatDurationFromMs(value: number): string {
+	if (value > 60000 * 60) {
+		const minutes = Math.round(value / 60000);
+		const hours = Math.floor(minutes / 60);
+		return `${hours} h ${minutes - hours * 60} min`;
+	}
+
+	const minutes = Math.round(value / 60000);
+	return minutes > 0 ? `${minutes} min` : '< 1 min';
+}

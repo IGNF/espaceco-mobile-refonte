@@ -39,6 +39,12 @@ export interface OfflineRasterMapDraftInput {
   maxZoom: number;
 }
 
+export interface OfflineRasterDownloadPreview {
+  tileCount: number;
+  estimatedSizeMb: number;
+  estimatedTimeMs: number;
+}
+
 export interface OfflineDownloadProgress {
   currentLayerTitle: string;
   downloadedTileCount: number;
@@ -74,4 +80,3 @@ export interface OfflineRasterMap {
   loadedAt?: string;
   lastRefreshAt?: string;
 }
-
