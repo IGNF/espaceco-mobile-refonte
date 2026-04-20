@@ -115,7 +115,9 @@ export class OfflineVectorDownloadService {
             tileExtent,
             preparedLayer.resolution
           );
+          preparedLayer.source.setLoading(true);
           preparedLayer.source.clear(true);
+          preparedLayer.source.setLoading(false);
 
           downloadedTileCount += 1;
           params.onProgress?.({
@@ -168,7 +170,9 @@ export class OfflineVectorDownloadService {
         await cacheStorage.deleteFeatures(cacheKey);
       }
 
+      preparedLayer.source.setLoading(true);
       preparedLayer.source.clear(true);
+      preparedLayer.source.setLoading(false);
     }
   }
 
@@ -192,6 +196,7 @@ export class OfflineVectorDownloadService {
       table,
       cache: cacheStorage,
       cacheNamespace,
+      legacyCacheFallback: false,
       online: true,
       useCacheWhenOnline: false,
       tileZoom,

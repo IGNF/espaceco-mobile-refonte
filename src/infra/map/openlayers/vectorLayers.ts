@@ -3,7 +3,7 @@ import type { ApiClient } from 'collaboratif-client-api';
 import {
   CollabVectorLayer,
   WFSLayer,
-  type CommunityLayer
+  type CommunityLayer,
 } from '@ign/mobile-core';
 import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 import { stripQueryParams } from '@/shared/utils/query';
@@ -46,6 +46,7 @@ export function createCommunityVectorLayer(
         table,
         cacheUrl,
         cacheNamespace,
+        legacyCacheFallback: !isOfflineMode,
       },
       {
         tileZoom: getTableTileZoom(layer),
@@ -54,6 +55,7 @@ export function createCommunityVectorLayer(
         outputFormat: getLayerOutputFormat(layer),
         useCacheWhenOnline: false,
         cache: cacheStorage,
+        legacyCacheFallback: !isOfflineMode,
       } as any
     );
 
