@@ -7,6 +7,8 @@ PODS:
     - Capacitor
   - CapacitorCamera (8.0.0):
     - Capacitor
+  - CapacitorCommunityDevice (8.0.0):
+    - Capacitor
   - CapacitorCommunityKeepAwake (8.0.0):
     - Capacitor
   - CapacitorCordova (8.0.0)
@@ -38,6 +40,7 @@ DEPENDENCIES:
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
   - "CapacitorCamera (from `../../node_modules/@capacitor/camera`)"
+  - "CapacitorCommunityDevice (from `../../node_modules/@capacitor-community/device`)"
   - "CapacitorCommunityKeepAwake (from `../../node_modules/@capacitor-community/keep-awake`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
@@ -64,6 +67,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/browser"
   CapacitorCamera:
     :path: "../../node_modules/@capacitor/camera"
+  CapacitorCommunityDevice:
+    :path: "../../node_modules/@capacitor-community/device"
   CapacitorCommunityKeepAwake:
     :path: "../../node_modules/@capacitor-community/keep-awake"
   CapacitorCordova:
@@ -90,6 +95,7 @@ SPEC CHECKSUMS:
   CapacitorApp: a4d8d936cc4390859a3766f141048abe55d4076f
   CapacitorBrowser: f42210052d25867e64cda9ee28906ca830835ebe
   CapacitorCamera: 05ac5bd4499ed4b8cf5358d1b4a874b385de7b4d
+  CapacitorCommunityDevice: 4b1c180a28bf7b639c1f33348629f02627fc8f17
   CapacitorCommunityKeepAwake: 2dffdfe2c56a49b15bef37da2e1a7bf5a8675989
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
   CapacitorDevice: b50f119138a2b69a1e9213f4468d1e75e4239cca
@@ -104,6 +110,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
 
-PODFILE CHECKSUM: 26c89d715228f4c4450f790eb210ca9c599868cb
+PODFILE CHECKSUM: 0d8d40004be958430c7fe59db2c8458b9405c22e
 
 COCOAPODS: 1.16.2

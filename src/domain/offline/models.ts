@@ -43,6 +43,7 @@ export interface OfflineRasterDownloadPreview {
   tileCount: number;
   estimatedSizeMb: number;
   estimatedTimeMs: number;
+  freeDiskSpaceMb?: number | null;
 }
 
 export interface OfflineDownloadProgress {

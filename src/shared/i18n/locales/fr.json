@@ -267,6 +267,7 @@
       "previewTileCount": "{{count}} tuile(s) à télécharger",
       "previewSize": "Taille estimée : {{value}} Mo",
       "previewTime": "Temps estimé : {{value}}",
+      "previewFreeSpace": "Espace disque libre : {{value}} Mo",
       "refresh": "Rafraîchir le fond",
       "refreshSuccess": "Fond hors ligne rafraîchi.",
       "delete": "Supprimer",

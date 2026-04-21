@@ -24,6 +24,7 @@ import { OfflineRasterMapRepository } from '@/infra/offline/OfflineRasterMapRepo
 import { OfflineRasterDownloadService } from '@/infra/offline/OfflineRasterDownloadService';
 import { OfflineVectorDownloadService } from '@/infra/offline/OfflineVectorDownloadService';
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
+import { EspaceCo_DeviceStorage } from '@/platform/device/storage';
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { OfflineContext } from './OfflineContext';
@@ -573,7 +574,8 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   );
 
   /**
-   * Builds the user-facing preview shown before launching a raster download.
+   * Builds the user-facing preview shown before launching a raster download,
+   * including the current free disk space when the native plugin can provide it.
    */
   const previewOfflineRasterMapDownload = useCallback(
     async (mapId: string, zoneName: string): Promise<OfflineRasterDownloadPreview> => {
@@ -584,12 +586,19 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
       const nextZoneNames = offlineRasterMap.zoneNames.includes(zoneName) ? offlineRasterMap.zoneNames : [...offlineRasterMap.zoneNames, zoneName];
       const nextExtents = await offlineZonesRepository.getExtents(nextZoneNames);
+      const [preview, freeDiskSpaceMb] = await Promise.all([
+        offlineRasterDownloadService.estimateDownload({
+          rasterMap: offlineRasterMap,
+          extents: nextExtents,
+          excludedExtents: offlineRasterMap.loaded ? offlineRasterMap.extents : undefined,
+        }),
+        EspaceCo_DeviceStorage.getFreeDiskSpaceMb(),
+      ]);
 
-      return offlineRasterDownloadService.estimateDownload({
-        rasterMap: offlineRasterMap,
-        extents: nextExtents,
-        excludedExtents: offlineRasterMap.loaded ? offlineRasterMap.extents : undefined,
-      });
+      return {
+        ...preview,
+        freeDiskSpaceMb,
+      };
     },
     [network.connected]
   );

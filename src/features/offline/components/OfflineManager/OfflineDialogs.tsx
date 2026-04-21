@@ -459,24 +459,34 @@ export function OfflineDialogs({
       >
         {rasterDownloadPreview && (
           <div className={styles.dialogContent}>
-            <p className={typography.body}>
+            <span className={typography.body}>
               {t('offline.raster.previewTileCount', {
                 count: rasterDownloadPreview.tileCount,
               })}
-            </p>
-            <p className={typography.body}>
+            </span>
+            <span className={typography.body}>
               {t('offline.raster.previewSize', {
                 value: rasterDownloadPreview.estimatedSizeMb.toLocaleString('fr-FR', {
                   minimumFractionDigits: 1,
                   maximumFractionDigits: 1,
                 }),
               })}
-            </p>
-            <p className={typography.body}>
+            </span>
+            <span className={typography.body}>
               {t('offline.raster.previewTime', {
                 value: formatDurationFromMs(rasterDownloadPreview.estimatedTimeMs),
               })}
-            </p>
+            </span>
+            {rasterDownloadPreview.freeDiskSpaceMb != null && (
+              <span className={typography.body}>
+                {t('offline.raster.previewFreeSpace', {
+                  value: rasterDownloadPreview.freeDiskSpaceMb.toLocaleString('fr-FR', {
+                    minimumFractionDigits: 1,
+                    maximumFractionDigits: 1,
+                  }),
+                })}
+              </span>
+            )}
           </div>
         )}
       </Alert>
