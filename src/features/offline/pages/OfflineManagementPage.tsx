@@ -37,6 +37,7 @@ import screen from '@/shared/styles/screen.module.css';
 
 import type {
   OfflineRasterDownloadPreview,
+  OfflineRasterMap,
   OfflineZoneEditorMode,
 } from '@/domain/offline/models';
 import { OfflineZoneEditorOverlay } from './OfflineZoneEditorOverlay';
@@ -63,7 +64,7 @@ interface RasterZoneDialogState {
 }
 
 interface RasterDownloadPreviewState {
-  mapId: string;
+  rasterMap: OfflineRasterMap;
   mapName: string;
   zoneName: string;
   mode: 'load' | 'append';
@@ -326,8 +327,7 @@ export function OfflineManagementPage({
 
       if (zones.length === 1) {
         await handleOpenRasterDownloadPreview(
-          savedRasterMap.id,
-          savedRasterMap.name,
+          savedRasterMap,
           'load',
           zones[0].name
         );
@@ -364,20 +364,19 @@ export function OfflineManagementPage({
    * Resolves the raster download preview first, then opens the confirmation alert.
    */
   async function handleOpenRasterDownloadPreview(
-    mapId: string,
-    mapName: string,
+    rasterMap: OfflineRasterMap,
     mode: 'load' | 'append',
     zoneName: string
   ) {
     try {
       setIsRasterPreviewLoading(true);
 
-      const preview = await previewOfflineRasterMapDownload(mapId, zoneName);
+      const preview = await previewOfflineRasterMapDownload(rasterMap, zoneName);
 
       setRasterZoneDialog(null);
       setRasterDownloadPreview({
-        mapId,
-        mapName,
+        rasterMap,
+        mapName: rasterMap.name,
         zoneName,
         mode,
         preview,
@@ -394,7 +393,7 @@ export function OfflineManagementPage({
    */
   async function handleConfirmRasterDownloadPreview() {
     await handleDownloadRasterMap(
-      rasterDownloadPreview!.mapId,
+      rasterDownloadPreview!.rasterMap.id,
       rasterDownloadPreview!.zoneName
     );
   }
@@ -411,8 +410,7 @@ export function OfflineManagementPage({
 
     if (zones.length === 1) {
       void handleOpenRasterDownloadPreview(
-        mapId,
-        rasterMap.name,
+        rasterMap,
         mode,
         zones[0].name
       );
@@ -890,8 +888,7 @@ export function OfflineManagementPage({
         rasterDownloadPreviewZoneName={rasterDownloadPreview?.zoneName ?? null}
         onSelectRasterZone={(zoneName) => {
           void handleOpenRasterDownloadPreview(
-            rasterZoneDialog!.mapId,
-            rasterMapForZoneDialog!.name,
+            rasterMapForZoneDialog!,
             rasterZoneDialog!.mode,
             zoneName
           );

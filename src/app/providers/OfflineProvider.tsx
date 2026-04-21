@@ -567,10 +567,14 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       };
 
       await offlineRasterMapRepository.saveMap(savedRasterMap);
-      await refresh();
+      setRasterMaps((previousMaps) =>
+        [...previousMaps, savedRasterMap].sort((firstMap, secondMap) =>
+          firstMap.name.localeCompare(secondMap.name)
+        )
+      );
       return savedRasterMap;
     },
-    [refresh]
+    []
   );
 
   /**
@@ -578,12 +582,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    * including the current free disk space when the native plugin can provide it.
    */
   const previewOfflineRasterMapDownload = useCallback(
-    async (mapId: string, zoneName: string): Promise<OfflineRasterDownloadPreview> => {
+    async (offlineRasterMap: OfflineRasterMap, zoneName: string): Promise<OfflineRasterDownloadPreview> => {
       if (!network.connected) {
         throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to estimate offline data' });
       }
 
-      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
       const nextZoneNames = offlineRasterMap.zoneNames.includes(zoneName) ? offlineRasterMap.zoneNames : [...offlineRasterMap.zoneNames, zoneName];
       const nextExtents = await offlineZonesRepository.getExtents(nextZoneNames);
       const [preview, freeDiskSpaceMb] = await Promise.all([
