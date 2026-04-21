@@ -219,3 +219,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Raster Specific Styles */
+.rasterRowActions {
+  margin:auto;
+}
+
+.rasterListRow {
+  flex-direction: column;
+}

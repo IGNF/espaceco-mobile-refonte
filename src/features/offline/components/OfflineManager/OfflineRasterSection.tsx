@@ -74,13 +74,13 @@ export function OfflineRasterSection({
               String(rasterMap.maxZoom);
 
             return (
-              <div key={rasterMap.id} className={styles.listRow}>
+              <div key={rasterMap.id} className={`${styles.listRow} ${styles.rasterListRow}`}>
                 <div className={styles.listMain}>
-                  <p className={styles.rowTitle}>{rasterMap.name}</p>
-                  <p className={typography.caption}>
+                  <span className={styles.rowTitle}>{rasterMap.name}</span>
+                  <span className={typography.caption}>
                     {getGeoportailLayerTitle(rasterMap.layerName)}
-                  </p>
-                  <p className={typography.caption}>
+                  </span>
+                  <span className={typography.caption}>
                     {rasterMap.minZoom === rasterMap.maxZoom
                       ? t('offline.raster.zoomSingle', {
                         value: maxScaleLabel,
@@ -89,22 +89,22 @@ export function OfflineRasterSection({
                         min: minScaleLabel,
                         max: maxScaleLabel,
                       })}
-                  </p>
-                  <p className={typography.caption}>
+                  </span>
+                  <span className={typography.caption}>
                     {rasterMap.loaded
                       ? t('offline.raster.zoneCount', {
                         count: rasterMap.zoneNames.length,
                       })
                       : t('offline.raster.pending')}
-                  </p>
+                  </span>
                   {refreshedAt && (
-                    <p className={typography.caption}>
+                    <span className={typography.caption}>
                       {t('offline.raster.updatedAt', { value: refreshedAt })}
-                    </p>
+                    </span>
                   )}
                 </div>
 
-                <div className={styles.rowActions}>
+                <div className={`${styles.rowActions} ${styles.rasterRowActions}`}>
                   {rasterMap.loaded ? (
                     <>
                       <Button
