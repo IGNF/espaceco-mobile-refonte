@@ -26,6 +26,19 @@
   gap: 0.75rem;
 }
 
+.sectionHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.sectionHeaderButton {
+  width: auto;
+  margin: 0;
+}
+
 .sectionDescription {
   margin: 0;
   line-height: 1.3;

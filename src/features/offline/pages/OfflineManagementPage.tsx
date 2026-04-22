@@ -58,16 +58,14 @@ interface ZoneEditorState {
   restoreLayerVisibility: boolean;
 }
 
-interface RasterZoneDialogState {
-  mapId: string;
-  mode: 'load' | 'append';
-}
+type RasterZoneDialogState =
+  | { kind: 'single-map'; mapId: string; mode: 'load-map' | 'add-zone' }
+  | { kind: 'pending-maps' };
 
 interface RasterDownloadPreviewState {
-  rasterMap: OfflineRasterMap;
+  rasterMaps: OfflineRasterMap[];
   mapName: string;
   zoneName: string;
-  mode: 'load' | 'append';
   preview: OfflineRasterDownloadPreview;
 }
 
@@ -206,13 +204,18 @@ export function OfflineManagementPage({
     ? rasterMaps.find((rasterMap) => rasterMap.id === deleteAlert.mapId) ?? null
     : null;
   const rasterMapForZoneDialog = rasterZoneDialog
-    ? rasterMaps.find((rasterMap) => rasterMap.id === rasterZoneDialog.mapId) ?? null
+    && rasterZoneDialog.kind === 'single-map'
+    ? rasterMaps.find((rasterMap) => rasterMap.id === rasterZoneDialog.mapId)!
     : null;
-  const rasterZoneDialogZones = zones.filter((zone) =>
-    rasterZoneDialog?.mode === 'append' && rasterMapForZoneDialog
-      ? !rasterMapForZoneDialog.zoneNames.includes(zone.name)
-      : true
-  );
+  const rasterZoneDialogZones =
+    rasterZoneDialog?.kind === 'single-map' && rasterZoneDialog.mode === 'add-zone'
+      ? zones.filter((zone) => !rasterMapForZoneDialog!.zoneNames.includes(zone.name))
+      : zones;
+  const pendingRasterMaps = rasterMaps.filter((rasterMap) => !rasterMap.loaded);
+  const rasterZoneDialogMode =
+    rasterZoneDialog?.kind === 'pending-maps'
+      ? 'pending-maps'
+      : rasterZoneDialog?.mode ?? null;
 
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({
@@ -328,30 +331,37 @@ export function OfflineManagementPage({
       if (zones.length === 1) {
         await handleOpenRasterDownloadPreview(
           savedRasterMap,
-          'load',
           zones[0].name
         );
         return;
       }
 
       setRasterZoneDialog({
+        kind: 'single-map',
         mapId: savedRasterMap.id,
-        mode: 'load',
+        mode: 'load-map',
       });
     } catch (error) {
       await showOfflineError(error);
     }
   }
 
-  async function handleDownloadRasterMap(mapId: string, zoneName: string) {
+  async function handleDownloadRasterMaps(
+    rasterMapsToDownload: OfflineRasterMap[],
+    zoneName: string
+  ) {
     try {
       setRasterZoneDialog(null);
       setRasterDownloadPreview(null);
-      const offlineRasterMap = await downloadOfflineRasterMap(mapId, zoneName);
+
+      for (const rasterMap of rasterMapsToDownload) {
+        await downloadOfflineRasterMap(rasterMap.id, zoneName);
+      }
+
       await showToastSafe({
-        text: offlineRasterMap.loadedAt
+        text: rasterMapsToDownload.length === 1
           ? t('offline.raster.downloadSuccess')
-          : t('offline.raster.mapCreated'),
+          : t('offline.raster.pendingDownloadSuccess'),
         duration: 'short',
         position: 'bottom',
       });
@@ -365,7 +375,6 @@ export function OfflineManagementPage({
    */
   async function handleOpenRasterDownloadPreview(
     rasterMap: OfflineRasterMap,
-    mode: 'load' | 'append',
     zoneName: string
   ) {
     try {
@@ -375,11 +384,56 @@ export function OfflineManagementPage({
 
       setRasterZoneDialog(null);
       setRasterDownloadPreview({
-        rasterMap,
+        rasterMaps: [rasterMap],
         mapName: rasterMap.name,
         zoneName,
-        mode,
         preview,
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    } finally {
+      setIsRasterPreviewLoading(false);
+    }
+  }
+
+  /**
+   * Builds one confirmation preview for the legacy-style "load all pending maps" action.
+   */
+  async function handleOpenPendingRasterMapsDownloadPreview(zoneName: string) {
+    try {
+      setIsRasterPreviewLoading(true);
+
+      const previews = await Promise.all(
+        pendingRasterMaps.map((rasterMap) =>
+          previewOfflineRasterMapDownload(rasterMap, zoneName)
+        )
+      );
+      const freeDiskSpaceMb = previews.find(
+        (preview) => preview.freeDiskSpaceMb != null
+      )?.freeDiskSpaceMb ?? null;
+      const tileCount = previews.reduce((total, preview) => total + preview.tileCount, 0);
+      const estimatedSizeMb = Math.round(previews.reduce(
+        (total, preview) => total + preview.estimatedSizeMb,
+        0
+      ) * 10) / 10;
+      const estimatedTimeMs = previews.reduce(
+        (total, preview) => total + preview.estimatedTimeMs,
+        0
+      );
+
+      setRasterZoneDialog(null);
+      setRasterDownloadPreview({
+        rasterMaps: pendingRasterMaps,
+        mapName: t('offline.raster.pendingMapsPreviewName', {
+          count: pendingRasterMaps.length,
+        }),
+        zoneName,
+        preview: {
+          tileCount,
+          estimatedSizeMb,
+          estimatedTimeMs,
+          freeDiskSpaceMb,
+        },
       });
     } catch (error) {
       await showOfflineError(error);
@@ -392,8 +446,8 @@ export function OfflineManagementPage({
    * Starts the raster download from the preview already confirmed by the user.
    */
   async function handleConfirmRasterDownloadPreview() {
-    await handleDownloadRasterMap(
-      rasterDownloadPreview!.rasterMap.id,
+    await handleDownloadRasterMaps(
+      rasterDownloadPreview!.rasterMaps,
       rasterDownloadPreview!.zoneName
     );
   }
@@ -405,22 +459,43 @@ export function OfflineManagementPage({
     setRasterDownloadPreview(null);
   }
 
-  function openRasterZoneDialog(mapId: string, mode: 'load' | 'append') {
+  function openRasterZoneDialog(mapId: string, mode: 'load-map' | 'add-zone') {
     const rasterMap = rasterMaps.find((currentRasterMap) => currentRasterMap.id === mapId)!;
 
     if (zones.length === 1) {
       void handleOpenRasterDownloadPreview(
         rasterMap,
-        mode,
         zones[0].name
       );
       return;
     }
 
     setRasterZoneDialog({
+      kind: 'single-map',
       mapId,
       mode,
     });
+  }
+
+  function openPendingRasterMapsDownload() {
+    if (zones.length === 1) {
+      void handleOpenPendingRasterMapsDownloadPreview(zones[0].name);
+      return;
+    }
+
+    setRasterZoneDialog({ kind: 'pending-maps' });
+  }
+
+  function selectRasterZone(zoneName: string) {
+    if (rasterZoneDialog!.kind === 'pending-maps') {
+      void handleOpenPendingRasterMapsDownloadPreview(zoneName);
+    }
+    else {
+      void handleOpenRasterDownloadPreview(
+        rasterMapForZoneDialog!,
+        zoneName
+      );
+    }
   }
 
   async function handleRefreshRasterMap(mapId: string) {
@@ -829,6 +904,7 @@ export function OfflineManagementPage({
             rasterScaleOptions={rasterScaleOptions}
             isDownloading={isDownloading}
             onOpenNewRasterMapDialog={openNewRasterMapDialog}
+            onDownloadPendingRasterMaps={openPendingRasterMapsDownload}
             onToggleRasterMapVisibility={(mapId, visible) => void handleToggleRasterMapVisibility(mapId, visible)}
             onOpenRasterZoneDialog={openRasterZoneDialog}
             onRefreshRasterMap={(mapId) => void handleRefreshRasterMap(mapId)}
@@ -878,7 +954,7 @@ export function OfflineManagementPage({
         onChangeNewRasterMapMaxZoom={setNewRasterMapMaxZoom}
         onValidateNewRasterMap={() => void handleValidateNewRasterMap()}
         isRasterZoneDialogOpen={rasterZoneDialog !== null}
-        rasterZoneDialogMode={rasterZoneDialog?.mode ?? null}
+        rasterZoneDialogMode={rasterZoneDialogMode}
         rasterZoneDialogSubtitle={rasterMapForZoneDialog?.name}
         rasterZoneDialogZones={rasterZoneDialogZones}
         onCloseRasterZoneDialog={() => setRasterZoneDialog(null)}
@@ -886,13 +962,7 @@ export function OfflineManagementPage({
         rasterDownloadPreview={rasterDownloadPreview?.preview ?? null}
         rasterDownloadPreviewMapName={rasterDownloadPreview?.mapName ?? null}
         rasterDownloadPreviewZoneName={rasterDownloadPreview?.zoneName ?? null}
-        onSelectRasterZone={(zoneName) => {
-          void handleOpenRasterDownloadPreview(
-            rasterMapForZoneDialog!,
-            rasterZoneDialog!.mode,
-            zoneName
-          );
-        }}
+        onSelectRasterZone={selectRasterZone}
         onCloseRasterDownloadPreview={closeRasterDownloadPreview}
         onConfirmRasterDownloadPreview={() => {
           void handleConfirmRasterDownloadPreview();

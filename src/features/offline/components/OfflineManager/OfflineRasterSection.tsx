@@ -21,8 +21,9 @@ interface OfflineRasterSectionProps {
   rasterScaleOptions: RasterScaleOption[];
   isDownloading: boolean;
   onOpenNewRasterMapDialog: () => void;
+  onDownloadPendingRasterMaps: () => void;
   onToggleRasterMapVisibility: (mapId: string, visible: boolean) => void;
-  onOpenRasterZoneDialog: (mapId: string, mode: 'load' | 'append') => void;
+  onOpenRasterZoneDialog: (mapId: string, mode: 'load-map' | 'add-zone') => void;
   onRefreshRasterMap: (mapId: string) => void;
   onRequestDeleteRasterMap: (mapId: string) => void;
 }
@@ -33,12 +34,14 @@ export function OfflineRasterSection({
   rasterScaleOptions,
   isDownloading,
   onOpenNewRasterMapDialog,
+  onDownloadPendingRasterMaps,
   onToggleRasterMapVisibility,
   onOpenRasterZoneDialog,
   onRefreshRasterMap,
   onRequestDeleteRasterMap,
 }: OfflineRasterSectionProps) {
   const { t } = useTranslation();
+  const hasPendingRasterMaps = rasterMaps.some((rasterMap) => !rasterMap.loaded);
 
   return (
     <section className={styles.section}>
@@ -50,9 +53,26 @@ export function OfflineRasterSection({
           </p>
         </div>
 
-        <Button onClick={onOpenNewRasterMapDialog} disabled={isDownloading}>
-          {t('offline.raster.newMap')}
-        </Button>
+        <div className={styles.sectionHeaderActions}>
+          {hasPendingRasterMaps && (
+            <Button
+              className={styles.sectionHeaderButton}
+              variant='outline'
+              color='secondary'
+              onClick={onDownloadPendingRasterMaps}
+              disabled={isDownloading || zones.length === 0}
+            >
+              {t('offline.raster.loadPending')}
+            </Button>
+          )}
+          <Button
+            className={styles.sectionHeaderButton}
+            onClick={onOpenNewRasterMapDialog}
+            disabled={isDownloading}
+          >
+            {t('offline.raster.newMap')}
+          </Button>
+        </div>
       </div>
 
       {rasterMaps.length === 0 ? (
@@ -130,7 +150,7 @@ export function OfflineRasterSection({
                         iconOnly
                         color='secondary'
                         variant='outline'
-                        onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'append')}
+                        onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'add-zone')}
                         disabled={isDownloading || !hasAddableZone}
                         aria-label={t('offline.raster.addZone')}
                         title={t('offline.raster.addZone')}
@@ -153,7 +173,7 @@ export function OfflineRasterSection({
                     <Button
                       variant='outline'
                       color='secondary'
-                      onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'load')}
+                      onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'load-map')}
                       disabled={isDownloading || zones.length === 0}
                     >
                       {t('offline.raster.download')}

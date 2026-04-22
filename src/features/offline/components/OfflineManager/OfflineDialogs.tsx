@@ -66,7 +66,7 @@ interface OfflineDialogsProps {
   onChangeNewRasterMapMaxZoom: (value: number) => void;
   onValidateNewRasterMap: () => void;
   isRasterZoneDialogOpen: boolean;
-  rasterZoneDialogMode: 'load' | 'append' | null;
+  rasterZoneDialogMode: 'load-map' | 'add-zone' | 'pending-maps' | null;
   rasterZoneDialogSubtitle?: string;
   rasterZoneDialogZones: OfflineZone[];
   isRasterPreviewLoading: boolean;
@@ -143,6 +143,14 @@ export function OfflineDialogs({
   onConfirmDeleteAlert,
 }: OfflineDialogsProps) {
   const { t } = useTranslation();
+  let rasterZoneDialogTitle = t('offline.raster.chooseZoneToLoad');
+
+  if (rasterZoneDialogMode === 'pending-maps') {
+    rasterZoneDialogTitle = t('offline.raster.chooseZoneForPending');
+  }
+  else if (rasterZoneDialogMode === 'add-zone') {
+    rasterZoneDialogTitle = t('offline.raster.chooseZoneToAdd');
+  }
 
   return (
     <>
@@ -404,11 +412,7 @@ export function OfflineDialogs({
       <Alert
         isOpen={isRasterZoneDialogOpen}
         onClose={onCloseRasterZoneDialog}
-        title={
-          rasterZoneDialogMode === 'append'
-            ? t('offline.raster.chooseZoneToAdd')
-            : t('offline.raster.chooseZoneToLoad')
-        }
+        title={rasterZoneDialogTitle}
         subtitle={rasterZoneDialogSubtitle}
       >
         <div className={styles.dialogContent}>
