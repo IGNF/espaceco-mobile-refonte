@@ -10,6 +10,7 @@ import type {
   OfflineRasterMap,
   OfflineRasterMapDraftInput,
   OfflineCacheDownloadInput,
+  OfflineCacheDownloadResult,
   OfflineZone,
 } from '@/domain/offline/models';
 import type { AppError } from '@/shared/errors/appError';
@@ -46,9 +47,9 @@ export interface OfflineContextType extends OfflineModeState {
   appendZoneExtent: (name: string, extent: Extent) => Promise<OfflineZone>;
   deleteZone: (name: string) => Promise<void>;
   saveCommunityCacheDraft: (input: OfflineCacheDraftInput) => Promise<OfflineCommunityCache | null>;
-  downloadCommunityCache: (input: OfflineCacheDownloadInput) => Promise<OfflineCommunityCache>;
-  refreshCommunityCache: (communityId: number) => Promise<OfflineCommunityCache>;
-  refreshCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<OfflineCommunityCache>;
+  downloadCommunityCache: (input: OfflineCacheDownloadInput) => Promise<OfflineCacheDownloadResult>;
+  refreshCommunityCache: (communityId: number) => Promise<OfflineCacheDownloadResult>;
+  refreshCommunityCacheLayer: (communityId: number, layerKey: string) => Promise<OfflineCacheDownloadResult>;
   saveOfflineRasterMapDraft: (input: OfflineRasterMapDraftInput) => Promise<OfflineRasterMap>;
   previewOfflineRasterMapDownload: (rasterMap: OfflineRasterMap, zoneName: string) => Promise<OfflineRasterDownloadPreview>;
   downloadOfflineRasterMap: (mapId: string, zoneName: string) => Promise<OfflineRasterMap>;

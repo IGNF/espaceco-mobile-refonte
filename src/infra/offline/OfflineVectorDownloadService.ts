@@ -42,6 +42,12 @@ interface PreparedOfflineLayer {
   source: CollabVectorSource;
   resolution: number;
   tileExtents: Extent[];
+  loadedObjectCount: number;
+}
+
+interface DownloadedOfflineLayer {
+  cacheLayer: OfflineCacheLayer;
+  loadedObjectCount: number;
 }
 
 /**
@@ -81,7 +87,7 @@ export class OfflineVectorDownloadService {
 
   async downloadCache(
     params: OfflineVectorDownloadParams
-  ): Promise<OfflineCacheLayer[]> {
+  ): Promise<DownloadedOfflineLayer[]> {
     this.cancelRequested = false;
     const preparedLayers = params.layers.map((layer) =>
       this.prepareLayer(
@@ -110,7 +116,7 @@ export class OfflineVectorDownloadService {
       for (const preparedLayer of preparedLayers) {
         for (const tileExtent of preparedLayer.tileExtents) {
           this.throwIfCancelled();
-          await this.loadTile(
+          preparedLayer.loadedObjectCount += await this.loadTile(
             preparedLayer.source,
             tileExtent,
             preparedLayer.resolution
@@ -132,9 +138,12 @@ export class OfflineVectorDownloadService {
       }
 
       return preparedLayers.map((preparedLayer) => ({
-        layerKey: preparedLayer.layerKey,
-        layer: preparedLayer.layer,
-        cacheNamespace: preparedLayer.cacheNamespace,
+        cacheLayer: {
+          layerKey: preparedLayer.layerKey,
+          layer: preparedLayer.layer,
+          cacheNamespace: preparedLayer.cacheNamespace,
+        },
+        loadedObjectCount: preparedLayer.loadedObjectCount,
       }));
     } finally {
       this.cancelRequested = false;
@@ -215,6 +224,7 @@ export class OfflineVectorDownloadService {
       source,
       resolution,
       tileExtents: this.getTileExtents(tileGrid, tileZoom, extents, excludedExtents),
+      loadedObjectCount: 0,
     };
   }
 
@@ -254,18 +264,21 @@ export class OfflineVectorDownloadService {
     return tileExtents;
   }
 
+  /**
+   * Returns the number of objects loaded for the tile while `loaderFn` writes them to cache.
+   */
   private async loadTile(
     source: CollabVectorSource,
     tileExtent: Extent,
     resolution: number
-  ): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
+  ): Promise<number> {
+    return await new Promise<number>((resolve, reject) => {
       source.loaderFn(
         tileExtent,
         resolution,
         WEB_MERCATOR_PROJECTION,
-        () => {
-          resolve();
+        (features) => {
+          resolve(features.length);
         },
         () => {
           reject(

@@ -215,6 +215,8 @@
       "selectAll": "Tout sélectionner",
       "refresh": "Rafraîchir la couche",
       "refreshSuccess": "Couche hors ligne rafraîchie.",
+      "noObjectLoaded": "Téléchargement terminé, mais aucun objet n'a été chargé pour {{title}}.",
+      "noObjectLoadedMultiple": "Téléchargement terminé, mais aucun objet n'a été chargé pour {{count}} couches.",
       "appendWarning": "Les couches sélectionnées seront chargées immédiatement dans le cache actuel.",
       "delete": "Supprimer",
       "confirmDeleteTitle": "Supprimer la couche",

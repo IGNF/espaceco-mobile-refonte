@@ -36,6 +36,7 @@ import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
 import screen from '@/shared/styles/screen.module.css';
 
 import type {
+  OfflineCacheDownloadResult,
   OfflineRasterDownloadPreview,
   OfflineRasterMap,
   OfflineZoneEditorMode,
@@ -242,6 +243,27 @@ export function OfflineManagementPage({
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({
       text: getUserFacingErrorMessage(error, t, 'errors.global.unknown'),
+      duration: 'short',
+      position: 'bottom',
+    });
+  }
+
+  async function showCacheDownloadToast(result: OfflineCacheDownloadResult, successMessage: string): Promise<void> {
+    const emptyLayers = result.layers.filter((layer) => layer.loadedObjectCount === 0);
+
+    if (emptyLayers.length === 0) {
+      await showToastSafe({
+        text: successMessage,
+        duration: 'short',
+        position: 'bottom',
+      });
+      return;
+    }
+
+    await showToastSafe({
+      text: emptyLayers.length === 1
+        ? t('offline.layers.noObjectLoaded', { title: emptyLayers[0].layerTitle })
+        : t('offline.layers.noObjectLoadedMultiple', { count: emptyLayers.length }),
       duration: 'short',
       position: 'bottom',
     });
@@ -708,16 +730,12 @@ export function OfflineManagementPage({
     setIsAddingLayersToCache(true);
     try {
       closeLayerPicker();
-      await downloadCommunityCache({
+      const result = await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: selectedLayers,
         zoneNames: [],
       });
-      await showToastSafe({
-        text: t('offline.cache.layersAddedSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      await showCacheDownloadToast(result, t('offline.cache.layersAddedSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {
@@ -734,16 +752,12 @@ export function OfflineManagementPage({
 
     try {
       setIsLoadZoneDialogOpen(false);
-      await downloadCommunityCache({
+      const result = await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: currentCacheLayers,
         zoneNames: [zoneName],
       });
-      await showToastSafe({
-        text: t('offline.cache.downloadSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      await showCacheDownloadToast(result, t('offline.cache.downloadSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {
@@ -769,16 +783,12 @@ export function OfflineManagementPage({
 
     try {
       setIsLoadZoneDialogOpen(false);
-      await downloadCommunityCache({
+      const result = await downloadCommunityCache({
         communityId: activeCommunityId!,
         layers: [],
         zoneNames: [zoneName],
       });
-      await showToastSafe({
-        text: t('offline.cache.zoneAddedSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      await showCacheDownloadToast(result, t('offline.cache.zoneAddedSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {
@@ -799,12 +809,8 @@ export function OfflineManagementPage({
     setIsRefreshingCache(true);
 
     try {
-      await refreshCommunityCache(activeCommunityId!);
-      await showToastSafe({
-        text: t('offline.cache.refreshSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      const result = await refreshCommunityCache(activeCommunityId!);
+      await showCacheDownloadToast(result, t('offline.cache.refreshSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {
@@ -848,12 +854,8 @@ export function OfflineManagementPage({
     setLayerKeyBeingRefreshed(layerKey);
 
     try {
-      await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
-      await showToastSafe({
-        text: t('offline.layers.refreshSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      const result = await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
+      await showCacheDownloadToast(result, t('offline.layers.refreshSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {

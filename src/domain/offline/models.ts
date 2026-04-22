@@ -22,6 +22,21 @@ export interface OfflineCacheDownloadInput {
   zoneNames: string[];
 }
 
+/**
+ * Runtime summary for one vector download operation.
+ * This is used by the UI only and is not persisted in cache metadata.
+ */
+export interface OfflineLayerDownloadReport {
+  layerKey: string;
+  layerTitle: string;
+  loadedObjectCount: number;
+}
+
+export interface OfflineCacheDownloadResult {
+  cache: OfflineCommunityCache;
+  layers: OfflineLayerDownloadReport[];
+}
+
 export interface OfflineCacheDraftInput {
   communityId: number;
   layers: CommunityLayer[];

@@ -5,8 +5,10 @@ import type { Extent } from 'ol/extent';
 import { boundingExtent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
 import {
+  type OfflineCacheDownloadResult,
   type OfflineCommunityCache,
   type OfflineDownloadProgress,
+  type OfflineLayerDownloadReport,
   type OfflineMode,
   type OfflineCacheDraftInput,
   type OfflineCacheDownloadInput,
@@ -26,6 +28,7 @@ import { OfflineVectorDownloadService } from '@/infra/offline/OfflineVectorDownl
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { EspaceCo_DeviceStorage } from '@/platform/device/storage';
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
+import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { OfflineContext } from './OfflineContext';
 import { OFFLINE_DOWNLOAD_CANCELLED_CODE, OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
@@ -285,7 +288,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       communityId,
       layers,
       zoneNames,
-    }: OfflineCacheDownloadInput): Promise<OfflineCommunityCache> => {
+    }: OfflineCacheDownloadInput): Promise<OfflineCacheDownloadResult> => {
       if (!network.connected) {
         throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
       }
@@ -327,7 +330,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       );
 
       if (existingCache && newZoneExtents.length === 0 && newLayers.length === 0) {
-        return existingCache;
+        return {
+          cache: existingCache,
+          layers: [],
+        };
       }
 
       const steps: Array<{
@@ -406,6 +412,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
           existingCache?.loaded === true
             ? [...existingCache.layers]
             : [];
+        const downloadReports: OfflineLayerDownloadReport[] = [];
 
         for (const step of steps) {
           cleanupSteps.push({
@@ -434,8 +441,16 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
             },
           });
 
+          downloadReports.push(
+            ...downloadedLayers.map((downloadedLayer) => ({
+              layerKey: downloadedLayer.cacheLayer.layerKey,
+              layerTitle: getCommunityLayerTitle(downloadedLayer.cacheLayer.layer),
+              loadedObjectCount: downloadedLayer.loadedObjectCount,
+            }))
+          );
+
           if (step.collectSavedLayers) {
-            savedLayers.push(...downloadedLayers);
+            savedLayers.push(...downloadedLayers.map((downloadedLayer) => downloadedLayer.cacheLayer));
           }
 
           progressOffset += step.tileCount;
@@ -458,7 +473,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
         await offlineCacheRepository.saveCache(savedCache);
         setCaches((currentCaches) => replaceOfflineCache(currentCaches, savedCache));
-        return savedCache;
+        return {
+          cache: savedCache,
+          layers: downloadReports,
+        };
       } catch (error) {
         try {
           for (const step of cleanupSteps) {
@@ -500,7 +518,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    * If redownload fails after the repository delete, local state is cleared to match storage.
    */
   const refreshCommunityCache = useCallback(
-    async (communityId: number): Promise<OfflineCommunityCache> => {
+    async (communityId: number): Promise<OfflineCacheDownloadResult> => {
       if (!network.connected) {
         throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
       }
@@ -536,7 +554,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
    * Refreshes one loaded layer in place on the current cache extents.
    * This keeps the rest of the cache untouched while replacing that layer's downloaded tiles.
    */
-  const refreshCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string): Promise<OfflineCommunityCache> => {
+  const refreshCommunityCacheLayer = useCallback(async (communityId: number, layerKey: string): Promise<OfflineCacheDownloadResult> => {
     if (!network.connected) {
       throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
     }
@@ -560,7 +578,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       });
 
       const nextLayers = offlineCache.layers.map((layer) =>
-        layer.layerKey === layerKey ? refreshedLayer : layer
+        layer.layerKey === layerKey ? refreshedLayer.cacheLayer : layer
       );
       const nextCache: OfflineCommunityCache = {
         ...offlineCache,
@@ -571,7 +589,16 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
       await offlineCacheRepository.saveCache(nextCache);
       setCaches((currentCaches) => replaceOfflineCache(currentCaches, nextCache));
-      return nextCache;
+      return {
+        cache: nextCache,
+        layers: [
+          {
+            layerKey: refreshedLayer.cacheLayer.layerKey,
+            layerTitle: getCommunityLayerTitle(refreshedLayer.cacheLayer.layer),
+            loadedObjectCount: refreshedLayer.loadedObjectCount,
+          },
+        ],
+      };
     } catch (error) {
       if (isAppError(error) && error.code === OFFLINE_DOWNLOAD_CANCELLED_CODE) {
         throw error;
