@@ -16,6 +16,7 @@ interface OfflineZonesSectionProps {
   activeCommunityCache: OfflineCommunityCache | null;
   hasLoadedCache: boolean;
   isDownloading: boolean;
+  zoneNameBeingAddedToCache: string | null;
   onOpenNewZoneDialog: () => void;
   onAddZoneToCache: (zoneName: string) => void;
   onRequestDeleteZone: (zoneName: string) => void;
@@ -26,6 +27,7 @@ export function OfflineZonesSection({
   activeCommunityCache,
   hasLoadedCache,
   isDownloading,
+  zoneNameBeingAddedToCache,
   onOpenNewZoneDialog,
   onAddZoneToCache,
   onRequestDeleteZone,
@@ -54,6 +56,7 @@ export function OfflineZonesSection({
           {zones.map((zone) => {
             const isInCache =
               activeCommunityCache?.zoneNames.includes(zone.name) ?? false;
+            const isAddingToCache = zoneNameBeingAddedToCache === zone.name;
 
             return (
               <div key={zone.name} className={styles.listRow}>
@@ -79,6 +82,7 @@ export function OfflineZonesSection({
                       variant='outline'
                       onClick={() => onAddZoneToCache(zone.name)}
                       disabled={isDownloading}
+                      loading={isAddingToCache}
                       aria-label={t('offline.zones.addToCache')}
                       title={t('offline.zones.addToCache')}
                     >

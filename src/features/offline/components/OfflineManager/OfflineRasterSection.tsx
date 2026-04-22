@@ -20,6 +20,9 @@ interface OfflineRasterSectionProps {
   zones: OfflineZone[];
   rasterScaleOptions: RasterScaleOption[];
   isDownloading: boolean;
+  isPendingRasterPreviewLoading: boolean;
+  rasterMapIdBeingPreviewed: string | null;
+  rasterMapIdBeingRefreshed: string | null;
   onOpenNewRasterMapDialog: () => void;
   onDownloadPendingRasterMaps: () => void;
   onToggleRasterMapVisibility: (mapId: string, visible: boolean) => void;
@@ -33,6 +36,9 @@ export function OfflineRasterSection({
   zones,
   rasterScaleOptions,
   isDownloading,
+  isPendingRasterPreviewLoading,
+  rasterMapIdBeingPreviewed,
+  rasterMapIdBeingRefreshed,
   onOpenNewRasterMapDialog,
   onDownloadPendingRasterMaps,
   onToggleRasterMapVisibility,
@@ -42,6 +48,7 @@ export function OfflineRasterSection({
 }: OfflineRasterSectionProps) {
   const { t } = useTranslation();
   const hasPendingRasterMaps = rasterMaps.some((rasterMap) => !rasterMap.loaded);
+  const isRasterPreviewLoading = isPendingRasterPreviewLoading || rasterMapIdBeingPreviewed !== null;
 
   return (
     <section className={styles.section}>
@@ -60,7 +67,8 @@ export function OfflineRasterSection({
               variant='outline'
               color='secondary'
               onClick={onDownloadPendingRasterMaps}
-              disabled={isDownloading || zones.length === 0}
+              disabled={isDownloading || isRasterPreviewLoading || zones.length === 0}
+              loading={isPendingRasterPreviewLoading}
             >
               {t('offline.raster.loadPending')}
             </Button>
@@ -68,7 +76,7 @@ export function OfflineRasterSection({
           <Button
             className={styles.sectionHeaderButton}
             onClick={onOpenNewRasterMapDialog}
-            disabled={isDownloading}
+            disabled={isDownloading || isRasterPreviewLoading}
           >
             {t('offline.raster.newMap')}
           </Button>
@@ -83,6 +91,8 @@ export function OfflineRasterSection({
             const hasAddableZone = zones.some(
               (zone) => !rasterMap.zoneNames.includes(zone.name)
             );
+            const isPreviewLoading = rasterMapIdBeingPreviewed === rasterMap.id;
+            const isRefreshingRasterMap = rasterMapIdBeingRefreshed === rasterMap.id;
             const refreshedAt = rasterMap.lastRefreshAt
               ? formatDateTime(new Date(rasterMap.lastRefreshAt))
               : null;
@@ -132,7 +142,7 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant={rasterMap.visible ? 'solid' : 'outline'}
                         onClick={() => onToggleRasterMapVisibility(rasterMap.id, !rasterMap.visible)}
-                        disabled={isDownloading}
+                        disabled={isDownloading || isRasterPreviewLoading}
                         aria-label={
                           rasterMap.visible
                             ? t('offline.raster.hide')
@@ -151,7 +161,8 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant='outline'
                         onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'add-zone')}
-                        disabled={isDownloading || !hasAddableZone}
+                        disabled={isDownloading || isRasterPreviewLoading || !hasAddableZone}
+                        loading={isPreviewLoading}
                         aria-label={t('offline.raster.addZone')}
                         title={t('offline.raster.addZone')}
                       >
@@ -162,7 +173,8 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant='outline'
                         onClick={() => onRefreshRasterMap(rasterMap.id)}
-                        disabled={isDownloading}
+                        disabled={isDownloading || isRasterPreviewLoading}
+                        loading={isRefreshingRasterMap}
                         aria-label={t('offline.raster.refresh')}
                         title={t('offline.raster.refresh')}
                       >
@@ -174,7 +186,8 @@ export function OfflineRasterSection({
                       variant='outline'
                       color='secondary'
                       onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'load-map')}
-                      disabled={isDownloading || zones.length === 0}
+                      disabled={isDownloading || isRasterPreviewLoading || zones.length === 0}
+                      loading={isPreviewLoading}
                     >
                       {t('offline.raster.download')}
                     </Button>
@@ -184,7 +197,7 @@ export function OfflineRasterSection({
                     color='danger'
                     variant='outline'
                     onClick={() => onRequestDeleteRasterMap(rasterMap.id)}
-                    disabled={isDownloading}
+                    disabled={isDownloading || isRasterPreviewLoading}
                     aria-label={t('offline.raster.delete')}
                     title={t('offline.raster.delete')}
                   >

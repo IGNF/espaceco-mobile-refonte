@@ -19,6 +19,7 @@ interface OfflineLayersSectionProps {
   selectedLayerKeys: string[];
   isOfflineAllowed: boolean;
   isDownloading: boolean;
+  layerKeyBeingRefreshed: string | null;
   canOpenLayerPicker: boolean;
   onOpenLayerPicker: () => void;
   onRefreshLayer: (layerKey: string) => void;
@@ -31,6 +32,7 @@ export function OfflineLayersSection({
   selectedLayerKeys,
   isOfflineAllowed,
   isDownloading,
+  layerKeyBeingRefreshed,
   canOpenLayerPicker,
   onOpenLayerPicker,
   onRefreshLayer,
@@ -63,6 +65,7 @@ export function OfflineLayersSection({
           {currentCacheLayers.map((layer) => {
             const layerKey = getCommunityLayerKey(layer);
             const isLoaded = hasLoadedCache && selectedLayerKeys.includes(layerKey);
+            const isRefreshingLayer = layerKeyBeingRefreshed === layerKey;
 
             return (
               <div key={layerKey} className={styles.listRow}>
@@ -83,6 +86,7 @@ export function OfflineLayersSection({
                       variant='outline'
                       onClick={() => onRefreshLayer(layerKey)}
                       disabled={isDownloading || !isOfflineAllowed}
+                      loading={isRefreshingLayer}
                       aria-label={t('offline.layers.refresh')}
                       title={t('offline.layers.refresh')}
                     >

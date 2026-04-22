@@ -43,6 +43,7 @@ import type {
 import { OfflineZoneEditorOverlay } from './OfflineZoneEditorOverlay';
 
 import styles from './OfflineManagementPage.module.css';
+import { Divider } from '@/shared/ui/Divider/Divider';
 
 type LayerPickerMode = 'draft-cache' | 'loaded-cache';
 type DeleteAlertState =
@@ -101,6 +102,7 @@ export function OfflineManagementPage({
     rasterMaps,
     zones,
     isDownloading,
+    isCancellingDownload,
     downloadProgress,
     downloadError,
     setOfflineMode,
@@ -135,14 +137,19 @@ export function OfflineManagementPage({
   const [newRasterMapMaxZoom, setNewRasterMapMaxZoom] = useState(15);
   const [rasterZoneDialog, setRasterZoneDialog] = useState<RasterZoneDialogState | null>(null);
   const [rasterDownloadPreview, setRasterDownloadPreview] = useState<RasterDownloadPreviewState | null>(null);
-  const [isRasterPreviewLoading, setIsRasterPreviewLoading] = useState(false);
+  const [rasterMapIdBeingPreviewed, setRasterMapIdBeingPreviewed] = useState<string | null>(null);
+  const [isPendingRasterPreviewLoading, setIsPendingRasterPreviewLoading] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<DeleteAlertState | null>(null);
-
-  useEffect(() => {
-    if (isDownloading) {
-      scrollToTop();
-    }
-  }, [isDownloading]);
+  const [isSavingZone, setIsSavingZone] = useState(false);
+  const [isNewRasterMapSubmitting, setIsNewRasterMapSubmitting] = useState(false);
+  const [zoneNameBeingAddedToCache, setZoneNameBeingAddedToCache] = useState<string | null>(null);
+  const [isLayerPickerSubmitting, setIsLayerPickerSubmitting] = useState(false);
+  const [isAddingLayersToCache, setIsAddingLayersToCache] = useState(false);
+  const [isLoadingInitialCache, setIsLoadingInitialCache] = useState(false);
+  const [isRefreshingCache, setIsRefreshingCache] = useState(false);
+  const [layerKeyBeingRefreshed, setLayerKeyBeingRefreshed] = useState<string | null>(null);
+  const [rasterMapIdBeingRefreshed, setRasterMapIdBeingRefreshed] = useState<string | null>(null);
+  const [isDeleteAlertProcessing, setIsDeleteAlertProcessing] = useState(false);
 
   const eligibleLayers = vectorLayers.filter((layer) => getTableWfsUrl(layer) !== undefined);
   const polygonLayers = eligibleLayers.filter(
@@ -216,6 +223,21 @@ export function OfflineManagementPage({
     rasterZoneDialog?.kind === 'pending-maps'
       ? 'pending-maps'
       : rasterZoneDialog?.mode ?? null;
+  const isRasterZonePreviewLoading =
+    isPendingRasterPreviewLoading || rasterMapIdBeingPreviewed !== null;
+  const isPreparingDownload =
+    isAddingLayersToCache ||
+    isLoadingInitialCache ||
+    isRefreshingCache ||
+    zoneNameBeingAddedToCache !== null ||
+    layerKeyBeingRefreshed !== null ||
+    rasterMapIdBeingRefreshed !== null;
+
+  useEffect(() => {
+    if (isPreparingDownload || isDownloading) {
+      scrollToTop();
+    }
+  }, [isPreparingDownload, isDownloading]);
 
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({
@@ -265,6 +287,8 @@ export function OfflineManagementPage({
   }
 
   async function handleSaveZone(extents: Extent[]) {
+    setIsSavingZone(true);
+
     try {
       await saveZone(zoneEditorState!.name, extents);
       closeZoneEditor();
@@ -275,6 +299,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setIsSavingZone(false);
     }
   }
 
@@ -291,11 +317,6 @@ export function OfflineManagementPage({
     }
   }
 
-  async function confirmDeleteZone(zoneName: string) {
-    setDeleteAlert(null);
-    await handleDeleteZone(zoneName);
-  }
-
   function openNewRasterMapDialog() {
     setNewRasterMapName(`Carte #${rasterMaps.length + 1}`);
     setNewRasterMapLayerName(DEFAULT_GEOPORTAIL_LAYERS[0]);
@@ -305,6 +326,8 @@ export function OfflineManagementPage({
   }
 
   async function handleValidateNewRasterMap() {
+    setIsNewRasterMapSubmitting(true);
+
     try {
       const savedRasterMap = await saveOfflineRasterMapDraft({
         name: newRasterMapName.trim(),
@@ -317,9 +340,8 @@ export function OfflineManagementPage({
           : newRasterMapMaxZoom,
       });
 
-      setIsNewRasterMapDialogOpen(false);
-
       if (zones.length === 0) {
+        setIsNewRasterMapDialogOpen(false);
         await showToastSafe({
           text: t('offline.raster.mapCreated'),
           duration: 'short',
@@ -333,9 +355,11 @@ export function OfflineManagementPage({
           savedRasterMap,
           zones[0].name
         );
+        setIsNewRasterMapDialogOpen(false);
         return;
       }
 
+      setIsNewRasterMapDialogOpen(false);
       setRasterZoneDialog({
         kind: 'single-map',
         mapId: savedRasterMap.id,
@@ -343,6 +367,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setIsNewRasterMapSubmitting(false);
     }
   }
 
@@ -378,7 +404,7 @@ export function OfflineManagementPage({
     zoneName: string
   ) {
     try {
-      setIsRasterPreviewLoading(true);
+      setRasterMapIdBeingPreviewed(rasterMap.id);
 
       const preview = await previewOfflineRasterMapDownload(rasterMap, zoneName);
 
@@ -392,7 +418,7 @@ export function OfflineManagementPage({
     } catch (error) {
       await showOfflineError(error);
     } finally {
-      setIsRasterPreviewLoading(false);
+      setRasterMapIdBeingPreviewed(null);
     }
   }
 
@@ -401,7 +427,7 @@ export function OfflineManagementPage({
    */
   async function handleOpenPendingRasterMapsDownloadPreview(zoneName: string) {
     try {
-      setIsRasterPreviewLoading(true);
+      setIsPendingRasterPreviewLoading(true);
 
       const previews = await Promise.all(
         pendingRasterMaps.map((rasterMap) =>
@@ -438,7 +464,7 @@ export function OfflineManagementPage({
     } catch (error) {
       await showOfflineError(error);
     } finally {
-      setIsRasterPreviewLoading(false);
+      setIsPendingRasterPreviewLoading(false);
     }
   }
 
@@ -499,6 +525,8 @@ export function OfflineManagementPage({
   }
 
   async function handleRefreshRasterMap(mapId: string) {
+    setRasterMapIdBeingRefreshed(mapId);
+
     try {
       await refreshOfflineRasterMap(mapId);
       await showToastSafe({
@@ -508,6 +536,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setRasterMapIdBeingRefreshed(null);
     }
   }
 
@@ -576,19 +606,31 @@ export function OfflineManagementPage({
     return t('offline.cache.confirmDeleteMessage');
   }
 
+  /**
+   * Runs the currently opened delete confirmation.
+   * One shared handler keeps the alert loading state identical for every delete type.
+   */
   async function confirmDeleteAlert() {
-    if (deleteAlert?.kind === 'zone') {
-      await confirmDeleteZone(deleteAlert.zoneName);
-    }
-    else if (deleteAlert?.kind === 'layer') {
-      await confirmDeleteLayer(deleteAlert.layerKey);
-    }
-    else if (deleteAlert?.kind === 'raster-map') {
+    setIsDeleteAlertProcessing(true);
+    const deleteTarget = deleteAlert!;
+
+    try {
+      if (deleteTarget.kind === 'zone') {
+        await handleDeleteZone(deleteTarget.zoneName);
+      }
+      else if (deleteTarget.kind === 'layer') {
+        await handleDeleteLayer(deleteTarget.layerKey);
+      }
+      else if (deleteTarget.kind === 'raster-map') {
+        await handleDeleteRasterMap(deleteTarget.mapId);
+      }
+      else { // Whole cache
+        await handleDeleteCache();
+      }
+
       setDeleteAlert(null);
-      await handleDeleteRasterMap(deleteAlert.mapId);
-    }
-    else { // Whole cache
-      await confirmDeleteCache();
+    } finally {
+      setIsDeleteAlertProcessing(false);
     }
   }
 
@@ -608,6 +650,7 @@ export function OfflineManagementPage({
   }
 
   function closeLayerPicker() {
+    setIsLayerPickerSubmitting(false);
     setLayerPickerMode(null);
     setLayerPickerKeys([]);
   }
@@ -631,6 +674,8 @@ export function OfflineManagementPage({
    * Before first load it only updates the draft cache; after load it starts downloading new layers.
    */
   async function handleValidateLayerPicker() {
+    setIsLayerPickerSubmitting(true);
+
     if (layerPickerMode && layerPickerMode === 'draft-cache') {
       const selectedLayers = eligibleLayers.filter((layer) =>
         layerPickerKeys.includes(getCommunityLayerKey(layer))
@@ -644,6 +689,8 @@ export function OfflineManagementPage({
         closeLayerPicker();
       } catch (error) {
         await showOfflineError(error);
+      } finally {
+        setIsLayerPickerSubmitting(false);
       }
 
       return;
@@ -658,6 +705,7 @@ export function OfflineManagementPage({
       return;
     }
 
+    setIsAddingLayersToCache(true);
     try {
       closeLayerPicker();
       await downloadCommunityCache({
@@ -672,6 +720,9 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setIsLayerPickerSubmitting(false);
+      setIsAddingLayersToCache(false);
     }
   }
 
@@ -679,6 +730,8 @@ export function OfflineManagementPage({
    * Performs the first cache load for one chosen zone.
    */
   async function loadCacheForZone(zoneName: string) {
+    setIsLoadingInitialCache(true);
+
     try {
       setIsLoadZoneDialogOpen(false);
       await downloadCommunityCache({
@@ -693,6 +746,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setIsLoadingInitialCache(false);
     }
   }
 
@@ -710,6 +765,8 @@ export function OfflineManagementPage({
    * Adds one more zone to an already loaded cache without changing its existing layers.
    */
   async function handleAddZoneToCache(zoneName: string) {
+    setZoneNameBeingAddedToCache(zoneName);
+
     try {
       setIsLoadZoneDialogOpen(false);
       await downloadCommunityCache({
@@ -724,6 +781,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setZoneNameBeingAddedToCache(null);
     }
   }
 
@@ -737,6 +796,8 @@ export function OfflineManagementPage({
       return;
     }
 
+    setIsRefreshingCache(true);
+
     try {
       await refreshCommunityCache(activeCommunityId!);
       await showToastSafe({
@@ -746,6 +807,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setIsRefreshingCache(false);
     }
   }
 
@@ -760,11 +823,6 @@ export function OfflineManagementPage({
     } catch (error) {
       await showOfflineError(error);
     }
-  }
-
-  async function confirmDeleteCache() {
-    setDeleteAlert(null);
-    await handleDeleteCache();
   }
 
   const refreshedAt = activeCommunityCache?.lastRefreshAt ? formatDateTime(new Date(activeCommunityCache.lastRefreshAt)) : null;
@@ -786,12 +844,9 @@ export function OfflineManagementPage({
     }
   }
 
-  async function confirmDeleteLayer(layerKey: string) {
-    setDeleteAlert(null);
-    await handleDeleteLayer(layerKey);
-  }
-
   async function handleRefreshLayer(layerKey: string) {
+    setLayerKeyBeingRefreshed(layerKey);
+
     try {
       await refreshCommunityCacheLayer(activeCommunityId!, layerKey);
       await showToastSafe({
@@ -801,6 +856,8 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+    } finally {
+      setLayerKeyBeingRefreshed(null);
     }
   }
 
@@ -829,6 +886,7 @@ export function OfflineManagementPage({
         layer={currentZoneEditorLayer}
         onCenterOnUserLocation={onCenterOnUserLocation}
         isLocating={isLocating}
+        isSaving={isSavingZone}
         onCancel={closeZoneEditor}
         onSave={handleSaveZone}
       />
@@ -854,7 +912,9 @@ export function OfflineManagementPage({
             hasLoadedCache={hasLoadedCache}
             activeCommunityCache={activeCommunityCache}
             refreshedAt={refreshedAt}
+            isPreparingDownload={isPreparingDownload}
             isDownloading={isDownloading}
+            isCancellingDownload={isCancellingDownload}
             downloadProgress={downloadProgress}
             inlineError={inlineError}
             onToggleOfflineMode={(checked) => void handleToggleOfflineMode(checked)}
@@ -866,6 +926,7 @@ export function OfflineManagementPage({
             activeCommunityCache={activeCommunityCache}
             hasLoadedCache={hasLoadedCache}
             isDownloading={isDownloading}
+            zoneNameBeingAddedToCache={zoneNameBeingAddedToCache}
             onOpenNewZoneDialog={openNewZoneDialog}
             onAddZoneToCache={(zoneName) => void handleAddZoneToCache(zoneName)}
             onRequestDeleteZone={(zoneName) => setDeleteAlert({ kind: 'zone', zoneName })}
@@ -877,6 +938,7 @@ export function OfflineManagementPage({
             selectedLayerKeys={selectedLayerKeys}
             isOfflineAllowed={isOfflineAllowed}
             isDownloading={isDownloading}
+            layerKeyBeingRefreshed={layerKeyBeingRefreshed}
             canOpenLayerPicker={canOpenLayerPicker}
             onOpenLayerPicker={openLayerPicker}
             onRefreshLayer={(layerKey) => void handleRefreshLayer(layerKey)}
@@ -893,16 +955,23 @@ export function OfflineManagementPage({
             canRefresh={canRefresh}
             canDeleteCache={canDeleteCache}
             isDownloading={isDownloading}
+            isLoadingInitialCache={isLoadingInitialCache}
+            isRefreshingCache={isRefreshingCache}
             onOpenLoadDialog={handleOpenLoadDialog}
             onRefreshCache={() => void handleRefreshCache()}
             onRequestDeleteCache={() => setDeleteAlert({ kind: 'cache' })}
           />
+
+          <Divider color="light" thickness="thin" width={80} />
 
           <OfflineRasterSection
             rasterMaps={rasterMaps}
             zones={zones}
             rasterScaleOptions={rasterScaleOptions}
             isDownloading={isDownloading}
+            isPendingRasterPreviewLoading={isPendingRasterPreviewLoading}
+            rasterMapIdBeingPreviewed={rasterMapIdBeingPreviewed}
+            rasterMapIdBeingRefreshed={rasterMapIdBeingRefreshed}
             onOpenNewRasterMapDialog={openNewRasterMapDialog}
             onDownloadPendingRasterMaps={openPendingRasterMapsDownload}
             onToggleRasterMapVisibility={(mapId, visible) => void handleToggleRasterMapVisibility(mapId, visible)}
@@ -931,6 +1000,7 @@ export function OfflineManagementPage({
         layerPickerLayers={layerPickerLayers}
         layerPickerKeys={layerPickerKeys}
         areAllLayerPickerLayersSelected={areAllLayerPickerLayersSelected}
+        isLayerPickerSubmitting={isLayerPickerSubmitting}
         onCloseLayerPicker={closeLayerPicker}
         onToggleAllLayerPickerLayers={handleToggleAllLayerPickerLayers}
         onToggleLayerPickerKey={toggleLayerPickerKey}
@@ -940,6 +1010,7 @@ export function OfflineManagementPage({
         onCloseLoadZoneDialog={() => setIsLoadZoneDialogOpen(false)}
         onLoadCacheForZone={(zoneName) => void loadCacheForZone(zoneName)}
         isNewRasterMapDialogOpen={isNewRasterMapDialogOpen}
+        isNewRasterMapSubmitting={isNewRasterMapSubmitting}
         newRasterMapName={newRasterMapName}
         newRasterMapLayerName={newRasterMapLayerName}
         newRasterMapMinZoom={newRasterMapMinZoom}
@@ -947,7 +1018,11 @@ export function OfflineManagementPage({
         geoportailLayerOptions={geoportailLayerOptions}
         rasterScaleOptions={rasterScaleOptions}
         isExpertMode={EXPERT_MODE}
-        onCloseNewRasterMapDialog={() => setIsNewRasterMapDialogOpen(false)}
+        onCloseNewRasterMapDialog={() => {
+          if (!isNewRasterMapSubmitting) {
+            setIsNewRasterMapDialogOpen(false);
+          }
+        }}
         onChangeNewRasterMapName={setNewRasterMapName}
         onChangeNewRasterMapLayerName={setNewRasterMapLayerName}
         onChangeNewRasterMapMinZoom={setNewRasterMapMinZoom}
@@ -958,7 +1033,7 @@ export function OfflineManagementPage({
         rasterZoneDialogSubtitle={rasterMapForZoneDialog?.name}
         rasterZoneDialogZones={rasterZoneDialogZones}
         onCloseRasterZoneDialog={() => setRasterZoneDialog(null)}
-        isRasterPreviewLoading={isRasterPreviewLoading}
+        isRasterPreviewLoading={isRasterZonePreviewLoading}
         rasterDownloadPreview={rasterDownloadPreview?.preview ?? null}
         rasterDownloadPreviewMapName={rasterDownloadPreview?.mapName ?? null}
         rasterDownloadPreviewZoneName={rasterDownloadPreview?.zoneName ?? null}
@@ -970,7 +1045,12 @@ export function OfflineManagementPage({
         isDeleteAlertOpen={deleteAlert !== null}
         deleteAlertTitle={getDeleteAlertTitle()}
         deleteAlertSubtitle={getDeleteAlertSubtitle()}
-        onCloseDeleteAlert={() => setDeleteAlert(null)}
+        onCloseDeleteAlert={() => {
+          if (!isDeleteAlertProcessing) {
+            setDeleteAlert(null);
+          }
+        }}
+        isDeleteAlertProcessing={isDeleteAlertProcessing}
         onConfirmDeleteAlert={() => {
           void confirmDeleteAlert();
         }}

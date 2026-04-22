@@ -16,6 +16,8 @@ interface OfflineCacheSectionProps {
   canRefresh: boolean;
   canDeleteCache: boolean;
   isDownloading: boolean;
+  isLoadingInitialCache: boolean;
+  isRefreshingCache: boolean;
   onOpenLoadDialog: () => void;
   onRefreshCache: () => void;
   onRequestDeleteCache: () => void;
@@ -31,6 +33,8 @@ export function OfflineCacheSection({
   canRefresh,
   canDeleteCache,
   isDownloading,
+  isLoadingInitialCache,
+  isRefreshingCache,
   onOpenLoadDialog,
   onRefreshCache,
   onRequestDeleteCache,
@@ -62,8 +66,8 @@ export function OfflineCacheSection({
           <Button
             fullWidth
             onClick={onOpenLoadDialog}
-            disabled={!canLoadInitialCache}
-            loading={isDownloading}
+            disabled={!canLoadInitialCache || isLoadingInitialCache}
+            loading={isLoadingInitialCache || isDownloading}
           >
             {t('offline.cache.download')}
           </Button>
@@ -74,7 +78,8 @@ export function OfflineCacheSection({
             color='secondary'
             variant='outline'
             onClick={onRefreshCache}
-            disabled={!canRefresh}
+            disabled={!canRefresh || isRefreshingCache}
+            loading={isRefreshingCache || isDownloading}
           >
             {t('offline.cache.refresh')}
           </Button>

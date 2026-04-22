@@ -14,6 +14,8 @@ export interface AlertButton {
 	onClick: () => void;
 	color?: ButtonColor;
 	variant?: ButtonVariant;
+	disabled?: boolean;
+	loading?: boolean;
 }
 
 export interface AlertProps {
@@ -98,6 +100,8 @@ export function Alert({
 									color={btn.color}
 									variant={btn.variant}
 									onClick={btn.onClick}
+									disabled={btn.disabled}
+									loading={btn.loading}
 								>
 									{btn.label}
 								</Button>

@@ -58,11 +58,34 @@ async function getNetworkStatus(): Promise<OfflineNetworkStatus> {
   }
 }
 
+function removeOfflineCache(currentCaches: OfflineCommunityCache[], communityId: number): OfflineCommunityCache[] {
+  return currentCaches.filter((cache) => cache.communityId !== communityId);
+}
+
+function removeOfflineRasterMap(currentMaps: OfflineRasterMap[], mapId: string): OfflineRasterMap[] {
+  return currentMaps.filter((rasterMap) => rasterMap.id !== mapId);
+}
+
+/**
+ * Replaces one cache in React state after the repository write has succeeded.
+ */
+function replaceOfflineCache(currentCaches: OfflineCommunityCache[], nextCache: OfflineCommunityCache): OfflineCommunityCache[] {
+  return [...removeOfflineCache(currentCaches, nextCache.communityId), nextCache];
+}
+
+/**
+ * Replaces one raster map in React state after the repository write has succeeded.
+ */
+function replaceOfflineRasterMap(currentMaps: OfflineRasterMap[], nextMap: OfflineRasterMap): OfflineRasterMap[] {
+  return [...removeOfflineRasterMap(currentMaps, nextMap.id), nextMap];
+}
+
 export function OfflineProvider({ children }: OfflineProviderProps) {
   const { activeCommunity } = useCommunity();
   const activeCommunityId = activeCommunity?.id ?? null;
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isCancellingDownload, setIsCancellingDownload] = useState(false);
   const [downloadProgress, setDownloadProgress] =
     useState<OfflineDownloadProgress | null>(null);
   const [downloadError, setDownloadError] = useState<AppError | null>(null);
@@ -74,7 +97,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
   /**
    * Reloads the persisted offline state used by the provider.
-   * This keeps repositories as the source of truth after each write operation.
+   * This is used for initial hydration; write operations update state directly.
    */
   const refresh = useCallback(async () => {
     setIsLoading(true);
@@ -164,20 +187,32 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
   const saveZone = useCallback(async (name: string, extents: Extent | Extent[]) => {
     const zone = await offlineZonesRepository.saveZone(name, extents);
-    await refresh();
+
+    setZones((currentZones) => {
+      const otherZones = currentZones.filter((currentZone) => currentZone.name !== zone.name);
+      const nextZones = [...otherZones, zone];
+      nextZones.sort((firstZone, secondZone) => firstZone.name.localeCompare(secondZone.name));
+
+      return nextZones;
+    });
+
     return zone;
-  }, [refresh]);
+  }, []);
 
   const appendZoneExtent = useCallback(async (name: string, extent: Extent) => {
     const zone = await offlineZonesRepository.appendExtent(name, extent);
-    await refresh();
+    setZones((currentZones) =>
+      currentZones.map((currentZone) =>
+        currentZone.name === zone.name ? zone : currentZone
+      )
+    );
     return zone;
-  }, [refresh]);
+  }, []);
 
   const deleteZone = useCallback(async (name: string) => {
     await offlineZonesRepository.deleteZone(name);
-    await refresh();
-  }, [refresh]);
+    setZones((currentZones) => currentZones.filter((zone) => zone.name !== name));
+  }, []);
 
   /**
    * Saves the pre-load cache definition created by "Ajouter des couches".
@@ -197,7 +232,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       if (layers.length === 0) {
         if (existingDraftCache) {
           await offlineCacheRepository.deleteCache(communityId);
-          await refresh();
+          setCaches((currentCaches) => removeOfflineCache(currentCaches, communityId));
         }
 
         return null;
@@ -234,10 +269,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       };
 
       await offlineCacheRepository.saveCache(savedCache);
-      await refresh();
+      setCaches((currentCaches) => replaceOfflineCache(currentCaches, savedCache));
+
       return savedCache;
     },
-    [activeCommunity?.name, activeCommunityId, isOfflineAllowed, refresh]
+    [activeCommunity?.name, activeCommunityId, isOfflineAllowed]
   );
 
   /**
@@ -356,6 +392,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       }> = [];
 
       setIsDownloading(true);
+      setIsCancellingDownload(false);
       setDownloadError(null);
       setDownloadProgress(null);
 
@@ -420,7 +457,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         };
 
         await offlineCacheRepository.saveCache(savedCache);
-        await refresh();
+        setCaches((currentCaches) => replaceOfflineCache(currentCaches, savedCache));
         return savedCache;
       } catch (error) {
         try {
@@ -445,6 +482,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         throw appError;
       } finally {
         setIsDownloading(false);
+        setIsCancellingDownload(false);
         setDownloadProgress(null);
       }
     },
@@ -453,13 +491,13 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       activeCommunityId,
       isOfflineAllowed,
       network.connected,
-      refresh,
     ]
   );
 
   /**
    * Refresh currently means "delete then redownload" for the whole cache.
-   * This keeps the behavior simple until an incremental refresh strategy is added.
+   * The current UI state is kept while redownloading so offline mode does not flicker.
+   * If redownload fails after the repository delete, local state is cleared to match storage.
    */
   const refreshCommunityCache = useCallback(
     async (communityId: number): Promise<OfflineCommunityCache> => {
@@ -480,11 +518,16 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       });
       await offlineCacheRepository.deleteCache(communityId);
 
-      return await downloadCommunityCache({
-        communityId,
-        layers: offlineCache.layers.map((cacheLayer) => cacheLayer.layer),
-        zoneNames: offlineCache.zoneNames,
-      });
+      try {
+        return await downloadCommunityCache({
+          communityId,
+          layers: offlineCache.layers.map((cacheLayer) => cacheLayer.layer),
+          zoneNames: offlineCache.zoneNames,
+        });
+      } catch (error) {
+        setCaches((currentCaches) => removeOfflineCache(currentCaches, communityId));
+        throw error;
+      }
     },
     [activeCommunityId, downloadCommunityCache, isOfflineAllowed, network.connected]
   );
@@ -502,6 +545,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     const cacheLayer = offlineCache.layers.find((layer) => layer.layerKey === layerKey)!;
 
     setIsDownloading(true);
+    setIsCancellingDownload(false);
     setDownloadError(null);
     setDownloadProgress(null);
 
@@ -526,7 +570,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       };
 
       await offlineCacheRepository.saveCache(nextCache);
-      await refresh();
+      setCaches((currentCaches) => replaceOfflineCache(currentCaches, nextCache));
       return nextCache;
     } catch (error) {
       if (isAppError(error) && error.code === OFFLINE_DOWNLOAD_CANCELLED_CODE) {
@@ -538,10 +582,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       throw appError;
     } finally {
       setIsDownloading(false);
+      setIsCancellingDownload(false);
       setDownloadProgress(null);
     }
   },
-    [network.connected, refresh]
+    [network.connected]
   );
 
   /**
@@ -567,11 +612,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       };
 
       await offlineRasterMapRepository.saveMap(savedRasterMap);
-      setRasterMaps((previousMaps) =>
-        [...previousMaps, savedRasterMap].sort((firstMap, secondMap) =>
-          firstMap.name.localeCompare(secondMap.name)
-        )
-      );
+      setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, savedRasterMap));
       return savedRasterMap;
     },
     []
@@ -633,6 +674,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       });
 
       setIsDownloading(true);
+      setIsCancellingDownload(false);
       setDownloadError(null);
       setDownloadProgress(null);
 
@@ -668,7 +710,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         }
 
         await offlineRasterMapRepository.saveMap(savedRasterMap);
-        await refresh();
+        setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, savedRasterMap));
         return savedRasterMap;
       } catch (error) {
         if (isAppError(error) && error.code === OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE) {
@@ -680,10 +722,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         throw appError;
       } finally {
         setIsDownloading(false);
+        setIsCancellingDownload(false);
         setDownloadProgress(null);
       }
     },
-    [network.connected, refresh]
+    [network.connected]
   );
 
   /**
@@ -698,6 +741,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
 
       setIsDownloading(true);
+      setIsCancellingDownload(false);
       setDownloadError(null);
       setDownloadProgress(null);
 
@@ -717,7 +761,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         };
 
         await offlineRasterMapRepository.saveMap(nextRasterMap);
-        await refresh();
+        setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, nextRasterMap));
         return nextRasterMap;
       } catch (error) {
         if (isAppError(error) && error.code === OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE) {
@@ -729,10 +773,11 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         throw appError;
       } finally {
         setIsDownloading(false);
+        setIsCancellingDownload(false);
         setDownloadProgress(null);
       }
     },
-    [network.connected, refresh]
+    [network.connected]
   );
 
   const setOfflineRasterMapVisibility = useCallback(
@@ -743,12 +788,21 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         ...offlineRasterMap,
         visible,
       });
-      await refresh();
+      setRasterMaps((currentMaps) =>
+        currentMaps.map((rasterMap) =>
+          rasterMap.id === mapId ? { ...rasterMap, visible } : rasterMap
+        )
+      );
     },
-    [refresh]
+    []
   );
 
+  /**
+   * Requests cancellation on both download services.
+   * Services still decide when the current network/storage operation can stop safely.
+   */
   const cancelOfflineDownload = useCallback(() => {
+    setIsCancellingDownload(true);
     offlineRasterDownloadService.cancel();
     offlineVectorDownloadService.cancel();
   }, []);
@@ -773,17 +827,19 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
     if (nextLayers.length === 0) {
       await offlineCacheRepository.deleteCache(communityId);
-      await refresh();
+      setCaches((currentCaches) => removeOfflineCache(currentCaches, communityId));
       return;
     }
 
-    await offlineCacheRepository.saveCache({
+    const nextCache: OfflineCommunityCache = {
       ...offlineCache,
       layerKeys: nextLayers.map((layer) => layer.layerKey),
       layers: nextLayers,
-    });
-    await refresh();
-  }, [refresh]);
+    };
+
+    await offlineCacheRepository.saveCache(nextCache);
+    setCaches((currentCaches) => replaceOfflineCache(currentCaches, nextCache));
+  }, []);
 
   /**
    * Deletes both the downloaded data and the persisted cache metadata for one community.
@@ -797,8 +853,8 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       extents: offlineCache.extents,
     });
     await offlineCacheRepository.deleteCache(communityId);
-    await refresh();
-  }, [refresh]);
+    setCaches((currentCaches) => removeOfflineCache(currentCaches, communityId));
+  }, []);
 
   /**
    * Deletes one raster map definition and all its downloaded tiles.
@@ -806,8 +862,8 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const deleteOfflineRasterMap = useCallback(async (mapId: string) => {
     await offlineRasterDownloadService.deleteMapData(mapId);
     await offlineRasterMapRepository.deleteMap(mapId);
-    await refresh();
-  }, [refresh]);
+    setRasterMaps((currentMaps) => removeOfflineRasterMap(currentMaps, mapId));
+  }, []);
 
   const value = {
     mode,
@@ -822,6 +878,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     zones,
     isLoading,
     isDownloading,
+    isCancellingDownload,
     downloadProgress,
     downloadError,
     caches,

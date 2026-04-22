@@ -43,6 +43,7 @@ interface OfflineDialogsProps {
   layerPickerLayers: CommunityLayer[];
   layerPickerKeys: string[];
   areAllLayerPickerLayersSelected: boolean;
+  isLayerPickerSubmitting: boolean;
   onCloseLayerPicker: () => void;
   onToggleAllLayerPickerLayers: (checked: boolean) => void;
   onToggleLayerPickerKey: (layerKey: string) => void;
@@ -52,6 +53,7 @@ interface OfflineDialogsProps {
   onCloseLoadZoneDialog: () => void;
   onLoadCacheForZone: (zoneName: string) => void;
   isNewRasterMapDialogOpen: boolean;
+  isNewRasterMapSubmitting: boolean;
   newRasterMapName: string;
   newRasterMapLayerName: string;
   newRasterMapMinZoom: number;
@@ -81,6 +83,7 @@ interface OfflineDialogsProps {
   deleteAlertTitle: string;
   deleteAlertSubtitle: string;
   onCloseDeleteAlert: () => void;
+  isDeleteAlertProcessing: boolean;
   onConfirmDeleteAlert: () => void;
 }
 
@@ -102,6 +105,7 @@ export function OfflineDialogs({
   layerPickerLayers,
   layerPickerKeys,
   areAllLayerPickerLayersSelected,
+  isLayerPickerSubmitting,
   onCloseLayerPicker,
   onToggleAllLayerPickerLayers,
   onToggleLayerPickerKey,
@@ -111,6 +115,7 @@ export function OfflineDialogs({
   onCloseLoadZoneDialog,
   onLoadCacheForZone,
   isNewRasterMapDialogOpen,
+  isNewRasterMapSubmitting,
   newRasterMapName,
   newRasterMapLayerName,
   newRasterMapMinZoom,
@@ -140,6 +145,7 @@ export function OfflineDialogs({
   deleteAlertTitle,
   deleteAlertSubtitle,
   onCloseDeleteAlert,
+  isDeleteAlertProcessing,
   onConfirmDeleteAlert,
 }: OfflineDialogsProps) {
   const { t } = useTranslation();
@@ -245,7 +251,7 @@ export function OfflineDialogs({
 
       <Alert
         isOpen={layerPickerMode !== null}
-        onClose={onCloseLayerPicker}
+        onClose={isLayerPickerSubmitting ? () => undefined : onCloseLayerPicker}
         title={t('offline.cache.addLayers')}
         subtitle={
           layerPickerMode === 'loaded-cache'
@@ -270,6 +276,7 @@ export function OfflineDialogs({
                   onChange={onToggleAllLayerPickerLayers}
                   label={t('offline.layers.selectAll')}
                   color='primary'
+                  disabled={isLayerPickerSubmitting}
                 />
               </div>
             )}
@@ -283,6 +290,7 @@ export function OfflineDialogs({
                   label={getCommunityLayerTitle(layer)}
                   checked={layerPickerKeys.includes(layerKey)}
                   onChange={() => onToggleLayerPickerKey(layerKey)}
+                  disabled={isLayerPickerSubmitting}
                 />
               );
             })}
@@ -293,10 +301,14 @@ export function OfflineDialogs({
               variant='outline'
               color='secondary'
               onClick={onCloseLayerPicker}
+              disabled={isLayerPickerSubmitting}
             >
               {t('offline.dialog.cancel')}
             </Button>
-            <Button onClick={onValidateLayerPicker}>
+            <Button
+              onClick={onValidateLayerPicker}
+              loading={isLayerPickerSubmitting}
+            >
               {t('offline.dialog.validate')}
             </Button>
           </div>
@@ -339,6 +351,7 @@ export function OfflineDialogs({
               value={newRasterMapName}
               onChange={(event) => onChangeNewRasterMapName(event.target.value)}
               placeholder={t('offline.raster.namePlaceholder')}
+              disabled={isNewRasterMapSubmitting}
             />
           </label>
 
@@ -348,6 +361,7 @@ export function OfflineDialogs({
               className={inputs.select}
               value={newRasterMapLayerName}
               onChange={(event) => onChangeNewRasterMapLayerName(event.target.value)}
+              disabled={isNewRasterMapSubmitting}
             >
               {geoportailLayerOptions.map((layerOption) => (
                 <option key={layerOption.name} value={layerOption.name}>
@@ -365,6 +379,7 @@ export function OfflineDialogs({
                   className={inputs.select}
                   value={newRasterMapMinZoom}
                   onChange={(event) => onChangeNewRasterMapMinZoom(Number(event.target.value))}
+                  disabled={isNewRasterMapSubmitting}
                 >
                   {rasterScaleOptions.map((scaleOption) => (
                     <option key={scaleOption.value} value={scaleOption.value}>
@@ -381,6 +396,7 @@ export function OfflineDialogs({
                 className={inputs.select}
                 value={newRasterMapMaxZoom}
                 onChange={(event) => onChangeNewRasterMapMaxZoom(Number(event.target.value))}
+                disabled={isNewRasterMapSubmitting}
               >
                 {rasterScaleOptions.map((scaleOption) => (
                   <option key={scaleOption.value} value={scaleOption.value}>
@@ -396,12 +412,14 @@ export function OfflineDialogs({
               variant='outline'
               color='secondary'
               onClick={onCloseNewRasterMapDialog}
+              disabled={isNewRasterMapSubmitting}
             >
               {t('offline.dialog.cancel')}
             </Button>
             <Button
               onClick={onValidateNewRasterMap}
               disabled={newRasterMapName.trim().length === 0}
+              loading={isNewRasterMapSubmitting}
             >
               {t('offline.dialog.validate')}
             </Button>
@@ -411,7 +429,7 @@ export function OfflineDialogs({
 
       <Alert
         isOpen={isRasterZoneDialogOpen}
-        onClose={onCloseRasterZoneDialog}
+        onClose={isRasterPreviewLoading ? () => undefined : onCloseRasterZoneDialog}
         title={rasterZoneDialogTitle}
         subtitle={rasterZoneDialogSubtitle}
       >
@@ -505,11 +523,13 @@ export function OfflineDialogs({
             label: t('offline.dialog.delete'),
             onClick: onConfirmDeleteAlert,
             color: 'danger',
+            loading: isDeleteAlertProcessing,
           },
           {
             label: t('offline.dialog.cancel'),
             onClick: onCloseDeleteAlert,
             variant: 'outline',
+            disabled: isDeleteAlertProcessing,
           },
         ]}
       />

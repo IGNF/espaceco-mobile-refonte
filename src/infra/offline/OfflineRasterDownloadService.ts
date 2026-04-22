@@ -24,9 +24,15 @@ interface RasterTileEntry {
 
 export class OfflineRasterDownloadService {
   private isCancelled = false;
+  private currentAbortController: AbortController | null = null;
 
+  /**
+   * Stops the current tile request immediately when possible.
+   * The download loop still normalizes the result to the app cancellation error.
+   */
   cancel(): void {
     this.isCancelled = true;
+    this.currentAbortController?.abort();
   }
 
   countTiles(params: {
@@ -100,13 +106,24 @@ export class OfflineRasterDownloadService {
         }
 
         const tileEntry = tileEntries[index];
-        const response = await fetch(tileEntry.url);
+        const abortController = new AbortController();
+        this.currentAbortController = abortController;
+
+        const response = await fetch(tileEntry.url, {
+          signal: abortController.signal,
+        });
 
         if (!response.ok) {
           throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: `Raster tile download failed with status ${response.status}` });
         }
 
         const blob = await response.blob();
+        this.currentAbortController = null;
+
+        if (this.isCancelled) {
+          this.throwCancelledDownload();
+        }
+
         await cacheStorage.saveTile(tileEntry.key, blob);
         savedKeys.push(tileEntry.key);
 
@@ -126,10 +143,25 @@ export class OfflineRasterDownloadService {
         await cacheStorage.deleteTile(key);
       }
 
+      if (
+        this.isCancelled ||
+        (error instanceof Error && error.name === 'AbortError')
+      ) {
+        this.throwCancelledDownload();
+      }
+
       throw error;
     } finally {
+      this.currentAbortController = null;
       this.isCancelled = false;
     }
+  }
+
+  /**
+   * Uses one cancellation error shape for manual cancellation and aborted fetches.
+   */
+  private throwCancelledDownload(): never {
+    throw new AppError({ kind: 'validation', translationKey: 'offline.status.cancelled', message: 'Offline raster download cancelled', retryable: false, code: OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE });
   }
 
   async deleteMapData(rasterMapId: string): Promise<void> {

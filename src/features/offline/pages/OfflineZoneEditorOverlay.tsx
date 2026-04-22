@@ -40,6 +40,7 @@ interface OfflineZoneEditorOverlayProps {
   layer: CommunityLayer | null;
   onCenterOnUserLocation?: () => Promise<void>;
   isLocating?: boolean;
+  isSaving?: boolean;
   onCancel: () => void;
   onSave: (extents: Extent[]) => Promise<void>;
 }
@@ -82,6 +83,7 @@ export function OfflineZoneEditorOverlay({
   layer,
   onCenterOnUserLocation,
   isLocating = false,
+  isSaving = false,
   onCancel,
   onSave,
 }: OfflineZoneEditorOverlayProps) {
@@ -356,7 +358,7 @@ export function OfflineZoneEditorOverlay({
         </div>
 
         <div className={styles.headerCardActions}>
-          <Button variant='solid' color='light' onClick={onCancel}>
+          <Button variant='solid' color='light' onClick={onCancel} disabled={isSaving}>
             {t('offline.editor.cancel')}
           </Button>
         </div>
@@ -405,13 +407,18 @@ export function OfflineZoneEditorOverlay({
             color='secondary'
             variant='outline'
             onClick={addCurrentSelection}
-            disabled={!canAddCurrentSelection}
+            disabled={!canAddCurrentSelection || isSaving}
           >
             {mode === 'custom'
               ? t('offline.editor.addVisibleExtent')
               : t('offline.editor.addSelectedObjects')}
           </Button>
-          <Button fullWidth onClick={() => void handleSave()} disabled={!canSave}>
+          <Button
+            fullWidth
+            onClick={() => void handleSave()}
+            disabled={!canSave}
+            loading={isSaving}
+          >
             {t('offline.editor.validate')}
           </Button>
         </div>

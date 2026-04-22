@@ -21,7 +21,11 @@ interface OfflineStatusSectionProps {
   hasLoadedCache: boolean;
   activeCommunityCache: OfflineCommunityCache | null;
   refreshedAt: string | null;
+  /** True while the app is preparing a download but does not have tile progress yet. */
+  isPreparingDownload: boolean;
   isDownloading: boolean;
+  /** True after the user taps cancel and before the active download service stops. */
+  isCancellingDownload: boolean;
   downloadProgress: OfflineDownloadProgress | null;
   inlineError: string | null;
   onToggleOfflineMode: (checked: boolean) => void;
@@ -36,7 +40,9 @@ export function OfflineStatusSection({
   hasLoadedCache,
   activeCommunityCache,
   refreshedAt,
+  isPreparingDownload,
   isDownloading,
+  isCancellingDownload,
   downloadProgress,
   inlineError,
   onToggleOfflineMode,
@@ -101,36 +107,48 @@ export function OfflineStatusSection({
         )}
       </div>
 
-      {isDownloading && downloadProgress && (
+      {(isPreparingDownload || isDownloading) && (
         <div className={styles.progressSection}>
-          <p className={styles.summaryTitle}>{t('offline.status.loading')}</p>
-          <div className={styles.progressBar} aria-hidden='true'>
-            <div
-              className={styles.progressFill}
-              style={{ width: `${downloadProgress.percent}%` }}
-            />
-          </div>
-          <p className={typography.caption}>
-            {t('offline.status.progress', {
-              current: downloadProgress.downloadedTileCount,
-              total: downloadProgress.totalTileCount,
-              percent: downloadProgress.percent,
-            })}
+          <p className={styles.summaryTitle}>
+            {isCancellingDownload
+              ? t('offline.status.cancelling')
+              : downloadProgress
+                ? t('offline.status.loading')
+                : t('offline.status.preparing')}
           </p>
-          <p className={typography.caption}>
-            {t('offline.status.currentLayer', {
-              title: downloadProgress.currentLayerTitle,
-            })}
-          </p>
-          <div className={styles.progressActions}>
-            <Button
-              variant='ghost'
-              color='danger'
-              onClick={onCancelDownload}
-            >
-              {t('offline.status.cancel')}
-            </Button>
-          </div>
+          {downloadProgress && (
+            <>
+              <div className={styles.progressBar} aria-hidden='true'>
+                <div
+                  className={styles.progressFill}
+                  style={{ width: `${downloadProgress.percent}%` }}
+                />
+              </div>
+              <p className={typography.caption}>
+                {t('offline.status.progress', {
+                  current: downloadProgress.downloadedTileCount,
+                  total: downloadProgress.totalTileCount,
+                  percent: downloadProgress.percent,
+                })}
+              </p>
+              <p className={typography.caption}>
+                {t('offline.status.currentLayer', {
+                  title: downloadProgress.currentLayerTitle,
+                })}
+              </p>
+              <div className={styles.progressActions}>
+                <Button
+                  variant='ghost'
+                  color='danger'
+                  onClick={onCancelDownload}
+                  disabled={isCancellingDownload}
+                  loading={isCancellingDownload}
+                >
+                  {t('offline.status.cancel')}
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 

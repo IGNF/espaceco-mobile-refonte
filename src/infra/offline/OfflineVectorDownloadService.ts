@@ -115,6 +115,8 @@ export class OfflineVectorDownloadService {
             tileExtent,
             preparedLayer.resolution
           );
+          this.throwIfCancelled();
+
           preparedLayer.source.setLoading(true);
           preparedLayer.source.clear(true);
           preparedLayer.source.setLoading(false);
