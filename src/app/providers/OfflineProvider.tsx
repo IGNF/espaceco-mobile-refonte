@@ -632,6 +632,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         layerName,
         minZoom,
         maxZoom,
+        failedTileCoords: [],
         zoneNames: [],
         extents: [],
         visible: true,
@@ -694,11 +695,6 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       }
 
       const excludedExtents = offlineRasterMap.loaded ? offlineRasterMap.extents : undefined;
-      const totalTileCount = offlineRasterDownloadService.countTiles({
-        rasterMap: offlineRasterMap,
-        extents: nextExtents,
-        excludedExtents,
-      });
 
       setIsDownloading(true);
       setIsCancellingDownload(false);
@@ -706,7 +702,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       setDownloadProgress(null);
 
       try {
-        await offlineRasterDownloadService.downloadMap({
+        const downloadResult = await offlineRasterDownloadService.downloadMap({
           rasterMap: offlineRasterMap,
           extents: nextExtents,
           excludedExtents,
@@ -716,25 +712,21 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         });
 
         const now = new Date().toISOString();
+        const isLoaded = offlineRasterMap.loaded || downloadResult.downloadedTileCount > 0;
+        const failedTileCoords = offlineRasterMap.loaded
+          ? [...offlineRasterMap.failedTileCoords, ...downloadResult.failedTileCoords]
+          : downloadResult.failedTileCoords;
         const savedRasterMap: OfflineRasterMap = {
           ...offlineRasterMap,
+          failedTileCoords,
           zoneNames: nextZoneNames,
           extent: nextUnionExtent,
           extents: nextExtents,
-          loaded: true,
-          loadedAt: offlineRasterMap.loadedAt ?? now,
+          loaded: isLoaded,
+          loadedAt: isLoaded ? offlineRasterMap.loadedAt ?? now : offlineRasterMap.loadedAt,
           lastRefreshAt: now,
           visible: offlineRasterMap.visible,
         };
-
-        if (totalTileCount === 0) {
-          setDownloadProgress({
-            currentLayerTitle: offlineRasterMap.name,
-            downloadedTileCount: 0,
-            totalTileCount: 0,
-            percent: 100,
-          });
-        }
 
         await offlineRasterMapRepository.saveMap(savedRasterMap);
         setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, savedRasterMap));
@@ -773,7 +765,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       setDownloadProgress(null);
 
       try {
-        await offlineRasterDownloadService.downloadMap({
+        const downloadResult = await offlineRasterDownloadService.downloadMap({
           rasterMap: offlineRasterMap,
           extents: offlineRasterMap.extents,
           onProgress: (progress) => {
@@ -781,10 +773,67 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
           },
         });
 
+        const now = new Date().toISOString();
+        const isLoaded = offlineRasterMap.loaded || downloadResult.downloadedTileCount > 0;
         const nextRasterMap: OfflineRasterMap = {
           ...offlineRasterMap,
+          failedTileCoords: downloadResult.failedTileCoords,
           extent: offlineRasterMap.extent ?? boundingExtent(offlineRasterMap.extents),
-          lastRefreshAt: new Date().toISOString(),
+          loaded: isLoaded,
+          loadedAt: isLoaded ? offlineRasterMap.loadedAt ?? now : offlineRasterMap.loadedAt,
+          lastRefreshAt: now,
+        };
+
+        await offlineRasterMapRepository.saveMap(nextRasterMap);
+        setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, nextRasterMap));
+        return nextRasterMap;
+      } catch (error) {
+        if (isAppError(error) && error.code === OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE) {
+          throw error;
+        }
+
+        const appError = toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.unknown' });
+        setDownloadError(appError);
+        throw appError;
+      } finally {
+        setIsDownloading(false);
+        setIsCancellingDownload(false);
+        setDownloadProgress(null);
+      }
+    },
+    [network.connected]
+  );
+
+  const retryOfflineRasterMapFailedTiles = useCallback(
+    async (mapId: string): Promise<OfflineRasterMap> => {
+      if (!network.connected) {
+        throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: 'A network connection is required to download offline data' });
+      }
+
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+
+      setIsDownloading(true);
+      setIsCancellingDownload(false);
+      setDownloadError(null);
+      setDownloadProgress(null);
+
+      try {
+        const downloadResult = await offlineRasterDownloadService.retryFailedTiles({
+          rasterMap: offlineRasterMap,
+          failedTileCoords: offlineRasterMap.failedTileCoords,
+          onProgress: (progress) => {
+            setDownloadProgress(progress);
+          },
+        });
+
+        const now = new Date().toISOString();
+        const isLoaded = offlineRasterMap.loaded || downloadResult.downloadedTileCount > 0;
+        const nextRasterMap: OfflineRasterMap = {
+          ...offlineRasterMap,
+          failedTileCoords: downloadResult.failedTileCoords,
+          loaded: isLoaded,
+          loadedAt: isLoaded ? offlineRasterMap.loadedAt ?? now : offlineRasterMap.loadedAt,
+          lastRefreshAt: now,
         };
 
         await offlineRasterMapRepository.saveMap(nextRasterMap);
@@ -937,6 +986,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     previewOfflineRasterMapDownload,
     downloadOfflineRasterMap,
     refreshOfflineRasterMap,
+    retryOfflineRasterMapFailedTiles,
     setOfflineRasterMapVisibility,
     renameOfflineRasterMap,
     cancelOfflineDownload,

@@ -10,14 +10,21 @@ const OFFLINE_RASTER_MAPS_STORAGE_KEY = storageKey('OFFLINE_RASTER_MAPS');
 export class OfflineRasterMapRepository {
   async listMaps(): Promise<OfflineRasterMap[]> {
     const maps = await this.getAllMaps();
-    return Object.values(maps).sort((firstMap, secondMap) =>
+    return Object.values(maps).map((map) => ({
+      ...map,
+      failedTileCoords: map.failedTileCoords ?? [],
+    })).sort((firstMap, secondMap) =>
       firstMap.name.localeCompare(secondMap.name)
     );
   }
 
   async getMap(mapId: string): Promise<OfflineRasterMap | null> {
     const maps = await this.getAllMaps();
-    return maps[mapId] ?? null;
+    const map = maps[mapId];
+    return !map ? null : {
+      ...map,
+      failedTileCoords: map.failedTileCoords ?? [],
+    };
   }
 
   async saveMap(offlineRasterMap: OfflineRasterMap): Promise<OfflineRasterMap> {

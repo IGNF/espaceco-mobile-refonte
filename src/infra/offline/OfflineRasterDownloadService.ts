@@ -12,6 +12,7 @@ import { OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offli
 import type {
   OfflineDownloadProgress,
   OfflineRasterDownloadPreview,
+  OfflineRasterDownloadResult,
   OfflineRasterMap,
 } from '@/domain/offline/models';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
@@ -19,6 +20,7 @@ import { getOfflineRasterTileKey } from '@/infra/map/openlayers/offlineRasterLay
 
 interface RasterTileEntry {
   key: string;
+  tileCoord: number[];
   url: string;
 }
 
@@ -35,14 +37,6 @@ export class OfflineRasterDownloadService {
     this.currentAbortController?.abort();
   }
 
-  countTiles(params: {
-    rasterMap: Pick<OfflineRasterMap, 'id' | 'layerName' | 'minZoom' | 'maxZoom'>;
-    extents: Extent[];
-    excludedExtents?: Extent[];
-  }): number {
-    return this.getTileEntries(params).length;
-  }
-
   /**
    * Estimates a raster download by counting all target tiles and sampling one real tile request.
    */
@@ -51,7 +45,7 @@ export class OfflineRasterDownloadService {
     extents: Extent[];
     excludedExtents?: Extent[];
   }): Promise<OfflineRasterDownloadPreview> {
-    const tileEntries = this.getTileEntries(params);
+    const tileEntries = this.getTileEntriesForExtents(params);
     const tileCount = tileEntries.length;
 
     if (tileCount === 0) {
@@ -85,76 +79,34 @@ export class OfflineRasterDownloadService {
     extents: Extent[];
     excludedExtents?: Extent[];
     onProgress?: (progress: OfflineDownloadProgress) => void;
-  }): Promise<void> {
+  }): Promise<OfflineRasterDownloadResult> {
     this.isCancelled = false;
 
-    const tileEntries = this.getTileEntries(params);
-    const totalTileCount = tileEntries.length;
-    const savedKeys: string[] = [];
+    const tileEntries = this.getTileEntriesForExtents(params);
+    return this.downloadTileEntries(
+      params.rasterMap.name,
+      tileEntries,
+      params.onProgress
+    );
+  }
 
-    params.onProgress?.({
-      currentLayerTitle: params.rasterMap.name,
-      downloadedTileCount: 0,
-      totalTileCount,
-      percent: totalTileCount === 0 ? 100 : 0,
-    });
+  async retryFailedTiles(params: {
+    rasterMap: Pick<OfflineRasterMap, 'id' | 'name' | 'layerName' | 'minZoom' | 'maxZoom'>;
+    failedTileCoords: number[][];
+    onProgress?: (progress: OfflineDownloadProgress) => void;
+  }): Promise<OfflineRasterDownloadResult> {
+    this.isCancelled = false;
 
-    try {
-      for (let index = 0; index < tileEntries.length; index += 1) {
-        if (this.isCancelled) {
-          throw new AppError({ kind: 'validation', translationKey: 'offline.status.cancelled', message: 'Offline raster download cancelled', retryable: false, code: OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE });
-        }
+    const tileEntries = this.getTileEntriesForCoords(
+      params.rasterMap,
+      params.failedTileCoords
+    );
 
-        const tileEntry = tileEntries[index];
-        const abortController = new AbortController();
-        this.currentAbortController = abortController;
-
-        const response = await fetch(tileEntry.url, {
-          signal: abortController.signal,
-        });
-
-        if (!response.ok) {
-          throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: `Raster tile download failed with status ${response.status}` });
-        }
-
-        const blob = await response.blob();
-        this.currentAbortController = null;
-
-        if (this.isCancelled) {
-          this.throwCancelledDownload();
-        }
-
-        await cacheStorage.saveTile(tileEntry.key, blob);
-        savedKeys.push(tileEntry.key);
-
-        const downloadedTileCount = index + 1;
-        params.onProgress?.({
-          currentLayerTitle: params.rasterMap.name,
-          downloadedTileCount,
-          totalTileCount,
-          percent:
-            totalTileCount === 0
-              ? 100
-              : Math.round((downloadedTileCount / totalTileCount) * 100),
-        });
-      }
-    } catch (error) {
-      for (const key of savedKeys) {
-        await cacheStorage.deleteTile(key);
-      }
-
-      if (
-        this.isCancelled ||
-        (error instanceof Error && error.name === 'AbortError')
-      ) {
-        this.throwCancelledDownload();
-      }
-
-      throw error;
-    } finally {
-      this.currentAbortController = null;
-      this.isCancelled = false;
-    }
+    return this.downloadTileEntries(
+      params.rasterMap.name,
+      tileEntries,
+      params.onProgress
+    );
   }
 
   /**
@@ -176,28 +128,26 @@ export class OfflineRasterDownloadService {
     }
   }
 
-  private getTileEntries(params: {
+  private getTileEntriesForCoords(
+    rasterMap: Pick<OfflineRasterMap, 'id' | 'layerName' | 'minZoom' | 'maxZoom'>,
+    tileCoords: number[][]
+  ): RasterTileEntry[] {
+    const { tileUrlFunction } = this.getGeoportailSource(rasterMap.layerName);
+
+    return tileCoords.map((tileCoord) => ({
+      key: getOfflineRasterTileKey(rasterMap.id, tileCoord),
+      tileCoord,
+      url: tileUrlFunction(tileCoord, 1, WEB_MERCATOR_PROJECTION)!,
+    }));
+  }
+
+  private getTileEntriesForExtents(params: {
     rasterMap: Pick<OfflineRasterMap, 'id' | 'layerName' | 'minZoom' | 'maxZoom'>;
     extents: Extent[];
     excludedExtents?: Extent[];
   }): RasterTileEntry[] {
-    const layer = new ol_layer_Geoportail(params.rasterMap.layerName, {
-      visible: false,
-    }, {
-      server: GEOPORTAIL_SERVER,
-    });
+    const { tileGrid, tileUrlFunction } = this.getGeoportailSource(params.rasterMap.layerName);
 
-    const source = layer.getSource() as unknown as {
-      getTileGrid(): TileGrid;
-      getTileUrlFunction(): (
-        tileCoord: number[],
-        pixelRatio: number,
-        projection: string
-      ) => string | undefined;
-    };
-
-    const tileGrid = source.getTileGrid();
-    const tileUrlFunction = source.getTileUrlFunction();
     const excludedTileKeys = new Set<string>();
     const tileEntries: RasterTileEntry[] = [];
 
@@ -227,6 +177,7 @@ export class OfflineRasterDownloadService {
           tileKeys.add(tileCoordKey);
           tileEntries.push({
             key: getOfflineRasterTileKey(params.rasterMap.id, tileCoord),
+            tileCoord,
             url,
           });
         });
@@ -234,5 +185,113 @@ export class OfflineRasterDownloadService {
     }
 
     return tileEntries;
+  }
+
+  /**
+   * ol-ext does not expose a typed Geoportail source, so the tile grid and URL builder are read here once.
+   */
+  private getGeoportailSource(layerName: string): {
+    tileGrid: TileGrid;
+    tileUrlFunction: (
+      tileCoord: number[],
+      pixelRatio: number,
+      projection: string
+    ) => string | undefined;
+  } {
+    const layer = new ol_layer_Geoportail(layerName, {
+      visible: false,
+    }, {
+      server: GEOPORTAIL_SERVER,
+    });
+
+    const source = layer.getSource() as unknown as {
+      getTileGrid(): TileGrid;
+      getTileUrlFunction(): (
+        tileCoord: number[],
+        pixelRatio: number,
+        projection: string
+      ) => string | undefined;
+    };
+
+    return {
+      tileGrid: source.getTileGrid(),
+      tileUrlFunction: source.getTileUrlFunction(),
+    };
+  }
+
+  private async downloadTileEntries(
+    rasterMapName: string,
+    tileEntries: RasterTileEntry[],
+    onProgress?: (progress: OfflineDownloadProgress) => void
+  ): Promise<OfflineRasterDownloadResult> {
+    const totalTileCount = tileEntries.length;
+    let downloadedTileCount = 0;
+    const failedTileCoords: number[][] = [];
+
+    onProgress?.({
+      currentLayerTitle: rasterMapName,
+      downloadedTileCount: 0,
+      totalTileCount,
+      percent: totalTileCount === 0 ? 100 : 0,
+    });
+
+    try {
+      for (let index = 0; index < tileEntries.length; index += 1) {
+        if (this.isCancelled) {
+          this.throwCancelledDownload();
+        }
+
+        const tileEntry = tileEntries[index];
+        const abortController = new AbortController();
+        this.currentAbortController = abortController;
+
+        try {
+          const response = await fetch(tileEntry.url, {
+            signal: abortController.signal,
+          });
+
+          if (!response.ok) {
+            throw new AppError({ kind: 'network', translationKey: 'errors.global.network', message: `Raster tile download failed with status ${response.status}` });
+          }
+
+          const blob = await response.blob();
+          this.currentAbortController = null;
+
+          if (this.isCancelled) {
+            this.throwCancelledDownload();
+          }
+
+          await cacheStorage.saveTile(tileEntry.key, blob);
+          downloadedTileCount += 1;
+        } catch (error) {
+          this.currentAbortController = null;
+
+          if (this.isCancelled || (error instanceof Error && error.name === 'AbortError')) {
+            this.throwCancelledDownload();
+          }
+
+          failedTileCoords.push(tileEntry.tileCoord);
+        }
+
+        onProgress?.({
+          currentLayerTitle: rasterMapName,
+          downloadedTileCount,
+          totalTileCount,
+          percent:
+            totalTileCount === 0
+              ? 100
+              : Math.round(((index + 1) / totalTileCount) * 100),
+        });
+      }
+
+      return {
+        totalTileCount,
+        downloadedTileCount,
+        failedTileCoords,
+      };
+    } finally {
+      this.currentAbortController = null;
+      this.isCancelled = false;
+    }
   }
 }

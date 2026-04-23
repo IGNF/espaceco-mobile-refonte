@@ -129,6 +129,7 @@ export function OfflineManagementPage({
     previewOfflineRasterMapDownload,
     downloadOfflineRasterMap,
     refreshOfflineRasterMap,
+    retryOfflineRasterMapFailedTiles,
     setOfflineRasterMapVisibility,
     renameOfflineRasterMap,
     cancelOfflineDownload,
@@ -164,6 +165,7 @@ export function OfflineManagementPage({
   const [isRefreshingCache, setIsRefreshingCache] = useState(false);
   const [layerKeyBeingRefreshed, setLayerKeyBeingRefreshed] = useState<string | null>(null);
   const [rasterMapIdBeingRefreshed, setRasterMapIdBeingRefreshed] = useState<string | null>(null);
+  const [rasterMapIdBeingRetried, setRasterMapIdBeingRetried] = useState<string | null>(null);
   const [isRenameRasterMapSubmitting, setIsRenameRasterMapSubmitting] = useState(false);
   const [isDeleteAlertProcessing, setIsDeleteAlertProcessing] = useState(false);
 
@@ -258,6 +260,29 @@ export function OfflineManagementPage({
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({
       text: getUserFacingErrorMessage(error, t, 'errors.global.unknown'),
+      duration: 'short',
+      position: 'bottom',
+    });
+  }
+
+  async function showRasterDownloadToast(
+    operationFailedTileCount: number,
+    rasterMapCount: number,
+    successMessage: string
+  ): Promise<void> {
+    if (operationFailedTileCount === 0) {
+      await showToastSafe({
+        text: successMessage,
+        duration: 'short',
+        position: 'bottom',
+      });
+      return;
+    }
+
+    await showToastSafe({
+      text: rasterMapCount === 1
+        ? t('offline.raster.downloadWithErrors', { count: operationFailedTileCount })
+        : t('offline.raster.downloadWithErrorsMultiple', { count: operationFailedTileCount }),
       duration: 'short',
       position: 'bottom',
     });
@@ -416,18 +441,23 @@ export function OfflineManagementPage({
     try {
       setRasterZoneDialog(null);
       setRasterDownloadPreview(null);
+      let operationFailedTileCount = 0;
 
       for (const rasterMap of rasterMapsToDownload) {
-        await downloadOfflineRasterMap(rasterMap.id, zoneName);
+        const downloadedRasterMap = await downloadOfflineRasterMap(rasterMap.id, zoneName);
+        const previousFailedTileCount = rasterMap.loaded ? rasterMap.failedTileCoords.length : 0;
+        const newFailedTileCount = downloadedRasterMap.failedTileCoords.length - previousFailedTileCount;
+
+        operationFailedTileCount += newFailedTileCount;
       }
 
-      await showToastSafe({
-        text: rasterMapsToDownload.length === 1
+      await showRasterDownloadToast(
+        operationFailedTileCount,
+        rasterMapsToDownload.length,
+        rasterMapsToDownload.length === 1
           ? t('offline.raster.downloadSuccess')
-          : t('offline.raster.pendingDownloadSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+          : t('offline.raster.pendingDownloadSuccess')
+      );
     } catch (error) {
       await showOfflineError(error);
     }
@@ -565,16 +595,29 @@ export function OfflineManagementPage({
     setRasterMapIdBeingRefreshed(mapId);
 
     try {
-      await refreshOfflineRasterMap(mapId);
-      await showToastSafe({
-        text: t('offline.raster.refreshSuccess'),
-        duration: 'short',
-        position: 'bottom',
-      });
+      const refreshedRasterMap = await refreshOfflineRasterMap(mapId);
+      await showRasterDownloadToast(refreshedRasterMap.failedTileCoords.length, 1, t('offline.raster.refreshSuccess'));
     } catch (error) {
       await showOfflineError(error);
     } finally {
       setRasterMapIdBeingRefreshed(null);
+    }
+  }
+
+  async function handleRetryRasterMapFailedTiles(mapId: string) {
+    setRasterMapIdBeingRetried(mapId);
+
+    try {
+      const retriedRasterMap = await retryOfflineRasterMapFailedTiles(mapId);
+      await showRasterDownloadToast(
+        retriedRasterMap.failedTileCoords.length,
+        1,
+        t('offline.raster.retryFailedTilesSuccess')
+      );
+    } catch (error) {
+      await showOfflineError(error);
+    } finally {
+      setRasterMapIdBeingRetried(null);
     }
   }
 
@@ -1029,6 +1072,7 @@ export function OfflineManagementPage({
             isPendingRasterPreviewLoading={isPendingRasterPreviewLoading}
             rasterMapIdBeingPreviewed={rasterMapIdBeingPreviewed}
             rasterMapIdBeingRefreshed={rasterMapIdBeingRefreshed}
+            rasterMapIdBeingRetried={rasterMapIdBeingRetried}
             canCenterRasterMaps={map !== null}
             onOpenNewRasterMapDialog={openNewRasterMapDialog}
             onDownloadPendingRasterMaps={openPendingRasterMapsDownload}
@@ -1036,6 +1080,7 @@ export function OfflineManagementPage({
             onCenterRasterMap={handleCenterRasterMap}
             onOpenRasterZoneDialog={openRasterZoneDialog}
             onRefreshRasterMap={(mapId) => void handleRefreshRasterMap(mapId)}
+            onRetryRasterMapFailedTiles={(mapId) => void handleRetryRasterMapFailedTiles(mapId)}
             onRequestRenameRasterMap={openRenameRasterMapDialog}
             onRequestDeleteRasterMap={(mapId) => setDeleteAlert({ kind: 'raster-map', mapId })}
           />

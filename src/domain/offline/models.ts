@@ -61,6 +61,12 @@ export interface OfflineRasterDownloadPreview {
   freeDiskSpaceMb?: number | null;
 }
 
+export interface OfflineRasterDownloadResult {
+  totalTileCount: number;
+  downloadedTileCount: number;
+  failedTileCoords: number[][];
+}
+
 export interface OfflineDownloadProgress {
   currentLayerTitle: string;
   downloadedTileCount: number;
@@ -88,6 +94,7 @@ export interface OfflineRasterMap {
   layerName: string;
   minZoom: number;
   maxZoom: number;
+  failedTileCoords: number[][];
   zoneNames: string[];
   extent?: Extent;
   extents: Extent[];

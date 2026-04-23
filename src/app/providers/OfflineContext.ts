@@ -54,6 +54,7 @@ export interface OfflineContextType extends OfflineModeState {
   previewOfflineRasterMapDownload: (rasterMap: OfflineRasterMap, zoneName: string) => Promise<OfflineRasterDownloadPreview>;
   downloadOfflineRasterMap: (mapId: string, zoneName: string) => Promise<OfflineRasterMap>;
   refreshOfflineRasterMap: (mapId: string) => Promise<OfflineRasterMap>;
+  retryOfflineRasterMapFailedTiles: (mapId: string) => Promise<OfflineRasterMap>;
   setOfflineRasterMapVisibility: (mapId: string, visible: boolean) => Promise<void>;
   renameOfflineRasterMap: (mapId: string, name: string) => Promise<OfflineRasterMap>;
   cancelOfflineDownload: () => void;

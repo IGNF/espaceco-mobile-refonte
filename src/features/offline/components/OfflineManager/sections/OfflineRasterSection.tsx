@@ -9,6 +9,7 @@ import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconGeolocation from '@/shared/assets/icons/icon-geolocation.svg?react';
+import IconReset from '@/shared/assets/icons/icon-reset.svg?react';
 import typography from '@/shared/styles/typography.module.css';
 
 import { formatDateTime } from '@/shared/utils/date';
@@ -25,6 +26,7 @@ interface OfflineRasterSectionProps {
   isPendingRasterPreviewLoading: boolean;
   rasterMapIdBeingPreviewed: string | null;
   rasterMapIdBeingRefreshed: string | null;
+  rasterMapIdBeingRetried: string | null;
   canCenterRasterMaps: boolean;
   onOpenNewRasterMapDialog: () => void;
   onDownloadPendingRasterMaps: () => void;
@@ -32,6 +34,7 @@ interface OfflineRasterSectionProps {
   onCenterRasterMap: (mapId: string) => void;
   onOpenRasterZoneDialog: (mapId: string, mode: 'load-map' | 'add-zone') => void;
   onRefreshRasterMap: (mapId: string) => void;
+  onRetryRasterMapFailedTiles: (mapId: string) => void;
   onRequestRenameRasterMap: (mapId: string) => void;
   onRequestDeleteRasterMap: (mapId: string) => void;
 }
@@ -44,6 +47,7 @@ export function OfflineRasterSection({
   isPendingRasterPreviewLoading,
   rasterMapIdBeingPreviewed,
   rasterMapIdBeingRefreshed,
+  rasterMapIdBeingRetried,
   canCenterRasterMaps,
   onOpenNewRasterMapDialog,
   onDownloadPendingRasterMaps,
@@ -51,6 +55,7 @@ export function OfflineRasterSection({
   onCenterRasterMap,
   onOpenRasterZoneDialog,
   onRefreshRasterMap,
+  onRetryRasterMapFailedTiles,
   onRequestRenameRasterMap,
   onRequestDeleteRasterMap,
 }: OfflineRasterSectionProps) {
@@ -99,8 +104,11 @@ export function OfflineRasterSection({
             const hasAddableZone = zones.some(
               (zone) => !rasterMap.zoneNames.includes(zone.name)
             );
+            const hasFailedTiles = rasterMap.failedTileCoords.length > 0;
             const isPreviewLoading = rasterMapIdBeingPreviewed === rasterMap.id;
             const isRefreshingRasterMap = rasterMapIdBeingRefreshed === rasterMap.id;
+            const isRetryingRasterMap = rasterMapIdBeingRetried === rasterMap.id;
+            const areActionsDisabled = isDownloading || isRasterPreviewLoading;
             const refreshedAt = rasterMap.lastRefreshAt
               ? formatDateTime(new Date(rasterMap.lastRefreshAt))
               : null;
@@ -135,6 +143,13 @@ export function OfflineRasterSection({
                       })
                       : t('offline.raster.pending')}
                   </span>
+                  {hasFailedTiles && (
+                    <span className={typography.caption}>
+                      {t('offline.raster.failedTileCount', {
+                        count: rasterMap.failedTileCoords.length,
+                      })}
+                    </span>
+                  )}
                   {refreshedAt && (
                     <span className={typography.caption}>
                       {t('offline.raster.updatedAt', { value: refreshedAt })}
@@ -150,7 +165,7 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant={rasterMap.visible ? 'solid' : 'outline'}
                         onClick={() => onToggleRasterMapVisibility(rasterMap.id, !rasterMap.visible)}
-                        disabled={isDownloading || isRasterPreviewLoading}
+                        disabled={areActionsDisabled}
                         aria-label={
                           rasterMap.visible
                             ? t('offline.raster.hide')
@@ -169,7 +184,7 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant='outline'
                         onClick={() => onCenterRasterMap(rasterMap.id)}
-                        disabled={isDownloading || isRasterPreviewLoading || !canCenterRasterMaps}
+                        disabled={areActionsDisabled || !canCenterRasterMaps}
                         aria-label={t('offline.raster.centerOnMap')}
                         title={t('offline.raster.centerOnMap')}
                       >
@@ -180,7 +195,7 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant='outline'
                         onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'add-zone')}
-                        disabled={isDownloading || isRasterPreviewLoading || !hasAddableZone}
+                        disabled={areActionsDisabled || !hasAddableZone}
                         loading={isPreviewLoading}
                         aria-label={t('offline.raster.addZone')}
                         title={t('offline.raster.addZone')}
@@ -192,7 +207,7 @@ export function OfflineRasterSection({
                         color='secondary'
                         variant='outline'
                         onClick={() => onRefreshRasterMap(rasterMap.id)}
-                        disabled={isDownloading || isRasterPreviewLoading}
+                        disabled={areActionsDisabled}
                         loading={isRefreshingRasterMap}
                         aria-label={t('offline.raster.refresh')}
                         title={t('offline.raster.refresh')}
@@ -205,10 +220,24 @@ export function OfflineRasterSection({
                       variant='outline'
                       color='secondary'
                       onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'load-map')}
-                      disabled={isDownloading || isRasterPreviewLoading || zones.length === 0}
+                      disabled={areActionsDisabled || zones.length === 0}
                       loading={isPreviewLoading}
                     >
                       {t('offline.raster.download')}
+                    </Button>
+                  )}
+                  {hasFailedTiles && (
+                    <Button
+                      iconOnly
+                      color='secondary'
+                      variant='outline'
+                      onClick={() => onRetryRasterMapFailedTiles(rasterMap.id)}
+                      disabled={areActionsDisabled}
+                      loading={isRetryingRasterMap}
+                      aria-label={t('offline.raster.retryFailedTiles')}
+                      title={t('offline.raster.retryFailedTiles')}
+                    >
+                      <IconReset className={styles.rowActionIcon} />
                     </Button>
                   )}
                   <Button
@@ -216,7 +245,7 @@ export function OfflineRasterSection({
                     color='secondary'
                     variant='outline'
                     onClick={() => onRequestRenameRasterMap(rasterMap.id)}
-                    disabled={isDownloading || isRasterPreviewLoading}
+                    disabled={areActionsDisabled}
                     aria-label={t('offline.raster.rename')}
                     title={t('offline.raster.rename')}
                   >
@@ -227,7 +256,7 @@ export function OfflineRasterSection({
                     color='danger'
                     variant='outline'
                     onClick={() => onRequestDeleteRasterMap(rasterMap.id)}
-                    disabled={isDownloading || isRasterPreviewLoading}
+                    disabled={areActionsDisabled}
                     aria-label={t('offline.raster.delete')}
                     title={t('offline.raster.delete')}
                   >

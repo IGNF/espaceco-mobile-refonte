@@ -278,6 +278,8 @@
       "previewFreeSpace": "Espace disque libre : {{value}} Mo",
       "refresh": "Rafraîchir le fond",
       "refreshSuccess": "Fond hors ligne rafraîchi.",
+      "retryFailedTiles": "Relancer les tuiles en erreur",
+      "retryFailedTilesSuccess": "Relance des tuiles en erreur terminée.",
       "rename": "Renommer le fond",
       "renameTitle": "Renommer le fond",
       "renameSuccess": "Fond hors ligne renommé.",
@@ -293,6 +295,9 @@
       "zoomRange": "Échelle {{min}} à {{max}}",
       "zoomSingle": "Échelle {{value}}",
       "zoneCount": "{{count}} zone(s) utilisée(s)",
+      "failedTileCount": "{{count}} tuile(s) en erreur",
+      "downloadWithErrors": "Téléchargement terminé, mais {{count}} tuile(s) restent en erreur.",
+      "downloadWithErrorsMultiple": "Téléchargement terminé, mais {{count}} tuiles restent en erreur.",
       "updatedAt": "Dernière mise à jour : {{value}}",
       "confirmDeleteTitle": "Supprimer le fond",
       "confirmDeleteMessage": "Voulez-vous supprimer le fond hors ligne {{name}} ?"
