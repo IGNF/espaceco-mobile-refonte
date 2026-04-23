@@ -6,7 +6,9 @@ import { Button } from '@/shared/ui/Button';
 
 import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
+import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
+import IconGeolocation from '@/shared/assets/icons/icon-geolocation.svg?react';
 import typography from '@/shared/styles/typography.module.css';
 
 import { formatDateTime } from '@/shared/utils/date';
@@ -23,11 +25,14 @@ interface OfflineRasterSectionProps {
   isPendingRasterPreviewLoading: boolean;
   rasterMapIdBeingPreviewed: string | null;
   rasterMapIdBeingRefreshed: string | null;
+  canCenterRasterMaps: boolean;
   onOpenNewRasterMapDialog: () => void;
   onDownloadPendingRasterMaps: () => void;
   onToggleRasterMapVisibility: (mapId: string, visible: boolean) => void;
+  onCenterRasterMap: (mapId: string) => void;
   onOpenRasterZoneDialog: (mapId: string, mode: 'load-map' | 'add-zone') => void;
   onRefreshRasterMap: (mapId: string) => void;
+  onRequestRenameRasterMap: (mapId: string) => void;
   onRequestDeleteRasterMap: (mapId: string) => void;
 }
 
@@ -39,11 +44,14 @@ export function OfflineRasterSection({
   isPendingRasterPreviewLoading,
   rasterMapIdBeingPreviewed,
   rasterMapIdBeingRefreshed,
+  canCenterRasterMaps,
   onOpenNewRasterMapDialog,
   onDownloadPendingRasterMaps,
   onToggleRasterMapVisibility,
+  onCenterRasterMap,
   onOpenRasterZoneDialog,
   onRefreshRasterMap,
+  onRequestRenameRasterMap,
   onRequestDeleteRasterMap,
 }: OfflineRasterSectionProps) {
   const { t } = useTranslation();
@@ -160,6 +168,17 @@ export function OfflineRasterSection({
                         iconOnly
                         color='secondary'
                         variant='outline'
+                        onClick={() => onCenterRasterMap(rasterMap.id)}
+                        disabled={isDownloading || isRasterPreviewLoading || !canCenterRasterMaps}
+                        aria-label={t('offline.raster.centerOnMap')}
+                        title={t('offline.raster.centerOnMap')}
+                      >
+                        <IconGeolocation className={styles.rowActionIcon} />
+                      </Button>
+                      <Button
+                        iconOnly
+                        color='secondary'
+                        variant='outline'
                         onClick={() => onOpenRasterZoneDialog(rasterMap.id, 'add-zone')}
                         disabled={isDownloading || isRasterPreviewLoading || !hasAddableZone}
                         loading={isPreviewLoading}
@@ -192,6 +211,17 @@ export function OfflineRasterSection({
                       {t('offline.raster.download')}
                     </Button>
                   )}
+                  <Button
+                    iconOnly
+                    color='secondary'
+                    variant='outline'
+                    onClick={() => onRequestRenameRasterMap(rasterMap.id)}
+                    disabled={isDownloading || isRasterPreviewLoading}
+                    aria-label={t('offline.raster.rename')}
+                    title={t('offline.raster.rename')}
+                  >
+                    <IconPencil className={styles.rowActionIcon} />
+                  </Button>
                   <Button
                     iconOnly
                     color='danger'

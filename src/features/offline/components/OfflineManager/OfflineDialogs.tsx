@@ -79,6 +79,12 @@ interface OfflineDialogsProps {
   onSelectRasterZone: (zoneName: string) => void;
   onCloseRasterDownloadPreview: () => void;
   onConfirmRasterDownloadPreview: () => void;
+  isRenameRasterMapDialogOpen: boolean;
+  rasterMapRenameName: string;
+  isRenameRasterMapSubmitting: boolean;
+  onCloseRenameRasterMapDialog: () => void;
+  onChangeRasterMapRenameName: (value: string) => void;
+  onConfirmRenameRasterMap: () => void;
   isDeleteAlertOpen: boolean;
   deleteAlertTitle: string;
   deleteAlertSubtitle: string;
@@ -141,6 +147,12 @@ export function OfflineDialogs({
   onSelectRasterZone,
   onCloseRasterDownloadPreview,
   onConfirmRasterDownloadPreview,
+  isRenameRasterMapDialogOpen,
+  rasterMapRenameName,
+  isRenameRasterMapSubmitting,
+  onCloseRenameRasterMapDialog,
+  onChangeRasterMapRenameName,
+  onConfirmRenameRasterMap,
   isDeleteAlertOpen,
   deleteAlertTitle,
   deleteAlertSubtitle,
@@ -511,6 +523,43 @@ export function OfflineDialogs({
             )}
           </div>
         )}
+      </Alert>
+
+      <Alert
+        isOpen={isRenameRasterMapDialogOpen}
+        onClose={isRenameRasterMapSubmitting ? () => undefined : onCloseRenameRasterMapDialog}
+        title={t('offline.raster.renameTitle')}
+      >
+        <div className={styles.dialogContent}>
+          <label className={inputs.field}>
+            <span className={inputs.label}>{t('offline.raster.nameLabel')}</span>
+            <input
+              type='text'
+              className={inputs.input}
+              value={rasterMapRenameName}
+              onChange={(event) => onChangeRasterMapRenameName(event.target.value)}
+              disabled={isRenameRasterMapSubmitting}
+            />
+          </label>
+
+          <div className={styles.dialogActions}>
+            <Button
+              variant='outline'
+              color='secondary'
+              onClick={onCloseRenameRasterMapDialog}
+              disabled={isRenameRasterMapSubmitting}
+            >
+              {t('offline.dialog.cancel')}
+            </Button>
+            <Button
+              onClick={onConfirmRenameRasterMap}
+              disabled={rasterMapRenameName.trim().length === 0}
+              loading={isRenameRasterMapSubmitting}
+            >
+              {t('offline.dialog.validate')}
+            </Button>
+          </div>
+        </div>
       </Alert>
 
       <Alert

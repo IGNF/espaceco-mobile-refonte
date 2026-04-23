@@ -824,6 +824,21 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     []
   );
 
+  const renameOfflineRasterMap = useCallback(
+    async (mapId: string, name: string): Promise<OfflineRasterMap> => {
+      const offlineRasterMap = (await offlineRasterMapRepository.getMap(mapId))!;
+      const renamedRasterMap: OfflineRasterMap = {
+        ...offlineRasterMap,
+        name,
+      };
+
+      await offlineRasterMapRepository.saveMap(renamedRasterMap);
+      setRasterMaps((currentMaps) => replaceOfflineRasterMap(currentMaps, renamedRasterMap));
+      return renamedRasterMap;
+    },
+    []
+  );
+
   /**
    * Requests cancellation on both download services.
    * Services still decide when the current network/storage operation can stop safely.
@@ -923,6 +938,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     downloadOfflineRasterMap,
     refreshOfflineRasterMap,
     setOfflineRasterMapVisibility,
+    renameOfflineRasterMap,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,

@@ -71,6 +71,11 @@ interface RasterDownloadPreviewState {
   preview: OfflineRasterDownloadPreview;
 }
 
+interface RenameRasterMapDialogState {
+  mapId: string;
+  name: string;
+}
+
 interface OfflineManagementPageProps {
   isOpen: boolean;
   onClose: () => void;
@@ -118,6 +123,7 @@ export function OfflineManagementPage({
     downloadOfflineRasterMap,
     refreshOfflineRasterMap,
     setOfflineRasterMapVisibility,
+    renameOfflineRasterMap,
     cancelOfflineDownload,
     deleteCommunityCacheLayer,
     deleteCommunityCache,
@@ -140,6 +146,7 @@ export function OfflineManagementPage({
   const [rasterDownloadPreview, setRasterDownloadPreview] = useState<RasterDownloadPreviewState | null>(null);
   const [rasterMapIdBeingPreviewed, setRasterMapIdBeingPreviewed] = useState<string | null>(null);
   const [isPendingRasterPreviewLoading, setIsPendingRasterPreviewLoading] = useState(false);
+  const [renameRasterMapDialog, setRenameRasterMapDialog] = useState<RenameRasterMapDialogState | null>(null);
   const [deleteAlert, setDeleteAlert] = useState<DeleteAlertState | null>(null);
   const [isSavingZone, setIsSavingZone] = useState(false);
   const [isNewRasterMapSubmitting, setIsNewRasterMapSubmitting] = useState(false);
@@ -150,6 +157,7 @@ export function OfflineManagementPage({
   const [isRefreshingCache, setIsRefreshingCache] = useState(false);
   const [layerKeyBeingRefreshed, setLayerKeyBeingRefreshed] = useState<string | null>(null);
   const [rasterMapIdBeingRefreshed, setRasterMapIdBeingRefreshed] = useState<string | null>(null);
+  const [isRenameRasterMapSubmitting, setIsRenameRasterMapSubmitting] = useState(false);
   const [isDeleteAlertProcessing, setIsDeleteAlertProcessing] = useState(false);
 
   const eligibleLayers = vectorLayers.filter((layer) => getTableWfsUrl(layer) !== undefined);
@@ -571,6 +579,46 @@ export function OfflineManagementPage({
     }
   }
 
+  function openRenameRasterMapDialog(mapId: string) {
+    const rasterMap = rasterMaps.find((currentRasterMap) => currentRasterMap.id === mapId)!;
+    setRenameRasterMapDialog({
+      mapId,
+      name: rasterMap.name,
+    });
+  }
+
+  async function handleRenameRasterMap() {
+    setIsRenameRasterMapSubmitting(true);
+
+    try {
+      await renameOfflineRasterMap(
+        renameRasterMapDialog!.mapId,
+        renameRasterMapDialog!.name.trim()
+      );
+      setRenameRasterMapDialog(null);
+      await showToastSafe({
+        text: t('offline.raster.renameSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      await showOfflineError(error);
+    } finally {
+      setIsRenameRasterMapSubmitting(false);
+    }
+  }
+
+  function handleCenterRasterMap(mapId: string) {
+    const rasterMap = rasterMaps.find((currentRasterMap) => currentRasterMap.id === mapId)!;
+
+    map!.getView().fit(rasterMap.extent!, {
+      duration: 300,
+      maxZoom: rasterMap.maxZoom,
+      padding: [80, 40, 80, 40],
+    });
+    onClose();
+  }
+
   async function handleDeleteRasterMap(mapId: string) {
     try {
       await deleteOfflineRasterMap(mapId);
@@ -974,11 +1022,14 @@ export function OfflineManagementPage({
             isPendingRasterPreviewLoading={isPendingRasterPreviewLoading}
             rasterMapIdBeingPreviewed={rasterMapIdBeingPreviewed}
             rasterMapIdBeingRefreshed={rasterMapIdBeingRefreshed}
+            canCenterRasterMaps={map !== null}
             onOpenNewRasterMapDialog={openNewRasterMapDialog}
             onDownloadPendingRasterMaps={openPendingRasterMapsDownload}
             onToggleRasterMapVisibility={(mapId, visible) => void handleToggleRasterMapVisibility(mapId, visible)}
+            onCenterRasterMap={handleCenterRasterMap}
             onOpenRasterZoneDialog={openRasterZoneDialog}
             onRefreshRasterMap={(mapId) => void handleRefreshRasterMap(mapId)}
+            onRequestRenameRasterMap={openRenameRasterMapDialog}
             onRequestDeleteRasterMap={(mapId) => setDeleteAlert({ kind: 'raster-map', mapId })}
           />
         </main>
@@ -1043,6 +1094,21 @@ export function OfflineManagementPage({
         onCloseRasterDownloadPreview={closeRasterDownloadPreview}
         onConfirmRasterDownloadPreview={() => {
           void handleConfirmRasterDownloadPreview();
+        }}
+        isRenameRasterMapDialogOpen={renameRasterMapDialog !== null}
+        rasterMapRenameName={renameRasterMapDialog?.name ?? ''}
+        isRenameRasterMapSubmitting={isRenameRasterMapSubmitting}
+        onCloseRenameRasterMapDialog={() => {
+          if (!isRenameRasterMapSubmitting) {
+            setRenameRasterMapDialog(null);
+          }
+        }}
+        onChangeRasterMapRenameName={(name) => setRenameRasterMapDialog({
+          ...renameRasterMapDialog!,
+          name,
+        })}
+        onConfirmRenameRasterMap={() => {
+          void handleRenameRasterMap();
         }}
         isDeleteAlertOpen={deleteAlert !== null}
         deleteAlertTitle={getDeleteAlertTitle()}
