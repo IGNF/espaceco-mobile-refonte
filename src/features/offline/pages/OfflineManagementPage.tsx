@@ -8,12 +8,19 @@ import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type { CommunityLayer } from '@ign/mobile-core';
 
 import { useOffline } from '@/features/offline/hooks/useOffline';
-import { OfflineStatusSection } from '@/features/offline/components/OfflineManager/OfflineStatusSection';
-import { OfflineZonesSection } from '@/features/offline/components/OfflineManager/OfflineZonesSection';
-import { OfflineLayersSection } from '@/features/offline/components/OfflineManager/OfflineLayersSection';
-import { OfflineCacheSection } from '@/features/offline/components/OfflineManager/OfflineCacheSection';
-import { OfflineRasterSection } from '@/features/offline/components/OfflineManager/OfflineRasterSection';
-import { OfflineDialogs } from '@/features/offline/components/OfflineManager/OfflineDialogs';
+import { OfflineStatusSection } from '@/features/offline/components/OfflineManager/sections/OfflineStatusSection';
+import { OfflineZonesSection } from '@/features/offline/components/OfflineManager/sections/OfflineZonesSection';
+import { OfflineLayersSection } from '@/features/offline/components/OfflineManager/sections/OfflineLayersSection';
+import { OfflineCacheSection } from '@/features/offline/components/OfflineManager/sections/OfflineCacheSection';
+import { OfflineRasterSection } from '@/features/offline/components/OfflineManager/sections/OfflineRasterSection';
+import { NewZoneDialog } from '@/features/offline/components/OfflineManager/dialogs/NewZoneDialog';
+import { LayerPickerDialog } from '@/features/offline/components/OfflineManager/dialogs/LayerPickerDialog';
+import { LoadZoneDialog } from '@/features/offline/components/OfflineManager/dialogs/LoadZoneDialog';
+import { NewRasterMapDialog } from '@/features/offline/components/OfflineManager/dialogs/NewRasterMapDialog';
+import { RasterZoneDialog } from '@/features/offline/components/OfflineManager/dialogs/RasterZoneDialog';
+import { RasterDownloadPreviewDialog } from '@/features/offline/components/OfflineManager/dialogs/RasterDownloadPreviewDialog';
+import { RenameRasterMapDialog } from '@/features/offline/components/OfflineManager/dialogs/RenameRasterMapDialog';
+import { DeleteOfflineItemDialog } from '@/features/offline/components/OfflineManager/dialogs/DeleteOfflineItemDialog';
 
 import { getOfflineGeoportailLayerOptions } from '@/infra/map/openlayers/geoportailLayers';
 import { getTableWfsUrl } from '@/infra/map/openlayers/vectorLayers';
@@ -1035,91 +1042,112 @@ export function OfflineManagementPage({
         </main>
       </SlideUpPage>
 
-      <OfflineDialogs
-        isNewZoneDialogOpen={isNewZoneDialogOpen}
-        newZoneName={newZoneName}
-        newZoneMode={newZoneMode}
-        newZoneLayerKey={newZoneLayerKey}
+      <NewZoneDialog
+        isOpen={isNewZoneDialogOpen}
+        name={newZoneName}
+        mode={newZoneMode}
+        layerKey={newZoneLayerKey}
         hasPolygonLayer={hasPolygonLayer}
         polygonLayers={polygonLayers}
-        onCloseNewZoneDialog={() => setIsNewZoneDialogOpen(false)}
-        onChangeNewZoneName={setNewZoneName}
-        onChangeNewZoneMode={setNewZoneMode}
-        onChangeNewZoneLayerKey={setNewZoneLayerKey}
-        onStartZoneEditor={startZoneEditor}
-        layerPickerMode={layerPickerMode}
+        onClose={() => setIsNewZoneDialogOpen(false)}
+        onChangeName={setNewZoneName}
+        onChangeMode={setNewZoneMode}
+        onChangeLayerKey={setNewZoneLayerKey}
+        onContinue={startZoneEditor}
+      />
+
+      <LayerPickerDialog
+        mode={layerPickerMode}
         addableLayers={addableLayers}
         eligibleLayers={eligibleLayers}
-        layerPickerLayers={layerPickerLayers}
-        layerPickerKeys={layerPickerKeys}
-        areAllLayerPickerLayersSelected={areAllLayerPickerLayersSelected}
-        isLayerPickerSubmitting={isLayerPickerSubmitting}
-        onCloseLayerPicker={closeLayerPicker}
-        onToggleAllLayerPickerLayers={handleToggleAllLayerPickerLayers}
-        onToggleLayerPickerKey={toggleLayerPickerKey}
-        onValidateLayerPicker={() => void handleValidateLayerPicker()}
-        isLoadZoneDialogOpen={isLoadZoneDialogOpen}
+        layers={layerPickerLayers}
+        selectedKeys={layerPickerKeys}
+        areAllLayersSelected={areAllLayerPickerLayersSelected}
+        isSubmitting={isLayerPickerSubmitting}
+        onClose={closeLayerPicker}
+        onToggleAllLayers={handleToggleAllLayerPickerLayers}
+        onToggleLayer={toggleLayerPickerKey}
+        onValidate={() => void handleValidateLayerPicker()}
+      />
+
+      <LoadZoneDialog
+        isOpen={isLoadZoneDialogOpen}
         zones={zones}
-        onCloseLoadZoneDialog={() => setIsLoadZoneDialogOpen(false)}
-        onLoadCacheForZone={(zoneName) => void loadCacheForZone(zoneName)}
-        isNewRasterMapDialogOpen={isNewRasterMapDialogOpen}
-        isNewRasterMapSubmitting={isNewRasterMapSubmitting}
-        newRasterMapName={newRasterMapName}
-        newRasterMapLayerName={newRasterMapLayerName}
-        newRasterMapMinZoom={newRasterMapMinZoom}
-        newRasterMapMaxZoom={newRasterMapMaxZoom}
+        onClose={() => setIsLoadZoneDialogOpen(false)}
+        onSelectZone={(zoneName) => void loadCacheForZone(zoneName)}
+      />
+
+      <NewRasterMapDialog
+        isOpen={isNewRasterMapDialogOpen}
+        isSubmitting={isNewRasterMapSubmitting}
+        name={newRasterMapName}
+        layerName={newRasterMapLayerName}
+        minZoom={newRasterMapMinZoom}
+        maxZoom={newRasterMapMaxZoom}
         geoportailLayerOptions={geoportailLayerOptions}
         rasterScaleOptions={rasterScaleOptions}
         isExpertMode={EXPERT_MODE}
-        onCloseNewRasterMapDialog={() => {
+        onClose={() => {
           if (!isNewRasterMapSubmitting) {
             setIsNewRasterMapDialogOpen(false);
           }
         }}
-        onChangeNewRasterMapName={setNewRasterMapName}
-        onChangeNewRasterMapLayerName={setNewRasterMapLayerName}
-        onChangeNewRasterMapMinZoom={setNewRasterMapMinZoom}
-        onChangeNewRasterMapMaxZoom={setNewRasterMapMaxZoom}
-        onValidateNewRasterMap={() => void handleValidateNewRasterMap()}
-        isRasterZoneDialogOpen={rasterZoneDialog !== null}
-        rasterZoneDialogMode={rasterZoneDialogMode}
-        rasterZoneDialogSubtitle={rasterMapForZoneDialog?.name}
-        rasterZoneDialogZones={rasterZoneDialogZones}
-        onCloseRasterZoneDialog={() => setRasterZoneDialog(null)}
-        isRasterPreviewLoading={isRasterZonePreviewLoading}
-        rasterDownloadPreview={rasterDownloadPreview?.preview ?? null}
-        rasterDownloadPreviewMapName={rasterDownloadPreview?.mapName ?? null}
-        rasterDownloadPreviewZoneName={rasterDownloadPreview?.zoneName ?? null}
-        onSelectRasterZone={selectRasterZone}
-        onCloseRasterDownloadPreview={closeRasterDownloadPreview}
-        onConfirmRasterDownloadPreview={() => {
+        onChangeName={setNewRasterMapName}
+        onChangeLayerName={setNewRasterMapLayerName}
+        onChangeMinZoom={setNewRasterMapMinZoom}
+        onChangeMaxZoom={setNewRasterMapMaxZoom}
+        onValidate={() => void handleValidateNewRasterMap()}
+      />
+
+      <RasterZoneDialog
+        isOpen={rasterZoneDialog !== null}
+        mode={rasterZoneDialogMode}
+        subtitle={rasterMapForZoneDialog?.name}
+        zones={rasterZoneDialogZones}
+        isPreviewLoading={isRasterZonePreviewLoading}
+        onClose={() => setRasterZoneDialog(null)}
+        onSelectZone={selectRasterZone}
+      />
+
+      <RasterDownloadPreviewDialog
+        preview={rasterDownloadPreview?.preview ?? null}
+        mapName={rasterDownloadPreview?.mapName ?? null}
+        zoneName={rasterDownloadPreview?.zoneName ?? null}
+        onClose={closeRasterDownloadPreview}
+        onConfirm={() => {
           void handleConfirmRasterDownloadPreview();
         }}
-        isRenameRasterMapDialogOpen={renameRasterMapDialog !== null}
-        rasterMapRenameName={renameRasterMapDialog?.name ?? ''}
-        isRenameRasterMapSubmitting={isRenameRasterMapSubmitting}
-        onCloseRenameRasterMapDialog={() => {
+      />
+
+      <RenameRasterMapDialog
+        isOpen={renameRasterMapDialog !== null}
+        name={renameRasterMapDialog?.name ?? ''}
+        isSubmitting={isRenameRasterMapSubmitting}
+        onClose={() => {
           if (!isRenameRasterMapSubmitting) {
             setRenameRasterMapDialog(null);
           }
         }}
-        onChangeRasterMapRenameName={(name) => setRenameRasterMapDialog({
+        onChangeName={(name) => setRenameRasterMapDialog({
           ...renameRasterMapDialog!,
           name,
         })}
-        onConfirmRenameRasterMap={() => {
+        onValidate={() => {
           void handleRenameRasterMap();
         }}
-        isDeleteAlertOpen={deleteAlert !== null}
-        deleteAlertTitle={getDeleteAlertTitle()}
-        deleteAlertSubtitle={getDeleteAlertSubtitle()}
-        onCloseDeleteAlert={() => {
+      />
+
+      <DeleteOfflineItemDialog
+        isOpen={deleteAlert !== null}
+        title={getDeleteAlertTitle()}
+        subtitle={getDeleteAlertSubtitle()}
+        isProcessing={isDeleteAlertProcessing}
+        onClose={() => {
           if (!isDeleteAlertProcessing) {
             setDeleteAlert(null);
           }
         }}
-        isDeleteAlertProcessing={isDeleteAlertProcessing}
-        onConfirmDeleteAlert={() => {
+        onConfirm={() => {
           void confirmDeleteAlert();
         }}
       />
