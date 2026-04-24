@@ -1,0 +1,35 @@
+.reportSection {
+  margin-top: 1.2rem;
+}
+
+.menuList {
+  padding-left: 1.4rem;
+  margin: 0.5rem 0;
+}
+
+.divider {
+  margin: 1.8rem 0;
+}
+
+.legendItems {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.legendItemColor {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+.legendItemTitle {
+  flex: 10;
+  margin-bottom: 0.5rem;
+}

@@ -106,7 +106,7 @@ export function LoginPage() {
 						components={{
 							a: (
 								<ExternalLink
-									href="https://espacecollaboratif.ign.fr/"
+									href={EXTERNAL_LINKS.ESPACE_COLLABORATIF}
 									className={styles.registerLink}
 								>
 									{""}

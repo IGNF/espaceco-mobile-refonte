@@ -849,5 +849,31 @@
   "help": {
     "title": "Aide",
     "subtitle": "de l'Espace collaboratif IGN"
+  },
+  "aboutReports": {
+    "title": "À propos des signalements",
+    "reportSection": {
+      "title": "Signalements",
+      "intro": "Les <b>signalements</b> permettent aux utilisateurs authentifiés de l'Espace collaboratif de signaler des modifications, des manques ou des incohérences dans les bases de données IGN et plus particulièrement la composante vecteur du Référentiel à Grande Echelle (RGE). Ce système de « community sourcing » a pour but de permettre à l'IGN de mettre à jour ses bases de données le plus efficacement possible.",
+      "contributor": "Un utilisateur qui soumet des signalements est appelé <b>contributeur</b>.",
+      "menuIntro": "Depuis le menu « Signalements », vous pouvez :",
+      "menuItem1": "Voir les signalements saisis par les autres contributeurs ainsi que leur description. Si le signalement concerne les bases de données de l'IGN, vous pouvez aussi avoir accès à l'avancement du traitement du signalement par les services de l'IGN.",
+      "menuItem2": "Saisir un nouveau signalement. Si vous n'êtes pas membre de l'Espace Collaboratif, ce signalement pourra être fait uniquement en mode test.",
+      "menuItem3": "Consulter les statistiques des signalements faits via l'Espace Collaboratif de l'IGN.",
+      "processing": "Les signalements faits via l'Espace Collaboratif et concernant les bases de données IGN sont traités et vérifiés par les collecteurs IGN avant intégration aux bases de données dans un délai compris entre 7 et 30 jours selon les thèmes sur lesquels portent les signalements. Le cas échéant, le collecteur peut demander un complément d'information au contributeur, ou n'intégrer les modifications qu'après un passage sur le terrain. Il arrive également que certains signalements soient rejetés car ne correspondant pas aux spécifications du RGE.",
+      "planIGN": "La couche appelée « <b>Plan IGN J+1</b> » permet de consulter depuis l'Espace Collaboratif l'état réel des bases de données IGN dans le but d'éviter aux contributeurs de signaler des incohérences ou manques qui auraient déjà été pris en compte par l'IGN. Cette couche est par défaut visible sur l'interface de saisie d'un nouveau signalement. Elle peut être également parcourue sur le <geoportail>Géoportail</geoportail>.",
+      "externalProducts": "Les modifications faites sur les bases de données de l'IGN ne seront cependant visibles sur les produits externes (BDTopo, BDAdresse, cartes Série bleue et TOP25...) qu'à la livraison suivante du produit.",
+      "contact": "Pour toute question sur les signalements, vous pouvez nous écrire via le <contactLink>formulaire de contact</contactLink>."
+    },
+    "legend": {
+      "title": "A propos des statuts de réponse",
+      "draft": "<b>Brouillon</b> : Le signalement est enregistré mais pas encore envoyé au serveur.",
+      "pending": "<b>En cours de traitement</b> : Le signalement est en cours d'analyse ou de traitement par un responsable.",
+      "pendingQualification": "<b>En attente de saisie</b> : La prise en compte effective du signalement nécessite un laps de temps plus long (attente de passage terrain par exemple). La mise à jour des données est donc différée.",
+      "valid": "<b>Pris en compte</b> : Le signalement est <b>clos</b> et a été pris en compte dans nos données",
+      "validAlreadyTreated": "<b>Déjà pris en compte</b> : Le signalement est <b>clos</b>. Aucune modification n'a été faite dans les données car la mise à jour avait déjà été faite par ailleurs.",
+      "rejected": "<b>Rejeté (hors spéc.)</b> : Le signalement est <b>clos</b> et n'a pas été pris en compte car il n'entre pas dans le champs des spécifications des données.",
+      "rejectedIrrelevant": "<b>Rejeté (hors de propos)</b> : Le signalement est <b>clos</b> et n'a pas été pris en compte car hors de propos par rapport aux données."
+    }
   }
 }
