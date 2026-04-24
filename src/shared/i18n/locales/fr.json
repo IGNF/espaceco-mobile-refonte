@@ -850,6 +850,11 @@
     "title": "Aide",
     "subtitle": "de l'Espace collaboratif IGN"
   },
+  "aboutCommunity": {
+    "title": "À propos du guichet",
+    "subtitle": "Guichet",
+    "description": "Lorem Ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+  },
   "aboutReports": {
     "title": "À propos des signalements",
     "reportSection": {
