@@ -152,7 +152,9 @@
 }
 
 .menuItem {
-	display: block;
+	display: flex;
+	align-items: center;
+	gap: 0.2rem;
 	width: 100%;
 	padding: 0.75rem 1rem 0.75rem 3.5rem;
 	background: none;
@@ -161,6 +163,20 @@
 	text-align: left;
 	font-size: 0.9375rem;
 	color: var(--color-medium-shade);
+}
+
+.menuItemOffline {
+	color: var(--color-primary-tint);
+}
+
+.offlineModeIcon {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+.offlineModeIcon path {
+	fill: var(--color-primary-tint);
 }
 
 .menuItem:hover {

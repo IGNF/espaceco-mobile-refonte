@@ -10,8 +10,11 @@ import IconConfiguration from "@/shared/assets/icons/icon-configuration.svg?reac
 import IconHelp from "@/shared/assets/icons/icon-help.svg?react";
 import IconInfo from "@/shared/assets/icons/icon-info.svg?react";
 import IconAngleDown from "@/shared/assets/icons/icon-angle-down.svg?react";
+import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
+
 import type { AppUser } from "@/domain/user/models";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
+import { useOffline } from "@/features/offline/hooks/useOffline";
 
 export interface LeftMenuProps {
   isOpen: boolean;
@@ -85,9 +88,12 @@ const standaloneItems: StandaloneItem[] = [
 export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
+  const { mode } = useOffline();
+
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])
   );
+  const isOffline = mode === "offline";
 
   const toggleGroup = (groupId: MenuGroupId) => {
     setExpandedGroups((prev) => {
@@ -173,9 +179,13 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                   {group.items.map((item) => (
                     <button
                       key={item.id}
-                      className={styles.menuItem}
+                      className={`${styles.menuItem} ${isOffline && item.id === "modeHorsLigne" ? styles.menuItemOffline : ""}`}
                       onClick={() => handleItemClick(item.route)}
                     >
+                      {isOffline && item.id === "modeHorsLigne" ? (
+                        <IconCheck  className={styles.offlineModeIcon} />
+                      ) : null
+                      }
                       {t(item.labelKey)}
                     </button>
                   ))}
