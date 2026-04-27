@@ -15,8 +15,10 @@ import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import styles from './SettingsPage.module.css';
+import type { DisplayMode } from '@/domain/user/models';
 
 export interface SettingsPageProps {
   isOpen: boolean;
@@ -27,8 +29,10 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const { t } = useTranslation();
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
+  const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
 
   const { activeCommunity } = useCommunity();
+  const { displayMode, setDisplayModeState } = useAuth();
 
   const {
     pendingGpsSourceType,
@@ -83,6 +87,16 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     });
   };
 
+  const handleSetDisplayMode = async (displayMode: DisplayMode) => {
+    await setDisplayModeState(displayMode);
+
+    await showToastSafe({
+      text: t('settings.advanced.displayMode.updated'),
+      duration: 'short',
+      position: 'bottom',
+    });
+  };
+
   return (
     <SlideUpPage isOpen={isOpen} onClose={onClose}>
       <PageHeader
@@ -94,6 +108,9 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
       />
 
       <main className={`${screen.screenContainer} ${styles.content}`}>
+
+        {/* Sources GPS */}
+
         <section className={styles.section}>
           <button
             type='button'
@@ -178,6 +195,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
           )}
         </section>
 
+        {/* Réglages traces GPS */}
+
         <section className={styles.section}>
           <button
             type='button'
@@ -256,6 +275,47 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
               </Button>
             </>
           )}
+        </section>
+
+        {/* Paramètres avancés */}
+
+        <section className={styles.section}>
+          <button
+            type='button'
+            className={styles.sectionHeaderButton}
+            onClick={() => setIsAdvancedSectionExpanded((value) => !value)}
+            aria-expanded={isAdvancedSectionExpanded}
+          >
+            <h2 className={styles.sectionTitle}>{t('settings.advanced.title')}</h2>
+            <IconAngleDown
+              className={`${styles.chevron} ${isAdvancedSectionExpanded ? styles.chevronExpanded : ''}`}
+              aria-hidden='true'
+            />
+          </button>
+
+          {isAdvancedSectionExpanded && (
+            <>
+              <p className={`${typography.caption} ${styles.sectionDescription}`}>
+                {t('settings.advanced.description')}
+              </p>
+
+              <div className={styles.fieldsGrid}>
+                <label className={inputs.field}>
+                  <span className={inputs.label}>{t('settings.advanced.displayMode.title')}</span>
+                </label>
+                <select
+                  className={inputs.input}
+                  value={displayMode ?? 'beginner'}
+                  onChange={(event) => handleSetDisplayMode(event.target.value as DisplayMode)}
+                >
+                  <option value='beginner'>{t('settings.advanced.displayMode.beginner')}</option>
+                  <option value='advanced'>{t('settings.advanced.displayMode.advanced')}</option>
+                  <option value='expert'>{t('settings.advanced.displayMode.expert')}</option>
+                </select>
+              </div>
+            </>
+          )}
+
         </section>
       </main>
     </SlideUpPage>

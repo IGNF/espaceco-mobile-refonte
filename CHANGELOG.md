@@ -13,7 +13,19 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.4] - 2026-04-xx
+## [0.0.5] - 2026-04-xx
+
+### Added
+
+- Choix du mode d'affichage dans les paramètres de l'application
+
+### Changed
+
+- Le contenu de la page "A propos du guichet" affiche maintenant la valeur du champ editorial ou description du groupe.
+
+### Fixed
+
+## [0.0.4] - 2026-04-27
 
 ### Added
 

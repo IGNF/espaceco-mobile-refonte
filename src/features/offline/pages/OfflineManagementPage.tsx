@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type Map from 'ol/Map';
 import type { Extent } from 'ol/extent';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import type { CommunityLayer } from '@ign/mobile-core';
 
@@ -35,8 +36,6 @@ import { formatDateTime } from '@/shared/utils/date';
 import { scrollToTop } from '@/shared/utils/scroll';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
-
-import { EXPERT_MODE } from '@/shared/constants/global';
 
 import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
 
@@ -106,6 +105,7 @@ export function OfflineManagementPage({
 }: OfflineManagementPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
+  const { displayMode } = useAuth();
   const {
     mode,
     activeCommunityId,
@@ -394,10 +394,10 @@ export function OfflineManagementPage({
       const savedRasterMap = await saveOfflineRasterMapDraft({
         name: newRasterMapName.trim(),
         layerName: newRasterMapLayerName,
-        minZoom: EXPERT_MODE
+        minZoom: displayMode === 'expert'
           ? Math.min(newRasterMapMinZoom, newRasterMapMaxZoom)
           : newRasterMapMaxZoom,
-        maxZoom: EXPERT_MODE
+        maxZoom: displayMode === 'expert'
           ? Math.max(newRasterMapMinZoom, newRasterMapMaxZoom)
           : newRasterMapMaxZoom,
       });
@@ -1131,7 +1131,7 @@ export function OfflineManagementPage({
         maxZoom={newRasterMapMaxZoom}
         geoportailLayerOptions={geoportailLayerOptions}
         rasterScaleOptions={rasterScaleOptions}
-        isExpertMode={EXPERT_MODE}
+        displayMode={displayMode}
         onClose={() => {
           if (!isNewRasterMapSubmitting) {
             setIsNewRasterMapDialogOpen(false);

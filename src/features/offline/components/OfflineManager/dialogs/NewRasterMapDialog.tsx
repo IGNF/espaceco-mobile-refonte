@@ -4,6 +4,7 @@ import { Alert } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
 import inputs from '@/shared/styles/inputs.module.css';
 import styles from '@/features/offline/pages/OfflineManagementPage.module.css';
+import type { DisplayMode } from '@/domain/user/models';
 
 interface NewRasterMapDialogProps {
   isOpen: boolean;
@@ -14,7 +15,7 @@ interface NewRasterMapDialogProps {
   maxZoom: number;
   geoportailLayerOptions: Array<{ name: string; title: string }>;
   rasterScaleOptions: RasterScaleOption[];
-  isExpertMode: boolean;
+  displayMode: DisplayMode;
   onClose: () => void;
   onChangeName: (value: string) => void;
   onChangeLayerName: (value: string) => void;
@@ -32,7 +33,7 @@ export function NewRasterMapDialog({
   maxZoom,
   geoportailLayerOptions,
   rasterScaleOptions,
-  isExpertMode,
+  displayMode,
   onClose,
   onChangeName,
   onChangeLayerName,
@@ -78,7 +79,7 @@ export function NewRasterMapDialog({
         </label>
 
         <div className={styles.dialogGrid}>
-          {isExpertMode && (
+          {displayMode === 'expert' && (
             <label className={inputs.field}>
               <span className={inputs.label}>{t('offline.raster.minZoom')}</span>
               <select

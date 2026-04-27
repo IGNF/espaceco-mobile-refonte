@@ -366,6 +366,17 @@
       "errors": {
         "invalidNumber": "Veuillez saisir des valeurs numériques positives."
       }
+    },
+    "advanced": {
+      "title": "Paramètres avancés",
+      "description": "Paramètres avancés de l'application.",
+      "displayMode": {
+        "title": "Mode d'affichage des menus",
+        "updated": "Mode d'affichage des menus mis à jour.",
+        "beginner": "Débutant",
+        "advanced": "Confirmé",
+        "expert": "Expert"
+      }
     }
   },
   "myInformations": {
