@@ -853,7 +853,8 @@
   "aboutCommunity": {
     "title": "À propos du guichet",
     "subtitle": "Guichet",
-    "description": "Lorem Ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    "description": "Lorem Ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
+    "noDescription": "Aucune description disponible pour ce guichet."
   },
   "aboutReports": {
     "title": "À propos des signalements",

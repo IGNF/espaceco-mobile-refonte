@@ -12,17 +12,27 @@ export interface AboutCommunityPageProps {
 }
 
 export function AboutCommunityPage({ isOpen, onClose }: AboutCommunityPageProps) {
-	const { t } = useTranslation();
+  const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
+  console.log(activeCommunity);
 
-	return (
-		<SlideUpPage isOpen={isOpen} onClose={onClose}>
-			<PageHeader title={t('aboutCommunity.title')} subtitle={activeCommunity?.name ?? ''} onClose={onClose} />
-			<main className={screen.screenContainer}>
-				<h1 className={typography.title}>{t('aboutCommunity.title')}</h1>
-				<p className={typography.subtitle}>{t('aboutCommunity.subtitle')}</p>
-        <p className={typography.paragraph}>{t('aboutCommunity.description')}</p>
-			</main>
-		</SlideUpPage>
-	);
+  const communityDescription = activeCommunity?.editorial || activeCommunity?.description || "";
+
+  return (
+    <SlideUpPage isOpen={isOpen} onClose={onClose}>
+      <PageHeader title={t('aboutCommunity.title')} subtitle={activeCommunity?.name ?? ''} onClose={onClose} />
+      <main className={screen.screenContainer}>
+        <h1 className={typography.title}>{t('aboutCommunity.title')}</h1>
+        <p className={typography.subtitle}>{activeCommunity?.name ?? ''}</p>
+        {communityDescription && communityDescription !== '' ? (
+          <div
+            className={typography.paragraph}
+            dangerouslySetInnerHTML={{ __html: communityDescription }}
+          />
+        ) : (
+          <p className={typography.paragraph}>{t('aboutCommunity.noDescription')}</p>
+        )}
+      </main>
+    </SlideUpPage>
+  );
 }
