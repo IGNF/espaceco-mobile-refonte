@@ -19,6 +19,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
+import { useMapSettings } from '@/features/map/hooks/useMapSettings';
 
 export interface SettingsPageProps {
   isOpen: boolean;
@@ -33,6 +34,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
 
   const { activeCommunity } = useCommunity();
   const { displayMode, setDisplayMode } = useAuth();
+  const { mapSettings, setMapSettings } = useMapSettings();
+  console.log('mapSettings =>', mapSettings);
 
   const {
     pendingGpsSourceType,
@@ -89,6 +92,12 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
 
   const handleSetDisplayMode = async (displayMode: DisplayMode) => {
     await setDisplayMode(displayMode);
+
+    await setMapSettings({
+      isZoomEnabled: true,
+      isRotationEnabled: true,
+      isSearchEnabled: !mapSettings.isSearchEnabled,
+    });
 
     await showToastSafe({
       text: t('settings.advanced.displayMode.updated'),

@@ -333,6 +333,7 @@
   "settings": {
     "headerTitle": "Paramètres",
     "headerSubtitle": "Groupe actif",
+    "updated": "Paramètres mis à jour.",
     "gps": {
       "title": "Source GPS",
       "description": "Choisissez la source de géolocalisation utilisée par l'application pour le centrage carte et la saisie de trace.",
@@ -376,6 +377,20 @@
         "beginner": "Débutant",
         "advanced": "Confirmé",
         "expert": "Expert"
+      }
+    },
+    "display": {
+      "rotation": {
+        "title": "Rotation de la carte",
+        "description": "Autoriser la rotation de la carte."
+      },
+      "zoom": {
+        "title": "Boutons de zoom",
+        "description": "Afficher les boutons de zoom sur la carte."
+      },
+      "search": {
+        "title": "Bouton de recherche",
+        "description": "Afficher le bouton de recherche pour rechercher une adresse sur la carte."
       }
     }
   },

@@ -4,8 +4,11 @@ import { useTranslation } from "react-i18next";
 import { getUid } from "ol/util";
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
+
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
+import { useMapSettings } from "@/features/map/hooks/useMapSettings";
+
 import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
 import { OnboardingModal } from "@/features/onboarding/components/OnboardingModal";
@@ -66,6 +69,7 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const { setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
+  const { mapSettings } = useMapSettings();
   const {
     mapElementRef,
     mapRef,
@@ -409,14 +413,16 @@ export function HomePage() {
           <IconBurger className={styles.burgerIcon} />
         </button>
         <h1 className={styles.title}>{t("home.title")}</h1>
-        <button
-          className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
-          onClick={handleSearchClick}
-          aria-label="Search"
-          data-onboarding-target="search"
-        >
-          <IconSearch className={styles.searchIcon} />
-        </button>
+        {mapSettings.isSearchEnabled && (
+          <button
+            className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
+            onClick={handleSearchClick}
+            aria-label="Search"
+            data-onboarding-target="search"
+          >
+            <IconSearch className={styles.searchIcon} />
+          </button>
+        )}
       </header>
 
       <main className={styles.main}>
