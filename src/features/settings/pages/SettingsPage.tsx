@@ -20,6 +20,8 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
 import { useMapSettings } from '@/features/map/hooks/useMapSettings';
+import { Toggle } from '@/shared/ui/Toggle';
+import type { MapSettings } from '@/domain/map/models';
 
 export interface SettingsPageProps {
   isOpen: boolean;
@@ -28,6 +30,7 @@ export interface SettingsPageProps {
 
 export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const { t } = useTranslation();
+  const [isMapSectionExpanded, setIsMapSectionExpanded] = useState(false);
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
@@ -106,6 +109,16 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     });
   };
 
+  const handleSetMapSettings = async (settings: MapSettings) => {
+    await setMapSettings(settings);
+
+    await showToastSafe({
+      text: t('settings.updated'),
+      duration: 'short',
+      position: 'bottom',
+    });
+  };
+
   return (
     <SlideUpPage isOpen={isOpen} onClose={onClose}>
       <PageHeader
@@ -117,6 +130,83 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
       />
 
       <main className={`${screen.screenContainer} ${styles.content}`}>
+
+        {/* Maps settings */}
+
+        {displayMode !== 'beginner' && (
+          <>
+            <section className={styles.section}>
+              <button
+                type='button'
+                className={styles.sectionHeaderButton}
+                onClick={() => setIsMapSectionExpanded((value) => !value)}
+                aria-expanded={isMapSectionExpanded}
+              >
+                <h2 className={styles.sectionTitle}>{t('settings.map.title')}</h2>
+                <IconAngleDown
+                  className={`${styles.chevron} ${isMapSectionExpanded ? styles.chevronExpanded : ''}`}
+                  aria-hidden='true'
+                />
+              </button>
+
+              {isMapSectionExpanded && (
+                <>
+                  <p className={`${typography.caption} ${styles.sectionDescription}`}>
+                    {t('settings.map.description')}
+                  </p>
+
+                  <div className={styles.toggleFieldsGrid}>
+                    <div className={styles.toggleField}>
+                      <label className={inputs.field}>
+                        <span className={inputs.label}>{t('settings.map.rotation.title')}</span>
+                      </label>
+                      <Toggle
+                        checked={mapSettings.isRotationEnabled}
+                        onChange={() => handleSetMapSettings({
+                          ...mapSettings,
+                          isRotationEnabled: !mapSettings.isRotationEnabled,
+                        })}
+                      />
+                    </div>
+                    <span className={typography.caption}>{t('settings.map.rotation.description')}</span>
+                  </div>
+
+                  <div className={styles.toggleFieldsGrid}>
+                    <div className={styles.toggleField}>
+                      <label className={inputs.field}>
+                        <span className={inputs.label}>{t('settings.map.zoom.title')}</span>
+                      </label>
+                      <Toggle
+                        checked={mapSettings.isZoomEnabled}
+                        onChange={() => handleSetMapSettings({
+                          ...mapSettings,
+                          isZoomEnabled: !mapSettings.isZoomEnabled,
+                        })}
+                      />
+                    </div>
+                    <span className={typography.caption}>{t('settings.map.zoom.description')}</span>
+                  </div>
+
+                  <div className={styles.toggleFieldsGrid}>
+                    <div className={styles.toggleField}>
+                      <label className={inputs.field}>
+                        <span className={inputs.label}>{t('settings.map.search.title')}</span>
+                      </label>
+                      <Toggle
+                        checked={mapSettings.isSearchEnabled}
+                        onChange={() => handleSetMapSettings({
+                          ...mapSettings,
+                          isSearchEnabled: !mapSettings.isSearchEnabled,
+                        })}
+                      />
+                    </div>
+                    <span className={typography.caption}>{t('settings.map.search.description')}</span>
+                  </div>
+                </>
+              )}
+            </section>
+          </>
+        )}
 
         {/* Sources GPS */}
 

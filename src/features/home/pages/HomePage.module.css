@@ -1,4 +1,5 @@
 .container {
+	position: relative;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
@@ -118,6 +119,46 @@
 }
 
 .geolocationIcon path {
+	fill: var(--color-dark);
+}
+
+/* Zoom in/out — stacked above geolocation, fused vertical control */
+.zoomInButton,
+.zoomOutButton {
+	position: absolute;
+	right: 1rem;
+	z-index: 100;
+	width: 48px;
+	height: 44px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-dark-contrast);
+	border: none;
+	box-shadow: 0px 0px 8px 0px #00000029;
+	cursor: pointer;
+}
+
+.zoomInButton {
+	bottom: calc(90px + 48px + 8px + 44px);
+	border-radius: 12px 12px 0 0;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.zoomOutButton {
+	bottom: calc(90px + 48px + 8px);
+	border-radius: 0 0 12px 12px;
+}
+
+.zoomInIcon,
+.zoomOutIcon {
+	width: 22px;
+	height: 22px;
+}
+
+.zoomInIcon path,
+.zoomOutIcon path {
 	fill: var(--color-dark);
 }
 

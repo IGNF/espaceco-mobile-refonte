@@ -379,7 +379,9 @@
         "expert": "Expert"
       }
     },
-    "display": {
+    "map": {
+      "title": "Affichage de la carte",
+      "description": "Personnalisez l'affichage de la carte.",
       "rotation": {
         "title": "Rotation de la carte",
         "description": "Autoriser la rotation de la carte."

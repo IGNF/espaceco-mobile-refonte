@@ -104,3 +104,17 @@
   gap: 0.75rem;
   margin-bottom: 0.9rem;
 }
+
+.toggleFieldsGrid {
+  display: grid;
+  gap: 0.25rem;
+  margin-bottom: 1.2rem;
+}
+
+.toggleField {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}

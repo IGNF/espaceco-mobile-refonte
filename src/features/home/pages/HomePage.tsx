@@ -49,9 +49,13 @@ import { DirectContributionConflictAlert } from "@/features/map/components/Direc
 import { getCommunityLayerDirectContributionState } from "@/domain/community/directContribution";
 import styles from "./HomePage.module.css";
 import { overlayRoutes } from "@/app/router/routes";
+
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
+import IconZoomIn from "@/shared/assets/icons/icon-plus.svg?react";
+import IconZoomOut from "@/shared/assets/icons/icon-minus.svg?react";
+
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
@@ -437,6 +441,31 @@ export function HomePage() {
       {/* <p className={styles.copyright}>
 				{t("home.copyright")}
 			</p> */}
+
+      {/* Zoom in/out buttons */}
+
+      {mapSettings.isZoomEnabled && (
+        <>
+          <button
+            className={styles.zoomInButton}
+            onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) + 1)}
+            aria-label="Zoom in"
+          >
+            <IconZoomIn className={styles.zoomInIcon} />
+          </button>
+
+          <button
+            className={styles.zoomOutButton}
+            onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) - 1)}
+            aria-label="Zoom out"
+          >
+            <IconZoomOut className={styles.zoomOutIcon} />
+          </button>
+        </>
+      )}
+
+
+      {/* Geolocation center button */}
 
       <button
         className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}
