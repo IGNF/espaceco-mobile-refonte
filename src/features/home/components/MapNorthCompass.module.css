@@ -1,0 +1,43 @@
+.compassButton {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	z-index: 10;
+	width: 52px;
+	height: 52px;
+	padding: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: var(--color-dark-contrast);
+	border: none;
+	border-radius: 100px;
+	box-shadow: 0px 0px 8px 0px #00000029;
+	cursor: pointer;
+}
+
+.compassButton:active {
+	opacity: 0.92;
+}
+
+.needle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	will-change: transform;
+}
+
+.diamond {
+	width: 18px;
+	height: 36px;
+	clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+	background: linear-gradient(
+		to bottom,
+		#c62828 0%,
+		#c62828 50%,
+		#cfd8dc 50%,
+		#cfd8dc 100%
+	);
+}

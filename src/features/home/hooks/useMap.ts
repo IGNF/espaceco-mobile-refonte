@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import { Attribution, defaults as defaultControls } from "ol/control";
-import Rotate from "ol/control/Rotate";
 import ScaleLine from "ol/control/ScaleLine";
 import DragRotate from "ol/interaction/DragRotate";
 import PinchRotate from "ol/interaction/PinchRotate";
@@ -229,17 +228,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			if (pinchRotate) {
 				olMap.removeInteraction(pinchRotate);
 			}
-		}
-
-		const rotateControl = olMap
-			.getControls()
-			.getArray()
-			.find((c): c is Rotate => c instanceof Rotate);
-
-		if (isRotationEnabled && !rotateControl) {
-			olMap.addControl(new Rotate());
-		} else if (!isRotationEnabled && rotateControl) {
-			olMap.removeControl(rotateControl);
 		}
 	}, [isRotationEnabled, map]);
 

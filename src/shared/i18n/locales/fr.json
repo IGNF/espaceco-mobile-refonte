@@ -73,7 +73,8 @@
       "message": "Chargement de l'application...",
       "timeoutError": "Une erreur est survenue lors du chargement de l'application."
     },
-    "copyright": "Géoportail © IGN-France IGN"
+    "copyright": "Géoportail © IGN-France IGN",
+    "resetMapNorth": "Réinitialiser l’orientation : nord en haut"
   },
   "search": {
     "modeAddress": "Adresse",

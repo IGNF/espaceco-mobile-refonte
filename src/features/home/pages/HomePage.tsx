@@ -57,6 +57,7 @@ import IconZoomIn from "@/shared/assets/icons/icon-plus.svg?react";
 import IconZoomOut from "@/shared/assets/icons/icon-minus.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
+import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
 
@@ -432,6 +433,11 @@ export function HomePage() {
 
       <main className={styles.main}>
         <div className={styles.map} ref={mapElementRef} />
+        <MapNorthCompass
+          map={map}
+          isMapReady={isMapReady}
+          isRotationEnabled={mapSettings.isRotationEnabled ?? false}
+        />
         <SearchPanel
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
@@ -446,8 +452,9 @@ export function HomePage() {
       {/* Zoom in/out buttons */}
 
       {mapSettings.isZoomEnabled && (
-        <>
+        <div className={styles.zoomButtonGroup}>
           <button
+            type="button"
             className={styles.zoomInButton}
             onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) + 1)}
             aria-label="Zoom in"
@@ -456,13 +463,14 @@ export function HomePage() {
           </button>
 
           <button
+            type="button"
             className={styles.zoomOutButton}
             onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) - 1)}
             aria-label="Zoom out"
           >
             <IconZoomOut className={styles.zoomOutIcon} />
           </button>
-        </>
+        </div>
       )}
 
 
