@@ -17,7 +17,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Choix du mode d'affichage dans les paramètres de l'application
+- Choix du mode d'affichage (débutant, confirmé, expert) dans les paramètres de l'application
+- Ajout des options d'afficahge de la carte (zoom, recherche, rotation)
 
 ### Changed
 

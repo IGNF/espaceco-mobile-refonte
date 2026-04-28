@@ -2,7 +2,11 @@ import { useEffect, useRef, useCallback, useState } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import { Attribution, defaults as defaultControls } from "ol/control";
+import Rotate from "ol/control/Rotate";
 import ScaleLine from "ol/control/ScaleLine";
+import DragRotate from "ol/interaction/DragRotate";
+import PinchRotate from "ol/interaction/PinchRotate";
+import { defaults as defaultInteractions } from "ol/interaction";
 import LayerGroup from "ol/layer/Group";
 import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
@@ -21,6 +25,7 @@ import {
 interface UseMapOptions {
 	centerOnUserLocation?: boolean;
   skipGeoportailCapabilities?: boolean;
+  isRotationEnabled?: boolean;
 }
 
 interface UseMapReturn {
@@ -37,11 +42,14 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 	const {
     centerOnUserLocation: shouldCenterOnMount = true,
     skipGeoportailCapabilities = false,
+    isRotationEnabled = false,
   } = options;
 
 	const mapElementRef = useRef<HTMLDivElement | null>(null);
 	const mapRef = useRef<Map | null>(null);
   const skipGeoportailCapabilitiesOnInitRef = useRef(skipGeoportailCapabilities);
+	const isRotationEnabledRef = useRef(isRotationEnabled);
+	isRotationEnabledRef.current = isRotationEnabled;
 	const [map, setMap] = useState<Map | null>(null);
 	const [isLocating, setIsLocating] = useState(false);
 	const [isMapReady, setIsMapReady] = useState(false);
@@ -150,10 +158,16 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				}),
 			];
 
+			const rotationOn = isRotationEnabledRef.current;
 			initializedMap = new Map({
 				target: mapElementRef.current,
 				layers: layers,
-				controls: defaultControls({ zoom: false, attribution: false }).extend([
+				interactions: defaultInteractions({
+					onFocusOnly: true,
+					altShiftDragRotate: rotationOn,
+					pinchRotate: rotationOn,
+				}),
+				controls: defaultControls({ zoom: false, attribution: false, rotate: false }).extend([
 					...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
 					new Attribution({
 						collapsible: false,
@@ -163,6 +177,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 				view: new View({
 					center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
 					zoom: DEFAULT_MAP_ZOOM,
+					enableRotation: rotationOn,
 				}),
 			});
 
@@ -181,6 +196,52 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
 			setIsMapReady(false);
 		};
 	}, []);
+
+	useEffect(() => {
+		const olMap = mapRef.current;
+		if (!olMap) {
+			return;
+		}
+
+		const view = olMap.getView();
+		view.applyOptions_(
+			view.getUpdatedOptions_({
+				enableRotation: isRotationEnabled,
+				...(!isRotationEnabled ? { rotation: 0 } : {}),
+			}),
+		);
+
+		const interactions = olMap.getInteractions().getArray();
+		const dragRotate = interactions.find((i): i is DragRotate => i instanceof DragRotate);
+		const pinchRotate = interactions.find((i): i is PinchRotate => i instanceof PinchRotate);
+
+		if (isRotationEnabled) {
+			if (!dragRotate) {
+				olMap.addInteraction(new DragRotate());
+			}
+			if (!pinchRotate) {
+				olMap.addInteraction(new PinchRotate());
+			}
+		} else {
+			if (dragRotate) {
+				olMap.removeInteraction(dragRotate);
+			}
+			if (pinchRotate) {
+				olMap.removeInteraction(pinchRotate);
+			}
+		}
+
+		const rotateControl = olMap
+			.getControls()
+			.getArray()
+			.find((c): c is Rotate => c instanceof Rotate);
+
+		if (isRotationEnabled && !rotateControl) {
+			olMap.addControl(new Rotate());
+		} else if (!isRotationEnabled && rotateControl) {
+			olMap.removeControl(rotateControl);
+		}
+	}, [isRotationEnabled, map]);
 
 	// Center on user location on mount
 	useEffect(() => {

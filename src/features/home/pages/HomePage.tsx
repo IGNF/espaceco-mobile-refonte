@@ -85,6 +85,7 @@ export function HomePage() {
   } = useMap({
     centerOnUserLocation: offlineMode !== 'offline',
     skipGeoportailCapabilities: offlineMode === 'offline',
+    isRotationEnabled: mapSettings.isRotationEnabled ?? false,
   });
   const {
     layers,

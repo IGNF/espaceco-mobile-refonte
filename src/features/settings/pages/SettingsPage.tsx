@@ -96,12 +96,6 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const handleSetDisplayMode = async (displayMode: DisplayMode) => {
     await setDisplayMode(displayMode);
 
-    await setMapSettings({
-      isZoomEnabled: true,
-      isRotationEnabled: true,
-      isSearchEnabled: !mapSettings.isSearchEnabled,
-    });
-
     await showToastSafe({
       text: t('settings.advanced.displayMode.updated'),
       duration: 'short',
