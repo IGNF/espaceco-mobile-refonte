@@ -32,7 +32,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
 
   const { activeCommunity } = useCommunity();
-  const { displayMode, setDisplayModeState } = useAuth();
+  const { displayMode, setDisplayMode } = useAuth();
 
   const {
     pendingGpsSourceType,
@@ -88,7 +88,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   };
 
   const handleSetDisplayMode = async (displayMode: DisplayMode) => {
-    await setDisplayModeState(displayMode);
+    await setDisplayMode(displayMode);
 
     await showToastSafe({
       text: t('settings.advanced.displayMode.updated'),

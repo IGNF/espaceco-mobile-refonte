@@ -17,7 +17,7 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('beginner');
+  const [displayMode, setDisplayModeValue] = useState<DisplayMode>('beginner');
   const [isLoading, setIsLoading] = useState(true);
 
   // Try to restore session on app start
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       try {
         const storedUser = await userStorage.getUser() as AppUser | null;
         const storedDisplayMode = await userStorage.getDisplayMode(storedUser?.id ?? 0);
-        setDisplayMode(storedDisplayMode ?? 'beginner');
+        setDisplayModeValue(storedDisplayMode ?? 'beginner');
         if (storedUser?.isAnonymous) {
           setUser(storedUser);
         } else if (storedUser) {
@@ -152,11 +152,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  const setDisplayModeState = useCallback(async (displayMode: DisplayMode) => {
+  const setDisplayMode = useCallback(async (displayMode: DisplayMode) => {
     if (!user) return;
 
     await userStorage.saveDisplayMode(user.id, displayMode);
-    setDisplayMode(displayMode);
+    setDisplayModeValue(displayMode);
   }, [user]);
 
   return (
@@ -172,7 +172,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refreshCurrentUser,
         logout,
         continueWithoutAccount,
-        setDisplayModeState,
+        setDisplayMode,
       }}
     >
       {children}
