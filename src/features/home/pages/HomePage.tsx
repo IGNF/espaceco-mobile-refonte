@@ -155,6 +155,7 @@ export function HomePage() {
     mountedVectorLayers,
     isMapReady,
     offlineMode,
+    mapSettings.isOnlineVectorCacheEnabled,
     activeCommunityCache
   );
   useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);

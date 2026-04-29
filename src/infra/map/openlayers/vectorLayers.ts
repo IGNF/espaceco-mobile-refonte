@@ -7,7 +7,7 @@ import {
 } from '@ign/mobile-core';
 import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 import { stripQueryParams } from '@/shared/utils/query';
-import { cacheStorage } from '@/infra/storage/cacheStorage';
+import { cacheStorage, onlineVectorCacheStorage } from '@/infra/storage/cacheStorage';
 
 /**
  * Builds the runtime OpenLayers layer used on the map from a community-layer definition.
@@ -17,18 +17,27 @@ export function createCommunityVectorLayer(
   layer: CommunityLayer,
   apiClient: ApiClient,
   isOfflineMode: boolean,
+  isOnlineVectorCacheEnabled: boolean,
   cacheNamespace?: string
 ): BaseLayer | null {
+  const shouldUseOnlineVectorCache = !isOfflineMode && isOnlineVectorCacheEnabled;
+  const runtimeCacheStorage = isOfflineMode
+    ? cacheStorage
+    : shouldUseOnlineVectorCache
+      ? onlineVectorCacheStorage
+      : undefined;
+
   const geoservice = layer.geoservice;
   if (geoservice && (geoservice.type as string)?.toUpperCase() === 'WFS') {
     const wfsLayer = new WFSLayer({
       geoservice,
       visibility: getLayerVisibility(layer),
       opacity: getLayerOpacity(layer),
-      useCacheWhenOnline: false,
-    } as any, cacheStorage as any);
+      useCacheWhenOnline: shouldUseOnlineVectorCache,
+    } as any, runtimeCacheStorage as any);
     // Keep a link back to the originating CommunityLayer for layer-panel actions.
     applyCommunityLayerMetadata(wfsLayer, layer);
+    wfsLayer.set('onlineVectorCacheEnabled', shouldUseOnlineVectorCache);
     return wfsLayer;
   }
 
@@ -53,8 +62,8 @@ export function createCommunityVectorLayer(
         maxFeatures: getLayerMaxFeatures(layer),
         online: !isOfflineMode,
         outputFormat: getLayerOutputFormat(layer),
-        useCacheWhenOnline: false,
-        cache: cacheStorage,
+        useCacheWhenOnline: shouldUseOnlineVectorCache,
+        ...(runtimeCacheStorage ? { cache: runtimeCacheStorage } : {}),
         legacyCacheFallback: !isOfflineMode,
       } as any
     );
@@ -73,6 +82,7 @@ export function createCommunityVectorLayer(
     applyCommunityLayerMetadata(collabLayer, layer);
     collabLayer.set('offlineRuntimeMode', isOfflineMode ? 'offline' : 'online');
     collabLayer.set('offlineCacheNamespace', cacheNamespace ?? null);
+    collabLayer.set('onlineVectorCacheEnabled', shouldUseOnlineVectorCache);
     return collabLayer;
   }
 

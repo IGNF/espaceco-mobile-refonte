@@ -41,6 +41,7 @@ function normalizeMapSettings(rawSettings: unknown): MapSettings {
     isZoomEnabled: Boolean(candidate?.isZoomEnabled ?? true),
     isRotationEnabled: Boolean(candidate?.isRotationEnabled ?? true),
     isSearchEnabled: Boolean(candidate?.isSearchEnabled ?? true),
+    isOnlineVectorCacheEnabled: Boolean(candidate?.isOnlineVectorCacheEnabled ?? true),
   };
 }
 

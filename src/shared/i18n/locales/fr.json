@@ -380,6 +380,10 @@
         "advanced": "Confirmé",
         "expert": "Expert"
       },
+      "noCache": {
+        "title": "No cache",
+        "description": "Ne pas gérer de cache vecteur (au prochain redémarrage)."
+      },
       "maintenance": {
         "title": "Maintenance",
         "description": "Afficher le status de l'application et le contenu télécharger",

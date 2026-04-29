@@ -63,6 +63,7 @@ function syncCommunityVectorLayerGroup(
   layerGroup: LayerGroup,
   vectorLayers: CommunityLayer[],
   isOfflineMode: boolean,
+  isOnlineVectorCacheEnabled: boolean,
   activeCommunityCache: OfflineCommunityCache | null
 ): void {
   const existingLayersByKey = new globalThis.Map<string, BaseLayer>();
@@ -85,10 +86,12 @@ function syncCommunityVectorLayerGroup(
       ? offlineCacheLayer?.cacheNamespace
       : undefined;
     const desiredRuntimeMode = isOfflineMode ? 'offline' : 'online';
+    const desiredOnlineVectorCacheEnabled = !isOfflineMode && isOnlineVectorCacheEnabled;
     let olLayer: BaseLayer | null | undefined = existingLayersByKey.get(layerKey);
 
     const canReuseLayer =
       olLayer &&
+      olLayer.get('onlineVectorCacheEnabled') === desiredOnlineVectorCacheEnabled &&
       (!(olLayer instanceof CollabVectorLayer) ||
         (
           olLayer.get('offlineRuntimeMode') === desiredRuntimeMode &&
@@ -100,6 +103,7 @@ function syncCommunityVectorLayerGroup(
         communityLayer,
         collabApiClient,
         isOfflineMode,
+        isOnlineVectorCacheEnabled,
         desiredCacheNamespace
       );
     }
@@ -131,6 +135,7 @@ export function useCommunityMapLayers(
   vectorLayers: CommunityLayer[],
   isMapReady: boolean,
   mode: OfflineMode,
+  isOnlineVectorCacheEnabled: boolean,
   activeCommunityCache: OfflineCommunityCache | null
 ): UseCommunityMapLayersResult {
   const [isVectorLayersLoading, setIsVectorLayersLoading] = useState(false);
@@ -164,9 +169,10 @@ export function useCommunityMapLayers(
       guichet,
       vectorLayers,
       isOfflineMode,
+      isOnlineVectorCacheEnabled,
       activeCommunityCache
     );
-  }, [activeCommunityCache, isMapReady, isOfflineMode, mapRef, vectorLayers]);
+  }, [activeCommunityCache, isMapReady, isOfflineMode, isOnlineVectorCacheEnabled, mapRef, vectorLayers]);
 
   useEffect(() => {
     if (!isMapReady) return;

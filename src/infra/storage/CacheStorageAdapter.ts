@@ -149,7 +149,7 @@ export class CacheStorageAdapter implements ICacheStorage {
       return;
     }
 
-    const path = `${FEATURES_DIR}/${layerId}.geojson`;
+    const path = this.getFeatureCachePath(layerId);
     const geojsonStr = this.geoJSON.writeFeatures(features);
     await FileSystem.writeFile({
       path,
@@ -166,7 +166,7 @@ export class CacheStorageAdapter implements ICacheStorage {
     }
 
     try {
-      const path = `${FEATURES_DIR}/${layerId}.geojson`;
+      const path = this.getFeatureCachePath(layerId);
       const data = await FileSystem.readFile({
         path,
         directory: 'DATA',
@@ -178,13 +178,35 @@ export class CacheStorageAdapter implements ICacheStorage {
     }
   }
 
+  async loadFreshFeatures(layerId: string, maxAgeMs: number): Promise<Feature[]> {
+    if (FEATURE_CACHE_DISABLED_ON_WEB) {
+      return [];
+    }
+
+    try {
+      const path = this.getFeatureCachePath(layerId);
+      const metadata = await FileSystem.stat({
+        path,
+        directory: 'DATA',
+      });
+
+      if (Date.now() - metadata.modifiedAt > maxAgeMs) {
+        return [];
+      }
+
+      return this.loadFeatures(layerId);
+    } catch {
+      return [];
+    }
+  }
+
   async deleteFeatures(layerId: string): Promise<void> {
     if (FEATURE_CACHE_DISABLED_ON_WEB) {
       return;
     }
 
     try {
-      const path = `${FEATURES_DIR}/${layerId}.geojson`;
+      const path = this.getFeatureCachePath(layerId);
       await FileSystem.deleteFile({
         path,
         directory: 'DATA',
@@ -296,5 +318,9 @@ export class CacheStorageAdapter implements ICacheStorage {
       console.log(`Directory ${path} not found`);
     }
     return results;
+  }
+
+  private getFeatureCachePath(layerId: string): string {
+    return `${FEATURES_DIR}/${layerId}.geojson`;
   }
 }

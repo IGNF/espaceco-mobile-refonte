@@ -24,6 +24,7 @@ import type { DisplayMode } from '@/domain/user/models';
 import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 import { Toggle } from '@/shared/ui/Toggle';
 import type { MapSettings } from '@/domain/map/models';
+import { Divider } from '@/shared/ui/Divider/Divider';
 
 export interface SettingsPageProps {
   isOpen: boolean;
@@ -207,6 +208,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                     </div>
                     <span className={typography.caption}>{t('settings.map.search.description')}</span>
                   </div>
+
                 </>
               )}
             </section>
@@ -418,8 +420,30 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                 </select>
               </div>
 
+              {displayMode === 'expert' && (
+                <>
+                  <Divider />
+                  <div className={styles.toggleFieldsGrid}>
+                    <div className={styles.toggleField}>
+                      <label className={inputs.field}>
+                        <span className={inputs.label}>{t('settings.advanced.noCache.title')}</span>
+                      </label>
+                      <Toggle
+                        checked={!mapSettings.isOnlineVectorCacheEnabled}
+                        onChange={() => handleSetMapSettings({
+                          ...mapSettings,
+                          isOnlineVectorCacheEnabled: !mapSettings.isOnlineVectorCacheEnabled,
+                        })}
+                      />
+                    </div>
+                    <span className={typography.caption}>{t('settings.advanced.noCache.description')}</span>
+                  </div>
+                </>
+              )}
+
               {displayMode !== 'beginner' && (
                 <>
+                  <Divider />
                   <button
                     type='button'
                     className={styles.maintenanceEntry}

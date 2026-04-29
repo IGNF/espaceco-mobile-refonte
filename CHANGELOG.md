@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - Choix du mode d'affichage (débutant, confirmé, expert) dans les paramètres de l'application
 - Ajout des options de l'affichage de la carte (zoom, recherche, rotation) dans les paramètres de l'application
+- Ajout du mode "no cache" dans l'app, et dans les paramètres de l'application
 - Ajout des informations de "Maintenance" dans les paramètres de l'application
 
 ### Changed
