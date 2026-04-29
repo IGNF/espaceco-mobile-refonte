@@ -224,9 +224,17 @@ export class CacheStorageAdapter implements ICacheStorage {
   }
 
   async getUsedSpace(): Promise<number> {
+    const [tileSize, featureSize] = await Promise.all([
+      this.getRasterCacheUsedSpace(),
+      this.getVectorCacheUsedSpace(),
+    ]);
+
+    return tileSize + featureSize;
+  }
+
+  async getRasterCacheUsedSpace(): Promise<number> {
     let totalSize = 0;
 
-    // Calculate tiles size
     try {
       const tileEntries = await this.listDirectoryRecursive(CACHE_DIR, 'CACHE');
       for (const entry of tileEntries) {
@@ -238,12 +246,14 @@ export class CacheStorageAdapter implements ICacheStorage {
       console.log(`Cache directory not found`);
     }
 
-    // Calculate features size
+    return totalSize;
+  }
+
+  async getVectorCacheUsedSpace(): Promise<number> {
+    let totalSize = 0;
+
     try {
-      const featureEntries = await FileSystem.listDirectory({
-        path: FEATURES_DIR,
-        directory: 'DATA',
-      });
+      const featureEntries = await this.listDirectoryRecursive(FEATURES_DIR, 'DATA');
       for (const entry of featureEntries) {
         if (!entry.isDirectory && entry.size) {
           totalSize += entry.size;

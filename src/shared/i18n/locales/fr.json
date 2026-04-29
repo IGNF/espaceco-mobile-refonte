@@ -1,6 +1,7 @@
 {
   "common": {
-    "loading": "Chargement..."
+    "loading": "Chargement...",
+    "close": "Fermer"
   },
   "welcome": {
     "title": "Bienvenue",
@@ -378,6 +379,21 @@
         "beginner": "Débutant",
         "advanced": "Confirmé",
         "expert": "Expert"
+      },
+      "maintenance": {
+        "title": "Maintenance",
+        "description": "Afficher le status de l'application et le contenu télécharger",
+        "open": "Afficher",
+        "content": {
+          "rasterCache": "Cache image",
+          "vectorCache": "Cache Vecteur",
+          "freeSpace": "Espace disponible",
+          "reports": "Signalements",
+          "reportCount_one": "{{count}} signalement",
+          "reportCount_other": "{{count}} signalements",
+          "fileCount_one": "{{count}} fichier",
+          "fileCount_other": "{{count}} fichiers"
+        }
       }
     },
     "map": {
@@ -594,7 +610,6 @@
       "description": "du groupe",
       "loadingReports": "Chargement des signalements...",
       "noCommunitySelected": "Aucune communauté sélectionnée",
-      
       "defaultTheme": "Thème",
       "reportNumber": "Signalement n°",
       "noMoreReports": "Tous les signalements ont été chargés"

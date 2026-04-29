@@ -29,6 +29,12 @@ const REPORT_FEATURE_SERIALIZATION_OPTIONS = {
   dataProjection: WGS84_PROJECTION,
 } as const;
 
+export interface ReportStorageSummary {
+  reportCount: number;
+  fileCount: number;
+  sizeBytes: number;
+}
+
 function base64ToBlob(base64Data: string, mimeType: string): Blob {
   const byteCharacters = atob(base64Data);
   const byteNumbers = new Array(byteCharacters.length);
@@ -168,6 +174,37 @@ export class ReportStorageAdapter implements IReportStorage {
   async listReports(): Promise<Report[]> {
     const allReports = await this.getAllReports();
     return Object.values(allReports).map(data => this.deserializeReport(data));
+  }
+
+  async getStorageSummary(): Promise<ReportStorageSummary> {
+    const allReports = await this.getAllReports();
+    const reportStorageSizeBytes = new Blob([JSON.stringify(allReports)]).size;
+    let photoFileCount = 0;
+    let photoSizeBytes = 0;
+
+    try {
+      const photoEntries = await FileSystem.listDirectory({
+        path: PHOTOS_DIR,
+        directory: 'DATA',
+      });
+
+      for (const entry of photoEntries) {
+        if (entry.isDirectory) continue;
+
+        photoFileCount += 1;
+        photoSizeBytes += entry.size ?? 0;
+      }
+    } catch {
+      console.log(`Report photos directory not found`);
+    }
+
+    const reportCount = Object.keys(allReports).length;
+
+    return {
+      reportCount,
+      fileCount: reportCount + photoFileCount,
+      sizeBytes: reportStorageSizeBytes + photoSizeBytes,
+    };
   }
 
   // Photo operations

@@ -18,11 +18,13 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Choix du mode d'affichage (débutant, confirmé, expert) dans les paramètres de l'application
-- Ajout des options d'afficahge de la carte (zoom, recherche, rotation)
+- Ajout des options de l'affichage de la carte (zoom, recherche, rotation) dans les paramètres de l'application
+- Ajout des informations de "Maintenance" dans les paramètres de l'application
 
 ### Changed
 
 - Le contenu de la page "A propos du guichet" affiche maintenant la valeur du champ editorial ou description du groupe.
+- Les couches s'affichent maintenant dans le bon ordre
 
 ### Fixed
 

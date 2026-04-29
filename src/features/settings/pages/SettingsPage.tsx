@@ -4,10 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
+import { Alert } from '@/shared/ui/Alert/Alert';
 
 import { showToastSafe } from '@/shared/utils/toast';
+import { formatSizeFromBytes, formatSizeFromMb } from '@/shared/utils/storageSize';
 
 import { useSettings } from '@/features/settings/hooks/useSettings';
+import { useMaintenanceStats } from '@/features/settings/hooks/useMaintenanceStats';
 
 import IconAngleDown from '@/shared/assets/icons/icon-angle-down.svg?react';
 import screen from '@/shared/styles/screen.module.css';
@@ -33,9 +36,15 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
+  const [isMaintenanceAlertOpen, setIsMaintenanceAlertOpen] = useState(false);
 
   const { activeCommunity } = useCommunity();
   const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
+  const {
+    stats: maintenanceStats,
+    isLoading: isMaintenanceStatsLoading,
+    loadStats: loadMaintenanceStats,
+  } = useMaintenanceStats();
 
   const {
     pendingGpsSourceType,
@@ -108,6 +117,11 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
       duration: 'short',
       position: 'bottom',
     });
+  };
+
+  const handleOpenMaintenance = async () => {
+    setIsMaintenanceAlertOpen(true);
+    await loadMaintenanceStats();
   };
 
   return (
@@ -403,11 +417,83 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                   <option value='expert'>{t('settings.advanced.displayMode.expert')}</option>
                 </select>
               </div>
+
+              {displayMode !== 'beginner' && (
+                <>
+                  <button
+                    type='button'
+                    className={styles.maintenanceEntry}
+                    onClick={handleOpenMaintenance}
+                  >
+                    <span className={styles.maintenanceEntryText}>
+                      <span className={inputs.label}>{t('settings.advanced.maintenance.title')}</span>
+                      <span className={`${typography.caption} ${styles.maintenanceEntryDescription}`}>
+                        {t('settings.advanced.maintenance.description')}
+                      </span>
+                    </span>
+                    <span className={styles.maintenanceEntryAction}>
+                      {t('settings.advanced.maintenance.open')}
+                    </span>
+                  </button>
+                </>
+              )}
+
             </>
           )}
 
         </section>
       </main>
+
+      <Alert
+        isOpen={isMaintenanceAlertOpen}
+        onClose={() => setIsMaintenanceAlertOpen(false)}
+        title={t('settings.advanced.maintenance.title')}
+        subtitle={t('settings.advanced.maintenance.description')}
+        buttons={[
+          {
+            label: t('common.close'),
+            onClick: () => setIsMaintenanceAlertOpen(false),
+            variant: 'outline',
+          },
+        ]}
+      >
+        {isMaintenanceStatsLoading || !maintenanceStats ? (
+          <p className={typography.body}>{t('common.loading')}</p>
+        ) : (
+          <div className={styles.maintenanceStats}>
+            <dl className={styles.maintenanceSummary}>
+              <div className={styles.maintenanceSummaryRow}>
+                <dt>{t('settings.advanced.maintenance.content.rasterCache')}</dt>
+                <dd>{formatSizeFromBytes(maintenanceStats.rasterCacheSizeBytes)}</dd>
+              </div>
+              <div className={styles.maintenanceSummaryRow}>
+                <dt>{t('settings.advanced.maintenance.content.vectorCache')}</dt>
+                <dd>{formatSizeFromBytes(maintenanceStats.vectorCacheSizeBytes)}</dd>
+              </div>
+              <div className={styles.maintenanceSummaryRow}>
+                <dt>{t('settings.advanced.maintenance.content.freeSpace')}</dt>
+                <dd>{formatSizeFromMb(maintenanceStats.freeDiskSpaceMb)}</dd>
+              </div>
+            </dl>
+
+            <section className={styles.maintenanceReportSection}>
+              <h3 className={styles.maintenanceReportTitle}>
+                {t('settings.advanced.maintenance.content.reports')}
+              </h3>
+              <p className={styles.maintenanceReportText}>
+                {t('settings.advanced.maintenance.content.reportCount', {
+                  count: maintenanceStats.reportCount,
+                })}
+              </p>
+              <p className={styles.maintenanceReportText}>
+                {t('settings.advanced.maintenance.content.fileCount', {
+                  count: maintenanceStats.reportFileCount,
+                })} - {formatSizeFromBytes(maintenanceStats.reportSizeBytes)}
+              </p>
+            </section>
+          </div>
+        )}
+      </Alert>
     </SlideUpPage>
   );
 }
