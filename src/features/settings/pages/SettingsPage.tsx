@@ -15,11 +15,10 @@ import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
-import { useMapSettings } from '@/features/map/hooks/useMapSettings';
+import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 import { Toggle } from '@/shared/ui/Toggle';
 import type { MapSettings } from '@/domain/map/models';
 
@@ -36,9 +35,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
 
   const { activeCommunity } = useCommunity();
-  const { displayMode, setDisplayMode } = useAuth();
-  const { mapSettings, setMapSettings } = useMapSettings();
-  console.log('mapSettings =>', mapSettings);
+  const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
 
   const {
     pendingGpsSourceType,

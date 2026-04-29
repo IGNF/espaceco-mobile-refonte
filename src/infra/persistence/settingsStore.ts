@@ -6,9 +6,12 @@ import { storageKey } from '@/shared/constants/storage';
 import { toRawObject } from '@/shared/utils/coercion';
 import { readNonNegativeNumber } from '@/shared/utils/number';
 import type { MapSettings } from '@/domain/map/models';
+import type { DisplayMode } from '@/domain/user/models';
 
 const TRACE_RECORDING_SETTINGS_KEY = storageKey('TRACE_RECORDING_SETTINGS');
-const MAP_SETTINGS_KEY = storageKey('MAP_SETTINGS');
+const MAP_SETTINGS_KEY = 'MAP_SETTINGS';
+const DISPLAY_MODE_KEY = 'DISPLAY_MODE';
+const DEFAULT_DISPLAY_MODE: DisplayMode = 'beginner';
 
 function normalizeTraceRecordingSettings(rawSettings: unknown): TraceRecordingSettings {
   const candidate = toRawObject(rawSettings);
@@ -42,6 +45,10 @@ function normalizeMapSettings(rawSettings: unknown): MapSettings {
 }
 
 export class EspaceCo_SettingsStore {
+  /**
+   * Trace Recording Settings
+   */
+
   static async getTraceRecordingSettings(): Promise<TraceRecordingSettings> {
     return normalizeTraceRecordingSettings(
       await Storage.get(TRACE_RECORDING_SETTINGS_KEY, 'object')
@@ -56,13 +63,32 @@ export class EspaceCo_SettingsStore {
     return normalizedSettings;
   }
 
-  static async getMapSettings(): Promise<MapSettings> {
-    return normalizeMapSettings(await Storage.get(MAP_SETTINGS_KEY, 'object'));
+  /**
+   * Map Settings
+   */
+
+  static async getMapSettings(userId: number): Promise<MapSettings> {
+    return normalizeMapSettings(
+      await Storage.get(storageKey(`${MAP_SETTINGS_KEY}_${userId}`), 'object')
+    );
   }
 
-  static async saveMapSettings(settings: MapSettings): Promise<MapSettings> {
+  static async saveMapSettings(userId: number, settings: MapSettings): Promise<MapSettings> {
     const normalizedSettings = normalizeMapSettings(settings);
-    await Storage.set(MAP_SETTINGS_KEY, normalizedSettings, 'object');
+    await Storage.set(storageKey(`${MAP_SETTINGS_KEY}_${userId}`), normalizedSettings, 'object');
     return normalizedSettings;
+  }
+
+  /**
+   * Display Mode Settings
+   */
+
+  static async getDisplayMode(userId: number): Promise<DisplayMode> {
+    const mode = await Storage.get(storageKey(`${DISPLAY_MODE_KEY}_${userId}`), 'string');
+    return mode ?? DEFAULT_DISPLAY_MODE;
+  }
+
+  static async saveDisplayMode(userId: number, mode: DisplayMode): Promise<void> {
+    await Storage.set(storageKey(`${DISPLAY_MODE_KEY}_${userId}`), mode, 'string');
   }
 }

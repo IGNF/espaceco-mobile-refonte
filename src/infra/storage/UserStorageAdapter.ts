@@ -14,14 +14,12 @@ import { storageKey } from '../../shared/constants/storage';
 import { collabApiClient } from '../api/collabApiClient';
 import { mapApiCommunityToAppCommunity } from '@/domain/community/mappers';
 import type { AppCommunity } from '@/domain/community/models';
-import type { DisplayMode } from '@/domain/user/models';
 
 const USER_KEY = 'USER';
 const USER_PARAMS_KEY = 'USER_PARAMS';
 const COMMUNITIES_KEY = 'COMMUNITIES';
 const ACTIVE_COMMUNITY_KEY = 'ACTIVE_COMMUNITY';
 const CREDENTIALS_KEY = 'CREDENTIALS';
-const DISPLAY_MODE_KEY = 'DISPLAY_MODE';
 
 export class UserStorageAdapter implements IUserStorage {
   // User operations
@@ -73,21 +71,6 @@ export class UserStorageAdapter implements IUserStorage {
 
   async clearParam(): Promise<void> {
     await Storage.remove(storageKey(USER_PARAMS_KEY));
-  }
-
-  // Display mode setting
-
-  async saveDisplayMode(userId: number, displayMode: DisplayMode): Promise<void> {
-    await Storage.set(storageKey(`${DISPLAY_MODE_KEY}_${userId}`), displayMode, 'string');
-  }
-
-  async getDisplayMode(userId: number): Promise<DisplayMode | null> {
-    const displayMode = await Storage.get(storageKey(`${DISPLAY_MODE_KEY}_${userId}`), 'string');
-    return displayMode ?? null;
-  }
-
-  async clearDisplayMode(userId: number): Promise<void> {
-    await Storage.remove(storageKey(`${DISPLAY_MODE_KEY}_${userId}`));
   }
 
   // Community operations

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type Map from 'ol/Map';
 import type { Extent } from 'ol/extent';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 
 import type { CommunityLayer } from '@ign/mobile-core';
 
@@ -105,7 +105,7 @@ export function OfflineManagementPage({
 }: OfflineManagementPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
-  const { displayMode } = useAuth();
+  const { displayMode } = useAppSettings();
   const {
     mode,
     activeCommunityId,

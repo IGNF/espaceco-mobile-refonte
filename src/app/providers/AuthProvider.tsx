@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, type ReactNode } from "react";
 import { Network } from '@ign/mobile-device';
 import { AuthContext } from "./AuthContext";
 import * as authService from "@/infra/auth";
-import type { AppUser, DisplayMode } from "@/domain/user/models";
+import type { AppUser } from "@/domain/user/models";
 import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
 import { isAppError, toAppError } from '@/shared/errors/appError';
 
@@ -17,7 +17,6 @@ interface AuthProviderProps {
  */
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
-  const [displayMode, setDisplayModeValue] = useState<DisplayMode>('beginner');
   const [isLoading, setIsLoading] = useState(true);
 
   // Try to restore session on app start
@@ -25,8 +24,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     async function tryRestoreSession() {
       try {
         const storedUser = await userStorage.getUser() as AppUser | null;
-        const storedDisplayMode = await userStorage.getDisplayMode(storedUser?.id ?? 0);
-        setDisplayModeValue(storedDisplayMode ?? 'beginner');
         if (storedUser?.isAnonymous) {
           setUser(storedUser);
         } else if (storedUser) {
@@ -152,18 +149,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  const setDisplayMode = useCallback(async (displayMode: DisplayMode) => {
-    if (!user) return;
-
-    await userStorage.saveDisplayMode(user.id, displayMode);
-    setDisplayModeValue(displayMode);
-  }, [user]);
-
   return (
     <AuthContext.Provider
       value={{
         user,
-        displayMode,
         isAuthenticated: !!user,
         isLoading,
         loginWithPassword,
@@ -172,7 +161,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refreshCurrentUser,
         logout,
         continueWithoutAccount,
-        setDisplayMode,
       }}
     >
       {children}

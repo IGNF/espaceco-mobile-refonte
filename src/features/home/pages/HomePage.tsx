@@ -7,7 +7,7 @@ import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
-import { useMapSettings } from "@/features/map/hooks/useMapSettings";
+import { useAppSettings } from "@/features/settings/hooks/useAppSettings";
 
 import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading";
 import { useOnboarding, type OnboardingStep } from "@/features/onboarding/hooks/useOnboarding";
@@ -74,7 +74,7 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const { setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
-  const { mapSettings } = useMapSettings();
+  const { mapSettings } = useAppSettings();
   const {
     mapElementRef,
     mapRef,

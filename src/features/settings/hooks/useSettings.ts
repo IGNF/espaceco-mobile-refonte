@@ -7,12 +7,8 @@ import {
   type GpsSourceType,
 } from '@/platform/device/gpsSource';
 
-import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
-
-import {
-  DEFAULT_TRACE_RECORDING_SETTINGS,
-  type TraceRecordingSettings,
-} from '@/features/report/constants/reportTrace.constants';
+import type { TraceRecordingSettings } from '@/features/report/constants/reportTrace.constants';
+import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 
 import { isNonNegativeFinite, parseDecimalInput } from '@/shared/utils/number';
 
@@ -38,6 +34,7 @@ export interface UseSettingsReturn {
 }
 
 export function useSettings(): UseSettingsReturn {
+  const { traceRecordingSettings, setTraceRecordingSettings } = useAppSettings();
   const [pendingGpsSourceType, setPendingGpsSourceType] = useState<GpsSourceType>('internal');
   const [activeGpsSourceInfo, setActiveGpsSourceInfo] = useState<GpsSourceInfo>({ type: 'internal' });
   const [isGpsSourcePluginAvailable, setIsGpsSourcePluginAvailable] = useState(false);
@@ -47,14 +44,12 @@ export function useSettings(): UseSettingsReturn {
   const [isApplyingTraceSettings, setIsApplyingTraceSettings] = useState(false);
   const [gpsSourceErrorCode, setGpsSourceErrorCode] = useState<GpsSourceErrorCode | null>(null);
   const [traceSettingsErrorCode, setTraceSettingsErrorCode] = useState<'invalidNumber' | null>(null);
-  const [traceMinAccuracyInput, setTraceMinAccuracyInput] = useState(
-    String(DEFAULT_TRACE_RECORDING_SETTINGS.minAccuracy)
-  );
+  const [traceMinAccuracyInput, setTraceMinAccuracyInput] = useState(String(traceRecordingSettings.minAccuracy));
   const [traceTolerancePedestrianInput, setTraceTolerancePedestrianInput] = useState(
-    String(DEFAULT_TRACE_RECORDING_SETTINGS.toleranceByMode.pedestrian)
+    String(traceRecordingSettings.toleranceByMode.pedestrian)
   );
   const [traceToleranceCarInput, setTraceToleranceCarInput] = useState(
-    String(DEFAULT_TRACE_RECORDING_SETTINGS.toleranceByMode.car)
+    String(traceRecordingSettings.toleranceByMode.car)
   );
 
   const setTraceInputValues = (settings: TraceRecordingSettings): void => {
@@ -71,7 +66,6 @@ export function useSettings(): UseSettingsReturn {
       try {
         await EspaceCo_GpsSource.restorePreferredSource();
         const preferredSource = await EspaceCo_GpsSource.getPreferredSource();
-        const traceSettings = await EspaceCo_SettingsStore.getTraceRecordingSettings();
 
         if (!isMounted) return;
 
@@ -79,7 +73,6 @@ export function useSettings(): UseSettingsReturn {
         setCanSetGpsSource(EspaceCo_GpsSource.canSetSource());
         setActiveGpsSourceInfo(EspaceCo_GpsSource.getCurrentSource());
         setPendingGpsSourceType(preferredSource);
-        setTraceInputValues(traceSettings);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -91,6 +84,10 @@ export function useSettings(): UseSettingsReturn {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    setTraceInputValues(traceRecordingSettings);
+  }, [traceRecordingSettings]);
 
   const applyGpsSource = async (): Promise<boolean> => {
     setGpsSourceErrorCode(null);
@@ -136,8 +133,8 @@ export function useSettings(): UseSettingsReturn {
         return false;
       }
 
-      const savedSettings = await EspaceCo_SettingsStore.saveTraceRecordingSettings(parsedSettings);
-      setTraceInputValues(savedSettings);
+      await setTraceRecordingSettings(parsedSettings);
+      setTraceInputValues(parsedSettings);
       return true;
     } finally {
       setIsApplyingTraceSettings(false);
