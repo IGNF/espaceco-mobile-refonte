@@ -100,7 +100,7 @@ export function LayerGroupDetailsPage({
   const unlockLayerLabel = t('layers.groupDetails.unlockLayerEdition');
 
   const orderedItems = group
-    ? orderItemsByStringKey(group.items, (item) => item.id, itemOrder)
+    ? [...orderItemsByStringKey(group.items, (item) => item.id, itemOrder)].reverse()
     : [];
 
   const getLayerDraftState = (item: LayerGroupItem): LayerDraftState => {

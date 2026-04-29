@@ -23,10 +23,11 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- Le contenu de la page "A propos du guichet" affiche maintenant la valeur du champ editorial ou description du groupe.
-- Les couches s'affichent maintenant dans le bon ordre
+- Le contenu de la page "A propos du guichet" affiche maintenant la valeur du champ editorial ou description du groupe. (ticket #118)
 
 ### Fixed
+
+- Les couches s'affichent maintenant dans le bon ordre
 
 ## [0.0.4] - 2026-04-27
 

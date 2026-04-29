@@ -916,7 +916,7 @@
       "contact": "Pour toute question sur les signalements, vous pouvez nous écrire via le <contactLink>formulaire de contact</contactLink>."
     },
     "legend": {
-      "title": "A propos des statuts de réponse",
+      "title": "Mon signalement est-il traité ?",
       "draft": "<b>Brouillon</b> : Le signalement est enregistré mais pas encore envoyé au serveur.",
       "pending": "<b>En cours de traitement</b> : Le signalement est en cours d'analyse ou de traitement par un responsable.",
       "pendingQualification": "<b>En attente de saisie</b> : La prise en compte effective du signalement nécessite un laps de temps plus long (attente de passage terrain par exemple). La mise à jour des données est donc différée.",

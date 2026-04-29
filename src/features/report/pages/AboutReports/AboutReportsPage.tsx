@@ -69,7 +69,7 @@ export function AboutReportsPage({ isOpen, onClose }: AboutReportsPageProps) {
     <SlideUpPage isOpen={isOpen} onClose={onClose}>
       <PageHeader title={t('aboutReports.title')} subtitle={activeCommunity?.name ?? ''} onClose={onClose} />
       <main className={screen.screenContainer}>
-        <h1 className={typography.title}>{t('aboutReports.title')}</h1>
+        <p className={typography.subtitle}>{t('aboutReports.title')}</p>
         <div className={styles.reportSection}>
           <p className={typography.paragraph}>
             <Trans i18nKey="aboutReports.reportSection.intro" components={{ b: <strong /> }} />
