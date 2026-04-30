@@ -8,11 +8,21 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "selectapp": "node ./scripts/selectapp.js && npm run build",
+    "selectapp:naviforest": "node ./scripts/selectapp.js --naviforest && npm run build",
+    "selectapp:espaceco": "node ./scripts/selectapp.js --espaceco && npm run build",
+    "generate-apk": "bash ./scripts/generate-apk.sh",
+    "capacitor-build-dev": "npm run build-dev && npx cap sync",
     "capacitor-build": "npm run build && npx cap sync",
     "capacitor-run-ios": "npm run capacitor-build && npx cap run ios",
+    "capacitor-run-ios-dev": "npm run capacitor-build-dev && npx cap run ios",
     "capacitor-run-android": "npm run capacitor-build && npx cap run android",
+    "capacitor-run-android-dev": "npm run capacitor-build-dev && npx cap run android",
     "open-xcode": "npx cap open ios",
-    "open-android": "npx cap open android"
+    "open-android": "npx cap open android",
+    "deploy:ios": "node ./scripts/deploy.js ios",
+    "deploy:android": "node ./scripts/deploy.js android",
+    "deploy": "node ./scripts/deploy.js both"
   },
   "dependencies": {
     "@capacitor-community/device": "^8.0.0",
