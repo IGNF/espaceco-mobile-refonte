@@ -55,7 +55,7 @@ const menuGroups: MenuGroup[] = [
     titleKey: "leftMenu.guichet.title",
     icon: IconGuichet,
     items: [
-      { id: "guichet", labelKey: "leftMenu.guichet.guichet", route: "/community-selection" },
+      // { id: "guichet", labelKey: "leftMenu.guichet.guichet", route: "/my-layers" },
       { id: "modeHorsLigne", labelKey: "leftMenu.guichet.modeHorsLigne", route: "/offline" },
       { id: "aProposGuichet", labelKey: "leftMenu.guichet.aPropos", route: "/about-community" },
     ],

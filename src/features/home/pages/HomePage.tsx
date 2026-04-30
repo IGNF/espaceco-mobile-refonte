@@ -35,6 +35,7 @@ import { DirectContributionFeatureFormPage } from "@/features/map/pages/DirectCo
 import { DirectContributionFeatureDetailsPage } from "@/features/map/pages/DirectContribution/DirectContributionFeatureDetailsPage";
 
 import { LayersPanelFlow } from "@/features/map/components/LayersPanelFlow";
+import type { LayerGroupId } from "@/features/map/types/layerGroups";
 import { useLayers } from "@/features/map/hooks/useLayers";
 import { useCommunityMapLayers } from "@/features/map/hooks/useCommunityMapLayers";
 import { useCommunityFeatureConsultation } from "@/features/map/hooks/useCommunityFeatureConsultation";
@@ -163,6 +164,8 @@ export function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+  const [initialLayerGroupId, setInitialLayerGroupId] = useState<LayerGroupId | null>(null);
+  const [initialLayerGroupRequestKey, setInitialLayerGroupRequestKey] = useState(0);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [newReportType, setReportType] = useState<ReportType>('standard');
@@ -223,8 +226,8 @@ export function HomePage() {
       if (route === '/offline') {
         setOfflineOverlayKey((value) => value + 1);
       }
-
       setActiveOverlay(route);
+
     } else {
       navigate(route);
     }
@@ -270,13 +273,17 @@ export function HomePage() {
 
   const handleTabClick = (tab: TabId) => {
     if (tab === "couches" && !isLayersPanelOpen) {
+      setInitialLayerGroupId(null);
       setIsLayersPanelOpen(true);
     }
     else if (tab === "signalement") {
       setActiveOverlay('/new-report-choice');
     }
     else if (tab === "guichet") {
-      console.log('guichet');
+      setActiveOverlay(null);
+      setInitialLayerGroupId('guichet');
+      setInitialLayerGroupRequestKey((value) => value + 1);
+      setIsLayersPanelOpen(true);
     }
   };
 
@@ -496,6 +503,8 @@ export function HomePage() {
       <LayersPanelFlow
         isOpen={isLayersPanelOpen}
         onClose={() => setIsLayersPanelOpen(false)}
+        initialLayerGroupId={initialLayerGroupId}
+        initialLayerGroupRequestKey={initialLayerGroupRequestKey}
         layers={layers}
         geoportailLayers={geoportailLayers}
         vectorLayers={vectorLayers}

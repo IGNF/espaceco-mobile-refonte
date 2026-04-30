@@ -13,6 +13,8 @@ import type {
 export interface LayersPanelFlowProps {
   isOpen: boolean;
   onClose: () => void;
+  initialLayerGroupId?: LayerGroupId | null;
+  initialLayerGroupRequestKey?: number;
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
@@ -36,6 +38,8 @@ export interface LayersPanelFlowProps {
 export function LayersPanelFlow({
   isOpen,
   onClose,
+  initialLayerGroupId = null,
+  initialLayerGroupRequestKey = 0,
   layers,
   geoportailLayers,
   vectorLayers,
@@ -67,7 +71,18 @@ export function LayersPanelFlow({
     submittingByLayerKey,
   });
 
-  const [activeLayerGroup, setActiveLayerGroup] = useState<LayerGroupId | null>(null);
+  const [activeLayerGroupState, setActiveLayerGroupState] = useState<LayerGroupId | null>(null);
+  const [
+    dismissedInitialLayerGroupRequestKey,
+    setDismissedInitialLayerGroupRequestKey,
+  ] = useState<number | null>(null);
+  const activeInitialLayerGroup =
+    isOpen &&
+    initialLayerGroupId !== null &&
+    dismissedInitialLayerGroupRequestKey !== initialLayerGroupRequestKey
+      ? initialLayerGroupId
+      : null;
+  const activeLayerGroup = activeInitialLayerGroup ?? activeLayerGroupState;
   const isLayerGroupOpen = isOpen && activeLayerGroup !== null;
   const isPanelOpen = isOpen && !isLayerGroupOpen;
 
@@ -77,7 +92,8 @@ export function LayersPanelFlow({
   );
 
   const handleOpenLayerGroup = (groupId: LayerGroupId) => {
-    setActiveLayerGroup(groupId);
+    setDismissedInitialLayerGroupRequestKey(initialLayerGroupRequestKey);
+    setActiveLayerGroupState(groupId);
   };
 
   const handleToggleGroupVisibility = (groupId: LayerGroupId) => {
@@ -107,11 +123,17 @@ export function LayersPanelFlow({
 
   const handleClosePanel = () => {
     onClose();
-    setActiveLayerGroup(null);
+    setDismissedInitialLayerGroupRequestKey(initialLayerGroupRequestKey);
+    setActiveLayerGroupState(null);
   };
 
   const handleCloseLayerGroup = () => {
-    setActiveLayerGroup(null);
+    setDismissedInitialLayerGroupRequestKey(initialLayerGroupRequestKey);
+    setActiveLayerGroupState(null);
+
+    if (activeInitialLayerGroup !== null) {
+      onClose();
+    }
   };
 
   const handleSendGroupDirectContributions = (groupId: LayerGroupId) => {

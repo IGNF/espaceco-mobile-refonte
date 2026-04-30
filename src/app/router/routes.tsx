@@ -65,6 +65,7 @@ export const overlayRoutes = [
   '/new-report-choice',
   '/create-or-edit-report',
   '/offline',
+  '/my-layers',
   '/about',
   '/help'
 ] as const;

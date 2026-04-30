@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.5] - 2026-04-xx
+## [0.0.5] - 2026-04-30
 
 ### Added
 
@@ -25,6 +25,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 
 - Le contenu de la page "A propos du guichet" affiche maintenant la valeur du champ editorial ou description du groupe. (ticket #118)
+- Item "Guichet" du menu de gauche supprimé (ticket #92)
+- La tab "Guichet" de la tabbar ouvre maintenant les couches du guichet utilisé (ticket #92)
 
 ### Fixed
 
