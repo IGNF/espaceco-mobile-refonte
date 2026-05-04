@@ -217,89 +217,96 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
 
         {/* Sources GPS */}
 
-        <section className={styles.section}>
-          <button
-            type='button'
-            className={styles.sectionHeaderButton}
-            onClick={() => setIsGpsSectionExpanded((value) => !value)}
-            aria-expanded={isGpsSectionExpanded}
-          >
-            <h2 className={styles.sectionTitle}>{t('settings.gps.title')}</h2>
-            <IconAngleDown
-              className={`${styles.chevron} ${isGpsSectionExpanded ? styles.chevronExpanded : ''}`}
-              aria-hidden='true'
-            />
-          </button>
-
-          {isGpsSectionExpanded && (
-            <>
-              <p className={`${typography.caption} ${styles.sectionDescription}`}>
-                {t('settings.gps.description')}
-              </p>
-
-              <div className={styles.currentSource}>
-                <span className={typography.caption}>{t('settings.gps.currentSource')}</span>
-                <strong className={styles.currentSourceValue}>{currentSourceLabel}</strong>
-              </div>
-
-              {!isGpsSourcePluginAvailable && (
-                <p className={`${typography.caption} ${styles.infoMessage}`}>
-                  {t('settings.gps.pluginUnavailable')}
-                </p>
-              )}
-              {isGpsSourcePluginAvailable && !canSetGpsSource && (
-                <p className={`${typography.caption} ${styles.infoMessage}`}>
-                  {t('settings.gps.changeUnsupported')}
-                </p>
-              )}
-
-              <fieldset className={styles.fieldset} disabled={isGpsSourceFormDisabled}>
-                <legend className={styles.legend}>{t('settings.gps.chooseSource')}</legend>
-
-                <label className={styles.radioOption}>
-                  <input
-                    type='radio'
-                    name='gps-source'
-                    value='internal'
-                    checked={pendingGpsSourceType === 'internal'}
-                    onChange={() => setPendingGpsSourceType('internal')}
-                  />
-                  <span>{t('settings.gps.source.internal')}</span>
-                </label>
-
-                <label
-                  className={`${styles.radioOption} ${!canChooseExternal ? styles.radioOptionDisabled : ''}`}
-                >
-                  <input
-                    type='radio'
-                    name='gps-source'
-                    value='external'
-                    checked={pendingGpsSourceType === 'external'}
-                    onChange={() => setPendingGpsSourceType('external')}
-                    disabled={!canChooseExternal}
-                  />
-                  <span>{t('settings.gps.source.external')}</span>
-                </label>
-              </fieldset>
-
-              {gpsSourceErrorCode && (
-                <p className={`${inputs.error} ${styles.errorMessage}`}>
-                  {t(`settings.gps.errors.${gpsSourceErrorCode}`)}
-                </p>
-              )}
-
-              <Button
-                color='primary'
-                fullWidth
-                onClick={handleApplyGpsSource}
-                disabled={isGpsSourceFormDisabled}
-                loading={isApplyingGpsSource}
+        {displayMode === 'expert' && (
+          <>
+            <section className={styles.section}>
+              <button
+                type='button'
+                className={styles.sectionHeaderButton}
+                onClick={() => setIsGpsSectionExpanded((value) => !value)}
+                aria-expanded={isGpsSectionExpanded}
               >
-                {t('settings.gps.apply')}
-              </Button>
-            </>
-          )}
-        </section>
+                <h2 className={styles.sectionTitle}>{t('settings.gps.title')}</h2>
+                <IconAngleDown
+                  className={`${styles.chevron} ${isGpsSectionExpanded ? styles.chevronExpanded : ''}`}
+                  aria-hidden='true'
+                />
+              </button>
+
+              {isGpsSectionExpanded && (
+                <>
+                  <p className={`${typography.caption} ${styles.sectionDescription}`}>
+                    {t('settings.gps.description')}
+                  </p>
+
+                  <div className={styles.currentSource}>
+                    <span className={typography.caption}>{t('settings.gps.currentSource')}</span>
+                    <strong className={styles.currentSourceValue}>{currentSourceLabel}</strong>
+                  </div>
+
+                  {!isGpsSourcePluginAvailable && (
+                    <p className={`${typography.caption} ${styles.infoMessage}`}>
+                      {t('settings.gps.pluginUnavailable')}
+                    </p>
+                  )}
+                  {isGpsSourcePluginAvailable && !canSetGpsSource && (
+                    <p className={`${typography.caption} ${styles.infoMessage}`}>
+                      {t('settings.gps.changeUnsupported')}
+                    </p>
+                  )}
+
+                  <fieldset className={styles.fieldset} disabled={isGpsSourceFormDisabled}>
+                    <legend className={styles.legend}>{t('settings.gps.chooseSource')}</legend>
+
+                    <label className={styles.radioOption}>
+                      <input
+                        type='radio'
+                        name='gps-source'
+                        value='internal'
+                        checked={pendingGpsSourceType === 'internal'}
+                        onChange={() => setPendingGpsSourceType('internal')}
+                      />
+                      <span>{t('settings.gps.source.internal')}</span>
+                    </label>
+
+                    <label
+                      className={`${styles.radioOption} ${!canChooseExternal ? styles.radioOptionDisabled : ''}`}
+                    >
+                      <input
+                        type='radio'
+                        name='gps-source'
+                        value='external'
+                        checked={pendingGpsSourceType === 'external'}
+                        onChange={() => setPendingGpsSourceType('external')}
+                        disabled={!canChooseExternal}
+                      />
+                      <span>{t('settings.gps.source.external')}</span>
+                    </label>
+                  </fieldset>
+
+                  {gpsSourceErrorCode && (
+                    <p className={`${inputs.error} ${styles.errorMessage}`}>
+                      {t(`settings.gps.errors.${gpsSourceErrorCode}`)}
+                    </p>
+                  )}
+
+                  <Button
+                    color='primary'
+                    fullWidth
+                    onClick={handleApplyGpsSource}
+                    disabled={isGpsSourceFormDisabled}
+                    loading={isApplyingGpsSource}
+                  >
+                    {t('settings.gps.apply')}
+                  </Button>
+                </>
+              )}
+            </section>
+
+          </>
+
+        )}
+
 
         {/* Réglages traces GPS */}
 
