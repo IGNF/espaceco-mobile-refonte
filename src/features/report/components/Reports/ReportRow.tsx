@@ -35,8 +35,8 @@ export function ReportRow({ report, communityName, onClick }: ReportRowProps) {
 				{communityName && <span className={styles.community}>{communityName}</span>}
 				<span className={styles.theme}>{themeName}</span>
 				<div className={styles.dateTime}>
-					<span className={styles.date}>{formatDate(report.createdAt)}</span>
-					<span className={styles.time}>{formatTime(report.createdAt)}</span>
+					<span className={styles.date}>{formatDate(report.modifiedAt ?? report.createdAt)}</span>
+					<span className={styles.time}>{formatTime(report.modifiedAt ?? report.createdAt)}</span>
 				</div>
 			</div>
 			<IconAngleRight className={styles.chevron} />

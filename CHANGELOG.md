@@ -11,7 +11,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
-- La position d'un signalement peut maintenant être modifiée lorsqu'on modifie un brouillon (ticket #118)
+### Fixed
+
+## [0.0.6] - 2026-05-07
+
+### Added
+
+### Changed
+
+- La position d'un signalement peut maintenant être modifiée lorsqu'on modifie un brouillon (ticket #103)
+- Dans la page listant les signalements, ceux-ci s'affichent maintenant dans l'ordre antéchronologique, et la date de mise à jour est affichée dans la liste au lieu de la date de création (ticket #102)
 
 ### Fixed
 
