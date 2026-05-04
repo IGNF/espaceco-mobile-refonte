@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getUid } from "ol/util";
@@ -61,6 +61,7 @@ import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverla
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
+import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -81,6 +82,8 @@ export function HomePage() {
     mapRef,
     map,
     centerOnUserLocation,
+    lockUserLocationOnMap,
+    isLockedUserLocation,
     isLocating,
     isMapReady,
     hasInitialCenterCompleted,
@@ -171,6 +174,8 @@ export function HomePage() {
   const [newReportType, setReportType] = useState<ReportType>('standard');
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
+  const geolocationTapTimeoutRef = useRef<number | null>(null);
+  const geolocationLastTapRef = useRef(0);
   const {
     featureCandidates: consultationFeatureCandidates,
     selectedFeatureCandidate: consultedFeatureCandidate,
@@ -212,6 +217,34 @@ export function HomePage() {
   const isHighlighted = (target: OnboardingStep): boolean => {
     return isTourMode && currentStep === target;
   };
+
+  /**
+   * A single tap centers the map. A second tap inside the delay toggles location lock.
+   */
+  const handleGeolocationButtonPointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    const now = event.timeStamp;
+
+    if (geolocationTapTimeoutRef.current !== null && now - geolocationLastTapRef.current <= GEOLOCATION_DOUBLE_TAP_DELAY_MS) {
+      window.clearTimeout(geolocationTapTimeoutRef.current);
+      geolocationTapTimeoutRef.current = null;
+      lockUserLocationOnMap();
+      return;
+    }
+
+    geolocationLastTapRef.current = now;
+    geolocationTapTimeoutRef.current = window.setTimeout(() => {
+      geolocationTapTimeoutRef.current = null;
+      void centerOnUserLocation();
+    }, GEOLOCATION_DOUBLE_TAP_DELAY_MS);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (geolocationTapTimeoutRef.current !== null) {
+        window.clearTimeout(geolocationTapTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleBurgerClick = () => {
     setIsMenuOpen(true);
@@ -485,9 +518,9 @@ export function HomePage() {
       {/* Geolocation center button */}
 
       <button
-        className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""}`}
-        onClick={centerOnUserLocation}
-        disabled={isLocating}
+        className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
+        onPointerUp={handleGeolocationButtonPointerUp}
+        disabled={isLocating && !isLockedUserLocation}
         aria-label="Center on my position"
         data-onboarding-target="geolocation"
       >

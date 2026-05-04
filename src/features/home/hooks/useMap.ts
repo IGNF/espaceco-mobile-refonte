@@ -11,106 +11,144 @@ import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
 import { EspaceCo_Geolocation } from "@/platform/device/geolocation";
 import {
-	DEFAULT_MAP_CENTER_LON_LAT,
-	DEFAULT_MAP_FOCUS_ZOOM,
-	DEFAULT_MAP_SHOW_SCALELINE,
-	DEFAULT_MAP_ZOOM,
+  DEFAULT_MAP_CENTER_LON_LAT,
+  DEFAULT_MAP_FOCUS_ZOOM,
+  DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION,
+  DEFAULT_MAP_SHOW_SCALELINE,
+  DEFAULT_MAP_ZOOM,
+  GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS,
+  GEOLOCATION_LOCK_RECENTER_INTERVAL_MS,
 } from "@/shared/constants/map";
 import {
-	initGeoportailCapabilities,
-	createGeoportailLayerGroup,
+  initGeoportailCapabilities,
+  createGeoportailLayerGroup,
 } from "@/infra/map/openlayers/geoportailLayers";
 
 interface UseMapOptions {
-	centerOnUserLocation?: boolean;
+  centerOnUserLocation?: boolean;
   skipGeoportailCapabilities?: boolean;
   isRotationEnabled?: boolean;
 }
 
 interface UseMapReturn {
-	mapElementRef: React.RefObject<HTMLDivElement | null>;
-	mapRef: React.RefObject<Map | null>;
-	map: Map | null;
-	centerOnUserLocation: () => Promise<void>;
-	isLocating: boolean;
-	isMapReady: boolean;
-	hasInitialCenterCompleted: boolean;
+  mapElementRef: React.RefObject<HTMLDivElement | null>;
+  mapRef: React.RefObject<Map | null>;
+  map: Map | null;
+  centerOnUserLocation: (animationDuration?: number) => Promise<void>;
+  lockUserLocationOnMap: () => void;
+  isLocating: boolean;
+  isLockedUserLocation: boolean;
+  isMapReady: boolean;
+  hasInitialCenterCompleted: boolean;
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
-	const {
+  const {
     centerOnUserLocation: shouldCenterOnMount = true,
     skipGeoportailCapabilities = false,
     isRotationEnabled = false,
   } = options;
 
-	const mapElementRef = useRef<HTMLDivElement | null>(null);
-	const mapRef = useRef<Map | null>(null);
+  const mapElementRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<Map | null>(null);
+  const isLocatingRef = useRef(false);
   const skipGeoportailCapabilitiesOnInitRef = useRef(skipGeoportailCapabilities);
-	const isRotationEnabledRef = useRef(isRotationEnabled);
-	isRotationEnabledRef.current = isRotationEnabled;
-	const [map, setMap] = useState<Map | null>(null);
-	const [isLocating, setIsLocating] = useState(false);
-	const [isMapReady, setIsMapReady] = useState(false);
-	const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
-		() => !shouldCenterOnMount
-	);
+  const isRotationEnabledRef = useRef(isRotationEnabled);
+  isRotationEnabledRef.current = isRotationEnabled;
+  const [map, setMap] = useState<Map | null>(null);
+  const [isLockedUserLocation, setIsLockedUserLocation] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [isMapReady, setIsMapReady] = useState(false);
+  const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
+    () => !shouldCenterOnMount
+  );
 
-	const animateTo = useCallback(async (map: Map, centerLonLat: [number, number]) => {
-		await new Promise<void>((resolve) => {
-			map.getView().animate(
-				{
-					center: fromLonLat(centerLonLat),
-					zoom: DEFAULT_MAP_FOCUS_ZOOM,
-					duration: 500,
-				},
-				() => resolve()
-			);
-		});
-	}, []);
+  const animateTo = useCallback(async (
+    map: Map,
+    centerLonLat: [number, number],
+    zoom: number = DEFAULT_MAP_FOCUS_ZOOM,
+    duration: number = 500
+  ) => {
+    await new Promise<void>((resolve) => {
+      map.getView().animate(
+        {
+          center: fromLonLat(centerLonLat),
+          zoom: zoom,
+          duration,
+        },
+        () => resolve()
+      );
+    });
+  }, []);
 
-	const centerOnUserLocation = useCallback(async () => {
-		const map = mapRef.current;
-		if (!map) {
-			return;
-		}
+  const lockUserLocationOnMap = useCallback(() => {
+    setIsLockedUserLocation((value) => {
+      const nextValue = !value;
+      console.log('isLockedUserLocation', nextValue);
+      return nextValue;
+    });
+  }, []);
 
-		setIsLocating(true);
-		try {
-			const position = await EspaceCo_Geolocation.getUsersLocation({
-				enableHighAccuracy: true,
-				timeout: 10000,
-			});
+  const centerOnUserLocation = useCallback(async (animationDuration: number = 500) => {
+    const map = mapRef.current;
+    if (!map || isLocatingRef.current) {
+      return;
+    }
 
-			if (position) {
-				const { longitude, latitude } = position.coords;
-				await animateTo(map, [longitude, latitude]);
-			} else {
-				// Fallback to default center if geolocation fails
-				await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT);
-			}
-		} catch (error) {
-			console.error("Error centering on user location:", error);
-			// Fallback to default center
-			await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT);
-		} finally {
-			setIsLocating(false);
-		}
-	}, [animateTo]);
+    isLocatingRef.current = true;
+    setIsLocating(true);
+    try {
+      const position = await EspaceCo_Geolocation.getUsersLocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+      });
 
-	// Initialize map
-	useEffect(() => {
-		if (!mapElementRef.current || mapRef.current) {
-			return;
-		}
+      if (position) {
+        const { longitude, latitude } = position.coords;
+        await animateTo(map, [longitude, latitude], DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION, animationDuration);
+      } else {
+        // Fallback to default center if geolocation fails
+        await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT, DEFAULT_MAP_FOCUS_ZOOM, animationDuration);
+      }
+    } catch (error) {
+      console.error("Error centering on user location:", error);
+      // Fallback to default center
+      await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT, DEFAULT_MAP_FOCUS_ZOOM, animationDuration);
+    } finally {
+      isLocatingRef.current = false;
+      setIsLocating(false);
+    }
+  }, [animateTo]);
 
-		let mounted = true;
-		let initializedMap: Map | null = null;
+  useEffect(() => {
+    if (!isLockedUserLocation) {
+      return;
+    }
 
-		async function initMap() {
-			if (!mapElementRef.current || !mounted) return;
+    void centerOnUserLocation(GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS);
 
-			if (!skipGeoportailCapabilitiesOnInitRef.current) {
+    const intervalId = window.setInterval(() => {
+      void centerOnUserLocation(GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS);
+    }, GEOLOCATION_LOCK_RECENTER_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [centerOnUserLocation, isLockedUserLocation]);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapElementRef.current || mapRef.current) {
+      return;
+    }
+
+    let mounted = true;
+    let initializedMap: Map | null = null;
+
+    async function initMap() {
+      if (!mapElementRef.current || !mounted) return;
+
+      if (!skipGeoportailCapabilitiesOnInitRef.current) {
         try {
           await initGeoportailCapabilities();
         } catch (error) {
@@ -118,149 +156,151 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
         }
       }
 
-			if (!mounted || !mapElementRef.current) return;
+      if (!mounted || !mapElementRef.current) return;
 
-			const layerCache = new LayerGroup({
-				properties: {
-					title: 'Cartes hors-ligne',
-					name: 'cache',
-					openInLayerSwitcher: false,
-					displayInLayerSwitcher: true,
-				},
-			});
+      const layerCache = new LayerGroup({
+        properties: {
+          title: 'Cartes hors-ligne',
+          name: 'cache',
+          openInLayerSwitcher: false,
+          displayInLayerSwitcher: true,
+        },
+      });
 
-			layerCache.on('change', function () {
-				if (layerCache.getLayers().getLength()) {
-					layerCache.set('displayInLayerSwitcher', true);
-				}
-			});
+      layerCache.on('change', function () {
+        if (layerCache.getLayers().getLength()) {
+          layerCache.set('displayInLayerSwitcher', true);
+        }
+      });
 
-			const geoportailLayer = createGeoportailLayerGroup();
+      const geoportailLayer = createGeoportailLayerGroup();
 
-			const layers = [
-				geoportailLayer,
-				layerCache,
-				new LayerGroup({
-					properties: {
-						title: 'Mes couches',
-						name: 'groupe',
-						displayInLayerSwitcher: false,
-						openInLayerSwitcher: true,
-					},
-				}),
-				new LayerGroup({
-					properties: {
-						title: 'Mon guichet',
-						name: 'guichet',
-						visible: true,
-					},
-				}),
-			];
+      const layers = [
+        geoportailLayer,
+        layerCache,
+        new LayerGroup({
+          properties: {
+            title: 'Mes couches',
+            name: 'groupe',
+            displayInLayerSwitcher: false,
+            openInLayerSwitcher: true,
+          },
+        }),
+        new LayerGroup({
+          properties: {
+            title: 'Mon guichet',
+            name: 'guichet',
+            visible: true,
+          },
+        }),
+      ];
 
-			const rotationOn = isRotationEnabledRef.current;
-			initializedMap = new Map({
-				target: mapElementRef.current,
-				layers: layers,
-				interactions: defaultInteractions({
-					onFocusOnly: true,
-					altShiftDragRotate: rotationOn,
-					pinchRotate: rotationOn,
-				}),
-				controls: defaultControls({ zoom: false, attribution: false, rotate: false }).extend([
-					...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
-					new Attribution({
-						collapsible: false,
-						collapsed: false,
-					}),
-				]),
-				view: new View({
-					center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
-					zoom: DEFAULT_MAP_ZOOM,
-					enableRotation: rotationOn,
-				}),
-			});
+      const rotationOn = isRotationEnabledRef.current;
+      initializedMap = new Map({
+        target: mapElementRef.current,
+        layers: layers,
+        interactions: defaultInteractions({
+          onFocusOnly: true,
+          altShiftDragRotate: rotationOn,
+          pinchRotate: rotationOn,
+        }),
+        controls: defaultControls({ zoom: false, attribution: false, rotate: false }).extend([
+          ...(DEFAULT_MAP_SHOW_SCALELINE ? [new ScaleLine()] : []),
+          new Attribution({
+            collapsible: false,
+            collapsed: false,
+          }),
+        ]),
+        view: new View({
+          center: fromLonLat(DEFAULT_MAP_CENTER_LON_LAT),
+          zoom: DEFAULT_MAP_ZOOM,
+          enableRotation: rotationOn,
+        }),
+      });
 
-			mapRef.current = initializedMap;
-			setMap(initializedMap);
-			setIsMapReady(true);
-		}
+      mapRef.current = initializedMap;
+      setMap(initializedMap);
+      setIsMapReady(true);
+    }
 
-		initMap();
+    initMap();
 
-		return () => {
-			mounted = false;
-			mapRef.current?.setTarget(undefined);
-			mapRef.current = null;
-			setMap(null);
-			setIsMapReady(false);
-		};
-	}, []);
+    return () => {
+      mounted = false;
+      mapRef.current?.setTarget(undefined);
+      mapRef.current = null;
+      setMap(null);
+      setIsMapReady(false);
+    };
+  }, []);
 
-	useEffect(() => {
-		const olMap = mapRef.current;
-		if (!olMap) {
-			return;
-		}
+  useEffect(() => {
+    const olMap = mapRef.current;
+    if (!olMap) {
+      return;
+    }
 
-		const view = olMap.getView();
-		view.applyOptions_(
-			view.getUpdatedOptions_({
-				enableRotation: isRotationEnabled,
-				...(!isRotationEnabled ? { rotation: 0 } : {}),
-			}),
-		);
+    const view = olMap.getView();
+    view.applyOptions_(
+      view.getUpdatedOptions_({
+        enableRotation: isRotationEnabled,
+        ...(!isRotationEnabled ? { rotation: 0 } : {}),
+      }),
+    );
 
-		const interactions = olMap.getInteractions().getArray();
-		const dragRotate = interactions.find((i): i is DragRotate => i instanceof DragRotate);
-		const pinchRotate = interactions.find((i): i is PinchRotate => i instanceof PinchRotate);
+    const interactions = olMap.getInteractions().getArray();
+    const dragRotate = interactions.find((i): i is DragRotate => i instanceof DragRotate);
+    const pinchRotate = interactions.find((i): i is PinchRotate => i instanceof PinchRotate);
 
-		if (isRotationEnabled) {
-			if (!dragRotate) {
-				olMap.addInteraction(new DragRotate());
-			}
-			if (!pinchRotate) {
-				olMap.addInteraction(new PinchRotate());
-			}
-		} else {
-			if (dragRotate) {
-				olMap.removeInteraction(dragRotate);
-			}
-			if (pinchRotate) {
-				olMap.removeInteraction(pinchRotate);
-			}
-		}
-	}, [isRotationEnabled, map]);
+    if (isRotationEnabled) {
+      if (!dragRotate) {
+        olMap.addInteraction(new DragRotate());
+      }
+      if (!pinchRotate) {
+        olMap.addInteraction(new PinchRotate());
+      }
+    } else {
+      if (dragRotate) {
+        olMap.removeInteraction(dragRotate);
+      }
+      if (pinchRotate) {
+        olMap.removeInteraction(pinchRotate);
+      }
+    }
+  }, [isRotationEnabled, map]);
 
-	// Center on user location on mount
-	useEffect(() => {
-		if (!shouldCenterOnMount || !isMapReady || hasInitialCenterCompleted) {
-			return;
-		}
+  // Center on user location on mount
+  useEffect(() => {
+    if (!shouldCenterOnMount || !isMapReady || hasInitialCenterCompleted) {
+      return;
+    }
 
-		let cancelled = false;
+    let cancelled = false;
 
-		void (async () => {
-			try {
-				await centerOnUserLocation();
-			} finally {
-				if (!cancelled) {
-					setHasInitialCenterCompleted(true);
-				}
-			}
-		})();
+    void (async () => {
+      try {
+        await centerOnUserLocation();
+      } finally {
+        if (!cancelled) {
+          setHasInitialCenterCompleted(true);
+        }
+      }
+    })();
 
-		return () => {
-			cancelled = true;
-		};
-	}, [centerOnUserLocation, hasInitialCenterCompleted, isMapReady, shouldCenterOnMount]);
+    return () => {
+      cancelled = true;
+    };
+  }, [centerOnUserLocation, hasInitialCenterCompleted, isMapReady, shouldCenterOnMount]);
 
-	return {
-		mapElementRef,
-		mapRef,
-		map,
-		centerOnUserLocation,
-		isLocating,
-		isMapReady,
-		hasInitialCenterCompleted,
-	};
+  return {
+    mapElementRef,
+    mapRef,
+    map,
+    centerOnUserLocation,
+    lockUserLocationOnMap,
+    isLocating,
+    isLockedUserLocation,
+    isMapReady,
+    hasInitialCenterCompleted,
+  };
 }

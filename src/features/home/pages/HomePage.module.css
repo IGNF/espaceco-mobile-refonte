@@ -168,3 +168,7 @@
 .highlighted {
 	z-index: 1001;
 }
+
+.locked {
+  background-color: var(--color-primary-light);
+}

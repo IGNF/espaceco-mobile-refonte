@@ -17,10 +17,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclencé toutes les 30 seconds
+
 ### Changed
 
 - La position d'un signalement peut maintenant être modifiée lorsqu'on modifie un brouillon (ticket #103)
 - Dans la page listant les signalements, ceux-ci s'affichent maintenant dans l'ordre antéchronologique, et la date de mise à jour est affichée dans la liste au lieu de la date de création (ticket #102)
+- La source du GPS n'est modifiable qu'en mode expert
+- Le niveau de zoom au recentrage est passé de 13 à 16
 
 ### Fixed
 
