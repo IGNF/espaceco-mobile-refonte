@@ -11,6 +11,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- La position d'un signalement peut maintenant être modifiée lorsqu'on modifie un brouillon (ticket #118)
+
 ### Fixed
 
 ## [0.0.5] - 2026-04-30

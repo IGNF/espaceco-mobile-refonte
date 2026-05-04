@@ -130,7 +130,7 @@ export function CreateOrEditReportPage({
 
   const basePosition = isEditMode ? editPosition : geoPosition;
   const position = selectedPosition ?? basePosition;
-  const canEditPosition = !isEditMode && Boolean(map);
+  const canEditPosition = Boolean(map);
   const canPickObjects = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const canPickSketches = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const canPickTrace = isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
@@ -446,15 +446,13 @@ export function CreateOrEditReportPage({
 
   const handleSaveDraft = async () => {
     await form.saveDraft();
-    resetMapPickers();
-    setTimeout(async () => {
-      onClose();
-      await showToastSafe({
-        text: t('reports.createOrEdit.actions.draftSaved'),
-        duration: 'short',
-        position: 'top',
-      });
-    }, 300);
+    closeMapPickers();
+    onClose();
+    await showToastSafe({
+      text: t('reports.createOrEdit.actions.draftSaved'),
+      duration: 'short',
+      position: 'top',
+    });
   };
 
   const handleSend = async () => {
