@@ -16,7 +16,6 @@ import { createCommunityVectorLayer } from '@/infra/map/openlayers/vectorLayers'
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
-import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 
 interface UseCommunityMapLayersResult {
   isVectorLayersLoading: boolean;
@@ -185,10 +184,6 @@ export function useCommunityMapLayers(
 
     const loadingByLayerKey: Record<string, boolean> = {};
     const cleanupTasks: Array<() => void> = [];
-    const layerTitleByKey = new globalThis.Map(
-      vectorLayers.map((layer) => [getCommunityLayerKey(layer), getCommunityLayerTitle(layer)])
-    );
-
     const setLayerLoadingState = (layerKey: string, isLoading: boolean) => {
       if (isLoading) {
         loadingByLayerKey[layerKey] = true;
@@ -201,9 +196,6 @@ export function useCommunityMapLayers(
 
     for (const layer of guichet.getLayers().getArray()) {
       const layerKey = getCommunityLayerKeyFromOlLayer(layer);
-      const layerTitle = layerKey ? layerTitleByKey.get(layerKey) ?? layerKey : '';
-      const loadSource =
-        isOfflineMode && layer instanceof CollabVectorLayer ? 'offline cache' : 'api';
 
       /**
        * BaseLayer does not expose getSource() in its public type, but the mounted vector layers do.
@@ -223,22 +215,11 @@ export function useCommunityMapLayers(
       }
 
       const handleLoadStart = () => {
-        console.log('[OFFLINE_MODE][useCommunityMapLayers] layer load start', {
-          layerKey,
-          layerTitle,
-          source: loadSource,
-        });
         setLayerLoadingState(layerKey, true);
       };
 
       const handleLoadEnd = (event: unknown) => {
         const remains = (event as { remains?: unknown } | undefined)?.remains;
-        console.log('[OFFLINE_MODE][useCommunityMapLayers] layer load end', {
-          layerKey,
-          layerTitle,
-          source: loadSource,
-          remains,
-        });
         setLayerLoadingState(layerKey, typeof remains === 'number' ? remains > 0 : false);
       };
 
@@ -257,7 +238,7 @@ export function useCommunityMapLayers(
 
       setIsVectorLayersLoading(false);
     };
-  }, [isMapReady, isOfflineMode, mapRef, vectorLayers]);
+  }, [isMapReady, mapRef, vectorLayers]);
 
   return {
     isVectorLayersLoading,

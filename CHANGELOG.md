@@ -17,7 +17,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclencé toutes les 30 seconds
+- Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclenché toutes les 30 seconds
 
 ### Changed
 

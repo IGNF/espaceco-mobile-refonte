@@ -33,6 +33,8 @@ export function createCommunityVectorLayer(
       geoservice,
       visibility: getLayerVisibility(layer),
       opacity: getLayerOpacity(layer),
+      tileZoom: getWfsTileZoom(layer),
+      maxFeatures: getLayerMaxFeatures(layer),
       useCacheWhenOnline: shouldUseOnlineVectorCache,
     } as any, runtimeCacheStorage as any);
     // Keep a link back to the originating CommunityLayer for layer-panel actions.
@@ -118,8 +120,15 @@ export function getTableTileZoom(layer: CommunityLayer): number {
   return Number.isFinite(tileZoom) ? tileZoom : 13;
 }
 
+function getWfsTileZoom(layer: CommunityLayer): number {
+  const geoservice = layer.geoservice as Record<string, unknown> | undefined;
+  const tileZoom = Number(geoservice?.tileZoomLevel ?? geoservice?.tile_zoom_level);
+
+  return Number.isFinite(tileZoom) ? tileZoom : 13;
+}
+
 export function getLayerMaxFeatures(layer: CommunityLayer): number {
-  const tileZoom = getTableTileZoom(layer);
+  const tileZoom = layer.table ? getTableTileZoom(layer) : getWfsTileZoom(layer);
 
   // Lower-zoom collaborative tiles cover a much larger area, so a smaller cap keeps slow environments responsive.
   if (tileZoom <= 12) {

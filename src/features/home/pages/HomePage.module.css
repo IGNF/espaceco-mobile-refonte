@@ -172,3 +172,7 @@
 .locked {
   background-color: var(--color-primary-light);
 }
+
+.geolocationLoading {
+  padding: 0;
+}
