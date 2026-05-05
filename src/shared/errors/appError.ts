@@ -12,6 +12,7 @@ export type AppErrorKind =
   | 'conflict'
   | 'server'
   | 'unknown'
+  | 'invalidParameter'
 
 interface AppErrorOptions {
   kind: AppErrorKind;
@@ -43,6 +44,7 @@ const DEFAULT_TRANSLATION_KEYS: Record<AppErrorKind, string> = {
   conflict: 'errors.global.conflict',
   server: 'errors.global.server',
   unknown: 'errors.global.unknown',
+  invalidParameter: 'errors.global.invalidParameter',
 }
 
 const RETRYABLE_KINDS = new Set<AppErrorKind>([

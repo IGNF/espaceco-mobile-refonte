@@ -40,6 +40,7 @@ export interface UseReportFormOptions {
   position: Position | null;
   isOpen?: boolean;
   reportType?: ReportType;
+  preselectFirstTheme?: boolean;
 }
 
 export interface UseReportFormReturn {
@@ -166,6 +167,7 @@ export function useReportForm({
   position,
   isOpen,
   reportType,
+  preselectFirstTheme = false,
 }: UseReportFormOptions): UseReportFormReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -176,9 +178,15 @@ export function useReportForm({
     [user?.communities_member, activeCommunity?.id]
   );
   const resolvedReportType: ReportType = reportType ?? 'standard';
+  const initialTheme = mode === 'create' && preselectFirstTheme
+    ? themes[0]?.theme ?? ''
+    : '';
+  const initialAttributeValues = initialTheme
+    ? buildDefaultValues(themes[0]?.attributes ?? [])
+    : {};
 
-  const [selectedTheme, setSelectedThemeRaw] = useState<string>('');
-  const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
+  const [selectedTheme, setSelectedThemeRaw] = useState<string>(initialTheme);
+  const [attributeValues, setAttributeValues] = useState<Record<string, string>>(initialAttributeValues);
   const [comment, setComment] = useState<string>('');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
   const [objects, setObjects] = useState<Feature<Geometry>[]>(() => {
@@ -205,8 +213,11 @@ export function useReportForm({
       setSketches(nextSketches);
     } else {
       setReportId(Date.now());
-      setSelectedThemeRaw('');
-      setAttributeValues({});
+      const nextTheme = preselectFirstTheme
+        ? themes[0]?.theme ?? ''
+        : '';
+      setSelectedThemeRaw(nextTheme);
+      setAttributeValues(nextTheme ? buildDefaultValues(themes[0]?.attributes ?? []) : {});
       setComment('');
       setPhotos([]);
       setObjects([]);
@@ -214,7 +225,7 @@ export function useReportForm({
     }
     setErrors({});
     setIsDirty(false);
-  }, [mode]);
+  }, [mode, preselectFirstTheme, themes]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const previousReportRef = useRef(report);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getUid } from "ol/util";
@@ -44,6 +44,7 @@ import { useDirectContributionSession } from "@/features/map/hooks/useDirectCont
 import { useOfflineRasterMapLayers } from "@/features/map/hooks/useOfflineRasterMapLayers";
 import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
+import { useMapLongPress, type MapLongPressCoordinate } from "@/features/map/hooks/useMapLongPress";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
@@ -63,6 +64,10 @@ import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
 import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
 import { Loading } from "@/shared/ui/Loading";
+import { Alert } from "@/shared/ui/Alert";
+import { createPositionFromLonLat } from "@/shared/utils/position";
+import { openInMapApp } from "@/platform/device/appLauncher";
+import type { Position } from "@/platform/device/geolocation";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -173,6 +178,9 @@ export function HomePage() {
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [newReportType, setReportType] = useState<ReportType>('standard');
+  const [newReportInitialPosition, setNewReportInitialPosition] = useState<Position | null>(null);
+  const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
+  const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
   const geolocationTapTimeoutRef = useRef<number | null>(null);
@@ -285,6 +293,8 @@ export function HomePage() {
 
   const handleNewReportStandard = () => {
     setReportType('standard');
+    setNewReportInitialPosition(null);
+    setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {
@@ -294,6 +304,8 @@ export function HomePage() {
 
   const handleNewReportTrace = () => {
     setReportType('trace');
+    setNewReportInitialPosition(null);
+    setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {
@@ -318,6 +330,35 @@ export function HomePage() {
       setInitialLayerGroupId('guichet');
       setInitialLayerGroupRequestKey((value) => value + 1);
       setIsLayersPanelOpen(true);
+    }
+  };
+
+  const handleCloseLongPressMapAction = useCallback(() => {
+    setLongPressMapAction(null);
+  }, []);
+
+  const handleCreateReportFromLongPress = () => {
+    if (!longPressMapAction) return;
+
+    setReportType('standard');
+    setNewReportInitialPosition(
+      createPositionFromLonLat(longPressMapAction.longitude, longPressMapAction.latitude)
+    );
+    setIsNewReportThemePreselected(true);
+    setLongPressMapAction(null);
+    setIsSearchOpen(false);
+    setActiveOverlay('/create-or-edit-report');
+  };
+
+  const handleOpenLongPressInMapApp = async () => {
+    if (!longPressMapAction) return;
+
+    const { latitude, longitude } = longPressMapAction;
+    setLongPressMapAction(null);
+    try {
+      await openInMapApp(latitude, longitude);
+    } catch (error) {
+      console.error('Failed to open map app', error);
     }
   };
 
@@ -442,6 +483,25 @@ export function HomePage() {
   ]);
 
   const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
+
+  const isMapLongPressEnabled =
+    isMapReady &&
+    activeOverlay === null &&
+    !isLayersPanelOpen &&
+    !isDirectContributionSessionActive &&
+    activeConflict === null &&
+    directContributionFeatureFormState === null &&
+    consultedFeatureCandidate === null &&
+    !isDirectContributionFeatureChoiceOpen &&
+    !isConsultationFeatureChoiceOpen &&
+    !isHomeLoadingOverlayVisible &&
+    !shouldShowOnboarding;
+
+  useMapLongPress({
+    map,
+    enabled: isMapLongPressEnabled,
+    onLongPress: setLongPressMapAction,
+  });
 
   return (
     <div className={styles.container}>
@@ -617,6 +677,23 @@ export function HomePage() {
         onConfirmResolutions={confirmConflictResolutions}
       />
 
+      <Alert
+        isOpen={longPressMapAction !== null}
+        onClose={handleCloseLongPressMapAction}
+        title={t('home.mapLongPressAction.title')}
+        buttons={[
+          {
+            label: t('home.mapLongPressAction.createReport'),
+            onClick: handleCreateReportFromLongPress,
+          },
+          {
+            label: t('home.mapLongPressAction.goTo'),
+            onClick: () => void handleOpenLongPressInMapApp(),
+            variant: 'outline',
+          },
+        ]}
+      />
+
       <OnboardingModal
         isOpen={shouldShowOnboarding}
         isTourMode={isTourMode}
@@ -678,6 +755,8 @@ export function HomePage() {
           onClose={handleCloseOverlay}
           mode="create"
           reportType={newReportType}
+          initialPosition={newReportInitialPosition}
+          preselectFirstTheme={isNewReportThemePreselected}
           map={map}
           onSearchPanelVisibilityChange={setIsSearchOpen}
         />

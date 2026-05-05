@@ -57,6 +57,8 @@ export interface CreateOrEditReportPageProps {
   mode: ReportPageMode;
   reportType?: ReportType;
   report?: AppReport | null;
+  initialPosition?: Position | null;
+  preselectFirstTheme?: boolean;
   onBack?: () => void;
   level?: number;
   map?: OlMap | null;
@@ -97,6 +99,8 @@ export function CreateOrEditReportPage({
   mode,
   reportType,
   report,
+  initialPosition = null,
+  preselectFirstTheme = false,
   onBack,
   level = 2,
   map,
@@ -108,7 +112,7 @@ export function CreateOrEditReportPage({
   const isDraftReport = report?.status === ReportStatus.Draft;
   const resolvedReportType: ReportType = reportType ?? 'standard';
   const isTraceReport = resolvedReportType === 'trace';
-  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(initialPosition);
   const [mapPickerMode, setMapPickerMode] = useState<MapPickerMode>('none');
   const [objectCandidates, setObjectCandidates] = useState<PickedMapObjectCandidate[]>([]);
   const [isObjectChoiceOpen, setIsObjectChoiceOpen] = useState(false);
@@ -116,7 +120,7 @@ export function CreateOrEditReportPage({
   const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
 
   const { position: geoPosition, isLocating, error, fetchPosition } = useGeolocation({
-    fetchOnMount: !isEditMode, // fetch position only on create mode
+    fetchOnMount: !isEditMode && !initialPosition, // fetch position only when create mode has no preset location
   });
 
   // In edit mode, reconstruct position from saved geometry ("POINT(lon lat)")
@@ -148,6 +152,7 @@ export function CreateOrEditReportPage({
     position,
     isOpen,
     reportType: resolvedReportType,
+    preselectFirstTheme,
   });
 
   const headerTitle = isEditMode

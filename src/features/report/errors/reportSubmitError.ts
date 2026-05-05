@@ -13,6 +13,7 @@ export type ReportSubmitErrorKind =
   | 'forbidden'
   | 'validation'
   | 'unknown'
+  | 'invalidParameter'
 
 interface ReportSubmitErrorOptions {
   kind: ReportSubmitErrorKind;
@@ -35,6 +36,7 @@ const DEFAULT_TRANSLATION_KEYS: Record<ReportSubmitErrorKind, string> = {
   forbidden: 'reports.errors.submit.forbidden',
   validation: 'reports.errors.submit.validation',
   unknown: 'reports.errors.submit.unknown',
+  invalidParameter: 'reports.errors.submit.invalidParameter',
 }
 
 const RETRYABLE_KINDS = new Set<ReportSubmitErrorKind>([

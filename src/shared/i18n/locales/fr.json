@@ -74,6 +74,11 @@
       "message": "Chargement de l'application...",
       "timeoutError": "Une erreur est survenue lors du chargement de l'application."
     },
+    "mapLongPressAction": {
+      "title": "Action sur la carte",
+      "createReport": "Créer un signalement",
+      "goTo": "Aller à"
+    },
     "copyright": "Géoportail © IGN-France IGN",
     "resetMapNorth": "Réinitialiser l’orientation : nord en haut"
   },
@@ -845,7 +850,8 @@
         "unauthorized": "Votre session a expiré. Merci de vous reconnecter.",
         "forbidden": "Vous n'avez pas les droits nécessaires pour envoyer ce signalement.",
         "validation": "Le signalement ne peut pas être envoyé car certaines données sont invalides.",
-        "unknown": "Une erreur inattendue est survenue lors de l'envoi du signalement."
+        "unknown": "Une erreur inattendue est survenue lors de l'envoi du signalement.",
+        "invalidParameter": "Les paramètres sont invalides."
       }
     }
   },

@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclenché toutes les 30 secondes (ticket #135)
 - On peut maintenant visualiser un signalement sur la carte depuis le brouillon de celui-ci (ticket #100)
+- Un appui long sur la carte ouvre maintenant une alerte pour proposer à l'utilisateur de créer un signalement à cet endroit, ou d'ouvrir cet endroit dans une appli de navigation (ticket #106)
 
 ### Changed
 
