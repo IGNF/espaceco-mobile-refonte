@@ -616,7 +616,8 @@
       "noCommunitySelected": "Aucune communauté sélectionnée",
       "defaultTheme": "Thème",
       "reportNumber": "Signalement n°",
-      "noMoreReports": "Tous les signalements ont été chargés"
+      "noMoreReports": "Tous les signalements ont été chargés",
+      "lastUpdated": "Mis à jour le {{date}} à {{time}}"
     },
     "myReports": {
       "headerTitle": "Mes signalements en cours",

@@ -78,7 +78,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
       }
 
       // sort by updating date, descending? Available sortable attributes are: id, comment, opening_date, closing_date, updating_date, status, input_device, device_version
-      params.sort = 'updating_date:DESC';
+      params.sort = 'id:DESC';
 
       const response = await collabApiClient.report.getAll(params);
 
