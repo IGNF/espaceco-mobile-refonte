@@ -680,6 +680,7 @@
         "draftSaved": "Signalement enregistré dans les brouillons",
         "send": "Envoyer",
         "validatePosition": "Valider la position",
+        "backToReport": "Retour à la fiche",
         "cancel": "Annuler",
         "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
         "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer."
@@ -708,6 +709,7 @@
         "positionLocating": "Localisation en cours...",
         "positionUnavailable": "Position non disponible",
         "editPosition": "Modifier la position",
+        "viewPosition": "Voir la position",
         "photo": "Photo",
         "photoAdd": "Ajouter une photo",
         "photoCount": "{{count}} / {{max}} photo(s)",

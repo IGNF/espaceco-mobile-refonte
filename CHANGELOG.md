@@ -18,6 +18,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclenché toutes les 30 secondes (ticket #135)
+- On peut maintenant visualiser un signalement sur la carte depuis le brouillon de celui-ci (ticket #100)
 
 ### Changed
 
