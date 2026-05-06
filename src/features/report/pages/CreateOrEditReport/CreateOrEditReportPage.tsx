@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReportStatus } from '@ign/mobile-core';
+import { ReportStatus, type CommunityLayer } from '@ign/mobile-core';
 import { createPortal } from 'react-dom';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
@@ -13,11 +13,13 @@ import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { Alert } from '@/shared/ui/Alert';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
+import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
+import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportForm } from '@/features/report/hooks/useReportForm';
 import { useReportSketchSession } from '@/features/report/hooks/useReportSketchSession';
@@ -35,6 +37,7 @@ import {
   getSketchToolActionById,
   SKETCH_TOOL_DEFINITIONS,
 } from '@/features/report/constants/reportSketch.constants';
+import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 import type { AppReport, MapPickerMode, ReportType } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
 
@@ -62,7 +65,9 @@ export interface CreateOrEditReportPageProps {
   onBack?: () => void;
   level?: number;
   map?: OlMap | null;
+  vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
+  onMapPickerActiveChange?: (isActive: boolean) => void;
 }
 
 interface PickedMapObjectCandidate {
@@ -81,7 +86,9 @@ function getLayerName(layer: BaseLayer | null | undefined): string {
     : 'layer';
 }
 
-function isSelectableReportObjectLayer(layer: BaseLayer | null | undefined): boolean {
+function isSelectableReportObjectLayer(
+  layer: BaseLayer | null | undefined
+): layer is BaseLayer {
   if (!layer) return false;
   if (!layer.getVisible()) return false;
 
@@ -91,6 +98,43 @@ function isSelectableReportObjectLayer(layer: BaseLayer | null | undefined): boo
   }
 
   return true;
+}
+
+function addReportObjectCandidate(
+  candidatesByKey: Map<string, PickedMapObjectCandidate>,
+  featureLike: Feature<Geometry>,
+  layer: BaseLayer,
+  unknownLayerLabel: string,
+  defaultObjectLabel: string
+): void {
+  const layerName = getLayerName(layer);
+  const layerTitle = getLayerDisplayTitle(layer) ?? unknownLayerLabel;
+  const objectKey = buildReportObjectKey(featureLike, layerName);
+
+  if (candidatesByKey.has(objectKey)) {
+    return;
+  }
+
+  const feature = featureLike.clone();
+  const featureId = featureLike.getId();
+  if (featureId !== undefined) {
+    feature.setId(featureId);
+  }
+
+  const objectLabel = getReportObjectLabel(featureLike) ?? defaultObjectLabel;
+  applyReportObjectMetadata(feature, {
+    key: objectKey,
+    label: objectLabel,
+    layerName,
+    layerTitle,
+  });
+
+  candidatesByKey.set(objectKey, {
+    key: objectKey,
+    label: objectLabel,
+    layerTitle,
+    feature,
+  });
 }
 
 export function CreateOrEditReportPage({
@@ -104,7 +148,9 @@ export function CreateOrEditReportPage({
   onBack,
   level = 2,
   map,
+  vectorLayers = [],
   onSearchPanelVisibilityChange,
+  onMapPickerActiveChange,
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -145,6 +191,14 @@ export function CreateOrEditReportPage({
   const isPickingSketch = mapPickerMode === 'sketch';
   const isPickingTrace = mapPickerMode === 'trace';
   const isPickingOnMap = mapPickerMode !== 'none';
+
+  useEffect(() => {
+    onMapPickerActiveChange?.(isPickingOnMap);
+
+    return () => {
+      onMapPickerActiveChange?.(false);
+    };
+  }, [isPickingOnMap, onMapPickerActiveChange]);
 
   const form = useReportForm({
     mode,
@@ -310,6 +364,7 @@ export function CreateOrEditReportPage({
 
   useEffect(() => {
     if (!isOpen || !map || !isPickingObject) return;
+    const layerService = new DirectContributionLayerService(map);
     const unknownLayerLabel = t('reports.createOrEdit.form.objectLayerUnknown');
     const defaultObjectLabel = t('reports.createOrEdit.form.objectDefaultName');
     const noObjectHitLabel = t('reports.createOrEdit.form.objectNoHit');
@@ -326,38 +381,55 @@ export function CreateOrEditReportPage({
           const layer = layerLike as BaseLayer | null | undefined;
           if (!isSelectableReportObjectLayer(layer)) return undefined;
 
-          const layerName = getLayerName(layer);
-          const layerTitle = getLayerDisplayTitle(layer) ?? unknownLayerLabel;
-          const objectKey = buildReportObjectKey(featureLike, layerName);
-
-          if (candidatesByKey.has(objectKey)) {
-            return undefined;
-          }
-
-          const feature = featureLike.clone();
-          const featureId = featureLike.getId();
-          if (featureId !== undefined) {
-            feature.setId(featureId);
-          }
-
-          const objectLabel = getReportObjectLabel(featureLike) ?? defaultObjectLabel;
-          applyReportObjectMetadata(feature, {
-            key: objectKey,
-            label: objectLabel,
-            layerName,
-            layerTitle,
-          });
-
-          candidatesByKey.set(objectKey, {
-            key: objectKey,
-            label: objectLabel,
-            layerTitle,
-            feature,
-          });
+          addReportObjectCandidate(
+            candidatesByKey,
+            featureLike,
+            layer,
+            unknownLayerLabel,
+            defaultObjectLabel
+          );
           return undefined;
         },
         { hitTolerance: 10 }
       );
+
+      for (const communityLayer of vectorLayers) {
+        if (!communityLayer.visible || !communityLayer.table) {
+          continue;
+        }
+
+        const layerKey = getCommunityLayerKey(communityLayer);
+        const collabLayer = layerService.getCollabLayer(layerKey);
+        const collabSource = layerService.getCollabSource(layerKey);
+        if (
+          !collabLayer ||
+          !collabSource ||
+          !isSelectableReportObjectLayer(collabLayer)
+        ) {
+          continue;
+        }
+
+        const fallbackCandidates = getDirectContributionFeatureCandidatesAtPixel({
+          map,
+          pixel: event.pixel,
+          layer: collabLayer,
+          source: collabSource,
+          communityLayer,
+          table: communityLayer.table,
+          hitTolerance: 10,
+          fallbackLabel: defaultObjectLabel,
+        });
+
+        for (const candidate of fallbackCandidates) {
+          addReportObjectCandidate(
+            candidatesByKey,
+            candidate.feature,
+            collabLayer,
+            unknownLayerLabel,
+            defaultObjectLabel
+          );
+        }
+      }
 
       const candidates = Array.from(candidatesByKey.values());
 
@@ -385,7 +457,7 @@ export function CreateOrEditReportPage({
     return () => {
       map.un('singleclick', handleMapSingleClick);
     };
-  }, [isOpen, isPickingObject, map, form, closeMapPickers, t]);
+  }, [isOpen, isPickingObject, map, vectorLayers, form, closeMapPickers, t]);
 
   const handleValidateSketch = useCallback(async () => {
     if (currentSketchMode === 'draw-linestring') {

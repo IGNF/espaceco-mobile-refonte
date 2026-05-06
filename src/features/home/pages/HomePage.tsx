@@ -175,6 +175,7 @@ export function HomePage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLayersPanelOpen, setIsLayersPanelOpen] = useState(false);
+  const [isReportMapPickerActive, setIsReportMapPickerActive] = useState(false);
   const [initialLayerGroupId, setInitialLayerGroupId] = useState<LayerGroupId | null>(null);
   const [initialLayerGroupRequestKey, setInitialLayerGroupRequestKey] = useState(0);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
@@ -200,6 +201,7 @@ export function HomePage() {
     vectorLayers,
     disabled:
       isDirectContributionSessionActive ||
+      isReportMapPickerActive ||
       activeConflict !== null ||
       activeOverlay === '/offline',
   });
@@ -741,7 +743,9 @@ export function HomePage() {
           isOpen
           onClose={handleCloseOverlay}
           map={map}
+          vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}
+          onMapPickerActiveChange={setIsReportMapPickerActive}
         />
       )}
       {activeOverlay === '/new-report-choice' && (
@@ -761,7 +765,9 @@ export function HomePage() {
           initialPosition={newReportInitialPosition}
           preselectFirstTheme={isNewReportThemePreselected}
           map={map}
+          vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}
+          onMapPickerActiveChange={setIsReportMapPickerActive}
         />
       )}
       {activeOverlay === '/my-communities' && (

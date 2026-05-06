@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type OlMap from 'ol/Map';
+import type { CommunityLayer } from '@ign/mobile-core';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
@@ -23,14 +24,18 @@ export interface MyReportsPageProps {
   isOpen?: boolean;
   onClose?: () => void;
   map?: OlMap | null;
+  vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
+  onMapPickerActiveChange?: (isActive: boolean) => void;
 }
 
 export function MyReportsPage({
   isOpen = true,
   onClose = () => { },
   map,
+  vectorLayers,
   onSearchPanelVisibilityChange,
+  onMapPickerActiveChange,
 }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
@@ -137,7 +142,9 @@ export function MyReportsPage({
         onBack={handleEditBack}
         onClose={handleEditClose}
         map={map}
+        vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
+        onMapPickerActiveChange={onMapPickerActiveChange}
       />
     </SlideUpPage>
   );

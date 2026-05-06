@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import type OlMap from 'ol/Map';
 
-import { ReportStatus } from '@ign/mobile-core';
+import { ReportStatus, type CommunityLayer } from '@ign/mobile-core';
 
 import type { AppReport } from '@/domain/report/models';
 
@@ -50,7 +50,9 @@ export interface ReportDetailsPageProps {
   onBack: () => void;
   onReplySuccess?: (updatedReport: AppReport) => void;
   map?: OlMap | null;
+  vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
+  onMapPickerActiveChange?: (isActive: boolean) => void;
 }
 
 export function ReportDetailsPage({
@@ -60,7 +62,9 @@ export function ReportDetailsPage({
   onBack,
   onReplySuccess,
   map,
+  vectorLayers,
   onSearchPanelVisibilityChange,
+  onMapPickerActiveChange,
 }: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -434,7 +438,9 @@ export function ReportDetailsPage({
         onBack={handleEditBack}
         onClose={handleEditClose}
         map={map}
+        vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
+        onMapPickerActiveChange={onMapPickerActiveChange}
       />
     </SlideUpPage>
   );
