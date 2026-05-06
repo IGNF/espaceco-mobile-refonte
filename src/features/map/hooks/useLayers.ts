@@ -19,7 +19,11 @@ import {
   isSignalementLayerKey,
   normalizeSignalementLayerOrder,
 } from '@/features/map/constants/signalementLayers.constants';
-import type { LayerDisplayState, LayerGroupId } from '@/features/map/types/layerGroups';
+import type {
+  LayerDisplayState,
+  LayerGroupId,
+  LayerGroupVisibility,
+} from '@/features/map/types/layerGroups';
 import {
   loadLayersConfiguration,
   saveLayersConfiguration,
@@ -37,6 +41,7 @@ import { DEFAULT_SIGNALEMENT_LAYER_OPACITY } from '@/features/map/constants/sign
 import {
   DEFAULT_GEOPORTAIL_LAYER_OPACITY,
   DEFAULT_GEOPORTAIL_LAYER_VISIBILITY,
+  DEFAULT_LAYER_GROUP_VISIBILITY,
   isDefaultGeoportailLayerName,
 } from '@/shared/constants/map';
 
@@ -57,6 +62,10 @@ function getDefaultGeoportailLayerState(): LayerDisplayState {
     visibility: { ...DEFAULT_GEOPORTAIL_LAYER_VISIBILITY },
     opacity: { ...DEFAULT_GEOPORTAIL_LAYER_OPACITY },
   };
+}
+
+function getDefaultLayerGroupVisibility(): LayerGroupVisibility {
+  return { ...DEFAULT_LAYER_GROUP_VISIBILITY };
 }
 
 function getGeoportailLayerName(layer: CommunityLayer): string | null {
@@ -175,6 +184,8 @@ export function useLayers(
     useState<SignalementLayerState>(() => getDefaultSignalementLayerState());
   const [geoportailLayerState, setGeoportailLayerState] =
     useState<LayerDisplayState>(() => getDefaultGeoportailLayerState());
+  const [groupVisibility, setGroupVisibility] =
+    useState<LayerGroupVisibility>(() => getDefaultLayerGroupVisibility());
   const [lockedByLayerKey, setLockedByLayerKey] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -185,6 +196,7 @@ export function useLayers(
   const resetLayerPreferences = useCallback(() => {
     setSignalementLayerState(getDefaultSignalementLayerState());
     setGeoportailLayerState(getDefaultGeoportailLayerState());
+    setGroupVisibility(getDefaultLayerGroupVisibility());
     setLockedByLayerKey({});
   }, []);
 
@@ -284,6 +296,16 @@ export function useLayers(
     );
   }, []);
 
+  const setLayerGroupVisibility = useCallback((
+    groupId: LayerGroupId,
+    visible: boolean
+  ) => {
+    setGroupVisibility((previous) => ({
+      ...previous,
+      [groupId]: visible,
+    }));
+  }, []);
+
   /**
    * Applies the saved layer-panel preferences to the current layer source.
    * 'baseLayers' can come either from the live API or from the persisted offline cache snapshot.
@@ -303,6 +325,8 @@ export function useLayers(
 
     const nextSignalementLayerState =
       savedConfiguration?.signalementLayerState ?? getDefaultSignalementLayerState();
+    const nextGroupVisibility =
+      savedConfiguration?.groupVisibility ?? getDefaultLayerGroupVisibility();
 
     setLayers(applyDefaultGeoportailLayerState(
       nextLayers,
@@ -311,6 +335,7 @@ export function useLayers(
     setLockedByLayerKey(nextLockedByLayerKey);
     setGeoportailLayerState(nextGeoportailLayerState);
     setSignalementLayerState(nextSignalementLayerState);
+    setGroupVisibility(nextGroupVisibility);
     setHydratedCommunityId(communityId);
     setHydratedUserId(userId);
     setHydratedMode(hydratedFromMode);
@@ -424,6 +449,7 @@ export function useLayers(
       userId,
       layers,
       lockedByLayerKey,
+      groupVisibility,
       geoportailLayerState,
       signalementLayerState,
     });
@@ -435,6 +461,7 @@ export function useLayers(
     layers,
     lockedByLayerKey,
     mode,
+    groupVisibility,
     geoportailLayerState,
     signalementLayerState,
     userId,
@@ -473,6 +500,7 @@ export function useLayers(
     geoportailLayers,
     vectorLayers,
     lockedByLayerKey,
+    groupVisibility,
     geoportailLayerState,
     signalementLayerState,
     isLoading,
@@ -481,6 +509,7 @@ export function useLayers(
     setLayerVisibility,
     setLayerOpacity,
     setGroupLayerOrder,
+    setLayerGroupVisibility,
     setLayerDirectContributionLock,
   };
 }

@@ -30,6 +30,9 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+- L'opacité des couches Géoservices (Plan IGN) fonctionne à présent (ticket #98)
+- L'opacité des "groupes de couches" sont maintenant décorrélées des couches elles-mêmes (ticket #98)
+
 ## [0.0.5] - 2026-04-30
 
 ### Added

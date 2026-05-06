@@ -122,6 +122,7 @@ function deduplicateFeatures(features: Feature[]): Feature[] {
 export function useSignalementMapLayers(
   mapRef: RefObject<OlMap | null>,
   signalementLayerState: SignalementLayerState,
+  isSignalementGroupVisible: boolean,
   isMapReady: boolean,
   mode: OfflineMode
 ) {
@@ -289,12 +290,18 @@ export function useSignalementMapLayers(
     const visibilityByLayerName = new Map<string, boolean>([
       [
         LAYER_NAME_MES_SIGNALEMENTS,
-        signalementLayerState.visibility[SIGNAL_LAYER_KEYS.mesSignalements],
+        isSignalementGroupVisible &&
+          signalementLayerState.visibility[SIGNAL_LAYER_KEYS.mesSignalements],
       ],
-      [LAYER_NAME_CROQUIS, signalementLayerState.visibility[SIGNAL_LAYER_KEYS.croquis]],
+      [
+        LAYER_NAME_CROQUIS,
+        isSignalementGroupVisible &&
+          signalementLayerState.visibility[SIGNAL_LAYER_KEYS.croquis],
+      ],
       [
         LAYER_NAME_SIGNALEMENTS,
-        signalementLayerState.visibility[SIGNAL_LAYER_KEYS.signalements],
+        isSignalementGroupVisible &&
+          signalementLayerState.visibility[SIGNAL_LAYER_KEYS.signalements],
       ],
     ]);
     const opacityByLayerName = new Map<string, number>([
@@ -363,6 +370,7 @@ export function useSignalementMapLayers(
     );
   }, [
     isMapReady,
+    isSignalementGroupVisible,
     mapRef,
     signalementLayerState,
   ]);

@@ -1,6 +1,10 @@
 import { useMemo, useState } from 'react';
 import type { CommunityLayer } from '@ign/mobile-core';
-import type { LayerDisplayState, LayerGroupId } from '@/features/map/types/layerGroups';
+import type {
+  LayerDisplayState,
+  LayerGroupId,
+  LayerGroupVisibility,
+} from '@/features/map/types/layerGroups';
 import { useLayerGroups } from '@/features/map/hooks/useLayerGroups';
 import { LayersPanel } from '@/features/map/components/LayersPanel';
 import { LayerGroupDetailsPage } from '@/features/map/pages/LayerGroupDetails/LayerGroupDetailsPage';
@@ -16,6 +20,7 @@ export interface LayersPanelFlowProps {
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
+  groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
   pendingChangesCountByLayerKey?: Record<string, number>;
@@ -24,6 +29,7 @@ export interface LayersPanelFlowProps {
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
+  onSetGroupVisibility?: (groupId: LayerGroupId, visible: boolean) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
   onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
   onEditLayer?: (layerKey: string) => void;
@@ -40,6 +46,7 @@ export function LayersPanelFlow({
   layers,
   geoportailLayers,
   vectorLayers,
+  groupVisibility,
   geoportailLayerState,
   signalementLayerState,
   pendingChangesCountByLayerKey,
@@ -48,6 +55,7 @@ export function LayersPanelFlow({
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
+  onSetGroupVisibility,
   onSetGroupLayerOrder,
   onSendGroupDirectContributions,
   onEditLayer,
@@ -59,6 +67,7 @@ export function LayersPanelFlow({
     layers,
     geoportailLayers,
     vectorLayers,
+    groupVisibility,
     geoportailLayerState,
     signalementLayerState,
     pendingChangesCountByLayerKey,
@@ -92,28 +101,9 @@ export function LayersPanelFlow({
   };
 
   const handleToggleGroupVisibility = (groupId: LayerGroupId) => {
-    if (!onSetLayerVisibility) return;
+    if (!onSetGroupVisibility) return;
 
-    const group = layerGroups.find((candidate) => candidate.id === groupId);
-    if (!group) return;
-
-    const layerKeys: string[] = [];
-    let hasVisibleLayer = false;
-
-    for (const item of group.items) {
-      if (!item.layerKey) continue;
-      layerKeys.push(item.layerKey);
-      if (item.visible ?? true) {
-        hasVisibleLayer = true;
-      }
-    }
-
-    if (layerKeys.length === 0) return;
-
-    const nextVisibility = !hasVisibleLayer;
-    for (const layerKey of layerKeys) {
-      onSetLayerVisibility(layerKey, nextVisibility);
-    }
+    onSetGroupVisibility(groupId, !groupVisibility[groupId]);
   };
 
   const handleClosePanel = () => {

@@ -10,6 +10,7 @@ import type {
   LayerGroupDetails,
   LayerDisplayState,
   LayerGroupItem,
+  LayerGroupVisibility,
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
 import {
@@ -31,6 +32,7 @@ interface UseLayerGroupsParams {
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
+  groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
   pendingChangesCountByLayerKey?: Record<string, number>;
@@ -69,6 +71,7 @@ export function useLayerGroups({
   layers,
   geoportailLayers,
   vectorLayers,
+  groupVisibility,
   geoportailLayerState,
   signalementLayerState,
   pendingChangesCountByLayerKey = {},
@@ -177,8 +180,8 @@ export function useLayerGroups({
   ]);
 
   const layerGroupSummaries = useMemo<LayerGroupSummary[]>(
-    () => mapLayerGroupsToSummaries(layerGroups),
-    [layerGroups]
+    () => mapLayerGroupsToSummaries(layerGroups, groupVisibility),
+    [groupVisibility, layerGroups]
   );
 
   return {

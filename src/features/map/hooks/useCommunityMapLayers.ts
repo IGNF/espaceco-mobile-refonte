@@ -8,7 +8,10 @@ import type LayerGroup from 'ol/layer/Group';
 import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
 
 import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
-import type { LayerDisplayState } from '@/features/map/types/layerGroups';
+import type {
+  LayerDisplayState,
+  LayerGroupVisibility,
+} from '@/features/map/types/layerGroups';
 
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
@@ -62,11 +65,12 @@ function replaceLayerGroupContent(
 
 function syncDefaultGeoportailLayerGroup(
   layerGroup: LayerGroup,
-  geoportailLayerState: LayerDisplayState
+  geoportailLayerState: LayerDisplayState,
+  isGroupVisible: boolean
 ): void {
   for (const layer of layerGroup.getLayers().getArray()) {
     const layerName = layer.get('geoportailLayerName') as string;
-    layer.setVisible(geoportailLayerState.visibility[layerName]);
+    layer.setVisible(isGroupVisible && geoportailLayerState.visibility[layerName]);
     layer.setOpacity(clampNumber(geoportailLayerState.opacity[layerName], 0, 1));
   }
 }
@@ -145,6 +149,7 @@ export function useCommunityMapLayers(
   mapRef: RefObject<Map | null>,
   geoportailLayers: CommunityLayer[],
   geoportailLayerState: LayerDisplayState,
+  groupVisibility: LayerGroupVisibility,
   vectorLayers: CommunityLayer[],
   isMapReady: boolean,
   mode: OfflineMode,
@@ -165,9 +170,10 @@ export function useCommunityMapLayers(
 
     syncDefaultGeoportailLayerGroup(
       geoportailGroup,
-      geoportailLayerState
+      geoportailLayerState,
+      groupVisibility.geoservices
     );
-  }, [geoportailLayerState, isMapReady, mapRef]);
+  }, [geoportailLayerState, groupVisibility.geoservices, isMapReady, mapRef]);
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -178,11 +184,16 @@ export function useCommunityMapLayers(
     const groupe = findLayerGroupByName(map, 'groupe');
     if (!groupe) return;
 
+    const visibleGeoportailLayers = geoportailLayers.map((layer) => ({
+      ...layer,
+      visible: groupVisibility.geoservices && (layer.visible ?? true),
+    }));
+
     replaceLayerGroupContent(
       groupe,
-      createCommunityGeoportailLayers(geoportailLayers)
+      createCommunityGeoportailLayers(visibleGeoportailLayers)
     );
-  }, [geoportailLayers, isMapReady, mapRef]);
+  }, [geoportailLayers, groupVisibility.geoservices, isMapReady, mapRef]);
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -200,7 +211,8 @@ export function useCommunityMapLayers(
       isOnlineVectorCacheEnabled,
       activeCommunityCache
     );
-  }, [activeCommunityCache, isMapReady, isOfflineMode, isOnlineVectorCacheEnabled, mapRef, vectorLayers]);
+    guichet.setVisible(groupVisibility.guichet);
+  }, [activeCommunityCache, groupVisibility.guichet, isMapReady, isOfflineMode, isOnlineVectorCacheEnabled, mapRef, vectorLayers]);
 
   useEffect(() => {
     if (!isMapReady) return;

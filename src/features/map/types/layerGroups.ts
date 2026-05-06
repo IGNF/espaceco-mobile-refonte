@@ -1,4 +1,5 @@
 export type LayerGroupId = 'signalements' | 'guichet' | 'mesCartes' | 'geoservices';
+export type LayerGroupVisibility = Record<LayerGroupId, boolean>;
 
 export interface LayerDirectContributionState {
   editable: boolean;

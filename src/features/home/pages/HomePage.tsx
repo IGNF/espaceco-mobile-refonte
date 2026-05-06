@@ -103,17 +103,20 @@ export function HomePage() {
     geoportailLayers,
     vectorLayers,
     lockedByLayerKey,
+    groupVisibility,
     geoportailLayerState,
     signalementLayerState,
     isLoading: isLayersLoading,
     setLayerVisibility,
     setLayerOpacity,
     setGroupLayerOrder,
+    setLayerGroupVisibility,
     setLayerDirectContributionLock,
   } = useLayers(offlineMode, activeCommunityCache);
   useSignalementMapLayers(
     mapRef,
     signalementLayerState,
+    groupVisibility.signalements,
     isMapReady,
     offlineMode
   );
@@ -160,6 +163,7 @@ export function HomePage() {
     mapRef,
     geoportailLayers,
     geoportailLayerState,
+    groupVisibility,
     mountedVectorLayers,
     isMapReady,
     offlineMode,
@@ -604,6 +608,7 @@ export function HomePage() {
         layers={layers}
         geoportailLayers={geoportailLayers}
         vectorLayers={vectorLayers}
+        groupVisibility={groupVisibility}
         geoportailLayerState={geoportailLayerState}
         lockedByLayerKey={lockedByLayerKey}
         signalementLayerState={signalementLayerState}
@@ -612,6 +617,7 @@ export function HomePage() {
         isLoading={isLayersLoading}
         onSetLayerVisibility={setLayerVisibility}
         onSetLayerOpacity={setLayerOpacity}
+        onSetGroupVisibility={setLayerGroupVisibility}
         onSetGroupLayerOrder={setGroupLayerOrder}
         onEditLayer={handleEditLayer}
         onSendLayerDirectContributions={sendLayerDirectContributions}

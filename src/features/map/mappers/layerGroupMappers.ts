@@ -4,6 +4,7 @@ import type {
   LayerGroupDetails,
   LayerGroupDirectContributionState,
   LayerGroupItem,
+  LayerGroupVisibility,
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
 
@@ -80,29 +81,21 @@ export function mapLayersToGroupItems(layers: CommunityLayer[]): LayerGroupItem[
 }
 
 export function mapLayerGroupsToSummaries(
-  layerGroups: LayerGroupDetails[]
+  layerGroups: LayerGroupDetails[],
+  groupVisibility: LayerGroupVisibility
 ): LayerGroupSummary[] {
   return layerGroups.map((group) => {
     let hasToggleableItems = false;
-    let hasVisibleToggleableItem = false;
-    let hasVisibleItem = false;
     let hasDirectContributionItems = false;
     let pendingDirectContributionCount = 0;
     let isSubmittingDirectContribution = false;
 
     for (const item of group.items) {
-      if (item.visible ?? true) {
-        hasVisibleItem = true;
-      }
-
       if (!item.layerKey) {
         continue;
       }
 
       hasToggleableItems = true;
-      if (item.visible ?? true) {
-        hasVisibleToggleableItem = true;
-      }
 
       if (item.directContribution) {
         hasDirectContributionItems = true;
@@ -112,7 +105,6 @@ export function mapLayerGroupsToSummaries(
       }
     }
 
-    const visible = hasToggleableItems ? hasVisibleToggleableItem : hasVisibleItem;
     const directContribution: LayerGroupDirectContributionState | undefined =
       hasDirectContributionItems
         ? {
@@ -125,7 +117,7 @@ export function mapLayerGroupsToSummaries(
       id: group.id,
       title: group.title,
       count: group.items.length,
-      visible,
+      visible: groupVisibility[group.id],
       canToggle: hasToggleableItems,
       directContribution,
     };

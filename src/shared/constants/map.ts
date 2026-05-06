@@ -1,3 +1,5 @@
+import type { LayerGroupVisibility } from "@/features/map/types/layerGroups";
+
 export const GEOLOCATION_DOUBLE_TAP_DELAY_MS = 300;
 export const GEOLOCATION_LOCK_RECENTER_INTERVAL_MS = 30000;
 export const GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS = 1000;
@@ -49,6 +51,13 @@ export const GEOPORTAIL_LAYER_TITLES: Record<string, string> = {
 	[GEOPORTAIL_LAYERS.MAPS]: 'Cartes IGN',
 	[GEOPORTAIL_LAYERS.PLAN_IGN]: 'Plan IGN',
 	[GEOPORTAIL_LAYERS.ORTHOPHOTOS]: 'Photographies aériennes',
+};
+
+export const DEFAULT_LAYER_GROUP_VISIBILITY: LayerGroupVisibility = {
+  signalements: true,
+  guichet: true,
+  mesCartes: true,
+  geoservices: true,
 };
 
 export function isDefaultGeoportailLayerName(layerName: string): boolean {

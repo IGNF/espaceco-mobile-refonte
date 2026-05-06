@@ -7,8 +7,10 @@ import { clampNumber } from '@/shared/utils/number';
 import {
   DEFAULT_GEOPORTAIL_LAYER_OPACITY,
   DEFAULT_GEOPORTAIL_LAYER_VISIBILITY,
+  DEFAULT_LAYER_GROUP_VISIBILITY,
 } from '@/shared/constants/map';
 import type { LayerDisplayState } from '@/features/map/types/layerGroups';
+import type { LayerGroupVisibility } from '@/features/map/types/layerGroups';
 
 import type {
   SignalementLayerKey,
@@ -33,6 +35,7 @@ interface PersistedLayerState {
 export interface LayersConfiguration {
   layersByKey: Record<string, PersistedLayerState>;
   layerOrder: string[];
+  groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
 }
@@ -42,8 +45,13 @@ export interface SaveLayersConfigurationParams {
   userId?: number | null;
   layers: CommunityLayer[];
   lockedByLayerKey: Record<string, boolean>;
+  groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
+}
+
+function getDefaultLayerGroupVisibility(): LayerGroupVisibility {
+  return { ...DEFAULT_LAYER_GROUP_VISIBILITY };
 }
 
 /**
@@ -168,6 +176,13 @@ function toGeoportailLayerState(value: unknown): LayerDisplayState {
   };
 }
 
+function toLayerGroupVisibility(value: unknown): LayerGroupVisibility {
+  return {
+    ...getDefaultLayerGroupVisibility(),
+    ...toBooleanRecord(value),
+  };
+}
+
 /**
  * Normalize raw signalement visibility values loaded from storage.
  * @param value Unknown value read from storage.
@@ -278,6 +293,7 @@ export async function loadLayersConfiguration(
     return {
       layersByKey: toLayerStateMap(payload.layersByKey),
       layerOrder: toLayerOrder(payload.layerOrder),
+      groupVisibility: toLayerGroupVisibility(payload.groupVisibility),
       geoportailLayerState: toGeoportailLayerState(payload.geoportailLayerState),
       signalementLayerState,
     };
@@ -297,6 +313,7 @@ export async function saveLayersConfiguration({
   userId,
   layers,
   lockedByLayerKey,
+  groupVisibility,
   geoportailLayerState,
   signalementLayerState,
 }: SaveLayersConfigurationParams): Promise<void> {
@@ -316,6 +333,7 @@ export async function saveLayersConfiguration({
   const payload: LayersConfiguration = {
     layersByKey,
     layerOrder,
+    groupVisibility,
     geoportailLayerState,
     signalementLayerState: {
       ...signalementLayerState,
