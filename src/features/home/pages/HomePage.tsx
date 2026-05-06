@@ -103,9 +103,8 @@ export function HomePage() {
     geoportailLayers,
     vectorLayers,
     lockedByLayerKey,
-    signalementLayerVisibility,
-    signalementLayerOpacity,
-    signalementLayerOrder,
+    geoportailLayerState,
+    signalementLayerState,
     isLoading: isLayersLoading,
     setLayerVisibility,
     setLayerOpacity,
@@ -114,9 +113,7 @@ export function HomePage() {
   } = useLayers(offlineMode, activeCommunityCache);
   useSignalementMapLayers(
     mapRef,
-    signalementLayerVisibility,
-    signalementLayerOpacity,
-    signalementLayerOrder,
+    signalementLayerState,
     isMapReady,
     offlineMode
   );
@@ -162,6 +159,7 @@ export function HomePage() {
   const { isVectorLayersLoading } = useCommunityMapLayers(
     mapRef,
     geoportailLayers,
+    geoportailLayerState,
     mountedVectorLayers,
     isMapReady,
     offlineMode,
@@ -606,10 +604,9 @@ export function HomePage() {
         layers={layers}
         geoportailLayers={geoportailLayers}
         vectorLayers={vectorLayers}
+        geoportailLayerState={geoportailLayerState}
         lockedByLayerKey={lockedByLayerKey}
-        signalementLayerVisibility={signalementLayerVisibility}
-        signalementLayerOpacity={signalementLayerOpacity}
-        signalementLayerOrder={signalementLayerOrder}
+        signalementLayerState={signalementLayerState}
         pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
         submittingByLayerKey={submittingByLayerKey}
         isLoading={isLayersLoading}

@@ -18,9 +18,7 @@ import { ReportSource, type Report } from '@ign/mobile-core';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type {
-  SignalementLayerKey,
-  SignalementLayerOpacity,
-  SignalementLayerVisibility
+  SignalementLayerState
 } from '@/features/map/constants/signalementLayers.constants';
 import { SIGNAL_LAYER_KEYS, normalizeSignalementLayerOrder } from '@/features/map/constants/signalementLayers.constants';
 
@@ -123,9 +121,7 @@ function deduplicateFeatures(features: Feature[]): Feature[] {
 
 export function useSignalementMapLayers(
   mapRef: RefObject<OlMap | null>,
-  signalementLayerVisibility: SignalementLayerVisibility,
-  signalementLayerOpacity: SignalementLayerOpacity,
-  signalementLayerOrder: SignalementLayerKey[],
+  signalementLayerState: SignalementLayerState,
   isMapReady: boolean,
   mode: OfflineMode
 ) {
@@ -293,27 +289,27 @@ export function useSignalementMapLayers(
     const visibilityByLayerName = new Map<string, boolean>([
       [
         LAYER_NAME_MES_SIGNALEMENTS,
-        signalementLayerVisibility[SIGNAL_LAYER_KEYS.mesSignalements],
+        signalementLayerState.visibility[SIGNAL_LAYER_KEYS.mesSignalements],
       ],
-      [LAYER_NAME_CROQUIS, signalementLayerVisibility[SIGNAL_LAYER_KEYS.croquis]],
+      [LAYER_NAME_CROQUIS, signalementLayerState.visibility[SIGNAL_LAYER_KEYS.croquis]],
       [
         LAYER_NAME_SIGNALEMENTS,
-        signalementLayerVisibility[SIGNAL_LAYER_KEYS.signalements],
+        signalementLayerState.visibility[SIGNAL_LAYER_KEYS.signalements],
       ],
     ]);
     const opacityByLayerName = new Map<string, number>([
       [
         LAYER_NAME_MES_SIGNALEMENTS,
-        signalementLayerOpacity[SIGNAL_LAYER_KEYS.mesSignalements],
+        signalementLayerState.opacity[SIGNAL_LAYER_KEYS.mesSignalements],
       ],
-      [LAYER_NAME_CROQUIS, signalementLayerOpacity[SIGNAL_LAYER_KEYS.croquis]],
+      [LAYER_NAME_CROQUIS, signalementLayerState.opacity[SIGNAL_LAYER_KEYS.croquis]],
       [
         LAYER_NAME_SIGNALEMENTS,
-        signalementLayerOpacity[SIGNAL_LAYER_KEYS.signalements],
+        signalementLayerState.opacity[SIGNAL_LAYER_KEYS.signalements],
       ],
     ]);
     const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
-      signalementLayerOrder
+      signalementLayerState.order
     );
     const layersByName = new Map<string, BaseLayer>();
 
@@ -368,8 +364,6 @@ export function useSignalementMapLayers(
   }, [
     isMapReady,
     mapRef,
-    signalementLayerOpacity,
-    signalementLayerOrder,
-    signalementLayerVisibility,
+    signalementLayerState,
   ]);
 }

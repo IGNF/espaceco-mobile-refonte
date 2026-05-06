@@ -33,11 +33,29 @@ export const DEFAULT_GEOPORTAIL_LAYERS = [
 	GEOPORTAIL_LAYERS.MAPS,
 ] as const;
 
+export const DEFAULT_GEOPORTAIL_LAYER_VISIBILITY: Record<string, boolean> = {
+	[GEOPORTAIL_LAYERS.PLAN_IGN]: true,
+	[GEOPORTAIL_LAYERS.ORTHOPHOTOS]: false,
+	[GEOPORTAIL_LAYERS.MAPS]: false,
+};
+
+export const DEFAULT_GEOPORTAIL_LAYER_OPACITY: Record<string, number> = {
+	[GEOPORTAIL_LAYERS.PLAN_IGN]: 1,
+	[GEOPORTAIL_LAYERS.ORTHOPHOTOS]: 1,
+	[GEOPORTAIL_LAYERS.MAPS]: 1,
+};
+
 export const GEOPORTAIL_LAYER_TITLES: Record<string, string> = {
 	[GEOPORTAIL_LAYERS.MAPS]: 'Cartes IGN',
 	[GEOPORTAIL_LAYERS.PLAN_IGN]: 'Plan IGN',
 	[GEOPORTAIL_LAYERS.ORTHOPHOTOS]: 'Photographies aériennes',
 };
+
+export function isDefaultGeoportailLayerName(layerName: string): boolean {
+	return DEFAULT_GEOPORTAIL_LAYERS.some(
+		(defaultLayerName) => defaultLayerName === layerName
+	);
+}
 
 /**
  * Geoportail server configuration

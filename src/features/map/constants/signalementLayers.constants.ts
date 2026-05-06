@@ -9,6 +9,11 @@ export type SignalementLayerKey =
 
 export type SignalementLayerVisibility = Record<SignalementLayerKey, boolean>;
 export type SignalementLayerOpacity = Record<SignalementLayerKey, number>;
+export interface SignalementLayerState {
+  visibility: SignalementLayerVisibility;
+  opacity: SignalementLayerOpacity;
+  order: SignalementLayerKey[];
+}
 const SIGNAL_LAYER_KEY_SET = new Set<SignalementLayerKey>(
   Object.values(SIGNAL_LAYER_KEYS)
 );

@@ -4,13 +4,23 @@ import type { CommunityLayer } from '@ign/mobile-core';
 import { storageKey } from '@/shared/constants/storage';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
+import {
+  DEFAULT_GEOPORTAIL_LAYER_OPACITY,
+  DEFAULT_GEOPORTAIL_LAYER_VISIBILITY,
+} from '@/shared/constants/map';
+import type { LayerDisplayState } from '@/features/map/types/layerGroups';
 
 import type {
   SignalementLayerKey,
   SignalementLayerOpacity,
+  SignalementLayerState,
   SignalementLayerVisibility,
 } from '@/features/map/constants/signalementLayers.constants';
-import { normalizeSignalementLayerOrder } from '@/features/map/constants/signalementLayers.constants';
+import {
+  DEFAULT_SIGNALEMENT_LAYER_OPACITY,
+  DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
+  normalizeSignalementLayerOrder,
+} from '@/features/map/constants/signalementLayers.constants';
 
 const LAYERS_CONFIGURATION_STORAGE_KEY = 'LAYERS_CONFIGURATION';
 
@@ -23,9 +33,8 @@ interface PersistedLayerState {
 export interface LayersConfiguration {
   layersByKey: Record<string, PersistedLayerState>;
   layerOrder: string[];
-  signalementLayerVisibility: Partial<SignalementLayerVisibility>;
-  signalementLayerOpacity: Partial<SignalementLayerOpacity>;
-  signalementLayerOrder: SignalementLayerKey[];
+  geoportailLayerState: LayerDisplayState;
+  signalementLayerState: SignalementLayerState;
 }
 
 export interface SaveLayersConfigurationParams {
@@ -33,9 +42,8 @@ export interface SaveLayersConfigurationParams {
   userId?: number | null;
   layers: CommunityLayer[];
   lockedByLayerKey: Record<string, boolean>;
-  signalementLayerVisibility: SignalementLayerVisibility;
-  signalementLayerOpacity: SignalementLayerOpacity;
-  signalementLayerOrder: SignalementLayerKey[];
+  geoportailLayerState: LayerDisplayState;
+  signalementLayerState: SignalementLayerState;
 }
 
 /**
@@ -115,6 +123,51 @@ function toLayerOrder(value: unknown): string[] {
   return orderedLayerKeys;
 }
 
+function toBooleanRecord(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== 'object') return {};
+
+  const source = value as Record<string, unknown>;
+  const result: Record<string, boolean> = {};
+
+  for (const [key, rawValue] of Object.entries(source)) {
+    if (typeof rawValue === 'boolean') {
+      result[key] = rawValue;
+    }
+  }
+
+  return result;
+}
+
+function toOpacityRecord(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object') return {};
+
+  const source = value as Record<string, unknown>;
+  const result: Record<string, number> = {};
+
+  for (const [key, rawValue] of Object.entries(source)) {
+    if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+      result[key] = clampNumber(rawValue, 0, 1);
+    }
+  }
+
+  return result;
+}
+
+function toGeoportailLayerState(value: unknown): LayerDisplayState {
+  const source = value as Partial<LayerDisplayState> | null | undefined;
+
+  return {
+    visibility: {
+      ...DEFAULT_GEOPORTAIL_LAYER_VISIBILITY,
+      ...toBooleanRecord(source?.visibility),
+    },
+    opacity: {
+      ...DEFAULT_GEOPORTAIL_LAYER_OPACITY,
+      ...toOpacityRecord(source?.opacity),
+    },
+  };
+}
+
 /**
  * Normalize raw signalement visibility values loaded from storage.
  * @param value Unknown value read from storage.
@@ -168,6 +221,22 @@ function toSignalementLayerOrder(value: unknown): SignalementLayerKey[] {
   return normalizeSignalementLayerOrder(value);
 }
 
+function toSignalementLayerState(value: unknown): SignalementLayerState {
+  const source = value as Partial<SignalementLayerState> | null | undefined;
+
+  return {
+    visibility: {
+      ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
+      ...toSignalementVisibility(source?.visibility),
+    },
+    opacity: {
+      ...DEFAULT_SIGNALEMENT_LAYER_OPACITY,
+      ...toSignalementOpacity(source?.opacity),
+    },
+    order: toSignalementLayerOrder(source?.order),
+  };
+}
+
 /**
  * Load one community layer configuration from storage.
  * @param communityId Active community identifier.
@@ -187,16 +256,30 @@ export async function loadLayersConfiguration(
       return null;
     }
 
-    const payload = raw as Partial<LayersConfiguration>;
+    const payload = raw as Partial<LayersConfiguration> & {
+      signalementLayerVisibility?: unknown;
+      signalementLayerOpacity?: unknown;
+      signalementLayerOrder?: unknown;
+    };
+    const signalementLayerState = payload.signalementLayerState
+      ? toSignalementLayerState(payload.signalementLayerState)
+      : {
+          visibility: {
+            ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
+            ...toSignalementVisibility(payload.signalementLayerVisibility),
+          },
+          opacity: {
+            ...DEFAULT_SIGNALEMENT_LAYER_OPACITY,
+            ...toSignalementOpacity(payload.signalementLayerOpacity),
+          },
+          order: toSignalementLayerOrder(payload.signalementLayerOrder),
+        };
 
     return {
       layersByKey: toLayerStateMap(payload.layersByKey),
       layerOrder: toLayerOrder(payload.layerOrder),
-      signalementLayerVisibility: toSignalementVisibility(
-        payload.signalementLayerVisibility
-      ),
-      signalementLayerOpacity: toSignalementOpacity(payload.signalementLayerOpacity),
-      signalementLayerOrder: toSignalementLayerOrder(payload.signalementLayerOrder),
+      geoportailLayerState: toGeoportailLayerState(payload.geoportailLayerState),
+      signalementLayerState,
     };
   } catch (error) {
     console.error('[Layers][Config] Failed to load layers configuration', error);
@@ -214,9 +297,8 @@ export async function saveLayersConfiguration({
   userId,
   layers,
   lockedByLayerKey,
-  signalementLayerVisibility,
-  signalementLayerOpacity,
-  signalementLayerOrder,
+  geoportailLayerState,
+  signalementLayerState,
 }: SaveLayersConfigurationParams): Promise<void> {
   const layerOrder: string[] = [];
   const layersByKey: Record<string, PersistedLayerState> = {};
@@ -234,9 +316,11 @@ export async function saveLayersConfiguration({
   const payload: LayersConfiguration = {
     layersByKey,
     layerOrder,
-    signalementLayerVisibility,
-    signalementLayerOpacity,
-    signalementLayerOrder: normalizeSignalementLayerOrder(signalementLayerOrder),
+    geoportailLayerState,
+    signalementLayerState: {
+      ...signalementLayerState,
+      order: normalizeSignalementLayerOrder(signalementLayerState.order),
+    },
   };
 
   try {

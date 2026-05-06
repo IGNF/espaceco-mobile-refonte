@@ -36,3 +36,8 @@ export interface LayerGroupDetails {
   title: string;
   items: LayerGroupItem[];
 }
+
+export interface LayerDisplayState {
+  visibility: Record<string, boolean>;
+  opacity: Record<string, number>;
+}

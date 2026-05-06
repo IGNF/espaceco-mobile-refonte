@@ -12,15 +12,14 @@ import {
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
-  type SignalementLayerKey,
   type SignalementLayerOpacity,
-  type SignalementLayerVisibility,
+  type SignalementLayerState,
   DEFAULT_SIGNALEMENT_LAYER_ORDER,
   DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
   isSignalementLayerKey,
   normalizeSignalementLayerOrder,
 } from '@/features/map/constants/signalementLayers.constants';
-import type { LayerGroupId } from '@/features/map/types/layerGroups';
+import type { LayerDisplayState, LayerGroupId } from '@/features/map/types/layerGroups';
 import {
   loadLayersConfiguration,
   saveLayersConfiguration,
@@ -35,9 +34,51 @@ import { clampNumber } from '@/shared/utils/number';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { DEFAULT_SIGNALEMENT_LAYER_OPACITY } from '@/features/map/constants/signalementLayers.constants';
+import {
+  DEFAULT_GEOPORTAIL_LAYER_OPACITY,
+  DEFAULT_GEOPORTAIL_LAYER_VISIBILITY,
+  isDefaultGeoportailLayerName,
+} from '@/shared/constants/map';
 
 function getDefaultSignalementLayerOpacity(): SignalementLayerOpacity {
   return { ...DEFAULT_SIGNALEMENT_LAYER_OPACITY };
+}
+
+function getDefaultSignalementLayerState(): SignalementLayerState {
+  return {
+    visibility: { ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY },
+    opacity: getDefaultSignalementLayerOpacity(),
+    order: [...DEFAULT_SIGNALEMENT_LAYER_ORDER],
+  };
+}
+
+function getDefaultGeoportailLayerState(): LayerDisplayState {
+  return {
+    visibility: { ...DEFAULT_GEOPORTAIL_LAYER_VISIBILITY },
+    opacity: { ...DEFAULT_GEOPORTAIL_LAYER_OPACITY },
+  };
+}
+
+function getGeoportailLayerName(layer: CommunityLayer): string | null {
+  return layer.geoservice?.layers ?? null;
+}
+
+function applyDefaultGeoportailLayerState(
+  layers: CommunityLayer[],
+  geoportailLayerState: LayerDisplayState
+): CommunityLayer[] {
+  return layers.map((layer) => {
+    const layerName = getGeoportailLayerName(layer);
+    if (!layerName || !isDefaultGeoportailLayerName(layerName)) {
+      return layer;
+    }
+
+    return {
+      ...layer,
+      visible: geoportailLayerState.visibility[layerName] ?? layer.visible,
+      opacity: geoportailLayerState.opacity[layerName] ?? layer.opacity,
+    };
+  });
 }
 
 function reorderLayersByLayerOrder(
@@ -130,13 +171,10 @@ export function useLayers(
   const activeCommunityId = activeCommunity?.id;
   const userId = user?.id ?? null;
   const [layers, setLayers] = useState<CommunityLayer[]>([]);
-  const [signalementLayerVisibility, setSignalementLayerVisibility] =
-    useState<SignalementLayerVisibility>(() => ({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY }));
-  const [signalementLayerOpacity, setSignalementLayerOpacity] =
-    useState<SignalementLayerOpacity>(() => getDefaultSignalementLayerOpacity());
-  const [signalementLayerOrder, setSignalementLayerOrder] = useState<
-    SignalementLayerKey[]
-  >(() => [...DEFAULT_SIGNALEMENT_LAYER_ORDER]);
+  const [signalementLayerState, setSignalementLayerState] =
+    useState<SignalementLayerState>(() => getDefaultSignalementLayerState());
+  const [geoportailLayerState, setGeoportailLayerState] =
+    useState<LayerDisplayState>(() => getDefaultGeoportailLayerState());
   const [lockedByLayerKey, setLockedByLayerKey] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -145,9 +183,8 @@ export function useLayers(
   const [hydratedMode, setHydratedMode] = useState<OfflineMode | null>(null);
 
   const resetLayerPreferences = useCallback(() => {
-    setSignalementLayerVisibility({ ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY });
-    setSignalementLayerOpacity(getDefaultSignalementLayerOpacity());
-    setSignalementLayerOrder([...DEFAULT_SIGNALEMENT_LAYER_ORDER]);
+    setSignalementLayerState(getDefaultSignalementLayerState());
+    setGeoportailLayerState(getDefaultGeoportailLayerState());
     setLockedByLayerKey({});
   }, []);
 
@@ -156,10 +193,29 @@ export function useLayers(
 
   const setLayerVisibility = useCallback((layerKey: string, visible: boolean) => {
     if (isSignalementLayerKey(layerKey)) {
-      setSignalementLayerVisibility((previous) => ({
+      setSignalementLayerState((previous) => ({
         ...previous,
-        [layerKey]: visible,
+        visibility: {
+          ...previous.visibility,
+          [layerKey]: visible,
+        },
       }));
+      return;
+    }
+
+    if (isDefaultGeoportailLayerName(layerKey)) {
+      setGeoportailLayerState((previous) => ({
+        ...previous,
+        visibility: {
+          ...previous.visibility,
+          [layerKey]: visible,
+        },
+      }));
+      setLayers((previous) =>
+        previous.map((layer) =>
+          getGeoportailLayerName(layer) === layerKey ? { ...layer, visible } : layer
+        )
+      );
       return;
     }
 
@@ -174,10 +230,31 @@ export function useLayers(
     const nextOpacity = clampNumber(opacity, 0, 1);
 
     if (isSignalementLayerKey(layerKey)) {
-      setSignalementLayerOpacity((previous) => ({
+      setSignalementLayerState((previous) => ({
         ...previous,
-        [layerKey]: nextOpacity,
+        opacity: {
+          ...previous.opacity,
+          [layerKey]: nextOpacity,
+        },
       }));
+      return;
+    }
+
+    if (isDefaultGeoportailLayerName(layerKey)) {
+      setGeoportailLayerState((previous) => ({
+        ...previous,
+        opacity: {
+          ...previous.opacity,
+          [layerKey]: nextOpacity,
+        },
+      }));
+      setLayers((previous) =>
+        previous.map((layer) =>
+          getGeoportailLayerName(layer) === layerKey
+            ? { ...layer, opacity: nextOpacity }
+            : layer
+        )
+      );
       return;
     }
 
@@ -195,7 +272,10 @@ export function useLayers(
     orderedLayerKeys: string[]
   ) => {
     if (groupId === 'signalements') {
-      setSignalementLayerOrder(normalizeSignalementLayerOrder(orderedLayerKeys));
+      setSignalementLayerState((previous) => ({
+        ...previous,
+        order: normalizeSignalementLayerOrder(orderedLayerKeys),
+      }));
       return;
     }
 
@@ -218,24 +298,19 @@ export function useLayers(
       layers: nextLayers,
       lockedByLayerKey: nextLockedByLayerKey,
     } = applySavedLayerConfiguration(baseLayers, savedConfiguration);
+    const nextGeoportailLayerState =
+      savedConfiguration?.geoportailLayerState ?? getDefaultGeoportailLayerState();
 
-    const nextSignalementLayerVisibility: SignalementLayerVisibility = {
-      ...DEFAULT_SIGNALEMENT_LAYER_VISIBILITY,
-      ...savedConfiguration?.signalementLayerVisibility,
-    };
-    const nextSignalementLayerOpacity: SignalementLayerOpacity = {
-      ...DEFAULT_SIGNALEMENT_LAYER_OPACITY,
-      ...savedConfiguration?.signalementLayerOpacity,
-    };
-    const nextSignalementLayerOrder = normalizeSignalementLayerOrder(
-      savedConfiguration?.signalementLayerOrder
-    );
+    const nextSignalementLayerState =
+      savedConfiguration?.signalementLayerState ?? getDefaultSignalementLayerState();
 
-    setLayers(nextLayers);
+    setLayers(applyDefaultGeoportailLayerState(
+      nextLayers,
+      nextGeoportailLayerState
+    ));
     setLockedByLayerKey(nextLockedByLayerKey);
-    setSignalementLayerVisibility(nextSignalementLayerVisibility);
-    setSignalementLayerOpacity(nextSignalementLayerOpacity);
-    setSignalementLayerOrder(nextSignalementLayerOrder);
+    setGeoportailLayerState(nextGeoportailLayerState);
+    setSignalementLayerState(nextSignalementLayerState);
     setHydratedCommunityId(communityId);
     setHydratedUserId(userId);
     setHydratedMode(hydratedFromMode);
@@ -349,9 +424,8 @@ export function useLayers(
       userId,
       layers,
       lockedByLayerKey,
-      signalementLayerVisibility,
-      signalementLayerOpacity,
-      signalementLayerOrder,
+      geoportailLayerState,
+      signalementLayerState,
     });
   }, [
     activeCommunityId,
@@ -361,9 +435,8 @@ export function useLayers(
     layers,
     lockedByLayerKey,
     mode,
-    signalementLayerOpacity,
-    signalementLayerOrder,
-    signalementLayerVisibility,
+    geoportailLayerState,
+    signalementLayerState,
     userId,
   ]);
 
@@ -400,9 +473,8 @@ export function useLayers(
     geoportailLayers,
     vectorLayers,
     lockedByLayerKey,
-    signalementLayerVisibility,
-    signalementLayerOpacity,
-    signalementLayerOrder,
+    geoportailLayerState,
+    signalementLayerState,
     isLoading,
     error,
     refetch: refetchLayers,

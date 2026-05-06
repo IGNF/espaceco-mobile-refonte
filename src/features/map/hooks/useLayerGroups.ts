@@ -8,6 +8,7 @@ import { getCommunityLayerDirectContributionState } from '@/domain/community/dir
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import type {
   LayerGroupDetails,
+  LayerDisplayState,
   LayerGroupItem,
   LayerGroupSummary,
 } from '@/features/map/types/layerGroups';
@@ -17,19 +18,21 @@ import {
 } from '@/features/map/mappers/layerGroupMappers';
 import {
   SIGNALEMENT_LAYER_DEFINITIONS,
-  type SignalementLayerKey,
-  type SignalementLayerOpacity,
-  type SignalementLayerVisibility,
+  type SignalementLayerState,
   normalizeSignalementLayerOrder,
 } from '@/features/map/constants/signalementLayers.constants';
+import {
+  DEFAULT_GEOPORTAIL_LAYERS,
+  GEOPORTAIL_LAYER_TITLES,
+  isDefaultGeoportailLayerName,
+} from '@/shared/constants/map';
 
 interface UseLayerGroupsParams {
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
-  signalementLayerVisibility: SignalementLayerVisibility;
-  signalementLayerOpacity: SignalementLayerOpacity;
-  signalementLayerOrder: SignalementLayerKey[];
+  geoportailLayerState: LayerDisplayState;
+  signalementLayerState: SignalementLayerState;
   pendingChangesCountByLayerKey?: Record<string, number>;
   lockedByLayerKey?: Record<string, boolean>;
   submittingByLayerKey?: Record<string, boolean>;
@@ -66,9 +69,8 @@ export function useLayerGroups({
   layers,
   geoportailLayers,
   vectorLayers,
-  signalementLayerVisibility,
-  signalementLayerOpacity,
-  signalementLayerOrder,
+  geoportailLayerState,
+  signalementLayerState,
   pendingChangesCountByLayerKey = {},
   lockedByLayerKey = {},
   submittingByLayerKey = {},
@@ -80,7 +82,7 @@ export function useLayerGroups({
     const vectorLayerSet = new Set(vectorLayers);
     const geoportailLayerSet = new Set(geoportailLayers);
     const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
-      signalementLayerOrder
+      signalementLayerState.order
     );
 
     const signalementItems: LayerGroupItem[] = normalizedSignalementLayerOrder.map(
@@ -93,8 +95,8 @@ export function useLayerGroups({
           id: layerKey,
           layerKey,
           title: layerDefinition ? t(layerDefinition.titleKey) : layerKey,
-          visible: signalementLayerVisibility[layerKey],
-          opacity: signalementLayerOpacity[layerKey],
+          visible: signalementLayerState.visibility[layerKey],
+          opacity: signalementLayerState.opacity[layerKey],
         };
       }
     );
@@ -103,6 +105,19 @@ export function useLayerGroups({
     const mesCartesLayers = layers.filter(
       (layer) => !vectorLayerSet.has(layer) && !geoportailLayerSet.has(layer)
     );
+    const defaultGeoportailItems: LayerGroupItem[] = DEFAULT_GEOPORTAIL_LAYERS.map(
+      (layerName) => ({
+        id: layerName,
+        layerKey: layerName,
+        title: GEOPORTAIL_LAYER_TITLES[layerName] ?? layerName,
+        visible: geoportailLayerState.visibility[layerName] ?? false,
+        opacity: geoportailLayerState.opacity[layerName] ?? 1,
+      })
+    );
+    const extraGeoportailLayers = geoportailLayers.filter((layer) => {
+      const layerName = layer.geoservice?.layers ?? '';
+      return !isDefaultGeoportailLayerName(layerName);
+    });
 
     const guichetTitle = activeCommunity?.name
       ? `${t('layers.groups.guichet')} ${activeCommunity.name}`
@@ -137,23 +152,25 @@ export function useLayerGroups({
       {
         id: 'geoservices',
         title: t('layers.groups.geoservices'),
-        items: mapLayersToGroupItemsWithDirectContribution(
-          geoportailLayers,
-          pendingChangesCountByLayerKey,
-          lockedByLayerKey,
-          submittingByLayerKey
-        ),
+        items: [
+          ...defaultGeoportailItems,
+          ...mapLayersToGroupItemsWithDirectContribution(
+            extraGeoportailLayers,
+            pendingChangesCountByLayerKey,
+            lockedByLayerKey,
+            submittingByLayerKey
+          ),
+        ],
       },
     ];
   }, [
     activeCommunity,
+    geoportailLayerState,
     geoportailLayers,
     layers,
     lockedByLayerKey,
     pendingChangesCountByLayerKey,
-    signalementLayerOpacity,
-    signalementLayerVisibility,
-    signalementLayerOrder,
+    signalementLayerState,
     submittingByLayerKey,
     t,
     vectorLayers,

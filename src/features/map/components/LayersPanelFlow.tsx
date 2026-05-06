@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
 import type { CommunityLayer } from '@ign/mobile-core';
-import type { LayerGroupId } from '@/features/map/types/layerGroups';
+import type { LayerDisplayState, LayerGroupId } from '@/features/map/types/layerGroups';
 import { useLayerGroups } from '@/features/map/hooks/useLayerGroups';
 import { LayersPanel } from '@/features/map/components/LayersPanel';
 import { LayerGroupDetailsPage } from '@/features/map/pages/LayerGroupDetails/LayerGroupDetailsPage';
 import type {
-  SignalementLayerKey,
-  SignalementLayerOpacity,
-  SignalementLayerVisibility
+  SignalementLayerState
 } from '@/features/map/constants/signalementLayers.constants';
 
 export interface LayersPanelFlowProps {
@@ -18,9 +16,8 @@ export interface LayersPanelFlowProps {
   layers: CommunityLayer[];
   geoportailLayers: CommunityLayer[];
   vectorLayers: CommunityLayer[];
-  signalementLayerVisibility: SignalementLayerVisibility;
-  signalementLayerOpacity: SignalementLayerOpacity;
-  signalementLayerOrder: SignalementLayerKey[];
+  geoportailLayerState: LayerDisplayState;
+  signalementLayerState: SignalementLayerState;
   pendingChangesCountByLayerKey?: Record<string, number>;
   lockedByLayerKey?: Record<string, boolean>;
   submittingByLayerKey?: Record<string, boolean>;
@@ -43,9 +40,8 @@ export function LayersPanelFlow({
   layers,
   geoportailLayers,
   vectorLayers,
-  signalementLayerVisibility,
-  signalementLayerOpacity,
-  signalementLayerOrder,
+  geoportailLayerState,
+  signalementLayerState,
   pendingChangesCountByLayerKey,
   lockedByLayerKey,
   submittingByLayerKey,
@@ -63,9 +59,8 @@ export function LayersPanelFlow({
     layers,
     geoportailLayers,
     vectorLayers,
-    signalementLayerVisibility,
-    signalementLayerOpacity,
-    signalementLayerOrder,
+    geoportailLayerState,
+    signalementLayerState,
     pendingChangesCountByLayerKey,
     lockedByLayerKey,
     submittingByLayerKey,

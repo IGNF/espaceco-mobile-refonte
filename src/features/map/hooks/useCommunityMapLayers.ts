@@ -8,6 +8,7 @@ import type LayerGroup from 'ol/layer/Group';
 import { CollabVectorLayer, type CommunityLayer } from '@ign/mobile-core';
 
 import type { OfflineCommunityCache, OfflineMode } from '@/domain/offline/models';
+import type { LayerDisplayState } from '@/features/map/types/layerGroups';
 
 import { collabApiClient } from '@/infra/api/collabApiClient';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
@@ -16,6 +17,7 @@ import { createCommunityVectorLayer } from '@/infra/map/openlayers/vectorLayers'
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { clampNumber } from '@/shared/utils/number';
 
 interface UseCommunityMapLayersResult {
   isVectorLayersLoading: boolean;
@@ -55,6 +57,17 @@ function replaceLayerGroupContent(
 
   for (const layer of orderedLayers) {
     layerGroup.getLayers().push(layer);
+  }
+}
+
+function syncDefaultGeoportailLayerGroup(
+  layerGroup: LayerGroup,
+  geoportailLayerState: LayerDisplayState
+): void {
+  for (const layer of layerGroup.getLayers().getArray()) {
+    const layerName = layer.get('geoportailLayerName') as string;
+    layer.setVisible(geoportailLayerState.visibility[layerName]);
+    layer.setOpacity(clampNumber(geoportailLayerState.opacity[layerName], 0, 1));
   }
 }
 
@@ -131,6 +144,7 @@ function syncCommunityVectorLayerGroup(
 export function useCommunityMapLayers(
   mapRef: RefObject<Map | null>,
   geoportailLayers: CommunityLayer[],
+  geoportailLayerState: LayerDisplayState,
   vectorLayers: CommunityLayer[],
   isMapReady: boolean,
   mode: OfflineMode,
@@ -139,6 +153,21 @@ export function useCommunityMapLayers(
 ): UseCommunityMapLayersResult {
   const [isVectorLayersLoading, setIsVectorLayersLoading] = useState(false);
   const isOfflineMode = mode === 'offline';
+
+  useEffect(() => {
+    if (!isMapReady) return;
+
+    const map = mapRef.current;
+    if (!map) return;
+
+    const geoportailGroup = findLayerGroupByName(map, 'geoportailGroup');
+    if (!geoportailGroup) return;
+
+    syncDefaultGeoportailLayerGroup(
+      geoportailGroup,
+      geoportailLayerState
+    );
+  }, [geoportailLayerState, isMapReady, mapRef]);
 
   useEffect(() => {
     if (!isMapReady) return;

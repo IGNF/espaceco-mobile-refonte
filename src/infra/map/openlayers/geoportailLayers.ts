@@ -30,12 +30,15 @@ export async function initGeoportailCapabilities(): Promise<void> {
 function createGeoportailLayer(config: GeoportailLayerConfig): ol_layer_Geoportail {
   const { name, visible = false, opacity = 1 } = config;
 
-  return new ol_layer_Geoportail(name, {
+  const layer = new ol_layer_Geoportail(name, {
     visible,
     opacity,
   }, {
     server: GEOPORTAIL_SERVER,
   });
+
+  layer.set('geoportailLayerName', name);
+  return layer;
 }
 
 /**
