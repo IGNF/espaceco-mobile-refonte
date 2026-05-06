@@ -33,6 +33,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - L'opacité des couches Géoservices (Plan IGN) fonctionne à présent (ticket #98)
 - L'opacité des "groupes de couches" sont maintenant décorrélées des couches elles-mêmes (ticket #98)
+- On peut maintenant correctement ajouter un objet à un signalement, sans collision avec le mode signalement direct (ticket #138)
 
 ## [0.0.6] - 2026-05-06
 
