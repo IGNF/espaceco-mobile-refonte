@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.6] - 2026-05-07
+## [0.0.7] - 2026-05-07
 
 ### Added
 
@@ -23,6 +23,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 
+- La liste des thèmes proposés dans un nouveau signalement sont ceux par défaut (shared themes) si un utilisateur n'a as de groupe associé
 - La position d'un signalement peut maintenant être modifiée lorsqu'on modifie un brouillon (ticket #103)
 - Dans la page listant les signalements, ceux-ci s'affichent maintenant dans l'ordre décroissant par ID, et la date de mise à jour est également affichée dans la liste (ticket #102)
 - La source du GPS n'est modifiable qu'en mode expert
@@ -32,6 +33,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 - L'opacité des couches Géoservices (Plan IGN) fonctionne à présent (ticket #98)
 - L'opacité des "groupes de couches" sont maintenant décorrélées des couches elles-mêmes (ticket #98)
+
+## [0.0.6] - 2026-05-06
+
+### Added
+
+### Changed
+
+- Un utilisateur qui n'a pas de groupe est maintenant redirigé vers la home page et non plus vers la page de choix de groupe après connexion
+
+### Fixed
 
 ## [0.0.5] - 2026-04-30
 

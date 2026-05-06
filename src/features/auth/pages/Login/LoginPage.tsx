@@ -23,7 +23,7 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+	const { user, loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
   const { network, isLoading: isOfflineLoading } = useOffline();
 	// const [email, setEmail] = useState("");
@@ -43,7 +43,7 @@ export function LoginPage() {
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
 		if (hasInitialAuthCheckCompleted && hasStartupContextCompleted && isAuthenticated) {
-      if (!network.connected && activeCommunity) {
+      if ((!network.connected && activeCommunity) || (user?.communities_member?.length === 0)) {
         navigate('/home', { replace: true });
         return;
       }
@@ -57,6 +57,7 @@ export function LoginPage() {
     isAuthenticated,
     navigate,
     network.connected,
+    user?.communities_member?.length
   ]);
 
 	if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || isAuthenticated) {

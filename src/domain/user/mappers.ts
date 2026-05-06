@@ -1,5 +1,6 @@
 import type { AppUser } from "./models";
 import type { Community, CommunityMember } from "@ign/mobile-core";
+import type { SharedThemeCommunity } from '@/domain/user/models';
 
 export interface ApiUserResponse {
 	id: number;
@@ -11,6 +12,7 @@ export interface ApiUserResponse {
 	description?: string;
 	communities?: Community[];
 	communities_member?: CommunityMember[];
+  shared_themes?: SharedThemeCommunity[];
 }
 
 export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
@@ -24,5 +26,6 @@ export function mapApiUserToAppUser(apiUser: ApiUserResponse): AppUser {
 		description: apiUser.description,
     communities: apiUser.communities || [],
 		communities_member: apiUser.communities_member || [],
+    shared_themes: apiUser.shared_themes || [],
 	};
 }

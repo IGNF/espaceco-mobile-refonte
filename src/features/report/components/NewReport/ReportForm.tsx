@@ -365,14 +365,16 @@ export function ReportForm({
           <select
             id="theme-select"
             className={`${inputs.select} ${form.errors.theme ? inputs.inputError : ''}`}
-            value={form.selectedTheme}
+            value={form.selectedThemeValue}
             onChange={e => form.setSelectedTheme(e.target.value)}
           >
             <option value="" disabled>
               {t('reports.createOrEdit.form.themePlaceholder')}
             </option>
             {form.themes.map(tc => (
-              <option key={tc.theme} value={tc.theme}>{tc.theme}</option>
+              <option key={`${tc.communityId ?? 0}:${tc.theme}`} value={`${tc.communityId ?? 0}:${tc.theme}`}>
+                {tc.communityName ? `${tc.communityName} - ${tc.theme}` : tc.theme}
+              </option>
             ))}
           </select>
           {renderError(form.errors.theme)}

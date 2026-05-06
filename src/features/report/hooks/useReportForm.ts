@@ -20,7 +20,7 @@ import {
   setReportFeatureKind,
 } from '@/features/report/utils/reportObjects';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
-import { extractThemeConfigs } from '@/features/report/utils/reportAttributes';
+import { extractAvailableReportThemes } from '@/features/report/utils/reportAttributes';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 
 import { ReportStorageAdapter } from '@/infra/storage';
@@ -48,6 +48,7 @@ export interface UseReportFormReturn {
   themes: CommunityThemeConfig[];
   currentAttributes: CommunityThemeAttribute[];
   selectedTheme: string;
+  selectedThemeValue: string;
   comment: string;
   photos: ReportPhoto[];
   objects: Feature<Geometry>[];
@@ -72,6 +73,10 @@ export interface UseReportFormReturn {
   validate: () => boolean;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
+}
+
+function getThemeOptionValue(themeConfig: CommunityThemeConfig): string {
+  return `${themeConfig.communityId ?? 0}:${themeConfig.theme}`;
 }
 
 /**
@@ -174,18 +179,22 @@ export function useReportForm({
   const { activeCommunity } = useCommunity();
 
   const themes = useMemo(
-    () => extractThemeConfigs(user?.communities_member, activeCommunity?.id),
-    [user?.communities_member, activeCommunity?.id]
+    () => extractAvailableReportThemes(user?.communities_member, activeCommunity?.id, user?.shared_themes),
+    [user?.communities_member, activeCommunity?.id, user?.shared_themes]
   );
   const resolvedReportType: ReportType = reportType ?? 'standard';
   const initialTheme = mode === 'create' && preselectFirstTheme
     ? themes[0]?.theme ?? ''
     : '';
+  const initialThemeCommunityId = initialTheme
+    ? themes[0]?.communityId ?? activeCommunity?.id
+    : undefined;
   const initialAttributeValues = initialTheme
     ? buildDefaultValues(themes[0]?.attributes ?? [])
     : {};
 
   const [selectedTheme, setSelectedThemeRaw] = useState<string>(initialTheme);
+  const [selectedThemeCommunityId, setSelectedThemeCommunityId] = useState<number | undefined>(initialThemeCommunityId);
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>(initialAttributeValues);
   const [comment, setComment] = useState<string>('');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
@@ -205,6 +214,7 @@ export function useReportForm({
     if (mode === 'edit' && nextReport) {
       setReportId(nextReport.id);
       setSelectedThemeRaw(nextReport.attributes?.themeName ? String(nextReport.attributes.themeName) : '');
+      setSelectedThemeCommunityId(nextReport.communityId);
       setAttributeValues(mapReportAttributesToFormValues(nextReport.attributes));
       setComment(nextReport.comment ?? '');
       setPhotos(nextReport.photos ?? []);
@@ -217,6 +227,7 @@ export function useReportForm({
         ? themes[0]?.theme ?? ''
         : '';
       setSelectedThemeRaw(nextTheme);
+      setSelectedThemeCommunityId(nextTheme ? themes[0]?.communityId ?? activeCommunity?.id : undefined);
       setAttributeValues(nextTheme ? buildDefaultValues(themes[0]?.attributes ?? []) : {});
       setComment('');
       setPhotos([]);
@@ -225,7 +236,7 @@ export function useReportForm({
     }
     setErrors({});
     setIsDirty(false);
-  }, [mode, preselectFirstTheme, themes]);
+  }, [activeCommunity?.id, mode, preselectFirstTheme, themes]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const previousReportRef = useRef(report);
@@ -248,20 +259,24 @@ export function useReportForm({
   }, [isOpen, report, resetFormState]);
 
   const currentThemeConfig = useMemo(
-    () => themes.find(t => t.theme === selectedTheme),
-    [themes, selectedTheme]
+    () => themes.find(t => t.theme === selectedTheme && t.communityId === selectedThemeCommunityId),
+    [themes, selectedTheme, selectedThemeCommunityId]
   );
+
+  const selectedThemeValue = currentThemeConfig ? getThemeOptionValue(currentThemeConfig) : '';
 
   const currentAttributes = useMemo(
     () => currentThemeConfig?.attributes ?? [],
     [currentThemeConfig]
   );
 
-  const setSelectedTheme = useCallback((theme: string) => {
+  const setSelectedTheme = useCallback((themeValue: string) => {
+    const config = themes.find(t => getThemeOptionValue(t) === themeValue);
+    const theme = config?.theme ?? '';
     setSelectedThemeRaw(theme);
+    setSelectedThemeCommunityId(config?.communityId);
     setIsDirty(true);
     // Reset attribute values to defaults for the new theme
-    const config = themes.find(t => t.theme === theme);
     if (config) {
       setAttributeValues(buildDefaultValues(config.attributes));
     } else {
@@ -459,7 +474,7 @@ export function useReportForm({
 
     return {
       id: reportId,
-      communityId: activeCommunity?.id ?? 0,
+      communityId: currentThemeConfig?.communityId ?? activeCommunity?.id ?? report?.communityId ?? 0,
       themeId: report?.themeId ?? 0,
       geometry: `POINT(${lon} ${lat})`,
       comment,
@@ -474,6 +489,8 @@ export function useReportForm({
     position,
     reportId,
     activeCommunity,
+    currentThemeConfig,
+    report?.communityId,
     report?.themeId,
     report?.createdAt,
     comment,
@@ -536,6 +553,7 @@ export function useReportForm({
     themes,
     currentAttributes,
     selectedTheme,
+    selectedThemeValue,
     comment,
     photos,
     objects,

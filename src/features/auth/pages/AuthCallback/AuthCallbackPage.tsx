@@ -43,6 +43,10 @@ export function AuthCallbackPage() {
 
         if (result.success && result.user) {
           await setUserFromOAuthCallback(result.user);
+          if (result.user.communities_member?.length === 0) {
+            navigate("/home", { replace: true });
+            return;
+          }
           navigate("/community-selection", { replace: true });
         } else {
           setError(t(getAppErrorTranslationKey(result.error, 'errors.auth.oauthCallbackFailed')));

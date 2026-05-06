@@ -4,7 +4,7 @@ import type {
   CommunityLayer,
 } from '@ign/mobile-core';
 
-export type CommunityAttributeType = 'list' | 'checkbox' | 'date' | 'integer' | 'double';
+export type CommunityAttributeType = 'text' | 'list' | 'checkbox' | 'date' | 'integer' | 'double';
 
 export interface CommunityThemeAttribute {
   name: string;
@@ -18,6 +18,11 @@ export interface CommunityThemeConfig {
   theme: string;
   attributes: CommunityThemeAttribute[];
   autofilled_attributes: CommunityThemeAttribute[];
+  // optional fields for shared themes
+  communityId?: number;
+  communityName?: string;
+  global?: boolean;
+  help?: string;
 }
 
 export interface AppCommunity extends Community {

@@ -3,6 +3,7 @@ import type {
   CommunityThemeConfig,
 } from '@/domain/community/models';
 import type { AppReport } from '@/domain/report/models';
+import type { SharedThemeCommunity } from '@/domain/user/models';
 import { formatDate, formatDateTime } from '@/shared/utils/date';
 
 export interface ReportCommunityMemberProfileSource {
@@ -196,6 +197,7 @@ export function extractThemeConfigs(
 
         seen.add(key);
         configs.push({
+          communityId: communityMember.community_id,
           theme: rawTheme.theme,
           attributes: Array.isArray(rawTheme.attributes)
             ? rawTheme.attributes as CommunityThemeAttribute[]
@@ -209,6 +211,48 @@ export function extractThemeConfigs(
   }
 
   return configs;
+}
+
+export function extractSharedThemeConfigs(sharedThemes: SharedThemeCommunity[] | undefined): CommunityThemeConfig[] {
+  if (!sharedThemes || sharedThemes.length === 0) return [];
+
+  const configs: CommunityThemeConfig[] = [];
+  const seen = new Set<string>();
+
+  for (const sharedCommunity of sharedThemes) {
+
+    for (const rawTheme of sharedCommunity.themes ?? []) {
+
+      const key = `${sharedCommunity.community_id}:${rawTheme.theme}`;
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      configs.push({
+        communityId: sharedCommunity.community_id,
+        communityName: sharedCommunity.community_name ?? undefined,
+        theme: rawTheme.theme,
+        global: rawTheme.global ?? undefined,
+        help: rawTheme.help ?? undefined,
+        attributes: rawTheme.attributes ?? [],
+        autofilled_attributes: rawTheme.autofilled_attributes ?? [],
+      });
+    }
+  }
+  return configs;
+}
+
+export function extractAvailableReportThemes(
+  communitiesMembers: ReportCommunityMemberProfileSource[] | undefined,
+  activeCommunityId: number | undefined,
+  sharedThemes: SharedThemeCommunity[] | undefined
+): CommunityThemeConfig[] {
+  if (activeCommunityId) {
+    return extractThemeConfigs(communitiesMembers, activeCommunityId);
+  }
+
+  return extractSharedThemeConfigs(sharedThemes);
 }
 
 function getReportThemeAttributes(
