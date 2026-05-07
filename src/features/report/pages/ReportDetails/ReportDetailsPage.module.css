@@ -58,3 +58,50 @@
   visibility: hidden;
   pointer-events: none;
 }
+
+.locationViewerSheet {
+  transform: translateY(92%) !important;
+}
+
+.locationViewerOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  pointer-events: none;
+}
+
+.locationTarget {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.locationTargetIcon {
+  width: 36px;
+  height: 36px;
+  color: var(--color-primary);
+  background: rgba(var(--color-light-rgb), 0.75);
+  border-radius: 999px;
+}
+
+.locationTargetIcon path {
+  fill: currentColor;
+}
+
+.backToReportButtonContainer {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: calc(14vh + var(--safe-bottom, 0px) + 18px);
+  pointer-events: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.backToReportButton {
+  width: min(320px, 100%) !important;
+  margin: 0 !important;
+}

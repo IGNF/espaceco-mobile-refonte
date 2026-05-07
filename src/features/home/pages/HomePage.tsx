@@ -736,6 +736,10 @@ export function HomePage() {
         <GroupReportsPage
           isOpen
           onClose={handleCloseOverlay}
+          map={map}
+          vectorLayers={vectorLayers}
+          onSearchPanelVisibilityChange={setIsSearchOpen}
+          onMapPickerActiveChange={setIsReportMapPickerActive}
         />
       )}
       {activeOverlay === '/my-reports' && (

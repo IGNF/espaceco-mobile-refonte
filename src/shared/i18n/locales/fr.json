@@ -800,6 +800,8 @@
       "responses": "Réponses",
       "noResponses": "Aucune réponse",
       "respondButton": "Répondre à ce signalement",
+      "viewOnMapButton": "Visualiser sur la carte",
+      "backToReportButton": "Retour au signalement",
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",

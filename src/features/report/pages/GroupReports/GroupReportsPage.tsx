@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { ReportStatus } from '@ign/mobile-core';
+import type OlMap from 'ol/Map';
+import type { CommunityLayer, ReportStatus } from '@ign/mobile-core';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -26,9 +27,20 @@ import typography from '@/shared/styles/typography.module.css';
 export interface GroupReportsPageProps {
   isOpen: boolean;
   onClose: () => void;
+  map?: OlMap | null;
+  vectorLayers?: CommunityLayer[];
+  onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
+  onMapPickerActiveChange?: (isActive: boolean) => void;
 }
 
-export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
+export function GroupReportsPage({
+  isOpen,
+  onClose,
+  map,
+  vectorLayers,
+  onSearchPanelVisibilityChange,
+  onMapPickerActiveChange,
+}: GroupReportsPageProps) {
   const { t } = useTranslation();
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
   const [filters, setFilters] = useState<ReportFilters>({});
@@ -191,7 +203,11 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
   };
 
   return (
-    <SlideUpPage isOpen={isOpen} onClose={onClose}>
+    <SlideUpPage
+      isOpen={isOpen}
+      onClose={onClose}
+      className={selectedReport ? styles.hiddenBehindChild : undefined}
+    >
       <PageHeader
         title={t('reports.groupReports.headerTitle')}
         subtitle={activeCommunity?.name || t('reports.groupReports.headerSubtitle')}
@@ -215,6 +231,10 @@ export function GroupReportsPage({ isOpen, onClose }: GroupReportsPageProps) {
         onBack={handleDetailsBack}
         onClose={handleDetailsClose}
         onReplySuccess={(updatedReport) => setSelectedReport(updatedReport)}
+        map={map}
+        vectorLayers={vectorLayers}
+        onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
+        onMapPickerActiveChange={onMapPickerActiveChange}
       />
 
       <ReportFiltersPage

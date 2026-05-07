@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { createPortal } from 'react-dom';
 
 import type OlMap from 'ol/Map';
+import { fromLonLat } from 'ol/proj';
 
 import { ReportStatus, type CommunityLayer } from '@ign/mobile-core';
 
@@ -29,10 +31,13 @@ import { Button } from '@/shared/ui/Button';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Alert } from '@/shared/ui/Alert';
+import { joinCSSClassNames } from '@/shared/utils/join';
 
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
+import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
+import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 
 import styles from './ReportDetailsPage.module.css';
 import replyFormStyles from './ReplyForm.module.css';
@@ -77,12 +82,29 @@ export function ReportDetailsPage({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
+  const [isViewingOnMap, setIsViewingOnMap] = useState(false);
   const [replyTitle, setReplyTitle] = useState('');
   const [replyText, setReplyText] = useState('');
   const [replyStatus, setReplyStatus] = useState(ReportStatus.Submit);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const isDraft = report?.status === ReportStatus.Draft;
+  const position = report ? parsePointGeometry(report.geometry) : null;
+  const canViewOnMap = Boolean(map && position);
+
+  useEffect(() => {
+    onMapPickerActiveChange?.(isViewingOnMap);
+
+    return () => {
+      onMapPickerActiveChange?.(false);
+    };
+  }, [isViewingOnMap, onMapPickerActiveChange]);
+
+  useEffect(() => {
+    if (!isOpen && isViewingOnMap) {
+      setIsViewingOnMap(false);
+    }
+  }, [isOpen, isViewingOnMap]);
 
   // Check if user is a member of the report's community
   const reportCommunityId = report?.attributes?.raw?.[0]?.community ?? report?.communityId;
@@ -108,6 +130,37 @@ export function ReportDetailsPage({
     setReplyStatus(report?.status ?? ReportStatus.Submit);
     setValidationError(null);
     setIsReplyOpen(true);
+  };
+
+  const handleViewOnMap = () => {
+    if (!map || !position) return;
+
+    map.getView().animate({
+      center: fromLonLat([position.lon, position.lat]),
+      duration: 250,
+    });
+
+    onSearchPanelVisibilityChange?.(false);
+    setIsViewingOnMap(true);
+  };
+
+  const handleBackToReport = () => {
+    setIsViewingOnMap(false);
+    onSearchPanelVisibilityChange?.(false);
+  };
+
+  const handlePageBack = () => {
+    if (isViewingOnMap) {
+      handleBackToReport();
+      return;
+    }
+
+    onBack();
+  };
+
+  const handlePageClose = () => {
+    setIsViewingOnMap(false);
+    onClose();
   };
 
   const handleReplyClose = () => {
@@ -193,255 +246,290 @@ export function ReportDetailsPage({
 
   const statusColor = getStatusColor(report.status);
   const statusLabel = t(`reports.status.${report.status}`, report.status);
-  const position = parsePointGeometry(report.geometry);
   const themeName = report.attributes?.themeName || t('reports.details.notAvailable');
   const communeName = report.commune?.title || t('reports.details.notAvailable');
   const departmentName = report.departement?.name || t('reports.details.notAvailable');
   const authorName = report.author?.username || t('reports.details.notAvailable');
   const responses = report.replies || [];
   const attributesText = formatReportAttributes(report, user?.communities_member);
+  const pageClassName = joinCSSClassNames(
+    isEditOpen ? styles.hiddenBehindChild : undefined,
+    isViewingOnMap ? styles.locationViewerSheet : undefined
+  );
 
   return (
-    <SlideUpPage
-      isOpen={isOpen}
-      onClose={onClose}
-      level={2}
-      className={isEditOpen ? styles.hiddenBehindChild : undefined}
-    >
-      <PageHeader
-        title={t('reports.details.headerTitle')}
-        subtitle={activeCommunity?.name ?? t('reports.details.headerSubtitle')}
-        showBackButton
-        onBack={onBack}
-        onClose={onClose}
-      />
-
-      <main className={screen.screenContainer + " " + styles.content}>
-        <div className={styles.titleSection}>
-          <h1 className={typography.title}>{t('reports.details.title')}</h1>
-          <p className={typography.subtitle}>
-            {t('reports.details.subtitle')}{report.id}
-          </p>
-        </div>
-
-        <div className={styles.detailsTable}>
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.identifier')} :</span>
-            <span className={styles.detailValue}>#{report.id}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.status')} :</span>
-            <span className={styles.detailValue}>
-              <span
-                className={styles.statusIndicator}
-                style={{ backgroundColor: statusColor }}
-              />
-              {statusLabel}
-            </span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.group')} :</span>
-            <span className={styles.detailValue}>{activeCommunity?.name ?? t('reports.details.notAvailable')}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.author')} :</span>
-            <span className={styles.detailValue}>{authorName}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.theme')} :</span>
-            <span className={styles.detailValue}>{themeName}</span>
-          </div>
-
-          {attributesText && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>{t('reports.details.attributes')} :</span>
-              <span className={styles.detailValue}>{attributesText}</span>
-            </div>
-          )}
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.date')} :</span>
-            <span className={styles.detailValue}>{formatDateTime(report.createdAt)}</span>
-          </div>
-
-          {position && (
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>{t('reports.details.position')} :</span>
-              <span className={styles.detailValue}>{position.lon.toFixed(6)}, {position.lat.toFixed(6)}</span>
-            </div>
-          )}
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.commune')} :</span>
-            <span className={styles.detailValue}>{communeName}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.department')} :</span>
-            <span className={styles.detailValue}>{departmentName}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.comment')} :</span>
-            <span className={styles.detailValue}>{report.comment || t('reports.details.notAvailable')}</span>
-          </div>
-
-          <div className={styles.detailRow}>
-            <span className={styles.detailLabel}>{t('reports.details.responses')} :</span>
-            <span className={styles.detailValue}>
-              {responses.length > 0
-                ? `${responses.length} réponse(s)`
-                : t('reports.details.noResponses')}
-            </span>
-          </div>
-        </div>
-
-        <div className={styles.buttonContainer}>
-          <>
-            {isDraft ? (
-              <>
-                <Button color="primary" onClick={handleEditReport}>
-                  <IconPencil className={buttonStyles.icon} />
-                  {t('reports.details.editButton')}
-                </Button>
-                <Button color="tertiary" onClick={handleSendReport} loading={isSending}>
-                  <IconSend className={buttonStyles.icon} />
-                  {t('reports.details.sendButton')}
-                </Button>
-                <Button color="danger" onClick={handleDeleteReport}>
-                  <IconDelete className={buttonStyles.icon} />
-                  {t('reports.details.deleteButton')}
-                </Button>
-                {sendError && (
-                  <p className={styles.permissionMessage}>
-                    {t(sendErrorKey)}
-                  </p>
-                )}
-              </>
-            ) : (
-              <>
-                <Button color="primary" onClick={handleRespond} disabled={!canReply}>
-                  {t('reports.details.respondButton')}
-                </Button>
-                {!canReply && (
-                  <p className={styles.permissionMessage}>
-                    {t('reports.details.reply.permissionDenied')}
-                  </p>
-                )}
-              </>
-            )}
-          </>
-        </div>
-      </main>
-
-      <Alert
-        isOpen={isReplyOpen}
-        onClose={handleReplyClose}
-        title={t('reports.details.reply.dialogTitle')}
-        buttons={[
-          {
-            label: t('reports.details.reply.cancelButton'),
-            onClick: handleReplyClose,
-            variant: 'outline',
-          },
-          {
-            label: isSubmitting
-              ? t('reports.general.loading')
-              : t('reports.details.reply.submitButton'),
-            onClick: handleReplySubmit,
-            color: 'primary',
-          },
-        ]}
+    <>
+      <SlideUpPage
+        isOpen={isOpen}
+        onClose={handlePageClose}
+        level={2}
+        className={pageClassName}
       >
-        <div className={replyFormStyles.replyForm}>
-          <label className={inputs.label}>
-            {t('reports.details.reply.textareaLabel')}
-          </label>
-          <textarea
-            className={inputs.textarea}
-            placeholder={t('reports.details.reply.textareaPlaceholder')}
-            value={replyText}
-            onChange={(e) => setReplyText(e.target.value)}
-            rows={4}
-          />
+        <PageHeader
+          title={t('reports.details.headerTitle')}
+          subtitle={activeCommunity?.name ?? t('reports.details.headerSubtitle')}
+          showBackButton
+          onBack={handlePageBack}
+          onClose={handlePageClose}
+        />
 
-          <label className={inputs.label}>
-            {t('reports.details.reply.statusLabel')}
-          </label>
-          <select
-            className={inputs.select}
-            value={replyStatus}
-            onChange={(e) => setReplyStatus(e.target.value as ReportStatus)}
-          >
-            {replyStatusOptions.map((status) => (
-              <option key={status} value={status}>
-                {t(`reports.status.${status}`, status)}
-              </option>
-            ))}
-          </select>
-
-          {validationError && (
-            <p className={replyFormStyles.replyError}>{validationError}</p>
-          )}
-          {replyError && (
-            <p className={replyFormStyles.replyError}>
-              {t(getAppErrorTranslationKey(replyError, 'reports.details.reply.errorMessage'))}
+        <main className={screen.screenContainer + " " + styles.content}>
+          <div className={styles.titleSection}>
+            <h1 className={typography.title}>{t('reports.details.title')}</h1>
+            <p className={typography.subtitle}>
+              {t('reports.details.subtitle')}{report.id}
             </p>
-          )}
-        </div>
-      </Alert>
+          </div>
 
-      <Alert
-        isOpen={isDeleteOpen}
-        onClose={handleDeleteClose}
-        title={t('reports.details.delete.dialogTitle', { id: report.id })}
-        subtitle={t('reports.details.delete.dialogMessage')}
-        buttons={[
-          {
-            label: isDeleting
-              ? t('reports.general.loading')
-              : t('reports.details.delete.confirmButton'),
-            onClick: handleDeleteConfirm,
-            color: 'danger',
-          },
-          {
-            label: t('reports.details.delete.cancelButton'),
-            onClick: handleDeleteClose,
-            variant: 'outline',
-          },
-        ]}
-      />
+          <div className={styles.detailsTable}>
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.identifier')} :</span>
+              <span className={styles.detailValue}>#{report.id}</span>
+            </div>
 
-      <Alert
-        isOpen={isSendSuccessOpen}
-        onClose={handleSendSuccessClose}
-        title={t('reports.details.sendSuccess.title')}
-        subtitle={t('reports.details.sendSuccess.message')}
-        buttons={[
-          {
-            label: t('reports.general.ok'),
-            onClick: handleSendSuccessClose,
-            color: 'primary',
-          },
-        ]}
-      />
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.status')} :</span>
+              <span className={styles.detailValue}>
+                <span
+                  className={styles.statusIndicator}
+                  style={{ backgroundColor: statusColor }}
+                />
+                {statusLabel}
+              </span>
+            </div>
 
-      <CreateOrEditReportPage
-        isOpen={isEditOpen}
-        mode="edit"
-        report={report}
-        level={3}
-        onBack={handleEditBack}
-        onClose={handleEditClose}
-        map={map}
-        vectorLayers={vectorLayers}
-        onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
-        onMapPickerActiveChange={onMapPickerActiveChange}
-      />
-    </SlideUpPage>
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.group')} :</span>
+              <span className={styles.detailValue}>{activeCommunity?.name ?? t('reports.details.notAvailable')}</span>
+            </div>
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.author')} :</span>
+              <span className={styles.detailValue}>{authorName}</span>
+            </div>
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.theme')} :</span>
+              <span className={styles.detailValue}>{themeName}</span>
+            </div>
+
+            {attributesText && (
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>{t('reports.details.attributes')} :</span>
+                <span className={styles.detailValue}>{attributesText}</span>
+              </div>
+            )}
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.date')} :</span>
+              <span className={styles.detailValue}>{formatDateTime(report.createdAt)}</span>
+            </div>
+
+            {position && (
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>{t('reports.details.position')} :</span>
+                <span className={styles.detailValue}>{position.lon.toFixed(6)}, {position.lat.toFixed(6)}</span>
+              </div>
+            )}
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.commune')} :</span>
+              <span className={styles.detailValue}>{communeName}</span>
+            </div>
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.department')} :</span>
+              <span className={styles.detailValue}>{departmentName}</span>
+            </div>
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.comment')} :</span>
+              <span className={styles.detailValue}>{report.comment || t('reports.details.notAvailable')}</span>
+            </div>
+
+            <div className={styles.detailRow}>
+              <span className={styles.detailLabel}>{t('reports.details.responses')} :</span>
+              <span className={styles.detailValue}>
+                {responses.length > 0
+                  ? `${responses.length} réponse(s)`
+                  : t('reports.details.noResponses')}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.buttonContainer}>
+            <>
+              {isDraft ? (
+                <>
+                  <Button color="primary" onClick={handleEditReport}>
+                    <IconPencil className={buttonStyles.icon} />
+                    {t('reports.details.editButton')}
+                  </Button>
+                  <Button color="tertiary" onClick={handleSendReport} loading={isSending}>
+                    <IconSend className={buttonStyles.icon} />
+                    {t('reports.details.sendButton')}
+                  </Button>
+                  <Button color="danger" onClick={handleDeleteReport}>
+                    <IconDelete className={buttonStyles.icon} />
+                    {t('reports.details.deleteButton')}
+                  </Button>
+                  {sendError && (
+                    <p className={styles.permissionMessage}>
+                      {t(sendErrorKey)}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button color="primary" onClick={handleRespond} disabled={!canReply}>
+                    <IconPencil className={buttonStyles.icon} />
+                    {t('reports.details.respondButton')}
+                  </Button>
+                  <Button
+                    color="medium"
+                    variant="outline"
+                    onClick={handleViewOnMap}
+                    disabled={!canViewOnMap}
+                  >
+                    <IconEye className={buttonStyles.icon} />
+                    {t('reports.details.viewOnMapButton')}
+                  </Button>
+                  {!canReply && (
+                    <p className={styles.permissionMessage}>
+                      {t('reports.details.reply.permissionDenied')}
+                    </p>
+                  )}
+                </>
+              )}
+            </>
+          </div>
+        </main>
+
+        <Alert
+          isOpen={isReplyOpen}
+          onClose={handleReplyClose}
+          title={t('reports.details.reply.dialogTitle')}
+          buttons={[
+            {
+              label: t('reports.details.reply.cancelButton'),
+              onClick: handleReplyClose,
+              variant: 'outline',
+            },
+            {
+              label: isSubmitting
+                ? t('reports.general.loading')
+                : t('reports.details.reply.submitButton'),
+              onClick: handleReplySubmit,
+              color: 'primary',
+            },
+          ]}
+        >
+          <div className={replyFormStyles.replyForm}>
+            <label className={inputs.label}>
+              {t('reports.details.reply.textareaLabel')}
+            </label>
+            <textarea
+              className={inputs.textarea}
+              placeholder={t('reports.details.reply.textareaPlaceholder')}
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+              rows={4}
+            />
+
+            <label className={inputs.label}>
+              {t('reports.details.reply.statusLabel')}
+            </label>
+            <select
+              className={inputs.select}
+              value={replyStatus}
+              onChange={(e) => setReplyStatus(e.target.value as ReportStatus)}
+            >
+              {replyStatusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {t(`reports.status.${status}`, status)}
+                </option>
+              ))}
+            </select>
+
+            {validationError && (
+              <p className={replyFormStyles.replyError}>{validationError}</p>
+            )}
+            {replyError && (
+              <p className={replyFormStyles.replyError}>
+                {t(getAppErrorTranslationKey(replyError, 'reports.details.reply.errorMessage'))}
+              </p>
+            )}
+          </div>
+        </Alert>
+
+        <Alert
+          isOpen={isDeleteOpen}
+          onClose={handleDeleteClose}
+          title={t('reports.details.delete.dialogTitle', { id: report.id })}
+          subtitle={t('reports.details.delete.dialogMessage')}
+          buttons={[
+            {
+              label: isDeleting
+                ? t('reports.general.loading')
+                : t('reports.details.delete.confirmButton'),
+              onClick: handleDeleteConfirm,
+              color: 'danger',
+            },
+            {
+              label: t('reports.details.delete.cancelButton'),
+              onClick: handleDeleteClose,
+              variant: 'outline',
+            },
+          ]}
+        />
+
+        <Alert
+          isOpen={isSendSuccessOpen}
+          onClose={handleSendSuccessClose}
+          title={t('reports.details.sendSuccess.title')}
+          subtitle={t('reports.details.sendSuccess.message')}
+          buttons={[
+            {
+              label: t('reports.general.ok'),
+              onClick: handleSendSuccessClose,
+              color: 'primary',
+            },
+          ]}
+        />
+
+        <CreateOrEditReportPage
+          isOpen={isEditOpen}
+          mode="edit"
+          report={report}
+          level={3}
+          onBack={handleEditBack}
+          onClose={handleEditClose}
+          map={map}
+          vectorLayers={vectorLayers}
+          onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
+          onMapPickerActiveChange={onMapPickerActiveChange}
+        />
+      </SlideUpPage>
+
+      {isViewingOnMap && typeof document !== 'undefined'
+        ? createPortal(
+          <div className={styles.locationViewerOverlay}>
+            <div className={styles.locationTarget} aria-hidden="true">
+              <IconAdd className={styles.locationTargetIcon} />
+            </div>
+            <div className={styles.backToReportButtonContainer}>
+              <Button
+                color="primary"
+                onClick={handleBackToReport}
+                className={styles.backToReportButton}
+              >
+                {t('reports.details.backToReportButton')}
+              </Button>
+            </div>
+          </div>,
+          document.body
+        )
+        : null}
+    </>
   );
 }
