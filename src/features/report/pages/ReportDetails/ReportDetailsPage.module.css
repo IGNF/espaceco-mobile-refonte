@@ -1,3 +1,7 @@
+.content {
+  padding-bottom: calc(96px + var(--safe-bottom, 0px));
+}
+
 .titleSection {
   text-align: center;
   margin-bottom: 32px;
@@ -56,6 +60,36 @@
 
 .hiddenBehindChild {
   visibility: hidden;
+  pointer-events: none;
+}
+
+.reportNavigationControls {
+  position: fixed;
+  left: 18px;
+  right: 18px;
+  bottom: calc(var(--safe-bottom, 0px) + 36px);
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 48px 1fr 48px;
+  align-items: center;
+  pointer-events: none;
+}
+
+.reportNavigationButton {
+  pointer-events: auto;
+}
+
+.reportNavigationPreviousButton {
+  grid-column: 1;
+}
+
+.reportNavigationNextButton {
+  grid-column: 3;
+}
+
+.reportNavigationLoading {
+  grid-column: 2;
+  padding: 0;
   pointer-events: none;
 }
 

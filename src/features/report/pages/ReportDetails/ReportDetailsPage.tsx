@@ -31,6 +31,7 @@ import { Button } from '@/shared/ui/Button';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Alert } from '@/shared/ui/Alert';
+import { Loading } from '@/shared/ui/Loading';
 import { joinCSSClassNames } from '@/shared/utils/join';
 
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
@@ -38,6 +39,8 @@ import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
+import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
+import IconArrowRight from '@/shared/assets/icons/icon-arrow-right.svg?react';
 
 import styles from './ReportDetailsPage.module.css';
 import replyFormStyles from './ReplyForm.module.css';
@@ -58,6 +61,11 @@ export interface ReportDetailsPageProps {
   vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
   onMapPickerActiveChange?: (isActive: boolean) => void;
+  hasPreviousReport?: boolean;
+  hasNextReport?: boolean;
+  isReportNavigationLoading?: boolean;
+  onPreviousReport?: () => void;
+  onNextReport?: () => void;
 }
 
 export function ReportDetailsPage({
@@ -70,6 +78,11 @@ export function ReportDetailsPage({
   vectorLayers,
   onSearchPanelVisibilityChange,
   onMapPickerActiveChange,
+  hasPreviousReport = false,
+  hasNextReport = false,
+  isReportNavigationLoading = false,
+  onPreviousReport,
+  onNextReport,
 }: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -256,6 +269,11 @@ export function ReportDetailsPage({
     isEditOpen ? styles.hiddenBehindChild : undefined,
     isViewingOnMap ? styles.locationViewerSheet : undefined
   );
+  const showPreviousReportButton = hasPreviousReport && Boolean(onPreviousReport);
+  const showNextReportButton = hasNextReport && Boolean(onNextReport);
+  const showReportNavigation =
+    !isViewingOnMap &&
+    (showPreviousReportButton || showNextReportButton || isReportNavigationLoading);
 
   return (
     <>
@@ -509,6 +527,51 @@ export function ReportDetailsPage({
           onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
           onMapPickerActiveChange={onMapPickerActiveChange}
         />
+
+        {showReportNavigation && (
+          <div className={styles.reportNavigationControls}>
+            {showPreviousReportButton && (
+              <Button
+                type="button"
+                color="light"
+                iconOnly
+                className={joinCSSClassNames(
+                  styles.reportNavigationButton,
+                  styles.reportNavigationPreviousButton
+                )}
+                onClick={onPreviousReport}
+                disabled={isReportNavigationLoading}
+                aria-label={t('reports.details.previousReportButton')}
+              >
+                <IconArrowLeft className={buttonStyles.icon} />
+              </Button>
+            )}
+
+            {isReportNavigationLoading && (
+              <Loading
+                size="small"
+                className={styles.reportNavigationLoading}
+              />
+            )}
+
+            {showNextReportButton && (
+              <Button
+                type="button"
+                color="light"
+                iconOnly
+                className={joinCSSClassNames(
+                  styles.reportNavigationButton,
+                  styles.reportNavigationNextButton
+                )}
+                onClick={onNextReport}
+                disabled={isReportNavigationLoading}
+                aria-label={t('reports.details.nextReportButton')}
+              >
+                <IconArrowRight className={buttonStyles.icon} />
+              </Button>
+            )}
+          </div>
+        )}
       </SlideUpPage>
 
       {isViewingOnMap && typeof document !== 'undefined'

@@ -47,6 +47,15 @@ export function GroupReportsPage({
   const { reports, isLoading, isLoadingMore, error, hasMore, loadMore } = useGroupReports({ filters });
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
+  const [isDetailsNavigationLoading, setIsDetailsNavigationLoading] = useState(false);
+  const selectedReportIndex = selectedReport
+    ? reports.findIndex((report) => report.id === selectedReport.id)
+    : -1;
+  const hasPreviousReport = selectedReportIndex > 0;
+  const hasNextReport = selectedReportIndex >= 0 && (
+    selectedReportIndex < reports.length - 1 ||
+    hasMore
+  );
 
   // Ref for the sentinel element
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -63,7 +72,7 @@ export function GroupReportsPage({
       const isVisible = rect.top <= window.innerHeight + 200;
 
       if (isVisible) {
-        loadMore();
+        void loadMore();
       }
     };
 
@@ -90,6 +99,29 @@ export function GroupReportsPage({
     setSelectedReport(null);
     onClose();
   }, [onClose]);
+
+  const handlePreviousReport = useCallback(() => {
+    setSelectedReport(reports[selectedReportIndex - 1]);
+  }, [reports, selectedReportIndex]);
+
+  const handleNextReport = useCallback(async () => {
+    // Test if there is a next report in the current list first
+    if (selectedReportIndex < reports.length - 1) {
+      setSelectedReport(reports[selectedReportIndex + 1]);
+      return;
+    }
+
+    // If not, load more reports
+    setIsDetailsNavigationLoading(true);
+    try {
+      const nextReports = await loadMore();
+      if (nextReports.length > 0) {
+        setSelectedReport(nextReports[0]);
+      }
+    } finally {
+      setIsDetailsNavigationLoading(false);
+    }
+  }, [loadMore, reports, selectedReportIndex]);
 
   const handleFilter = () => {
     setIsFiltersOpen(true);
@@ -235,6 +267,11 @@ export function GroupReportsPage({
         vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
         onMapPickerActiveChange={onMapPickerActiveChange}
+        hasPreviousReport={hasPreviousReport}
+        hasNextReport={hasNextReport}
+        isReportNavigationLoading={isDetailsNavigationLoading}
+        onPreviousReport={hasPreviousReport ? handlePreviousReport : undefined}
+        onNextReport={hasNextReport ? () => void handleNextReport() : undefined}
       />
 
       <ReportFiltersPage

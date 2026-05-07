@@ -802,6 +802,8 @@
       "respondButton": "Répondre à ce signalement",
       "viewOnMapButton": "Visualiser sur la carte",
       "backToReportButton": "Retour au signalement",
+      "previousReportButton": "Signalement précédent",
+      "nextReportButton": "Signalement suivant",
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",

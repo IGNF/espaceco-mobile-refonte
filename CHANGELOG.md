@@ -13,6 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
+## [0.0.8] - 2026-05-xx
+
+### Added
+- On peut maintenant visualiser la localisation d'un signalement sur la carte, depuis la page de détails du signalement (ticket #99)
+- On peut maintenant naviguer entre les signalements depuis la page de détails des signalements (ticket #99)
+
+### Changed
+
+### Fixed
+
 ## [0.0.7] - 2026-05-07
 
 ### Added

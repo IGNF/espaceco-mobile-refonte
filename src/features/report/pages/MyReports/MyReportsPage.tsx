@@ -54,10 +54,23 @@ export function MyReportsPage({
   }, [communities]);
 
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
+  const selectedReportIndex = selectedReport
+    ? reports.findIndex((report) => report.id === selectedReport.id)
+    : -1;
+  const hasPreviousReport = selectedReportIndex > 0;
+  const hasNextReport = selectedReportIndex >= 0 && selectedReportIndex < reports.length - 1;
 
   const handleReportClick = useCallback((report: AppReport) => {
     setSelectedReport(report);
   }, []);
+
+  const handlePreviousReport = useCallback(() => {
+    setSelectedReport(reports[selectedReportIndex - 1]);
+  }, [reports, selectedReportIndex]);
+
+  const handleNextReport = useCallback(() => {
+    setSelectedReport(reports[selectedReportIndex + 1]);
+  }, [reports, selectedReportIndex]);
 
   const handleEditBack = useCallback(() => {
     setSelectedReport(null);
@@ -145,6 +158,10 @@ export function MyReportsPage({
         vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
         onMapPickerActiveChange={onMapPickerActiveChange}
+        hasPreviousReport={hasPreviousReport}
+        hasNextReport={hasNextReport}
+        onPreviousReport={hasPreviousReport ? handlePreviousReport : undefined}
+        onNextReport={hasNextReport ? handleNextReport : undefined}
       />
     </SlideUpPage>
   );

@@ -19,7 +19,7 @@ interface UseGroupReportsResult {
   isLoadingMore: boolean;
   error: Error | null;
   hasMore: boolean;
-  loadMore: () => Promise<void>;
+  loadMore: () => Promise<AppReport[]>;
 }
 
 export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupReportsResult {
@@ -39,12 +39,12 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
   const isLoadingRef = useRef(false);
   const hasMoreRef = useRef(true);
 
-  const fetchReports = useCallback(async (page: number, append: boolean = false) => {
+  const fetchReports = useCallback(async (page: number, append: boolean = false): Promise<AppReport[]> => {
     if (!activeCommunity) {
       setReports([]);
       setHasMore(false);
       hasMoreRef.current = false;
-      return;
+      return [];
     }
 
     // Set loading ref immediately to prevent duplicate calls
@@ -98,6 +98,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
 
       // Update page for next request
       pageRef.current = page + 1;
+      return appReports;
 
     } catch (err) {
       console.error('fetchReports => error', err);
@@ -105,6 +106,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
       if (!append) {
         setReports([]);
       }
+      return [];
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
@@ -122,8 +124,8 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
 
   const loadMore = useCallback(async () => {
     // Use refs for synchronous checks to prevent duplicate requests
-    if (isLoadingRef.current || !hasMoreRef.current) return;
-    await fetchReports(pageRef.current, true);
+    if (isLoadingRef.current || !hasMoreRef.current) return [];
+    return fetchReports(pageRef.current, true);
   }, [fetchReports]);
 
   return {
