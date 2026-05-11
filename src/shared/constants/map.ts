@@ -86,3 +86,8 @@ export const LAYER_CACHE_KEY_PREFIX = 'community-layers:';
  * Maximum duration for initial app/map loading before showing an error toast.
  */
 export const APP_LOADING_TIMEOUT_MS = 20 * 1000;
+
+export const USER_LOCATION_LAYER_NAME = 'UserLocationMarker';
+export const USER_LOCATION_MARKER_RADIUS = 10;
+export const USER_LOCATION_MARKER_STROKE_WIDTH = 2;
+export const USER_LOCATION_MARKER_Z_INDEX = Infinity;

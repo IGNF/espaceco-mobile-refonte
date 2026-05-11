@@ -45,6 +45,7 @@ import { useOfflineRasterMapLayers } from "@/features/map/hooks/useOfflineRaster
 import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
 import { useMapLongPress, type MapLongPressCoordinate } from "@/features/map/hooks/useMapLongPress";
+import { useUserLocationMarker } from "@/features/home/hooks/useUserLocationMarker";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
@@ -68,6 +69,7 @@ import { Alert } from "@/shared/ui/Alert";
 import { createPositionFromLonLat } from "@/shared/utils/position";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
+import { EspaceCo_DeviceOrientation } from "@/platform/device/orientation";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -171,6 +173,7 @@ export function HomePage() {
     activeCommunityCache
   );
   useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);
+  useUserLocationMarker({ map, isMapReady });
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -236,6 +239,8 @@ export function HomePage() {
    */
   const handleGeolocationButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     const now = event.timeStamp;
+
+    void EspaceCo_DeviceOrientation.ensurePermissions();
 
     if (geolocationTapTimeoutRef.current !== null && now - geolocationLastTapRef.current <= GEOLOCATION_DOUBLE_TAP_DELAY_MS) {
       window.clearTimeout(geolocationTapTimeoutRef.current);

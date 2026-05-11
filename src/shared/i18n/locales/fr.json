@@ -68,7 +68,8 @@
     "tabs": {
       "signalement": "Signalement",
       "guichet": "Guichet",
-      "couches": "Couches"
+      "couches": "Couches",
+      "signalementRapide": "Signalement rapide"
     },
     "loading": {
       "message": "Chargement de l'application...",

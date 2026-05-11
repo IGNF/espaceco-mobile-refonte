@@ -20,3 +20,7 @@ export function parseDecimalInput(value: string): number {
 export function isNonNegativeFinite(value: number): boolean {
   return Number.isFinite(value) && value >= 0
 }
+
+export function degreesToRadians(degrees: number): number {
+  return degrees * Math.PI / 180
+}
