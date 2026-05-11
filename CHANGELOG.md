@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - On peut maintenant visualiser la localisation d'un signalement sur la carte, depuis la page de détails du signalement (ticket #99)
 - On peut maintenant naviguer entre les signalements depuis la page de détails des signalements (ticket #99)
 - La position de l'utilisateur est maintenant indiquée sur la carte à tout moment
+- Le bouton pour verrouiller la vue sur la position de l'utilisateur a été ajouté (ticket #135)
 
 ### Changed
 - Les boutons de zoom ont été déplacés en haut à droite de l'écran

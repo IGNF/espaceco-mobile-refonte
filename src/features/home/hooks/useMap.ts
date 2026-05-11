@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback, useState, type Dispatch, type SetStateAction } from "react";
 import Map from "ol/Map";
 import View from "ol/View";
 import { Attribution, defaults as defaultControls } from "ol/control";
@@ -9,7 +9,7 @@ import { defaults as defaultInteractions } from "ol/interaction";
 import LayerGroup from "ol/layer/Group";
 import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
-import { EspaceCo_Geolocation } from "@/platform/device/geolocation";
+import { EspaceCo_Geolocation, type CallbackID, type Position } from "@/platform/device/geolocation";
 import {
   DEFAULT_MAP_CENTER_LON_LAT,
   DEFAULT_MAP_FOCUS_ZOOM,
@@ -18,6 +18,7 @@ import {
   DEFAULT_MAP_ZOOM,
   GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS,
   GEOLOCATION_LOCK_RECENTER_INTERVAL_MS,
+  GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
 } from "@/shared/constants/map";
 import {
   initGeoportailCapabilities,
@@ -30,12 +31,16 @@ interface UseMapOptions {
   isRotationEnabled?: boolean;
 }
 
+export type UserFollowingMode = 'none' | 'tracking' | 'locked';
+
 interface UseMapReturn {
   mapElementRef: React.RefObject<HTMLDivElement | null>;
   mapRef: React.RefObject<Map | null>;
   map: Map | null;
   centerOnUserLocation: (animationDuration?: number) => Promise<void>;
   lockUserLocationOnMap: () => void;
+  userFollowingMode: UserFollowingMode;
+  setUserFollowingMode: Dispatch<SetStateAction<UserFollowingMode>>;
   isLocating: boolean;
   isLockedUserLocation: boolean;
   isMapReady: boolean;
@@ -56,12 +61,13 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const isRotationEnabledRef = useRef(isRotationEnabled);
   isRotationEnabledRef.current = isRotationEnabled;
   const [map, setMap] = useState<Map | null>(null);
-  const [isLockedUserLocation, setIsLockedUserLocation] = useState(false);
+  const [userFollowingMode, setUserFollowingMode] = useState<UserFollowingMode>('none');
   const [isLocating, setIsLocating] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
     () => !shouldCenterOnMount
   );
+  const isLockedUserLocation = userFollowingMode === 'locked';
 
   const animateTo = useCallback(async (
     map: Map,
@@ -82,12 +88,17 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   }, []);
 
   const lockUserLocationOnMap = useCallback(() => {
-    setIsLockedUserLocation((value) => {
-      const nextValue = !value;
-      console.log('isLockedUserLocation', nextValue);
-      return nextValue;
-    });
+    setUserFollowingMode((mode) => mode === 'locked' ? 'none' : 'locked');
   }, []);
+
+  const animateToPosition = useCallback(async (
+    map: Map,
+    position: Position,
+    animationDuration: number,
+  ) => {
+    const { longitude, latitude } = position.coords;
+    await animateTo(map, [longitude, latitude], DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION, animationDuration);
+  }, [animateTo]);
 
   const centerOnUserLocation = useCallback(async (animationDuration: number = 500) => {
     const map = mapRef.current;
@@ -104,8 +115,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       });
 
       if (position) {
-        const { longitude, latitude } = position.coords;
-        await animateTo(map, [longitude, latitude], DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION, animationDuration);
+        await animateToPosition(map, position, animationDuration);
       } else {
         // Fallback to default center if geolocation fails
         await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT, DEFAULT_MAP_FOCUS_ZOOM, animationDuration);
@@ -118,10 +128,10 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       isLocatingRef.current = false;
       setIsLocating(false);
     }
-  }, [animateTo]);
+  }, [animateTo, animateToPosition]);
 
   useEffect(() => {
-    if (!isLockedUserLocation) {
+    if (userFollowingMode !== 'locked') {
       return;
     }
 
@@ -134,7 +144,38 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [centerOnUserLocation, isLockedUserLocation]);
+  }, [centerOnUserLocation, userFollowingMode]);
+
+  useEffect(() => {
+    if (userFollowingMode !== 'tracking') {
+      return;
+    }
+
+    const map = mapRef.current!;
+    let watchId: CallbackID | null = null;
+
+    void (async () => {
+      watchId = await EspaceCo_Geolocation.watchUsersLocation((position) => {
+        if (!position) {
+          return;
+        }
+
+        void animateToPosition(map, position, 0);
+      }, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 1000,
+        minimumUpdateInterval: GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
+        interval: GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
+      });
+    })();
+
+    return () => {
+      if (watchId) {
+        void EspaceCo_Geolocation.clearWatch(watchId);
+      }
+    };
+  }, [animateToPosition, userFollowingMode]);
 
   // Initialize map
   useEffect(() => {
@@ -298,6 +339,8 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     map,
     centerOnUserLocation,
     lockUserLocationOnMap,
+    userFollowingMode,
+    setUserFollowingMode,
     isLocating,
     isLockedUserLocation,
     isMapReady,

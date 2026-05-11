@@ -58,6 +58,7 @@ import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
 import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import IconZoomIn from "@/shared/assets/icons/icon-plus.svg?react";
 import IconZoomOut from "@/shared/assets/icons/icon-minus.svg?react";
+import IconCompass from "@/shared/assets/icons/icon-compass.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
@@ -84,7 +85,7 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const { setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
-  const { mapSettings } = useAppSettings();
+  const { mapSettings, displayMode } = useAppSettings();
   const {
     mapElementRef,
     mapRef,
@@ -95,6 +96,8 @@ export function HomePage() {
     isLocating,
     isMapReady,
     hasInitialCenterCompleted,
+    userFollowingMode,
+    setUserFollowingMode,
   } = useMap({
     centerOnUserLocation: offlineMode !== 'offline',
     skipGeoportailCapabilities: offlineMode === 'offline',
@@ -254,6 +257,11 @@ export function HomePage() {
       geolocationTapTimeoutRef.current = null;
       void centerOnUserLocation();
     }, GEOLOCATION_DOUBLE_TAP_DELAY_MS);
+  };
+
+  const handleUserFollowingButtonClick = () => {
+    void EspaceCo_DeviceOrientation.ensurePermissions();
+    setUserFollowingMode((mode) => mode === 'tracking' ? 'none' : 'tracking');
   };
 
   useEffect(() => {
@@ -584,13 +592,30 @@ export function HomePage() {
         </div>
       )}
 
+      {/* Following user location button */}
+
+      {
+        displayMode !== 'beginner' && (
+          <button
+            className={`${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
+            onClick={handleUserFollowingButtonClick}
+            disabled={isLocating && userFollowingMode === 'none'}
+            aria-label="Follow my position"
+            data-onboarding-target="userFollowing"
+          >
+            <IconCompass
+              className={styles.userFollowingIcon}
+            />
+          </button>
+        )
+      }
 
       {/* Geolocation center button */}
 
       <button
         className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
         onClick={handleGeolocationButtonClick}
-        disabled={isLocating && !isLockedUserLocation}
+        disabled={isLocating && userFollowingMode === 'none'}
         aria-label="Center on my position"
         data-onboarding-target="geolocation"
       >

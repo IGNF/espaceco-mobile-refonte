@@ -102,7 +102,7 @@
 /* Geolocation floating button */
 .geolocationButton {
 	position: absolute;
-	bottom: 90px;
+	bottom: 110px;
 	right: 1rem;
 	z-index: 100;
 	width: 48px;
@@ -119,6 +119,29 @@
 }
 
 .geolocationIcon path {
+	fill: var(--color-dark);
+}
+
+/* User following button */
+.userFollowingButton {
+	position: absolute;
+	bottom: 110px;
+	right: calc(1rem + 64px);
+	z-index: 100;
+	width: 48px;
+	height: 48px;
+	background-color: var(--color-dark-contrast);
+	border: none;
+	border-radius: 100px;
+	box-shadow: 0px 0px 8px 0px #00000029;
+}
+
+.userFollowingIcon {
+	width: 30px;
+	height: 30px;
+}
+
+.userFollowingIcon path {
 	fill: var(--color-dark);
 }
 

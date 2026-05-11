@@ -1,6 +1,7 @@
 import type { LayerGroupVisibility } from "@/features/map/types/layerGroups";
 
 export const GEOLOCATION_DOUBLE_TAP_DELAY_MS = 300;
+export const GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS = 1000;
 export const GEOLOCATION_LOCK_RECENTER_INTERVAL_MS = 30000;
 export const GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS = 1000;
 
