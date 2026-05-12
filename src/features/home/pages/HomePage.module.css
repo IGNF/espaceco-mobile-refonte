@@ -1,4 +1,8 @@
 .container {
+	--map-action-button-size: 48px;
+	--map-action-button-gap: 1rem;
+	--map-action-button-right: 1rem;
+	--map-action-button-bottom: 110px;
 	position: relative;
 	flex: 1;
 	display: flex;
@@ -99,50 +103,83 @@
   border-radius: 0.25rem;
 }
 
-/* Geolocation floating button */
-.geolocationButton {
-	position: absolute;
-	bottom: 110px;
-	right: 1rem;
+.mapActionButton {
 	z-index: 100;
-	width: 48px;
-	height: 48px;
+	width: var(--map-action-button-size);
+	height: var(--map-action-button-size);
+	display: flex;
+	align-items: center;
+	justify-content: center;
 	background-color: var(--color-dark-contrast);
 	border: none;
 	border-radius: 100px;
 	box-shadow: 0px 0px 8px 0px #00000029;
+	cursor: pointer;
 }
 
-.geolocationIcon {
-	width: 30px;
-	height: 30px;
+.mapActionButton:disabled {
+	opacity: 1;
+	cursor: default;
 }
 
-.geolocationIcon path {
-	fill: var(--color-dark);
+/* Geolocation floating button */
+.geolocationButton {
+	position: absolute;
+	bottom: var(--map-action-button-bottom);
+	right: var(--map-action-button-right);
 }
 
 /* User following button */
 .userFollowingButton {
 	position: absolute;
-	bottom: 110px;
-	right: calc(1rem + 64px);
-	z-index: 100;
-	width: 48px;
-	height: 48px;
-	background-color: var(--color-dark-contrast);
-	border: none;
-	border-radius: 100px;
-	box-shadow: 0px 0px 8px 0px #00000029;
+	bottom: var(--map-action-button-bottom);
+	right: calc(
+		var(--map-action-button-right) +
+		var(--map-action-button-size) +
+		var(--map-action-button-gap)
+	);
 }
 
+.geolocationIcon,
 .userFollowingIcon {
 	width: 30px;
 	height: 30px;
 }
 
-.userFollowingIcon path {
+.geolocationIcon path,
+.userFollowingIcon path,
+.gpsSketchActionIcon path {
 	fill: var(--color-dark);
+}
+
+.gpsSketchControls {
+	position: absolute;
+	bottom: calc(
+		var(--map-action-button-bottom) +
+		var(--map-action-button-size) +
+		var(--map-action-button-gap)
+	);
+	right: var(--map-action-button-right);
+	z-index: 100;
+	display: flex;
+	gap: var(--map-action-button-gap);
+	align-items: center;
+}
+
+.gpsSketchActionButton.recording {
+	background-color: var(--color-primary-light);
+}
+
+.gpsSketchRecordDot {
+	width: 18px;
+	height: 18px;
+	border-radius: 100px;
+	background-color: var(--color-danger, #cf1919);
+}
+
+.gpsSketchActionIcon {
+	width: 24px;
+	height: 24px;
 }
 
 /* Zoom in/out — stacked above geolocation; single shadow on the group */

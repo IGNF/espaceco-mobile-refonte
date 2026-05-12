@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import type Feature from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
 import { getUid } from "ol/util";
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
+import { useGpsSketchActions, type GpsSketchReportDraft } from "@/features/home/hooks/useGpsSketchActions";
+import { useGpsSketchTrackingSession } from "@/features/home/hooks/useGpsSketchTrackingSession";
 import { useAppSettings } from "@/features/settings/hooks/useAppSettings";
 
 import { useInitialAppLoading } from "@/features/home/hooks/useInitialAppLoading";
@@ -59,6 +63,8 @@ import IconGeolocation from "@/shared/assets/icons/icon-geolocation.svg?react";
 import IconZoomIn from "@/shared/assets/icons/icon-plus.svg?react";
 import IconZoomOut from "@/shared/assets/icons/icon-minus.svg?react";
 import IconCompass from "@/shared/assets/icons/icon-compass.svg?react";
+import IconPause from "@/shared/assets/icons/icon-pause.svg?react";
+import IconPlay from "@/shared/assets/icons/icon-play.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
@@ -188,6 +194,7 @@ export function HomePage() {
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [newReportType, setReportType] = useState<ReportType>('standard');
   const [newReportInitialPosition, setNewReportInitialPosition] = useState<Position | null>(null);
+  const [newReportInitialSketches, setNewReportInitialSketches] = useState<Feature<Geometry>[]>([]);
   const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
   const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
@@ -259,11 +266,6 @@ export function HomePage() {
     }, GEOLOCATION_DOUBLE_TAP_DELAY_MS);
   };
 
-  const handleUserFollowingButtonClick = () => {
-    void EspaceCo_DeviceOrientation.ensurePermissions();
-    setUserFollowingMode((mode) => mode === 'tracking' ? 'none' : 'tracking');
-  };
-
   useEffect(() => {
     return () => {
       if (geolocationTapTimeoutRef.current !== null) {
@@ -311,6 +313,7 @@ export function HomePage() {
   const handleNewReportStandard = () => {
     setReportType('standard');
     setNewReportInitialPosition(null);
+    setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
     setIsSearchOpen(false);
@@ -322,6 +325,7 @@ export function HomePage() {
   const handleNewReportTrace = () => {
     setReportType('trace');
     setNewReportInitialPosition(null);
+    setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
     setIsSearchOpen(false);
@@ -361,6 +365,7 @@ export function HomePage() {
     setNewReportInitialPosition(
       createPositionFromLonLat(longPressMapAction.longitude, longPressMapAction.latitude)
     );
+    setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(true);
     setLongPressMapAction(null);
     setIsSearchOpen(false);
@@ -501,11 +506,75 @@ export function HomePage() {
 
   const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
 
+  const isGpsSketchSelectionEnabled =
+    isMapReady &&
+    userFollowingMode === 'none' &&
+    activeOverlay === null &&
+    !isLayersPanelOpen &&
+    !isDirectContributionSessionActive &&
+    activeConflict === null &&
+    directContributionFeatureFormState === null &&
+    consultedFeatureCandidate === null &&
+    !isDirectContributionFeatureChoiceOpen &&
+    !isConsultationFeatureChoiceOpen &&
+    !isHomeLoadingOverlayVisible &&
+    !shouldShowOnboarding;
+
+  const {
+    isRecording: isGpsSketchRecording,
+    isPaused: isGpsSketchPaused,
+    selectedSketch: selectedGpsSketch,
+    pointCount: gpsSketchPointCount,
+    distanceMeters: gpsSketchDistanceMeters,
+    startRecording: startGpsSketchRecording,
+    togglePause: toggleGpsSketchPause,
+    stopRecording: stopGpsSketchRecording,
+    clearSelection: clearGpsSketchSelection,
+  } = useGpsSketchTrackingSession({
+    map,
+    enabled: isMapReady,
+    selectionEnabled: isGpsSketchSelectionEnabled,
+  });
+
+  const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
+    setReportType('standard');
+    setNewReportInitialPosition(draft.position);
+    setNewReportInitialSketches(draft.sketches);
+    setIsNewReportThemePreselected(true);
+    setActiveOverlay('/create-or-edit-report');
+  }, []);
+
+  const {
+    isExporting: isGpsSketchExporting,
+    createReportFromSketch,
+    exportSketchAsGpx,
+  } = useGpsSketchActions({
+    map,
+    selectedSketch: selectedGpsSketch,
+    clearSelection: clearGpsSketchSelection,
+    onCreateReport: openReportFromGpsSketch,
+  });
+
+  const handleUserFollowingButtonClick = () => {
+    void EspaceCo_DeviceOrientation.ensurePermissions();
+    setUserFollowingMode((mode) => {
+      if (mode === 'tracking') {
+        stopGpsSketchRecording();
+        return 'none';
+      }
+
+      clearGpsSketchSelection();
+      return 'tracking';
+    });
+  };
+
   const isMapLongPressEnabled =
     isMapReady &&
     activeOverlay === null &&
     !isLayersPanelOpen &&
     !isDirectContributionSessionActive &&
+    !isGpsSketchRecording &&
+    selectedGpsSketch === null &&
     activeConflict === null &&
     directContributionFeatureFormState === null &&
     consultedFeatureCandidate === null &&
@@ -597,7 +666,7 @@ export function HomePage() {
       {
         displayMode !== 'beginner' && (
           <button
-            className={`${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
+            className={`${styles.mapActionButton} ${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
             onClick={handleUserFollowingButtonClick}
             disabled={isLocating && userFollowingMode === 'none'}
             aria-label="Follow my position"
@@ -610,10 +679,41 @@ export function HomePage() {
         )
       }
 
+      {displayMode !== 'beginner' && userFollowingMode === 'tracking' && (
+        <div className={styles.gpsSketchControls}>
+          <button
+            type="button"
+            className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
+            onClick={startGpsSketchRecording}
+            disabled={isGpsSketchRecording}
+            aria-label={t('home.gpsSketch.record')}
+          >
+            <span className={styles.gpsSketchRecordDot} />
+          </button>
+
+          {isGpsSketchRecording && (
+            <button
+              type="button"
+              className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
+              onClick={toggleGpsSketchPause}
+              aria-label={isGpsSketchPaused
+                ? t('home.gpsSketch.resume')
+                : t('home.gpsSketch.pause')}
+            >
+              {isGpsSketchPaused ? (
+                <IconPlay className={styles.gpsSketchActionIcon} />
+              ) : (
+                <IconPause className={styles.gpsSketchActionIcon} />
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Geolocation center button */}
 
       <button
-        className={`${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
+        className={`${styles.mapActionButton} ${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
         onClick={handleGeolocationButtonClick}
         disabled={isLocating && userFollowingMode === 'none'}
         aria-label="Center on my position"
@@ -729,6 +829,28 @@ export function HomePage() {
         ]}
       />
 
+      <Alert
+        isOpen={selectedGpsSketch !== null}
+        onClose={clearGpsSketchSelection}
+        title={t('home.gpsSketch.selectionTitle')}
+        subtitle={t('home.gpsSketch.selectionSubtitle', {
+          count: gpsSketchPointCount,
+          distance: gpsSketchDistanceMeters,
+        })}
+        buttons={[
+          {
+            label: t('home.gpsSketch.createReport'),
+            onClick: createReportFromSketch,
+          },
+          {
+            label: t('home.gpsSketch.exportGpx'),
+            onClick: () => void exportSketchAsGpx(),
+            variant: 'outline',
+            loading: isGpsSketchExporting,
+          },
+        ]}
+      />
+
       <OnboardingModal
         isOpen={shouldShowOnboarding}
         isTourMode={isTourMode}
@@ -797,6 +919,7 @@ export function HomePage() {
           mode="create"
           reportType={newReportType}
           initialPosition={newReportInitialPosition}
+          initialSketches={newReportInitialSketches}
           preselectFirstTheme={isNewReportThemePreselected}
           map={map}
           vectorLayers={vectorLayers}

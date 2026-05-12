@@ -16,6 +16,8 @@ PODS:
   - CapacitorCordova (8.0.0)
   - CapacitorDevice (8.0.2):
     - Capacitor
+  - CapacitorEmailComposer (8.0.0):
+    - Capacitor
   - CapacitorFilesystem (8.0.0):
     - Capacitor
     - IONFilesystemLib (~> 1.0.1)
@@ -47,6 +49,7 @@ DEPENDENCIES:
   - "CapacitorCommunityKeepAwake (from `../../node_modules/@capacitor-community/keep-awake`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorDevice (from `../../node_modules/@capacitor/device`)"
+  - CapacitorEmailComposer (from `../../node_modules/capacitor-email-composer`)
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
   - "CapacitorInappbrowser (from `../../node_modules/@capacitor/inappbrowser`)"
@@ -80,6 +83,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/ios"
   CapacitorDevice:
     :path: "../../node_modules/@capacitor/device"
+  CapacitorEmailComposer:
+    :path: "../../node_modules/capacitor-email-composer"
   CapacitorFilesystem:
     :path: "../../node_modules/@capacitor/filesystem"
   CapacitorGeolocation:
@@ -105,6 +110,7 @@ SPEC CHECKSUMS:
   CapacitorCommunityKeepAwake: 2dffdfe2c56a49b15bef37da2e1a7bf5a8675989
   CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
   CapacitorDevice: b50f119138a2b69a1e9213f4468d1e75e4239cca
+  CapacitorEmailComposer: 4dc7fde6f40db29b10cc1e998aa3b577e06164fb
   CapacitorFilesystem: 608bca984a5b6b2cba85a2972ea22974a37659d8
   CapacitorGeolocation: a8381371f7b460e6be569576557285e70f0c9d6c
   CapacitorInappbrowser: 419fca64e69be39249eee70958ebfd0dc0ff2490
@@ -116,6 +122,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
 
-PODFILE CHECKSUM: 5dda5d8c5e3503fa97502565f15b28829a41f87f
+PODFILE CHECKSUM: 3f0b3eaa04016ec1cc5f203225e5a0dbec75d268
 
 COCOAPODS: 1.16.2

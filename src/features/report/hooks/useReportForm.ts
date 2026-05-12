@@ -41,6 +41,8 @@ export interface UseReportFormOptions {
   isOpen?: boolean;
   reportType?: ReportType;
   preselectFirstTheme?: boolean;
+  /** Sketches injected by map workflows before the report form opens. */
+  initialSketches?: Feature<Geometry>[];
 }
 
 export interface UseReportFormReturn {
@@ -74,6 +76,8 @@ export interface UseReportFormReturn {
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
 }
+
+const EMPTY_INITIAL_SKETCHES: Feature<Geometry>[] = [];
 
 function getThemeOptionValue(themeConfig: CommunityThemeConfig): string {
   return `${themeConfig.communityId ?? 0}:${themeConfig.theme}`;
@@ -173,6 +177,7 @@ export function useReportForm({
   isOpen,
   reportType,
   preselectFirstTheme = false,
+  initialSketches = EMPTY_INITIAL_SKETCHES,
 }: UseReportFormOptions): UseReportFormReturn {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -202,6 +207,10 @@ export function useReportForm({
     return splitReportFeatures(report?.features).objects;
   });
   const [sketches, setSketches] = useState<Feature<Geometry>[]>(() => {
+    if (mode === 'create' && initialSketches.length > 0) {
+      return splitReportFeatures(initialSketches).sketches;
+    }
+
     return splitReportFeatures(report?.features).sketches;
   });
   const [reportId, setReportId] = useState<number>(report?.id ?? Date.now());
@@ -232,11 +241,11 @@ export function useReportForm({
       setComment('');
       setPhotos([]);
       setObjects([]);
-      setSketches([]);
+      setSketches(splitReportFeatures(initialSketches).sketches);
     }
     setErrors({});
     setIsDirty(false);
-  }, [activeCommunity?.id, mode, preselectFirstTheme, themes]);
+  }, [activeCommunity?.id, initialSketches, mode, preselectFirstTheme, themes]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const previousReportRef = useRef(report);

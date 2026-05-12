@@ -61,6 +61,7 @@ export interface CreateOrEditReportPageProps {
   reportType?: ReportType;
   report?: AppReport | null;
   initialPosition?: Position | null;
+  initialSketches?: Feature<Geometry>[];
   preselectFirstTheme?: boolean;
   onBack?: () => void;
   level?: number;
@@ -144,6 +145,7 @@ export function CreateOrEditReportPage({
   reportType,
   report,
   initialPosition = null,
+  initialSketches,
   preselectFirstTheme = false,
   onBack,
   level = 2,
@@ -207,6 +209,7 @@ export function CreateOrEditReportPage({
     isOpen,
     reportType: resolvedReportType,
     preselectFirstTheme,
+    initialSketches,
   });
 
   const headerTitle = isEditMode

@@ -80,6 +80,18 @@
       "createReport": "Créer un signalement",
       "goTo": "Aller à"
     },
+    "gpsSketch": {
+      "record": "Enregistrer une trace GPS",
+      "pause": "Mettre en pause",
+      "resume": "Reprendre l'enregistrement",
+      "selectionTitle": "Trace GPS",
+      "selectionSubtitle": "{{count}} point(s), {{distance}} m",
+      "createReport": "Créer un signalement",
+      "exportGpx": "Envoyer au format GPX",
+      "emailSubject": "Trace GPX Espace Collaboratif Mobile du {{date}}",
+      "exportSuccess": "La trace GPX est prête à être envoyée.",
+      "exportError": "Impossible de préparer la trace GPX."
+    },
     "copyright": "Géoportail © IGN-France IGN",
     "resetMapNorth": "Réinitialiser l’orientation : nord en haut"
   },
