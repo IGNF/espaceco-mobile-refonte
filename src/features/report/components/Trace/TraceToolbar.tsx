@@ -5,6 +5,8 @@ import IconPause from '@/shared/assets/icons/icon-pause.svg?react';
 import IconPlay from '@/shared/assets/icons/icon-play.svg?react';
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
+import IconMenu from '@/shared/assets/icons/icon-menu.svg?react';
+import IconNext from '@/shared/assets/icons/icon-next.svg?react';
 import IconSpeaker from '@/shared/assets/icons/icon-speaker.svg?react';
 import IconCar from '@/shared/assets/icons/Icon-car.svg?react';
 import IconPedestrian from '@/shared/assets/icons/Icon-pedestrain.svg?react';
@@ -13,6 +15,7 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './TraceToolbar.module.css';
 
 interface TraceToolbarProps {
+  variant?: 'reportTrace' | 'fastReport';
   isRecording: boolean;
   isPaused: boolean;
   hasTrace: boolean;
@@ -25,10 +28,13 @@ interface TraceToolbarProps {
   onToggleTransportMode: () => void;
   onToggleAudio: () => void;
   onValidate: () => void;
+  onValidateAndContinue?: () => void;
+  onChooseTheme?: () => void;
   onCancel: () => void;
 }
 
 export function TraceToolbar({
+  variant = 'reportTrace',
   isRecording,
   isPaused,
   hasTrace,
@@ -41,6 +47,8 @@ export function TraceToolbar({
   onToggleTransportMode,
   onToggleAudio,
   onValidate,
+  onValidateAndContinue,
+  onChooseTheme,
   onCancel,
 }: TraceToolbarProps) {
   const { t } = useTranslation();
@@ -48,6 +56,7 @@ export function TraceToolbar({
   const isPauseDisabled = !isRecording;
   const canResume = isRecording && isPaused;
   const isCarMode = transportMode === 'car';
+  const isFastReport = variant === 'fastReport';
 
   return (
     <div className={styles.root}>
@@ -62,7 +71,7 @@ export function TraceToolbar({
         <IconSpeaker className={styles.audioIcon} />
       </button>
 
-      <div className={styles.bottomBar}>
+      <div className={joinCSSClassNames(styles.bottomBar, isFastReport && styles.bottomBarFastReport)}>
         <button
           type="button"
           className={joinCSSClassNames(
@@ -121,6 +130,18 @@ export function TraceToolbar({
           <IconCheck className={styles.actionIcon} />
         </button>
 
+        {isFastReport && (
+          <button
+            type="button"
+            className={joinCSSClassNames(styles.actionButton, styles.validateButton)}
+            onClick={onValidateAndContinue}
+            disabled={!canValidate || !onValidateAndContinue}
+            aria-label={t('reports.createOrEdit.traceToolbar.validateAndContinue')}
+          >
+            <IconNext className={styles.actionIcon} />
+          </button>
+        )}
+
         <button
           type="button"
           className={joinCSSClassNames(styles.actionButton, styles.cancelButton)}
@@ -129,6 +150,18 @@ export function TraceToolbar({
         >
           <IconClose className={styles.actionIcon} />
         </button>
+
+        {isFastReport && (
+          <button
+            type="button"
+            className={styles.actionButton}
+            onClick={onChooseTheme}
+            disabled={!onChooseTheme}
+            aria-label={t('reports.createOrEdit.traceToolbar.chooseTheme')}
+          >
+            <IconMenu className={styles.actionIcon} />
+          </button>
+        )}
       </div>
 
       <div className={styles.statusPill}>

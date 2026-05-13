@@ -58,6 +58,10 @@
   pointer-events: auto;
 }
 
+.bottomBarFastReport {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
 .actionButton {
   height: 46px;
   border: none;

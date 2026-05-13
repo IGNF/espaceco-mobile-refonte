@@ -1,0 +1,19 @@
+.themePill {
+  position: fixed;
+  z-index: 141;
+  top: calc(var(--safe-top, 0px) + 88px);
+  left: 50%;
+  max-width: calc(100vw - 96px);
+  transform: translateX(-50%);
+  padding: 8px 12px;
+  border: 1px solid rgba(23, 31, 38, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark);
+  font-size: 12px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}

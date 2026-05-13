@@ -1,0 +1,8 @@
+.themeList {
+  display: grid;
+  gap: 8px;
+}
+
+.themeButton {
+  justify-content: flex-start;
+}

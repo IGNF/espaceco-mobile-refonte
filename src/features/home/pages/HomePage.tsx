@@ -28,6 +28,10 @@ import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
 import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
 import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
+import { FastReportGpsOverlay } from "@/features/report/components/FastReport/FastReportGpsOverlay";
+import { FastReportThemePicker } from "@/features/report/components/FastReport/FastReportThemePicker";
+import { useFastReportFlow } from "@/features/report/hooks/useFastReportFlow";
+import { useFastReportThemes } from "@/features/report/hooks/useFastReportThemes";
 import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
@@ -92,6 +96,8 @@ export function HomePage() {
   const { setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
   const { mapSettings, displayMode } = useAppSettings();
+  const fastReportThemes = useFastReportThemes();
+  const fastReportFlow = useFastReportFlow(fastReportThemes);
   const {
     mapElementRef,
     mapRef,
@@ -201,6 +207,7 @@ export function HomePage() {
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
   const geolocationTapTimeoutRef = useRef<number | null>(null);
   const geolocationLastTapRef = useRef(0);
+  const isFastReportFlowActive = fastReportFlow.isActive;
   const {
     featureCandidates: consultationFeatureCandidates,
     selectedFeatureCandidate: consultedFeatureCandidate,
@@ -215,6 +222,7 @@ export function HomePage() {
     disabled:
       isDirectContributionSessionActive ||
       isReportMapPickerActive ||
+      isFastReportFlowActive ||
       activeConflict !== null ||
       activeOverlay === '/offline',
   });
@@ -334,6 +342,19 @@ export function HomePage() {
     }, 300);
   };
 
+  const handleFastReportTabClick = () => {
+    setActiveOverlay(null);
+    setIsLayersPanelOpen(false);
+    setIsSearchOpen(false);
+    clearGpsSketchSelection();
+    fastReportFlow.openFromTab();
+  };
+
+  const handleFastReportOther = () => {
+    fastReportFlow.closeThemePicker();
+    handleNewReportStandard();
+  };
+
   const handleSearchClick = () => {
     setIsSearchOpen((prev) => !prev);
   };
@@ -351,6 +372,9 @@ export function HomePage() {
       setInitialLayerGroupId('guichet');
       setInitialLayerGroupRequestKey((value) => value + 1);
       setIsLayersPanelOpen(true);
+    }
+    else if (tab === "signalementRapide") {
+      handleFastReportTabClick();
     }
   };
 
@@ -511,6 +535,7 @@ export function HomePage() {
     userFollowingMode === 'none' &&
     activeOverlay === null &&
     !isLayersPanelOpen &&
+    !isFastReportFlowActive &&
     !isDirectContributionSessionActive &&
     activeConflict === null &&
     directContributionFeatureFormState === null &&
@@ -573,6 +598,7 @@ export function HomePage() {
     activeOverlay === null &&
     !isLayersPanelOpen &&
     !isDirectContributionSessionActive &&
+    !isFastReportFlowActive &&
     !isGpsSketchRecording &&
     selectedGpsSketch === null &&
     activeConflict === null &&
@@ -729,7 +755,7 @@ export function HomePage() {
       <BottomTabbar
         onTabClick={handleTabClick}
         highlightedTab={getHighlightedTab()}
-        activeTab={isLayersPanelOpen ? "couches" : null}
+        activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
       />
 
       <LayersPanelFlow
@@ -863,6 +889,24 @@ export function HomePage() {
         onPrevious={previousStep}
         onClose={closeOnboarding}
       />
+
+      <FastReportThemePicker
+        isOpen={fastReportFlow.isThemePickerOpen}
+        themes={fastReportThemes}
+        onSelectTheme={fastReportFlow.openGps}
+        onSelectOther={handleFastReportOther}
+        onClose={fastReportFlow.closeThemePicker}
+      />
+
+      {map && fastReportFlow.selectedTheme && (
+        <FastReportGpsOverlay
+          isOpen={fastReportFlow.isGpsOpen}
+          map={map}
+          theme={fastReportFlow.selectedTheme}
+          onClose={fastReportFlow.closeGps}
+          onChooseTheme={fastReportFlow.chooseAnotherTheme}
+        />
+      )}
 
       {/* Overlay pages */}
       {activeOverlay === '/my-informations' && (

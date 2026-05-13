@@ -6,6 +6,8 @@ import type { AppReport } from '@/domain/report/models';
 import type { SharedThemeCommunity } from '@/domain/user/models';
 import { formatDate, formatDateTime } from '@/shared/utils/date';
 
+const FAST_REPORT_THEME_PATTERN = /^(GPS|Rapide)@/;
+
 export interface ReportCommunityMemberProfileSource {
   community_id: number;
   profile?: unknown;
@@ -253,6 +255,22 @@ export function extractAvailableReportThemes(
   }
 
   return extractSharedThemeConfigs(sharedThemes);
+}
+
+export function extractFastReportThemes(themes: CommunityThemeConfig[]): CommunityThemeConfig[] {
+  return themes
+    .filter((theme) => FAST_REPORT_THEME_PATTERN.test(theme.theme))
+    .sort((leftTheme, rightTheme) => leftTheme.theme.localeCompare(rightTheme.theme, 'fr'));
+}
+
+export function buildDefaultReportAttributeValues(
+  attributes: CommunityThemeAttribute[]
+): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const attr of attributes) {
+    values[attr.name] = attr.default ?? '';
+  }
+  return values;
 }
 
 function getReportThemeAttributes(

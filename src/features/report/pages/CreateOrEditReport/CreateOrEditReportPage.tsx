@@ -37,6 +37,7 @@ import {
   getSketchToolActionById,
   SKETCH_TOOL_DEFINITIONS,
 } from '@/features/report/constants/reportSketch.constants';
+import { formatTraceToolbarStatus } from '@/features/report/utils/traceStatus';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 import type { AppReport, MapPickerMode, ReportType } from '@/domain/report/models';
 import type { Position } from '@/platform/device/geolocation';
@@ -489,25 +490,13 @@ export function CreateOrEditReportPage({
   }, [closeMapPickers, finalizeTraceRecording, form]);
 
   const traceStatusText = useMemo(() => {
-    if (isTraceRecording && !isTracePaused) {
-      return t('reports.createOrEdit.traceToolbar.statusRecording', {
-        pointCount: tracePointCount,
-        distance: traceDistanceMeters,
-      });
-    }
-    if (isTraceRecording && isTracePaused) {
-      return t('reports.createOrEdit.traceToolbar.statusPaused', {
-        pointCount: tracePointCount,
-        distance: traceDistanceMeters,
-      });
-    }
-    if (hasTraceInSession) {
-      return t('reports.createOrEdit.traceToolbar.statusReady', {
-        pointCount: tracePointCount,
-        distance: traceDistanceMeters,
-      });
-    }
-    return t('reports.createOrEdit.traceToolbar.statusIdle');
+    return formatTraceToolbarStatus(t, {
+      isRecording: isTraceRecording,
+      isPaused: isTracePaused,
+      hasTrace: hasTraceInSession,
+      pointCount: tracePointCount,
+      distanceMeters: traceDistanceMeters,
+    });
   }, [
     hasTraceInSession,
     isTracePaused,

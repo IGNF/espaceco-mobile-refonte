@@ -787,11 +787,24 @@
         "switchToPedestrian": "Passer en mode piéton",
         "switchToCar": "Passer en mode voiture",
         "validate": "Valider la trace",
+        "validateAndContinue": "Valider et continuer",
+        "chooseTheme": "Choisir un autre thème",
         "cancel": "Annuler la trace",
         "statusIdle": "Appuyez sur enregistrer pour démarrer la trace",
         "statusRecording": "Enregistrement : {{pointCount}} pts · {{distance}} m",
         "statusPaused": "Pause : {{pointCount}} pts · {{distance}} m",
         "statusReady": "Trace prête : {{pointCount}} pts · {{distance}} m"
+      }
+    },
+    "fastReport": {
+      "themePicker": {
+        "title": "Signalement rapide",
+        "subtitle": "Choisissez un thème GPS.",
+        "other": "Autres"
+      },
+      "gps": {
+        "saveSuccess": "Le signalement rapide a été enregistré.",
+        "saveError": "Impossible d'enregistrer le signalement rapide."
       }
     },
     "details": {
