@@ -6,6 +6,8 @@ import IconGuichet from "@/shared/assets/icons/icon-guichet.svg?react";
 import IconLayers from "@/shared/assets/icons/icon-layers.svg?react";
 import IconFlag from "@/shared/assets/icons/icon-flag.svg?react";
 
+import { useCommunity } from "@/features/community/hooks/useCommunity";
+
 import { useAppSettings } from "@/features/settings/hooks/useAppSettings";
 
 export type TabId = "signalement" | "guichet" | "couches" | "signalementRapide";
@@ -19,6 +21,9 @@ export interface BottomTabbarProps {
 export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTabbarProps) {
   const { t } = useTranslation();
   const { displayMode } = useAppSettings();
+  const { activeCommunity } = useCommunity();
+  const displaySignalementRapideTab =
+    activeCommunity?.attributes?.some((attr: any) => attr.theme && typeof attr.theme === 'string' && attr.theme.startsWith('Rapide@')) ?? false;
 
   const handleTabClick = (tab: TabId) => {
     onTabClick?.(tab);
@@ -61,7 +66,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
         <IconLayers className={styles.tabIcon} />
         {t("home.tabs.couches")}
       </button>
-      {displayMode === 'expert' && (
+      {displayMode === 'expert' && displaySignalementRapideTab && (
         <button
           className={getTabClassName("signalementRapide")}
           onClick={() => handleTabClick("signalementRapide")}

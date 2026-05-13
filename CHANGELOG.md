@@ -20,11 +20,13 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - On peut maintenant naviguer entre les signalements depuis la page de détails des signalements (ticket #99)
 - La position de l'utilisateur est maintenant indiquée sur la carte à tout moment
 - Le bouton pour verrouiller la vue sur la position de l'utilisateur a été ajouté (ticket #135)
+- On peut maintenant créer un tracé directement depuis la home page, depuis les boutons d'accès rapide (ticket #135)
 
 ### Changed
 - Les boutons de zoom ont été déplacés en haut à droite de l'écran
 
 ### Fixed
+- Un geste de zoom ne déclenche plus la fonction d'appui long (ticket #)
 
 ## [0.0.7] - 2026-05-07
 
