@@ -29,3 +29,14 @@ export function findLineStringFeature(
 ): Feature<Geometry> | null {
   return features.find((feature) => getLineStringGeometry(feature) !== null) ?? null;
 }
+
+export function cleanLineStringCoordinates(line: LineString): void {
+  line.setCoordinates(
+    line.getCoordinates().filter((coordinate) => {
+      return Number.isFinite(coordinate[0]) &&
+        Number.isFinite(coordinate[1]) &&
+        coordinate[0] !== 0 &&
+        coordinate[1] !== 0;
+    })
+  );
+}

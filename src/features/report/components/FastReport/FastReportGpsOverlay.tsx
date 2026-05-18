@@ -105,7 +105,6 @@ export function FastReportGpsOverlay({
   };
 
   const handleChooseTheme = () => {
-    discardTrace();
     onChooseTheme();
   };
 

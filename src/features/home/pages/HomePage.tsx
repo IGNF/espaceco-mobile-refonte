@@ -97,7 +97,7 @@ export function HomePage() {
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
   const { mapSettings, displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
-  const fastReportFlow = useFastReportFlow(fastReportThemes);
+  const fastReportFlow = useFastReportFlow();
   const {
     mapElementRef,
     mapRef,
@@ -352,6 +352,7 @@ export function HomePage() {
 
   const handleFastReportOther = () => {
     fastReportFlow.closeThemePicker();
+    fastReportFlow.closeGps();
     handleNewReportStandard();
   };
 

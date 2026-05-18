@@ -20,7 +20,10 @@ import {
   setReportFeatureKind,
 } from '@/features/report/utils/reportObjects';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
-import { extractAvailableReportThemes } from '@/features/report/utils/reportAttributes';
+import {
+  buildDefaultReportAttributeValues,
+  extractAvailableReportThemes,
+} from '@/features/report/utils/reportAttributes';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 
 import { ReportStorageAdapter } from '@/infra/storage';
@@ -81,17 +84,6 @@ const EMPTY_INITIAL_SKETCHES: Feature<Geometry>[] = [];
 
 function getThemeOptionValue(themeConfig: CommunityThemeConfig): string {
   return `${themeConfig.communityId ?? 0}:${themeConfig.theme}`;
-}
-
-/**
- * Build default attribute values from a theme's attribute definitions.
- */
-function buildDefaultValues(attributes: CommunityThemeAttribute[]): Record<string, string> {
-  const values: Record<string, string> = {};
-  for (const attr of attributes) {
-    values[attr.name] = attr.default ?? '';
-  }
-  return values;
 }
 
 function mapReportAttributesToFormValues(attributes?: Record<string, any>): Record<string, string> {
@@ -195,7 +187,7 @@ export function useReportForm({
     ? themes[0]?.communityId ?? activeCommunity?.id
     : undefined;
   const initialAttributeValues = initialTheme
-    ? buildDefaultValues(themes[0]?.attributes ?? [])
+    ? buildDefaultReportAttributeValues(themes[0]?.attributes ?? [])
     : {};
 
   const [selectedTheme, setSelectedThemeRaw] = useState<string>(initialTheme);
@@ -237,7 +229,7 @@ export function useReportForm({
         : '';
       setSelectedThemeRaw(nextTheme);
       setSelectedThemeCommunityId(nextTheme ? themes[0]?.communityId ?? activeCommunity?.id : undefined);
-      setAttributeValues(nextTheme ? buildDefaultValues(themes[0]?.attributes ?? []) : {});
+      setAttributeValues(nextTheme ? buildDefaultReportAttributeValues(themes[0]?.attributes ?? []) : {});
       setComment('');
       setPhotos([]);
       setObjects([]);
@@ -287,7 +279,7 @@ export function useReportForm({
     setIsDirty(true);
     // Reset attribute values to defaults for the new theme
     if (config) {
-      setAttributeValues(buildDefaultValues(config.attributes));
+      setAttributeValues(buildDefaultReportAttributeValues(config.attributes));
     } else {
       setAttributeValues({});
     }

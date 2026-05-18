@@ -35,6 +35,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Un double-tap sur le bouton de centrage vérouille maintenant le centrage, avec un recentrage déclenché toutes les 30 secondes (ticket #135)
 - On peut maintenant visualiser un signalement sur la carte depuis le brouillon de celui-ci (ticket #100)
 - Un appui long sur la carte ouvre maintenant une alerte pour proposer à l'utilisateur de créer un signalement à cet endroit, ou d'ouvrir cet endroit dans une appli de navigation (ticket #106)
+- On peut maintenant ajouter une trace GPS avant de créer un signalement, et l'exporter au format GPX (ticket #110)
 
 ### Changed
 
@@ -49,6 +50,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - L'opacité des couches Géoservices (Plan IGN) fonctionne à présent (ticket #98)
 - L'opacité des "groupes de couches" sont maintenant décorrélées des couches elles-mêmes (ticket #98)
 - On peut maintenant correctement ajouter un objet à un signalement, sans collision avec le mode signalement direct (ticket #138)
+- Ajouter une nouvelle trace à un signalement ne supprime plus la précédente trace (ticket #110)
 
 ## [0.0.6] - 2026-05-06
 

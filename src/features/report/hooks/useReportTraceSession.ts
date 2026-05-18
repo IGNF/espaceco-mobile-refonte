@@ -25,6 +25,7 @@ import {
 } from '@/features/report/constants/reportTrace.constants';
 import {
   calculateTraceStats,
+  cleanLineStringCoordinates,
   findLineStringFeature,
   getLineStringGeometry,
 } from '@/features/report/utils/traceGeometry';
@@ -57,8 +58,18 @@ export interface UseReportTraceSessionReturn {
   discardTrace: () => void;
   toggleTransportMode: () => void;
   toggleAudio: () => void;
+  startRecordingFromCoordinate: (coordinate: number[]) => void;
   getTraceFeatures: () => Feature<Geometry>[];
   clearSession: () => void;
+}
+
+interface GeolocationDrawInternals extends GeolocationDraw {
+  path_: number[][];
+  geolocation: {
+    getPosition: () => number[] | undefined;
+    getAltitude: () => number | undefined;
+  };
+  sketch_: Feature<Geometry>[];
 }
 
 /**
@@ -162,10 +173,34 @@ export function useReportTraceSession({
     }
   }, []);
 
+  const appendCurrentPositionToTrace = useCallback(() => {
+    const interaction = interactionRef.current as GeolocationDrawInternals | null;
+    if (!interaction?.getActive()) return;
+
+    const currentPosition = interaction.geolocation.getPosition();
+    if (!currentPosition) return;
+
+    const nextCoordinate = [
+      currentPosition[0],
+      currentPosition[1],
+      Math.round((interaction.geolocation.getAltitude() || 0) * 100) / 100,
+      Math.round(Date.now() / 1000),
+    ];
+    const lastCoordinate = interaction.path_[interaction.path_.length - 1];
+    if (nextCoordinate[0] === lastCoordinate?.[0] && nextCoordinate[1] === lastCoordinate?.[1]) return;
+
+    interaction.path_.push(nextCoordinate);
+    const line = getLineStringGeometry(interaction.sketch_[1]);
+    if (line) {
+      line.appendCoordinate(nextCoordinate);
+      cleanLineStringCoordinates(line);
+    }
+  }, []);
+
   /**
    * Starts a new recording (clears previous draft trace), or resumes when paused.
    */
-  const startRecording = useCallback(() => {
+  const startRecordingFromCoordinate = useCallback((seedCoordinate?: number[]) => {
     const interaction = interactionRef.current;
     const source = traceSourceRef.current;
     if (!interaction || !source) return;
@@ -179,6 +214,9 @@ export function useReportTraceSession({
       interaction.setActive(true);
       interaction.setFollowTrack('auto');
       interaction.pause(false);
+      if (seedCoordinate) {
+        (interaction as GeolocationDrawInternals).path_.push(seedCoordinate);
+      }
       setIsRecording(true);
       setIsPaused(false);
       return;
@@ -190,6 +228,10 @@ export function useReportTraceSession({
       setIsPaused(false);
     }
   }, [resetTraceState, stopTracePointSound, transportMode]);
+
+  const startRecording = useCallback(() => {
+    startRecordingFromCoordinate();
+  }, [startRecordingFromCoordinate]);
 
   const togglePause = useCallback(() => {
     const interaction = interactionRef.current;
@@ -208,6 +250,7 @@ export function useReportTraceSession({
    * Plays the "recording end" sound when a trace exists.
    */
   const finalizeRecording = useCallback((): Feature<Geometry>[] => {
+    appendCurrentPositionToTrace();
     deactivateInteraction(interactionRef.current);
     clearRecordingFlags();
     const traceFeatures = getTraceFeatures();
@@ -215,7 +258,7 @@ export function useReportTraceSession({
       playTraceEndSound();
     }
     return traceFeatures;
-  }, [clearRecordingFlags, deactivateInteraction, getTraceFeatures, playTraceEndSound]);
+  }, [appendCurrentPositionToTrace, clearRecordingFlags, deactivateInteraction, getTraceFeatures, playTraceEndSound]);
 
   /**
    * Cancels the current draft trace and fully resets UI/session state.
@@ -388,6 +431,7 @@ export function useReportTraceSession({
     discardTrace,
     toggleTransportMode,
     toggleAudio,
+    startRecordingFromCoordinate,
     getTraceFeatures,
     clearSession: discardTrace,
   };
