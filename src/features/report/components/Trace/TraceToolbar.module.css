@@ -93,11 +93,19 @@
   color: #4a4f5d;
 }
 
+.recordButtonRecording {
+  color: var(--color-danger);
+}
+
 .recordDot {
   width: 14px;
   height: 14px;
   border-radius: 999px;
   background: currentColor;
+}
+
+.validateButtonReady {
+  color: var(--color-success);
 }
 
 .actionIcon {
@@ -132,4 +140,42 @@
   height: 8px;
   border-radius: 999px;
   background: var(--color-primary);
+}
+
+.gpsInfoBar {
+  position: absolute;
+  left: 16px;
+  bottom: calc(112px + var(--safe-bottom, 0px));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 10px;
+  border: 1px solid rgba(23, 31, 38, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--color-dark);
+  font-size: 12px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.gpsQuality {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #cf1919;
+}
+
+.gpsQuality-fix {
+  background: #d6b820;
+}
+
+.gpsQuality-dgps-fix {
+  background: #32c21d;
+}
+
+.gpsQuality-invalid {
+  background: #cf1919;
 }
