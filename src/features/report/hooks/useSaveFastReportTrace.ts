@@ -8,6 +8,9 @@ import { toLonLat } from 'ol/proj';
 
 import type { CommunityThemeConfig } from '@/domain/community/models';
 import { ReportStorageAdapter } from '@/infra/storage';
+import type { TraceTransportMode } from '@/features/report/constants/reportTrace.constants';
+import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
+import { applyFastReportGpsFeatureProperties } from '@/features/report/utils/fastReportGps';
 import { buildDefaultReportAttributeValues } from '@/features/report/utils/reportAttributes';
 import { setReportFeatureKind } from '@/features/report/utils/reportObjects';
 import {
@@ -22,6 +25,8 @@ interface SaveFastReportTraceOptions {
   map: OlMap;
   theme: CommunityThemeConfig;
   traceFeature: Feature<Geometry>;
+  gpsSettings: FastReportGpsSettings;
+  transportMode: TraceTransportMode;
 }
 
 export function useSaveFastReportTrace() {
@@ -31,11 +36,14 @@ export function useSaveFastReportTrace() {
     map,
     theme,
     traceFeature,
-  }: SaveFastReportTraceOptions) => {
+    gpsSettings,
+    transportMode,
+  }: SaveFastReportTraceOptions): Promise<Report> => {
     setIsSaving(true);
     try {
       const feature = traceFeature.clone();
       cleanLineStringCoordinates(getLineStringGeometry(feature)!);
+      applyFastReportGpsFeatureProperties(feature, gpsSettings, transportMode);
       setReportFeatureKind(feature, 'sketch');
 
       const line = getLineStringGeometry(feature)!;
@@ -62,6 +70,7 @@ export function useSaveFastReportTrace() {
       };
 
       await reportStorage.saveReport(report);
+      return report;
     } finally {
       setIsSaving(false);
     }

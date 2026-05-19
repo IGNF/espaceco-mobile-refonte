@@ -11,6 +11,10 @@ import GeolocationDraw, { type GeolocationDrawEvent } from 'ol-ext/interaction/G
 
 import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
 
+import type {
+  FastReportGpsInfo,
+  FastReportGpsQuality,
+} from '@/features/report/types/fastReportGps';
 import {
   DEFAULT_TRACE_RECORDING_SETTINGS,
   DEFAULT_TRACE_TRANSPORT_MODE,
@@ -39,6 +43,7 @@ export interface UseReportTraceSessionOptions {
   map?: OlMap | null;
   /** Enables or disables the whole session lifecycle. */
   enabled: boolean;
+  toleranceByMode?: Record<TraceTransportMode, number>;
 }
 
 /**
@@ -50,6 +55,7 @@ export interface UseReportTraceSessionReturn {
   hasTrace: boolean;
   tracePointCount: number;
   traceDistanceMeters: number;
+  gpsInfo: FastReportGpsInfo | null;
   transportMode: TraceTransportMode;
   isAudioEnabled: boolean;
   startRecording: () => void;
@@ -72,6 +78,29 @@ interface GeolocationDrawInternals extends GeolocationDraw {
   sketch_: Feature<Geometry>[];
 }
 
+interface NmeaPosition {
+  geoidal: number;
+  pdop?: number;
+  quality?: string | null;
+}
+
+interface GeolocationDrawLocation {
+  getPosition: () => number[];
+  getAltitude: () => number | undefined;
+  getHeading: () => number | undefined;
+  _position?: {
+    nmea?: NmeaPosition;
+    coords?: {
+      heading?: number | null;
+    };
+  };
+}
+
+function getGpsQuality(quality: string | null | undefined): FastReportGpsQuality {
+  if (quality === 'fix' || quality === 'dgps-fix') return quality;
+  return 'invalid';
+}
+
 /**
  * Manages one report trace recording session:
  * - creates/removes the temporary trace layer and interaction
@@ -81,17 +110,19 @@ interface GeolocationDrawInternals extends GeolocationDraw {
 export function useReportTraceSession({
   map,
   enabled,
+  toleranceByMode,
 }: UseReportTraceSessionOptions): UseReportTraceSessionReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [hasTrace, setHasTrace] = useState(false);
   const [tracePointCount, setTracePointCount] = useState(0);
   const [traceDistanceMeters, setTraceDistanceMeters] = useState(0);
+  const [gpsInfo, setGpsInfo] = useState<FastReportGpsInfo | null>(null);
   const [transportMode, setTransportMode] = useState<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
   const [traceRecordingSettings, setTraceRecordingSettings] = useState<TraceRecordingSettings>({
     minAccuracy: DEFAULT_TRACE_RECORDING_SETTINGS.minAccuracy,
-    toleranceByMode: { ...DEFAULT_TRACE_RECORDING_SETTINGS.toleranceByMode },
+    tolerance: DEFAULT_TRACE_RECORDING_SETTINGS.tolerance,
   });
 
   const interactionRef = useRef<GeolocationDraw | null>(null);
@@ -102,6 +133,11 @@ export function useReportTraceSession({
   const transportModeRef = useRef<TraceTransportMode>(DEFAULT_TRACE_TRANSPORT_MODE);
   const audioEnabledRef = useRef(isAudioEnabled);
   const traceRecordingSettingsRef = useRef(traceRecordingSettings);
+  const toleranceByModeRef = useRef(toleranceByMode);
+
+  const getToleranceForMode = useCallback((mode: TraceTransportMode) => {
+    return toleranceByModeRef.current?.[mode] ?? traceRecordingSettingsRef.current.tolerance;
+  }, []);
 
   const resetTraceState = useCallback(() => {
     setHasTrace(false);
@@ -197,6 +233,28 @@ export function useReportTraceSession({
     }
   }, []);
 
+  const getPositionWithMetadata = useCallback((location: GeolocationDrawLocation) => {
+    const position = location.getPosition();
+    position.push(Math.round((location.getAltitude() || 0) * 100) / 100);
+    position.push(Math.round(Date.now() / 1000));
+
+    const nmea = location._position?.nmea;
+    if (!nmea) {
+      setGpsInfo(null);
+      return position;
+    }
+
+    position.push(nmea.geoidal);
+    setGpsInfo({
+      quality: getGpsQuality(nmea.quality),
+      pdop: nmea.pdop,
+      heading: location._position?.coords?.heading ?? location.getHeading(),
+      battery: '%',
+    });
+
+    return position;
+  }, []);
+
   /**
    * Starts a new recording (clears previous draft trace), or resumes when paused.
    */
@@ -209,7 +267,7 @@ export function useReportTraceSession({
       stopTracePointSound();
       source.clear(true);
       resetTraceState();
-      interaction.set('tolerance', traceRecordingSettingsRef.current.toleranceByMode[transportMode]);
+      interaction.set('tolerance', getToleranceForMode(transportMode));
       interaction.set('minAccuracy', traceRecordingSettingsRef.current.minAccuracy);
       interaction.setActive(true);
       interaction.setFollowTrack('auto');
@@ -227,7 +285,7 @@ export function useReportTraceSession({
       interaction.setFollowTrack('auto');
       setIsPaused(false);
     }
-  }, [resetTraceState, stopTracePointSound, transportMode]);
+  }, [getToleranceForMode, resetTraceState, stopTracePointSound, transportMode]);
 
   const startRecording = useCallback(() => {
     startRecordingFromCoordinate();
@@ -274,6 +332,7 @@ export function useReportTraceSession({
     stopTracePointSound();
     clearRecordingFlags();
     resetTraceState();
+    setGpsInfo(null);
   }, [clearRecordingFlags, deactivateInteraction, resetTraceState, stopTracePointSound]);
 
   const toggleTransportMode = useCallback(() => {
@@ -292,16 +351,23 @@ export function useReportTraceSession({
     transportModeRef.current = transportMode;
     const interaction = interactionRef.current;
     if (!interaction) return;
-    interaction.set('tolerance', traceRecordingSettingsRef.current.toleranceByMode[transportMode]);
-  }, [transportMode]);
+    interaction.set('tolerance', getToleranceForMode(transportMode));
+  }, [getToleranceForMode, transportMode]);
 
   useEffect(() => {
     traceRecordingSettingsRef.current = traceRecordingSettings;
     const interaction = interactionRef.current;
     if (!interaction) return;
     interaction.set('minAccuracy', traceRecordingSettings.minAccuracy);
-    interaction.set('tolerance', traceRecordingSettings.toleranceByMode[transportModeRef.current]);
-  }, [traceRecordingSettings]);
+    interaction.set('tolerance', getToleranceForMode(transportModeRef.current));
+  }, [getToleranceForMode, traceRecordingSettings]);
+
+  useEffect(() => {
+    toleranceByModeRef.current = toleranceByMode;
+    const interaction = interactionRef.current;
+    if (!interaction) return;
+    interaction.set('tolerance', getToleranceForMode(transportModeRef.current));
+  }, [getToleranceForMode, toleranceByMode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -345,10 +411,13 @@ export function useReportTraceSession({
       type: 'LineString',
       minZoom: TRACE_MIN_ZOOM,
       followTrack: 'auto',
-      tolerance: traceRecordingSettingsRef.current.toleranceByMode[transportModeRef.current],
+      tolerance: getToleranceForMode(transportModeRef.current),
       minAccuracy: traceRecordingSettingsRef.current.minAccuracy,
       style: TRACE_STYLE,
     });
+    (geolocationInteraction as GeolocationDrawInternals).getPosition = (location) => {
+      return getPositionWithMetadata(location as unknown as GeolocationDrawLocation);
+    };
     geolocationInteraction.setActive(false);
 
     map.addLayer(traceLayer);
@@ -403,12 +472,15 @@ export function useReportTraceSession({
 
       clearRecordingFlags();
       resetTraceState();
+      setGpsInfo(null);
       stopTracePointSound();
       void EspaceCo_KeepAwake.allowSleep();
     };
   }, [
     clearRecordingFlags,
     enabled,
+    getPositionWithMetadata,
+    getToleranceForMode,
     map,
     playTracePointSound,
     resetTraceState,
@@ -423,6 +495,7 @@ export function useReportTraceSession({
     hasTrace,
     tracePointCount,
     traceDistanceMeters,
+    gpsInfo,
     transportMode,
     isAudioEnabled,
     startRecording,

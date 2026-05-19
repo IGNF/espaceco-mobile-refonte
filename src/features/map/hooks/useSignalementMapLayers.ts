@@ -8,10 +8,9 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Cluster from 'ol/source/Cluster';
 import Feature from 'ol/Feature';
-import Point from 'ol/geom/Point';
 import { bbox as bboxStrategy } from 'ol/loadingstrategy';
 import type Projection from 'ol/proj/Projection';
-import { fromLonLat, transformExtent } from 'ol/proj';
+import { transformExtent } from 'ol/proj';
 import { Style, Stroke } from 'ol/style';
 
 import { ReportSource, type Report } from '@ign/mobile-core';
@@ -29,10 +28,13 @@ import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { ReportStorageAdapter } from '@/infra/storage';
 
-import { parsePointGeometry } from '@/shared/utils/geometry';
 import { clampNumber } from '@/shared/utils/number';
 import { WGS84_PROJECTION } from '@/shared/constants/projections';
 import { SIGNAL_GROUP_NAME, LAYER_NAME_MES_SIGNALEMENTS, LAYER_NAME_CROQUIS, LAYER_NAME_SIGNALEMENTS, LAYER_NAME_BY_SIGNALEMENT_KEY } from '@/features/map/constants/signalementLayers.constants';
+import {
+  createLocalReportFeatures,
+  createLocalReportsSketchFeatures,
+} from '@/features/map/utils/signalementReportFeatures';
 
 const CROQUIS_STYLE = new Style({
   stroke: new Stroke({
@@ -60,29 +62,6 @@ function getOrCreateSignalementGroup(map: OlMap): LayerGroup {
 
   map.addLayer(group);
   return group;
-}
-
-function getLocalReportFeatures(reports: Report[]): Feature[] {
-  return reports.flatMap((report) => {
-    if (typeof report.geometry !== 'string') {
-      return [];
-    }
-
-    const position = parsePointGeometry(report.geometry);
-    if (!position) {
-      return [];
-    }
-
-    const feature = new Feature({
-      status: report.status,
-      reportId: report.id,
-      source: 'local',
-    });
-    feature.setId(`local-${report.id}`);
-    feature.setGeometry(new Point(fromLonLat([position.lon, position.lat])));
-
-    return [feature];
-  });
 }
 
 function copyReportProperties(targetFeature: Feature): Feature {
@@ -263,9 +242,12 @@ export function useSignalementMapLayers(
           return;
         }
 
-        const localFeatures = getLocalReportFeatures(reports as Report[]);
+        const localFeatures = createLocalReportFeatures(reports as Report[]);
+        const localSketchFeatures = createLocalReportsSketchFeatures(reports as Report[]);
         myReportsSource.clear(true);
         myReportsSource.addFeatures(localFeatures);
+        croquisSource.clear(true);
+        croquisSource.addFeatures(localSketchFeatures);
       } catch (error) {
         console.error('[Signalements] Failed to load local reports layer', error);
       }
