@@ -58,12 +58,10 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     gpsSourceErrorCode,
     traceSettingsErrorCode,
     traceMinAccuracyInput,
-    traceTolerancePedestrianInput,
-    traceToleranceCarInput,
+    traceToleranceInput,
     setPendingGpsSourceType,
     setTraceMinAccuracyInput,
-    setTraceTolerancePedestrianInput,
-    setTraceToleranceCarInput,
+    setTraceToleranceInput,
     applyGpsSource,
     applyTraceSettings,
   } = useSettings();
@@ -345,28 +343,15 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                 </label>
 
                 <label className={inputs.field}>
-                  <span className={inputs.label}>{t('settings.trace.tolerancePedestrian')}</span>
+                  <span className={inputs.label}>{t('settings.trace.tolerance')}</span>
                   <input
                     type='number'
                     min='0'
                     step='0.1'
                     inputMode='decimal'
                     className={inputs.input}
-                    value={traceTolerancePedestrianInput}
-                    onChange={(event) => setTraceTolerancePedestrianInput(event.target.value)}
-                  />
-                </label>
-
-                <label className={inputs.field}>
-                  <span className={inputs.label}>{t('settings.trace.toleranceCar')}</span>
-                  <input
-                    type='number'
-                    min='0'
-                    step='0.1'
-                    inputMode='decimal'
-                    className={inputs.input}
-                    value={traceToleranceCarInput}
-                    onChange={(event) => setTraceToleranceCarInput(event.target.value)}
+                    value={traceToleranceInput}
+                    onChange={(event) => setTraceToleranceInput(event.target.value)}
                   />
                 </label>
               </div>

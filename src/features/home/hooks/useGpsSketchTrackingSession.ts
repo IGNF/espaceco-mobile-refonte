@@ -63,7 +63,7 @@ export function useGpsSketchTrackingSession({
   const [distanceMeters, setDistanceMeters] = useState(0);
   const [recordingSettings, setRecordingSettings] = useState<TraceRecordingSettings>({
     minAccuracy: DEFAULT_TRACE_RECORDING_SETTINGS.minAccuracy,
-    toleranceByMode: { ...DEFAULT_TRACE_RECORDING_SETTINGS.toleranceByMode },
+    tolerance: DEFAULT_TRACE_RECORDING_SETTINGS.tolerance,
   });
 
   const sourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
@@ -131,7 +131,7 @@ export function useGpsSketchTrackingSession({
     source.clear(true);
     syncStatsFromLineString(null);
     interaction.set('minAccuracy', recordingSettingsRef.current.minAccuracy);
-    interaction.set('tolerance', recordingSettingsRef.current.toleranceByMode.pedestrian);
+    interaction.set('tolerance', recordingSettingsRef.current.tolerance);
     interaction.setActive(true);
     interaction.setFollowTrack('auto');
     interaction.pause(false);
@@ -165,7 +165,7 @@ export function useGpsSketchTrackingSession({
     if (!interaction) return;
 
     interaction.set('minAccuracy', recordingSettings.minAccuracy);
-    interaction.set('tolerance', recordingSettings.toleranceByMode.pedestrian);
+    interaction.set('tolerance', recordingSettings.tolerance);
   }, [recordingSettings]);
 
   useEffect(() => {
@@ -212,7 +212,7 @@ export function useGpsSketchTrackingSession({
       type: 'LineString',
       minZoom: TRACE_MIN_ZOOM,
       followTrack: 'auto',
-      tolerance: recordingSettingsRef.current.toleranceByMode.pedestrian,
+      tolerance: recordingSettingsRef.current.tolerance,
       minAccuracy: recordingSettingsRef.current.minAccuracy,
       style: TRACE_STYLE,
     });

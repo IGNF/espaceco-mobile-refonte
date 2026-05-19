@@ -23,12 +23,10 @@ export interface UseSettingsReturn {
   gpsSourceErrorCode: GpsSourceErrorCode | null;
   traceSettingsErrorCode: 'invalidNumber' | null;
   traceMinAccuracyInput: string;
-  traceTolerancePedestrianInput: string;
-  traceToleranceCarInput: string;
+  traceToleranceInput: string;
   setPendingGpsSourceType: (source: GpsSourceType) => void;
   setTraceMinAccuracyInput: (value: string) => void;
-  setTraceTolerancePedestrianInput: (value: string) => void;
-  setTraceToleranceCarInput: (value: string) => void;
+  setTraceToleranceInput: (value: string) => void;
   applyGpsSource: () => Promise<boolean>;
   applyTraceSettings: () => Promise<boolean>;
 }
@@ -45,17 +43,11 @@ export function useSettings(): UseSettingsReturn {
   const [gpsSourceErrorCode, setGpsSourceErrorCode] = useState<GpsSourceErrorCode | null>(null);
   const [traceSettingsErrorCode, setTraceSettingsErrorCode] = useState<'invalidNumber' | null>(null);
   const [traceMinAccuracyInput, setTraceMinAccuracyInput] = useState(String(traceRecordingSettings.minAccuracy));
-  const [traceTolerancePedestrianInput, setTraceTolerancePedestrianInput] = useState(
-    String(traceRecordingSettings.toleranceByMode.pedestrian)
-  );
-  const [traceToleranceCarInput, setTraceToleranceCarInput] = useState(
-    String(traceRecordingSettings.toleranceByMode.car)
-  );
+  const [traceToleranceInput, setTraceToleranceInput] = useState(String(traceRecordingSettings.tolerance));
 
   const setTraceInputValues = (settings: TraceRecordingSettings): void => {
     setTraceMinAccuracyInput(String(settings.minAccuracy));
-    setTraceTolerancePedestrianInput(String(settings.toleranceByMode.pedestrian));
-    setTraceToleranceCarInput(String(settings.toleranceByMode.car));
+    setTraceToleranceInput(String(settings.tolerance));
   };
 
   useEffect(() => {
@@ -112,20 +104,15 @@ export function useSettings(): UseSettingsReturn {
 
     try {
       const minAccuracy = parseDecimalInput(traceMinAccuracyInput);
-      const tolerancePedestrian = parseDecimalInput(traceTolerancePedestrianInput);
-      const toleranceCar = parseDecimalInput(traceToleranceCarInput);
+      const tolerance = parseDecimalInput(traceToleranceInput);
       const parsedSettings: TraceRecordingSettings = {
         minAccuracy,
-        toleranceByMode: {
-          pedestrian: tolerancePedestrian,
-          car: toleranceCar,
-        },
+        tolerance,
       };
 
       const allValuesAreValid = [
         parsedSettings.minAccuracy,
-        parsedSettings.toleranceByMode.pedestrian,
-        parsedSettings.toleranceByMode.car,
+        parsedSettings.tolerance,
       ].every(isNonNegativeFinite);
 
       if (!allValuesAreValid) {
@@ -152,12 +139,10 @@ export function useSettings(): UseSettingsReturn {
     gpsSourceErrorCode,
     traceSettingsErrorCode,
     traceMinAccuracyInput,
-    traceTolerancePedestrianInput,
-    traceToleranceCarInput,
+    traceToleranceInput,
     setPendingGpsSourceType,
     setTraceMinAccuracyInput,
-    setTraceTolerancePedestrianInput,
-    setTraceToleranceCarInput,
+    setTraceToleranceInput,
     applyGpsSource,
     applyTraceSettings,
   };

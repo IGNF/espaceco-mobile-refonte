@@ -13,12 +13,22 @@ export function readNonNegativeNumber(value: unknown, fallback: number): number 
   return parsed
 }
 
+export function readFiniteNumber(value: unknown, fallback: number): number {
+  const parsed = toNumber(value)
+  if (parsed === undefined) return fallback
+  return parsed
+}
+
 export function parseDecimalInput(value: string): number {
   return Number(value.replace(',', '.'))
 }
 
 export function isNonNegativeFinite(value: number): boolean {
   return Number.isFinite(value) && value >= 0
+}
+
+export function isFiniteNumber(value: number): boolean {
+  return Number.isFinite(value)
 }
 
 export function degreesToRadians(degrees: number): number {

@@ -1,7 +1,9 @@
 {
   "common": {
     "loading": "Chargement...",
-    "close": "Fermer"
+    "close": "Fermer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
   },
   "welcome": {
     "title": "Bienvenue",
@@ -380,8 +382,7 @@
       "title": "Réglages trace GPS",
       "description": "Personnalisez la précision minimale GPS et la distance minimale entre deux points pour la saisie de trace.",
       "minAccuracy": "Précision GPS minimale (m)",
-      "tolerancePedestrian": "Distance minimale piéton (m)",
-      "toleranceCar": "Distance minimale voiture (m)",
+      "tolerance": "Distance GPS (m)",
       "apply": "Appliquer les réglages trace",
       "applySuccess": "Réglages de trace mis à jour.",
       "errors": {
@@ -789,6 +790,14 @@
         "validate": "Valider la trace",
         "validateAndContinue": "Valider et continuer",
         "chooseTheme": "Choisir un autre thème",
+        "offsetSettings": "Régler les déports",
+        "pdop": "PDOP : {{value}}",
+        "heading": "Cap : {{value}}",
+        "gpsQuality": {
+          "fix": "Fix GPS",
+          "dgps-fix": "Fix DGPS",
+          "invalid": "Fix GPS invalide"
+        },
         "cancel": "Annuler la trace",
         "statusIdle": "Appuyez sur enregistrer pour démarrer la trace",
         "statusRecording": "Enregistrement : {{pointCount}} pts · {{distance}} m",
@@ -805,6 +814,23 @@
       "gps": {
         "saveSuccess": "Le signalement rapide a été enregistré.",
         "saveError": "Impossible d'enregistrer le signalement rapide."
+      },
+      "cancelConfirm": {
+        "title": "Trace en cours...",
+        "subtitle": "Voulez-vous interrompre la saisie ? La saisie ne sera pas enregistrée.",
+        "confirm": "Interrompre",
+        "continue": "Continuer"
+      },
+      "offset": {
+        "title": "Déports GPS",
+        "mode": {
+          "car": "Mode voiture",
+          "pedestrian": "Mode piéton"
+        },
+        "planimetric": "Déport planimétrique",
+        "altimetric": "Déport altimétrique",
+        "tolerance": "Intervalle entre points (m)",
+        "invalidNumber": "Veuillez saisir un nombre valide."
       }
     },
     "details": {
