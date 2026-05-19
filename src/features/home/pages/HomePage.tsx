@@ -25,6 +25,7 @@ import { MyInformationsPage } from "@/features/auth/pages/MyInformations/MyInfor
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { GroupReportsPage } from "@/features/report/pages/GroupReports/GroupReportsPage";
 import { MyReportsPage } from "@/features/report/pages/MyReports/MyReportsPage";
+import { ReportDetailsPage } from "@/features/report/pages/ReportDetails/ReportDetailsPage";
 import { LogoutPage } from "@/features/auth/pages/Logout/LogoutPage";
 import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage";
 import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
@@ -52,6 +53,7 @@ import { useDirectContributionSession } from "@/features/map/hooks/useDirectCont
 import { useOfflineRasterMapLayers } from "@/features/map/hooks/useOfflineRasterMapLayers";
 import { useMountedCommunityVectorLayers } from "@/features/map/hooks/useMountedCommunityVectorLayers";
 import { useSignalementMapLayers } from "@/features/map/hooks/useSignalementMapLayers";
+import { useLocalReportFeatureConsultation } from "@/features/map/hooks/useLocalReportFeatureConsultation";
 import { useMapLongPress, type MapLongPressCoordinate } from "@/features/map/hooks/useMapLongPress";
 import { useUserLocationMarker } from "@/features/home/hooks/useUserLocationMarker";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
@@ -507,6 +509,28 @@ export function HomePage() {
   const isHomeLoadingOverlayVisible =
     showInitialLoadingOverlay || isCommunitySwitchLoading;
 
+  const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
+
+  const {
+    selectedReport: selectedLocalReport,
+    closeReportDetails: closeLocalReportDetails,
+  } = useLocalReportFeatureConsultation({
+    map,
+    disabled:
+      isDirectContributionSessionActive ||
+      isReportMapPickerActive ||
+      isFastReportFlowActive ||
+      activeConflict !== null ||
+      activeOverlay !== null ||
+      isLayersPanelOpen ||
+      directContributionFeatureFormState !== null ||
+      consultedFeatureCandidate !== null ||
+      isDirectContributionFeatureChoiceOpen ||
+      isConsultationFeatureChoiceOpen ||
+      isHomeLoadingOverlayVisible ||
+      shouldShowOnboarding,
+  });
+
   useEffect(() => {
     if (!isCommunitySwitchLoading || !hasObservedCommunitySwitchLoading || isAppDataLoading) {
       if (isAppDataLoading) {
@@ -529,8 +553,6 @@ export function HomePage() {
     isCommunitySwitchLoading,
   ]);
 
-  const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
-
   const isGpsSketchSelectionEnabled =
     isMapReady &&
     userFollowingMode === 'none' &&
@@ -541,6 +563,7 @@ export function HomePage() {
     activeConflict === null &&
     directContributionFeatureFormState === null &&
     consultedFeatureCandidate === null &&
+    selectedLocalReport === null &&
     !isDirectContributionFeatureChoiceOpen &&
     !isConsultationFeatureChoiceOpen &&
     !isHomeLoadingOverlayVisible &&
@@ -605,6 +628,7 @@ export function HomePage() {
     activeConflict === null &&
     directContributionFeatureFormState === null &&
     consultedFeatureCandidate === null &&
+    selectedLocalReport === null &&
     !isDirectContributionFeatureChoiceOpen &&
     !isConsultationFeatureChoiceOpen &&
     !isHomeLoadingOverlayVisible &&
@@ -816,6 +840,17 @@ export function HomePage() {
             : undefined
         }
         onClose={closeConsultedFeatureDetails}
+      />
+
+      <ReportDetailsPage
+        isOpen={selectedLocalReport !== null}
+        report={selectedLocalReport}
+        onBack={closeLocalReportDetails}
+        onClose={closeLocalReportDetails}
+        map={map}
+        vectorLayers={vectorLayers}
+        onSearchPanelVisibilityChange={setIsSearchOpen}
+        onMapPickerActiveChange={setIsReportMapPickerActive}
       />
 
       <DirectContributionFeatureChoiceAlert

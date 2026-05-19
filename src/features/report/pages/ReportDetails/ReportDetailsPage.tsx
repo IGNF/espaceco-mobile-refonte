@@ -16,6 +16,7 @@ import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
+import { removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
 
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 
@@ -236,6 +237,9 @@ export function ReportDetailsPage({
     setIsDeleting(true);
     try {
       await reportStorage.deleteReport(report.id);
+      if (map) {
+        removeLocalReportFromMap(map, report.id);
+      }
       void showToastSafe({
         text: t('reports.details.delete.successMessage'),
         duration: 'short',
