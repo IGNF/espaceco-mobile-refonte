@@ -185,7 +185,7 @@
 /* Zoom in/out — stacked above geolocation; single shadow on the group */
 .zoomButtonGroup {
 	position: absolute;
-	top: calc(90px);
+	top: 140px;
 	right: 1rem;
 	z-index: 100;
 	display: flex;

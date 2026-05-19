@@ -258,9 +258,7 @@ export function extractAvailableReportThemes(
 }
 
 export function extractFastReportThemes(themes: CommunityThemeConfig[]): CommunityThemeConfig[] {
-  return themes
-    .filter((theme) => FAST_REPORT_THEME_PATTERN.test(theme.theme))
-    .sort((leftTheme, rightTheme) => leftTheme.theme.localeCompare(rightTheme.theme, 'fr'));
+  return themes.filter((theme) => FAST_REPORT_THEME_PATTERN.test(theme.theme));
 }
 
 export function buildDefaultReportAttributeValues(

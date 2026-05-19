@@ -2,8 +2,8 @@ import { Storage } from '@ign/mobile-device';
 
 import {
   DEFAULT_FAST_REPORT_GPS_SETTINGS,
-  type FastReportGpsSettings,
 } from '@/features/report/constants/fastReportGps.constants';
+import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
 import { DEFAULT_TRACE_RECORDING_SETTINGS, type TraceRecordingSettings } from '@/features/report/constants/reportTrace.constants';
 
 import { storageKey } from '@/shared/constants/storage';
