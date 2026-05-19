@@ -7,6 +7,8 @@ import { Alert } from '@/shared/ui/Alert';
 import { Toggle } from '@/shared/ui/Toggle';
 import { isFiniteNumber, isNonNegativeFinite, parseDecimalInput } from '@/shared/utils/number';
 
+import IconReset from "@/shared/assets/icons/icon-reset.svg?react";
+
 import styles from './FastReportOffsetSettingsModal.module.css';
 
 interface FastReportOffsetSettingsModalProps {
@@ -59,7 +61,7 @@ function OffsetRow({
         disabled={!enabled}
         onClick={() => onValueChange(reverseInputValue(value))}
       >
-        +/-
+        <IconReset className={styles.resetIcon} />
       </button>
     </div>
   );

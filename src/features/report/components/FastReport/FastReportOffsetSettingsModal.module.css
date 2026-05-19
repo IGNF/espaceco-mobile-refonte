@@ -37,6 +37,12 @@
   opacity: 0.5;
 }
 
+.resetIcon {
+  vertical-align: middle;
+  width: 26px;
+  height: 26px;
+}
+
 .signButton {
   height: 40px;
   border: 1px solid rgba(23, 31, 38, 0.18);
