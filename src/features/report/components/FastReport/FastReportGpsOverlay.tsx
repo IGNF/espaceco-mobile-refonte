@@ -1,12 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CommunityThemeConfig } from '@/domain/community/models';
+import { FastReportOffsetSettingsModal } from '@/features/report/components/FastReport/FastReportOffsetSettingsModal';
 import { TraceToolbar } from '@/features/report/components/Trace/TraceToolbar';
+import { useFastReportGpsSettings } from '@/features/report/hooks/useFastReportGpsSettings';
 import { useReportTraceSession } from '@/features/report/hooks/useReportTraceSession';
 import { useSaveFastReportTrace } from '@/features/report/hooks/useSaveFastReportTrace';
 import { formatTraceToolbarStatus } from '@/features/report/utils/traceStatus';
 import { getLineStringGeometry } from '@/features/report/utils/traceGeometry';
+import { addLocalReportToMap } from '@/features/map/utils/signalementReportFeatures';
+import { Alert } from '@/shared/ui/Alert';
 import { showToastSafe } from '@/shared/utils/toast';
 import type OlMap from 'ol/Map';
 
@@ -28,12 +32,16 @@ export function FastReportGpsOverlay({
   onChooseTheme,
 }: FastReportGpsOverlayProps) {
   const { t } = useTranslation();
+  const [isOffsetSettingsOpen, setIsOffsetSettingsOpen] = useState(false);
+  const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const { settings: gpsSettings, saveSettings: saveGpsSettings } = useFastReportGpsSettings();
   const {
     isRecording,
     isPaused,
     hasTrace,
     tracePointCount,
     traceDistanceMeters,
+    gpsInfo,
     transportMode,
     isAudioEnabled,
     startRecording,
@@ -46,6 +54,7 @@ export function FastReportGpsOverlay({
   } = useReportTraceSession({
     map,
     enabled: isOpen,
+    toleranceByMode: gpsSettings.toleranceByMode,
   });
   const { isSaving, saveFastReportTrace } = useSaveFastReportTrace();
 
@@ -64,11 +73,14 @@ export function FastReportGpsOverlay({
     if (!traceFeature) return;
 
     try {
-      await saveFastReportTrace({
+      const report = await saveFastReportTrace({
         map,
         theme,
         traceFeature,
+        gpsSettings,
+        transportMode,
       });
+      addLocalReportToMap(map, report);
 
       await showToastSafe({
         text: t('reports.fastReport.gps.saveSuccess'),
@@ -100,11 +112,22 @@ export function FastReportGpsOverlay({
   };
 
   const handleCancel = () => {
-    discardTrace();
+    setIsOffsetSettingsOpen(false);
+    if (isRecording) {
+      setIsCancelConfirmOpen(true);
+      return;
+    }
+
     onClose();
   };
 
+  const interruptRecording = () => {
+    setIsCancelConfirmOpen(false);
+    discardTrace();
+  };
+
   const handleChooseTheme = () => {
+    setIsOffsetSettingsOpen(false);
     onChooseTheme();
   };
 
@@ -122,6 +145,7 @@ export function FastReportGpsOverlay({
         transportMode={transportMode}
         isAudioEnabled={isAudioEnabled}
         statusText={statusText}
+        gpsInfo={gpsInfo}
         onStartRecording={startRecording}
         onTogglePause={togglePause}
         onToggleTransportMode={toggleTransportMode}
@@ -129,7 +153,33 @@ export function FastReportGpsOverlay({
         onValidate={handleValidate}
         onValidateAndContinue={handleValidateAndContinue}
         onChooseTheme={handleChooseTheme}
+        onOpenOffsetSettings={() => setIsOffsetSettingsOpen(true)}
         onCancel={handleCancel}
+      />
+      <FastReportOffsetSettingsModal
+        isOpen={isOpen && isOffsetSettingsOpen}
+        settings={gpsSettings}
+        transportMode={transportMode}
+        onSave={saveGpsSettings}
+        onClose={() => setIsOffsetSettingsOpen(false)}
+      />
+      <Alert
+        isOpen={isCancelConfirmOpen}
+        onClose={() => setIsCancelConfirmOpen(false)}
+        title={t('reports.fastReport.cancelConfirm.title')}
+        subtitle={t('reports.fastReport.cancelConfirm.subtitle')}
+        buttons={[
+          {
+            label: t('reports.fastReport.cancelConfirm.confirm'),
+            onClick: interruptRecording,
+            color: 'danger',
+          },
+          {
+            label: t('reports.fastReport.cancelConfirm.continue'),
+            onClick: () => setIsCancelConfirmOpen(false),
+            variant: 'outline',
+          },
+        ]}
       />
     </>
   );
