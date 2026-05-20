@@ -79,6 +79,7 @@ import type { ReportType } from "@/domain/report/models";
 import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
 import { Loading } from "@/shared/ui/Loading";
 import { Alert } from "@/shared/ui/Alert";
+import { ActionSheet } from "@/shared/ui/ActionSheet";
 import { createPositionFromLonLat } from "@/shared/utils/position";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
@@ -874,7 +875,7 @@ export function HomePage() {
         onConfirmResolutions={confirmConflictResolutions}
       />
 
-      <Alert
+      <ActionSheet
         isOpen={longPressMapAction !== null}
         onClose={handleCloseLongPressMapAction}
         title={t('home.mapLongPressAction.title')}

@@ -25,9 +25,11 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Les boutons de zoom ont été déplacés en haut à droite de l'écran
+- Un appui long ouvre une action sheet (en bas de l'écran) et non plus une alerte, pour ne pas cacher l'écran (ticket #106)
 
 ### Fixed
-- Un geste de zoom ne déclenche plus la fonction d'appui long
+- Un geste de zoom ne déclenche plus la fonction d'appui long (ticket #106)
+- Une nouvelle trace dans un signalement n'écrase plus la trace précédente (ticket #110)
 
 ## [0.0.7] - 2026-05-07
 
