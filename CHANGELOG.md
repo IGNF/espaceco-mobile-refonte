@@ -18,6 +18,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Les pages secondaires comportant un header avec boutons de navigation, on maintenant ce header en "sticky" pour être toujours visible (ticket #140)
 - Le geste de swipe back ne redirige plus vers la page de choix du groupe (ticket #140)
 
 ### Fixed
