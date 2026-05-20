@@ -5,9 +5,11 @@ import { createPortal } from 'react-dom';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import type BaseLayer from 'ol/layer/Base';
+import VectorLayer from 'ol/layer/Vector';
 import type OlMap from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { fromLonLat, toLonLat } from 'ol/proj';
+import VectorSource from 'ol/source/Vector';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
@@ -37,6 +39,7 @@ import {
   getSketchToolActionById,
   SKETCH_TOOL_DEFINITIONS,
 } from '@/features/report/constants/reportSketch.constants';
+import { TRACE_STYLE } from '@/features/report/constants/reportTrace.constants';
 import { formatTraceToolbarStatus } from '@/features/report/utils/traceStatus';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 import type { AppReport, MapPickerMode, ReportType } from '@/domain/report/models';
@@ -78,6 +81,9 @@ interface PickedMapObjectCandidate {
   layerTitle: string;
   feature: Feature<Geometry>;
 }
+
+const REPORT_TRACE_PREVIEW_LAYER_NAME = 'ReportTracePreview';
+const REPORT_TRACE_PREVIEW_LAYER_TITLE = 'Traces GPS du signalement';
 
 function getLayerName(layer: BaseLayer | null | undefined): string {
   if (!layer) return 'layer';
@@ -275,6 +281,37 @@ export function CreateOrEditReportPage({
     map,
     enabled: isOpen && isPickingTrace,
   });
+
+  useEffect(() => {
+    if (
+      !map ||
+      !isOpen ||
+      !isTraceReport ||
+      form.sketches.length === 0
+    ) {
+      return;
+    }
+
+    const previewSource = new VectorSource<Feature<Geometry>>();
+    const previewLayer = new VectorLayer({
+      source: previewSource,
+      style: TRACE_STYLE,
+      properties: {
+        name: REPORT_TRACE_PREVIEW_LAYER_NAME,
+        title: REPORT_TRACE_PREVIEW_LAYER_TITLE,
+      },
+      zIndex: Infinity,
+    });
+
+    previewSource.addFeatures(form.sketches.map((feature) => feature.clone()));
+    map.addLayer(previewLayer);
+
+    return () => {
+      if (map.getLayers().getArray().includes(previewLayer)) {
+        map.removeLayer(previewLayer);
+      }
+    };
+  }, [form.sketches, isOpen, isTraceReport, map]);
 
   const hasUnsavedChanges = form.isDirty ||
     selectedPosition !== null ||
@@ -485,7 +522,7 @@ export function CreateOrEditReportPage({
 
     if (!traceFeature) return;
 
-    form.replaceSketches([traceFeature]);
+    form.addSketches([traceFeature]);
     closeMapPickers();
   }, [closeMapPickers, finalizeTraceRecording, form]);
 
@@ -626,7 +663,6 @@ export function CreateOrEditReportPage({
           <div className={styles.validateButtonContainer}>
             <Button
               color="medium"
-              variant="outline"
               onClick={closeMapPickers}
               className={styles.validateButton}
             >
@@ -771,7 +807,6 @@ export function CreateOrEditReportPage({
             </Button>
             <Button
               color="medium"
-              variant="outline"
               fullWidth
               onClick={handlePageBack}
             >

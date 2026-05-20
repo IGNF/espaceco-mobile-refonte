@@ -122,12 +122,6 @@ export function ReportForm({
       }
       : undefined;
 
-    const traceFeature = form.sketches[0];
-    const traceGeometry = traceFeature?.getGeometry();
-    const tracePointCount = traceGeometry?.getType() === 'LineString'
-      ? (traceGeometry as LineString).getCoordinates().length
-      : 0;
-
     return (
       <AttachmentSection
         Icon={IconTrack}
@@ -139,24 +133,33 @@ export function ReportForm({
       >
         {form.sketches.length > 0 && (
           <div className={styles.objectList}>
-            <div className={styles.objectItem}>
-              <div className={styles.objectItemInfo}>
-                <span className={styles.objectItemLabel}>
-                  {t('reports.createOrEdit.form.traceItem', { pointCount: tracePointCount })}
-                </span>
-                <span className={styles.objectItemLayer}>
-                  {t('geometry.types.lineString')}
-                </span>
-              </div>
-              <button
-                type="button"
-                className={styles.objectRemoveButton}
-                onClick={() => form.replaceSketches([])}
-                aria-label={t('reports.createOrEdit.form.traceRemove')}
-              >
-                <IconClose className={styles.objectRemoveIcon} />
-              </button>
-            </div>
+            {form.sketches.map((feature, index) => {
+              const geometry = feature.getGeometry();
+              const pointCount = geometry?.getType() === 'LineString'
+                ? (geometry as LineString).getCoordinates().length
+                : 0;
+
+              return (
+                <div key={`trace-${index}`} className={styles.objectItem}>
+                  <div className={styles.objectItemInfo}>
+                    <span className={styles.objectItemLabel}>
+                      {t('reports.createOrEdit.form.traceItem', { pointCount })}
+                    </span>
+                    <span className={styles.objectItemLayer}>
+                      {t('geometry.types.lineString')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.objectRemoveButton}
+                    onClick={() => form.removeSketch(index)}
+                    aria-label={t('reports.createOrEdit.form.traceRemove')}
+                  >
+                    <IconClose className={styles.objectRemoveIcon} />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
         {renderError(form.errors.trace)}
