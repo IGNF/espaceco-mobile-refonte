@@ -1,10 +1,26 @@
 .container {
-  margin-top: 40%
+  margin-top: 40%;
+  padding-bottom: calc(48px + var(--safe-bottom, 0px));
 }
 
 .description {
   text-align: center;
-  margin-top: 40px;
+}
+
+.userCallout {
+	background-color: var(--color-primary-light);
+	border: 1px solid var(--color-primary);
+	border-radius: 8px;
+	padding: 16px;
+	margin-top: 24px;
+}
+
+.userCalloutMessage {
+	color: var(--color-primary-shade);
+	font-size: 14px;
+	line-height: 1.4;
+	margin: 0;
+	text-align: center;
 }
 
 .selectWrapper select {
@@ -19,6 +35,27 @@
 .validateButton {
 	width: 80%;
 	margin: auto;
+}
+
+.backToLoginFooter {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 16px 25px calc(16px + var(--safe-bottom, 0px));
+	text-align: center;
+}
+
+.backToLoginLink {
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--color-primary);
+	font: inherit;
+	cursor: pointer;
+	text-decoration: underline;
+	text-decoration-thickness: 2.5px;
+	text-underline-offset: 0.5rem;
 }
 
 .error {

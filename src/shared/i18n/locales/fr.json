@@ -57,10 +57,13 @@
   "communitySelection": {
     "title": "Groupe actif",
     "subtitle": "de votre Espace collaboratif IGN",
+    "greeting": "Bonjour, {{name}}. Vous êtes connecté en tant que {{login}}",
+    "greetingNoName": "Bonjour. Vous êtes connecté en tant que {{login}}",
     "description": "Vous pouvez choisir un groupe pour faire des signalements dans ce groupe et de consulter son guichet. Vous pouvez changer de groupe à tout moment dans mes groupes.",
     "validate": "Valider",
     "noCommunitiesTitle": "Aucun groupe",
-    "noCommunities": "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer."
+    "noCommunities": "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer.",
+    "backToLogin": "Retour à la connexion"
   },
   "home": {
     "title": "Espace collaboratif",
