@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { App } from './app/App';
 
 import { defineCustomElements } from '@ionic/pwa-elements/loader';
-import { initAppLifecycleListener } from './platform/app/lifecycle';
+import { initAppEvents } from './platform/app/events';
 
 import './styles/global.css';
 
@@ -50,7 +50,7 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 defineCustomElements(window);
-initAppLifecycleListener();
+initAppEvents();
 
 if (import.meta.env.DEV) {
   window.addEventListener('error', (event) => {
