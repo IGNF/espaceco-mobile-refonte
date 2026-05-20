@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.8] - 2026-05-xx
+## [0.0.8] - 2026-05-20
 
 ### Added
 - On peut maintenant visualiser la localisation d'un signalement sur la carte, depuis la page de détails du signalement (ticket #99)
