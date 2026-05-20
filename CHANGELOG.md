@@ -20,6 +20,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 - Les pages secondaires comportant un header avec boutons de navigation, on maintenant ce header en "sticky" pour être toujours visible (ticket #140)
 - Le geste de swipe back ne redirige plus vers la page de choix du groupe (ticket #140)
+- La "status bar" est maintenant obligatoirement affichée en light mode pour garder les informations peu importe le thème du device
 
 ### Fixed
 

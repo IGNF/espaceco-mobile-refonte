@@ -6,6 +6,7 @@ import { defineCustomElements } from '@ionic/pwa-elements/loader';
 import { initAppEvents } from './platform/app/events';
 
 import './styles/global.css';
+import { initDevice } from './platform/app/deviceInit';
 
 const VITE_MODULE_RELOAD_RETRY_KEY = 'vite-module-reload-retry';
 const VITE_MODULE_RELOAD_RETRY_RESET_MS = 10000;
@@ -51,6 +52,7 @@ window.addEventListener('vite:preloadError', (event) => {
 
 defineCustomElements(window);
 initAppEvents();
+initDevice();
 
 if (import.meta.env.DEV) {
   window.addEventListener('error', (event) => {
