@@ -9,4 +9,6 @@ export const EXTERNAL_LINKS = {
   GEOPORTAIL: 'https://www.geoportail.gouv.fr/donnees/plan-ign-j1',
   CONTACT_FORM: 'https://espacecollaboratif.ign.fr/contact-us/',
   CGU: 'https://espacecollaboratif.ign.fr/cgu/',
+  MY_ACCOUNT: 'https://espacecollaboratif.ign.fr/profile/',
+  CREATE_ACCOUNT: 'https://cartes.gouv.fr/aide/fr/guides-utilisateur/presentation-utilisateur/connexion/'
 } as const;

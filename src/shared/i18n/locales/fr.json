@@ -1028,5 +1028,54 @@
         "content": "Pour toute demande, merci d'utiliser le <contactLink>formulaire de contact de l'Espace Collaboratif IGN</contactLink>"
       }
     }
+  },
+  "helpPage": {
+    "title": "Aide",
+    "report": {
+      "title": "Signalement",
+      "faq": [
+        {
+          "question": "Comment faire un signalement ?",
+          "answer": "Une fois connecté à son compte, utiliser le bouton Signalement ou effectuer un appui long sur la carte.<br/> Valider le positionnement ou le modifier en fonction du besoin.<br/> Choisir un thème et remplir les champs.<br/> Ajouter une ou plusieures photos, croquis ou objet. Enregistrer ou envoyer directement le signalement."
+        },
+        {
+          "question": "Comment envoyer un signalement ?",
+          "answer": "Aller dans Menu > Mes signalements en cours > Fiche de signalement > Envoyer<br/> ou Envoyer tous les signalements."
+        },
+        {
+          "question": "Consulter les signalements",
+          "answer": "Consulter les signalements du groupe > Filtrer > Mes signalements"
+        }
+      ]
+    },
+    "guichet": {
+      "title": "Guichet",
+      "faq": [
+        {
+          "question": "Qu'est ce qu'un guichet ?",
+          "answer": "C'est l'interface graphique d'une base de données géographiques (disponible via le web ou une application mobile) dédiée à une thématique spécifique, qui permet de visualiser, d'ajouter, de modifier ou de supprimer des données."
+        },
+        {
+          "question": "Comment créer un objet ?",
+          "answer": "Depuis les outils mis à disposition dans l'application, créer la géométrie et remplir les attributs des objets puis envoyer les modifications."
+        },
+        {
+          "question": "Comment modifier un objet ?",
+          "answer": "Depuis l'interface graphique, sélectionner l'objet, effectuer les modifications avec les ouitils mis à disposition puis envoyer les modifications."
+        }
+      ]
+    },
+    "extraFaq": {
+      "faq": [
+        {
+          "question": "Mon compte",
+          "answer": "<myAccountLink>Accéder à mon compte</myAccountLink>"
+        },
+        {
+          "question": "Comment créer un compte ?",
+          "answer": "Depuis la page <createAccountLink>https://cartes.gouv.fr/aide/fr/guides-utilisateur/presentation-utilisateur/connexion/</createAccountLink>"
+        }
+      ]
+    }
   }
 }

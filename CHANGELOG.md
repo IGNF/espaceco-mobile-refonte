@@ -10,7 +10,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
-
+ 
 ### Fixed
 
 ## [0.0.9] - 2026-05-XX
@@ -18,6 +18,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 - Un utilisateur peut maintenant retourner vers la page de login depuis la page de sélection de groupe actif (à l'ouverture de l'app) (ticket #5)
 - La page de sélection de groupe actif (à l'ouverture de l'app) affiche maintenant le nom/pseudo de l'utilisateur connecté (ticket #5)
+- La page "À propos" a été ajoutée (ticket #119)
+- La page "Aide" a été ajoutée (ticket #119)
 
 ### Changed
 - Les pages secondaires comportant un header avec boutons de navigation, on maintenant ce header en "sticky" pour être toujours visible (ticket #140)
