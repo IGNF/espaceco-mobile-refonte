@@ -997,5 +997,36 @@
       "rejected": "<b>Rejeté (hors spéc.)</b> : Le signalement est <b>clos</b> et n'a pas été pris en compte car il n'entre pas dans le champs des spécifications des données.",
       "rejectedIrrelevant": "<b>Rejeté (hors de propos)</b> : Le signalement est <b>clos</b> et n'a pas été pris en compte car hors de propos par rapport aux données."
     }
+  },
+  "aboutGeneral": {
+    "title": "À propos",
+    "subtitle": "<b>Espace collaboratif IGN v.3.0.8</b>",
+    "tagline": "La solution IGN pour gérer une base de données de façon collaborative.",
+    "intro1": "\"<b>Espace collaboratif IGN</b>\" est une application personnalisable qui permet à un groupe d'utilisateurs de constituer et faire vivre une base de données métier (saisir, éditer, supprimer des objets de cette base) sur fonds cartographiques de I'IGN. La définition et la configuration du guichet se fait sur l'<mainWebsiteLink>Espace collaboratif de l'IGN</mainWebsiteLink>.",
+    "intro2": "<i>Vous devez avoir un compte sur cet espace pour avoir accès à toutes les fonctionnalités de l'application</i>. Un outil collaboratif de signalement (remontée d'anomalie, information erronée...) est inclus. Les signalements permettent aux utilisateurs authentifiés de l'Espace collaboratif d'indiquer des modifications, des manques ou des incohérences dans la base de données. Vous gardez le contrôle intégral de vos données.",
+    "legals": {
+      "title": "Mentions légales",
+      "editeur": {
+        "title": "Éditeur",
+        "content": "L'application Espace collaboratif IGN est éditée par l'Institut national de I'information géographique et forestière (IGN), 73 avenue de Paris, 94165 SAINT- MANDE CEDEX, France, Tél :01 43 98 80 00. Directeur de la publication: Sébastien Soriano, Directeur général de I'GN."
+      },
+      "personalDataProtection": {
+        "title": "Traitement des données à caractère personnel",
+        "content1": "Les informations issues des formulaires remplis par l'utilisateur sont anonymes et sont consultables sur le site <mainWebsiteLink>https://espacecollaboratif.ign.fr/</mainWebsiteLink>.",
+        "content2": "Le destinataire des données est l'IGN.<br >/ Conformément à la loi \"Informatique et libertés du 6 janvier 1978\", vous bénéficiez d'un droit d'accès et de rectification aux informations qui vous concernent, que vous pouvez exercer en vous adressant à I'iGN aux coordonnées accessibles via le lien \"nous contacter\" en bas de page."
+      },
+      "intellectualProperty": {
+        "title": "Droit de propriété intellectuelle",
+        "content": "Les illustrations, le contenu éditorial, les divers éléments de la charte graphique ainsi que les données cartographiques IGN issues de la consultation en ligne figurant sur l'application Espace collaboratif » sont des éléments dont I'IGN détient la propriété ou le droit d'exploitation.<br/> Les données métiers du guichet restent la propriété de l'utilisateur de l'application.<br/> L'utilisation des documents ou éléments du site est soumise à l'accord préalable de notre établissement."
+      },
+      "termsOfUse": {
+        "title": "CGU",
+        "content": "Plus d'information sur les CGU: <cguLink>https://espacecollaboratif.ign.fr/cgu/</cguLink>"
+      },
+      "contact": {
+        "title": "Nous contacter",
+        "content": "Pour toute demande, merci d'utiliser le <contactLink>formulaire de contact de l'Espace Collaboratif IGN</contactLink>"
+      }
+    }
   }
 }

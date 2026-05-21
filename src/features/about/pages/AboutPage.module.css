@@ -1,0 +1,14 @@
+.section {
+  margin-top: 1.2rem;
+}
+
+.divider {
+  margin: 1.8rem 0;
+}
+
+.legalTitle {
+  color: var(--color-dark);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.4rem 0 0;
+}
