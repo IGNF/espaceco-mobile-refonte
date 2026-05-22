@@ -1,110 +1,305 @@
-# Modèle de ReadMe
+# EspaceCo Mobile
 
-Ci-dessous une proposition de readme pour tout projet
+EspaceCo Mobile est l'application mobile IGN de contribution collaborative, construite avec React 19, TypeScript, Vite et Capacitor 8. Elle permet aux utilisateurs authentifies de consulter une carte, de gerer leurs communautes, de creer des signalements, de contribuer directement sur des couches geographiques et de preparer des donnees pour un usage hors ligne.
 
+Le depot contient aussi les projets natifs iOS et Android generes par Capacitor afin de tester et distribuer l'application sur mobile.
 
-## Description/Résumé du projet
+## Fonctionnalites principales
 
-Dans cette section, on décrit la vision générale du projet ainsi que ses objectifs à destination des futurs utilisateurs et des développeurs.
+- Authentification OAuth/PKCE et gestion de session.
+- Carte OpenLayers avec fonds Geoportail, couches de signalements, couches communautaires et couches raster hors ligne.
+- Recherche Geoportail et recentrage sur la position utilisateur.
+- Gestion des communautes et selection de la communaute active.
+- Creation, edition, consultation et synchronisation de signalements.
+- Signalement rapide par GPS avec suivi de trace.
+- Contribution directe sur les couches communautaires, avec gestion des conflits.
+- Mode hors ligne : cache de couches, zones, fonds raster telecharges et consultation en mobilite.
+- Parametres applicatifs, choix de source GPS, aide, a propos et informations utilisateur.
+- Support de plusieurs variantes applicatives via les scripts `selectapp` (`EspaceCo` et `NaviForest`).
 
-Pour ce dépôt : 
+## Prerequis
 
-Ce dépôt permet de répertorier les différents éléments essentiels dans un dépôt SIDC :
-* ce ReadMe
-* des modèles de tickets type pour des ajouts de fonctionnalité, réparation de bug, ajout de documentation, maintenance/montée de version...
-* des milestones témoins (ex: backlog, sprint1...)
-* des exemples de github Actions CI/CD (lancement de test, build d'images...)
-* des exemples de label pour les futurs tickets
-
+- Node.js compatible avec Vite 7 et TypeScript 5.9.
+- npm.
+- Un acces SSH aux dependances privees IGN referencees dans `package.json`.
+- Pour les builds natifs : Xcode pour iOS, Android Studio pour Android, ainsi que les outils Capacitor habituels.
 
 ## Installation
 
-La procédure d'installation du projet doit être décrite dans cette section ou dans un fichier complémentaire dont le lien est présent ici.
+Installez les dependances :
 
+```bash
+npm install
+```
 
-## Documentation développeurs
+Preparez la configuration locale :
 
-Lien vers la documentation pour les développeurs, à la fois pour maintenir le projet, le déployer et ajouter de nouvelles fonctionnalités. Schémas UML...
+```bash
+cp .env.dist .env
+```
 
+Puis renseignez les variables necessaires dans `.env` :
 
-## L'arborescence du projet
+- `VITE_BASE_API_URL` : URL de l'API Espace Collaboratif.
+- `VITE_COLLAB_API_CLIENT_ID`, `VITE_COLLAB_API_CLIENT_SECRET`, `VITE_BASE_AUTH_URL` : configuration d'authentification production.
+- `VITE_QLF_COLLAB_API_CLIENT_ID`, `VITE_QLF_COLLAB_API_CLIENT_SECRET`, `VITE_QLF_BASE_AUTH_URL` : configuration d'authentification qualification.
+- `VITE_OAUTH_CLIENT_ID`, `VITE_OAUTH_BASE_URL`, `VITE_OAUTH_ANDROID_REDIRECT_URI`, `VITE_OAUTH_IOS_REDIRECT_URI`, `VITE_OAUTH_WEB_REDIRECT_URI` : configuration OAuth/PKCE.
+- `VITE_APPLI`, `VITE_APPLI_ID`, `VITE_APPLI_NAME`, `VITE_SECRET` : parametrage de la variante applicative.
 
-Espaceco est une application mobile IGN construite avec React 19, TypeScript et Capacitor 8. Le projet suit une **architecture en couches** avec des règles de dépendances strictes :
+Par defaut, l'application utilise l'environnement de production. Pour utiliser les variables de qualification, definir :
 
-### Racine du projet
+```bash
+VITE_USE_QUALIF=true
+```
 
-* `src/` : code source de l'application (voir détail ci-dessous)
-* `android/` : projet natif Android généré par Capacitor
-* `ios/` : projet natif iOS généré par Capacitor
-* `public/` : fichiers statiques servis par Vite
-* `docs/` : documentation du projet (conventions de commit, etc.)
-* `tests/` : scripts et explications pour lancer les tests
-* `package.json` : dépendances et scripts npm
-* `capacitor.config.ts` : configuration Capacitor
-* `vite.config.ts` : configuration du bundler Vite
-* `eslint.config.js` : configuration ESLint
-* `README.md` : ce fichier
+## Commandes utiles
 
-### Architecture du dossier `src/`
+### Developpement web
 
-L'application suit le pattern suivant :
+```bash
+npm run dev
+```
 
-* **`app/`** : shell de l'application
-  * `App.tsx` : composant racine
-  * `providers/` : providers React (Auth, i18n, Query, Theme)
-  * `router/` : configuration du routage et guards d'authentification
+Lance le serveur Vite en local.
 
-* **`domain/`** : logique métier pure (sans dépendances externes)
-  * `auth/` : modèles d'authentification
-  * `contribution/` : modèles de contributions géographiques
-  * `map/` : modèles cartographiques
-  * `user/` : modèles utilisateur
-  * Principe : cette couche ne dépend d'aucune autre couche
+```bash
+npm run build
+```
 
-* **`infra/`** : implémentations concrètes et adaptateurs
-  * `auth/` : API et stockage de session d'authentification
-  * `contribution/` : API, repository et queue de contributions
-  * `http/` : client HTTP et API IGN
-  * `map/openlayers/` : implémentation cartographique avec OpenLayers
-  * `persistence/` : stockage local (SQLite, Preferences, Settings)
-  * `sync/` : gestion de la synchronisation réseau
-  * Principe : implémente les ports définis dans `domain/`
+Execute le type-check TypeScript puis genere le build de production dans `dist/`.
 
-* **`platform/`** : wrappers des APIs natives Capacitor
-  * `app/` : lifecycle de l'application
-  * `device/` : APIs appareil (caméra, fichiers, géolocalisation, permissions, partage)
-  * Principe : abstraction des capacités natives sans logique métier
+```bash
+npm run lint
+```
 
-* **`features/`** : modules fonctionnels (UI + orchestration)
-  * Chaque feature suit la structure : `pages/`, `components/`, `hooks/`, `state/`
-  * `auth/` : authentification et login
-  * `contribution/` : création et gestion des contributions
-  * `map/` : visualisation cartographique
-  * `onboarding/` : parcours d'introduction
-  * `settings/` : paramètres de l'application
-  * `welcome/` : écran d'accueil
-  * `about/` : à propos de l'application
-  * Principe : orchestre les couches domain/infra/platform
+Lance ESLint sur le depot.
 
-* **`shared/`** : éléments transverses réutilisables
-  * `ui/` : composants UI génériques (Button, Loading, Sheet, Toast)
-  * `hooks/` : hooks React partagés
-  * `utils/` : utilitaires (date, assertions)
+```bash
+npm run preview
+```
 
-* **`styles/`** : styles globaux et tokens de design
-  * `global.css` : styles CSS globaux
+Previsualise le build de production.
 
-* **`assets/`** : ressources statiques (images, icônes)
+### Selection de variante applicative
 
-* **`main.tsx`** : point d'entrée de l'application React
+```bash
+npm run selectapp:espaceco
+npm run selectapp:naviforest
+```
 
-## Contacts du projets
+Ces commandes selectionnent la variante cible dans `scripts/.selected-app`, puis lancent un build.
 
-Ici on met la liste des personnes qui travaillent sur ce projet et le maintiennent à jour.
+Il est aussi possible d'utiliser la commande generique :
 
+```bash
+npm run selectapp -- --espaceco
+npm run selectapp -- --naviforest
+```
 
-|Nom|Prénom|mail|fonction|
-|---|---|---|---|
-|   |   |   |   |
-|   |   |   |   |
-|   |   |   |   |
+### Capacitor et projets natifs
+
+```bash
+npm run capacitor-build
+```
+
+Construit l'application web et synchronise les assets avec Capacitor.
+
+```bash
+npm run capacitor-run-ios
+npm run capacitor-run-android
+```
+
+Construit, synchronise et lance l'application sur iOS ou Android.
+
+```bash
+npm run open-xcode
+npm run open-android
+```
+
+Ouvre le projet natif correspondant dans Xcode ou Android Studio.
+
+```bash
+npx cap sync
+```
+
+Synchronise manuellement `dist/` vers les projets natifs.
+
+### Livraison
+
+```bash
+npm run deploy:ios
+npm run deploy:android
+npm run deploy
+```
+
+Les scripts de livraison verifient que le working tree est propre, mettent a jour les numeros de build, creent un commit et poussent les tags de deploiement. Ils doivent donc etre lances depuis une branche propre et prete a publier.
+
+## Architecture du projet
+
+Le code applicatif est dans `src/` et suit une architecture en couches. L'objectif est de separer la logique metier, les integrations techniques et l'orchestration UI.
+
+```text
+src/
+├── app/        # Shell applicatif : router, providers, navigation globale
+├── domain/     # Modeles et logique metier pure
+├── infra/      # APIs, persistance, OpenLayers, synchronisation
+├── platform/   # Wrappers Capacitor et APIs natives
+├── features/   # Modules fonctionnels React
+├── shared/     # UI, hooks, utilitaires, constantes, i18n
+├── styles/     # Styles globaux
+└── assets/     # Assets applicatifs
+```
+
+### Regles de dependances
+
+- `domain/` reste pur et ne depend pas des autres couches.
+- `infra/` implemente les acces externes : API collaborative, stockage local, cache, synchronisation, OpenLayers.
+- `platform/` isole les APIs natives Capacitor : geolocalisation, camera, fichiers, partage, orientation, source GPS, lancement d'applications externes.
+- `features/` contient les pages, composants, hooks et etats propres aux parcours utilisateur.
+- `shared/` regroupe ce qui est transverse : composants UI, i18n, styles partages, constantes, erreurs et utilitaires.
+
+## Organisation des modules
+
+### `src/app/`
+
+Contient le composant racine, les providers globaux et le router :
+
+- `AuthProvider`
+- `AppSettingsProvider`
+- `CommunityProvider`
+- `OfflineProvider`
+- `I18nProvider`
+- `AuthGuard`
+- `BottomTabbar`
+- `LeftMenu`
+
+Les routes principales sont `welcome`, `login`, `auth/callback`, `home` et `community-selection`. Les ecrans secondaires sont ouverts en overlays depuis la page carte.
+
+### `src/domain/`
+
+Contient les modeles et fonctions metier pour :
+
+- l'authentification ;
+- les communautes ;
+- les contributions directes ;
+- les signalements ;
+- la carte ;
+- l'utilisateur ;
+- le mode hors ligne.
+
+Cette couche doit rester independante de React, Capacitor, OpenLayers et des APIs reseau.
+
+### `src/infra/`
+
+Contient les implementations concretes :
+
+- client API collaborative ;
+- API d'authentification ;
+- APIs communautes et signalements ;
+- repositories et files d'attente de contributions ;
+- services de couches Geoportail, vectorielles et raster ;
+- repositories de cache et mode hors ligne ;
+- synchronisation reseau ;
+- stockage local.
+
+### `src/platform/`
+
+Regroupe les wrappers natifs :
+
+- geolocalisation ;
+- source GPS ;
+- orientation ;
+- partage ;
+- stockage fichier ;
+- export email ;
+- lifecycle applicatif ;
+- ouverture d'applications externes.
+
+### `src/features/`
+
+Chaque fonctionnalite suit autant que possible la structure `pages/`, `components/`, `hooks/`, `state/`.
+
+Modules principaux :
+
+- `auth/` : connexion, callback OAuth, deconnexion, informations utilisateur.
+- `home/` : page carte, navigation principale, actions GPS et orchestration globale.
+- `map/` : panneaux de couches, couches communautaires, contributions directes, consultation d'objets.
+- `report/` : creation, edition, liste, filtres, details, traces et signalement rapide.
+- `community/` : selection, adhesion et gestion des communautes.
+- `offline/` : gestion du mode hors ligne, zones, caches et rasters.
+- `search/` : recherche Geoportail.
+- `settings/` : preferences utilisateur et maintenance.
+- `onboarding/`, `welcome/`, `about/`, `help/` : parcours d'accueil et pages transverses.
+
+### `src/shared/`
+
+Contient les briques reutilisables :
+
+- composants UI (`Button`, `Alert`, `ActionSheet`, `Tabs`, `Toast`, `SearchBar`, etc.) ;
+- hooks partages ;
+- utilitaires de dates, geometrie, couleurs, stockage, GPX, EXIF, authentification ;
+- constantes applicatives ;
+- i18n et fichier de traduction `fr.json` ;
+- icones et sons.
+
+## Tests et verification
+
+Aucun runner de tests dedie n'est configure dans `package.json` a ce stade. Pour valider une modification, lancer au minimum :
+
+```bash
+npm run lint
+npm run build
+```
+
+Pour les changements UI ou mobiles, verifier aussi le parcours concerne dans le navigateur via `npm run dev`, puis sur simulateur ou appareil avec les commandes Capacitor.
+
+Lorsqu'une nouvelle logique metier est introduite, ajouter des tests adaptes ou documenter clairement la procedure de verification manuelle.
+
+## Documentation
+
+La documentation projet se trouve dans `docs/` :
+
+- `docs/developper/Doc_commit.md` : convention de commit.
+- `docs/contributions-directes-refonte.md` et `docs/contributions-directes-conflits.md` : contribution directe.
+- `docs/mode-hors-ligne-refonte.md` : mode hors ligne.
+- `docs/signalement-rapide-gps-plan.md` et `docs/gps-sketch-tracking-plan.md` : signalement rapide et suivi GPS.
+
+## Conventions de contribution
+
+Le projet utilise une convention de commit de type Angular :
+
+```text
+<type>(<scope>): <subject> #<issue>
+```
+
+Types courants :
+
+- `feat`
+- `fix`
+- `refactor`
+- `style`
+- `docs`
+- `test`
+- `build`
+- `ci`
+- `revert`
+
+Avant d'ouvrir une pull request, inclure :
+
+- un resume clair des changements ;
+- les commandes de verification lancees et leurs resultats ;
+- des captures ou enregistrements pour les changements UI ;
+- le lien vers l'issue associee si elle existe.
+
+## Racine du depot
+
+- `src/` : code source de l'application.
+- `public/` : fichiers statiques servis par Vite.
+- `android/` : projet natif Android.
+- `ios/` : projet natif iOS.
+- `scripts/` : scripts de selection d'application, build, APK et deploiement.
+- `docs/` : documentation technique et fonctionnelle.
+- `tests/` : rappel et espace reserve aux procedures de test.
+- `capacitor.config.ts` : configuration Capacitor.
+- `vite.config.ts` : configuration Vite.
+- `eslint.config.js` : configuration ESLint flat config.

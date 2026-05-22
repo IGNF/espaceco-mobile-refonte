@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.9] - 2026-05-XX
+## [0.0.9] - 2026-05-22
 
 ### Added
 - Un utilisateur peut maintenant retourner vers la page de login depuis la page de sélection de groupe actif (à l'ouverture de l'app) (ticket #5)
