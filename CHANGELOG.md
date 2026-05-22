@@ -27,6 +27,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - La "status bar" est maintenant obligatoirement affichée en light mode pour garder les informations peu importe le thème du device (ticket #139)
 
 ### Fixed
+- Les couches 'Carte topographique( (IGN Sanc 25)' et 'Carte IGN' sont maintenant correctement affichées (ticket #98)
 
 ## [0.0.8] - 2026-05-20
 

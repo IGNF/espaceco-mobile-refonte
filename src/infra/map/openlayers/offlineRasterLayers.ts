@@ -1,9 +1,8 @@
-import ol_layer_Geoportail from 'ol-ext/layer/Geoportail';
 import type BaseLayer from 'ol/layer/Base';
 import type { OfflineRasterMap } from '@/domain/offline/models';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
-import { GEOPORTAIL_SERVER } from '@/shared/constants/map';
 import { OFFLINE_EMPTY_TILE_DATA_URL } from '@/shared/constants/offline';
+import { createGeoportailLayer } from '@/infra/map/openlayers/geoportailLayers';
 
 /**
  * Build the storage key of one cached raster tile.
@@ -43,11 +42,10 @@ function loadOfflineRasterTile(image: HTMLImageElement, key: string): void {
  * Create a Geoportail layer whose tile loader reads only the locally cached raster tiles of the offline map.
  */
 export function createOfflineRasterLayer(rasterMap: OfflineRasterMap): BaseLayer {
-  const layer = new ol_layer_Geoportail(rasterMap.layerName, {
+  const layer = createGeoportailLayer({
+    name: rasterMap.layerName,
     visible: rasterMap.visible,
     opacity: 1,
-  }, {
-    server: GEOPORTAIL_SERVER,
   });
 
   layer.set('title', rasterMap.name);

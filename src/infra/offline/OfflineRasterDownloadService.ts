@@ -2,11 +2,9 @@ import { FileSystem } from '@ign/mobile-device';
 
 import type TileGrid from 'ol/tilegrid/TileGrid';
 import type { Extent } from 'ol/extent';
-import ol_layer_Geoportail from 'ol-ext/layer/Geoportail';
 
 import { AppError } from '@/shared/errors/appError';
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
-import { GEOPORTAIL_SERVER } from '@/shared/constants/map';
 import { OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
 
 import type {
@@ -17,6 +15,7 @@ import type {
 } from '@/domain/offline/models';
 import { cacheStorage } from '@/infra/storage/cacheStorage';
 import { getOfflineRasterTileKey } from '@/infra/map/openlayers/offlineRasterLayers';
+import { createGeoportailLayer } from '@/infra/map/openlayers/geoportailLayers';
 
 interface RasterTileEntry {
   key: string;
@@ -198,10 +197,9 @@ export class OfflineRasterDownloadService {
       projection: string
     ) => string | undefined;
   } {
-    const layer = new ol_layer_Geoportail(layerName, {
+    const layer = createGeoportailLayer({
+      name: layerName,
       visible: false,
-    }, {
-      server: GEOPORTAIL_SERVER,
     });
 
     const source = layer.getSource() as unknown as {
