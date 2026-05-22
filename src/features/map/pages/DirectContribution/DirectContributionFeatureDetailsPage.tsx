@@ -33,6 +33,7 @@ export interface DirectContributionFeatureDetailsPageProps {
   candidate: DirectContributionFeatureCandidate | null;
   canEdit: boolean;
   onEdit: () => void;
+  onReport: () => void;
   onClose: () => void;
   onBack?: () => void;
 }
@@ -143,6 +144,7 @@ export function DirectContributionFeatureDetailsPage({
   candidate,
   canEdit,
   onEdit,
+  onReport,
   onClose,
   onBack,
 }: DirectContributionFeatureDetailsPageProps) {
@@ -215,9 +217,12 @@ export function DirectContributionFeatureDetailsPage({
       </main>
 
       {canEdit ? (
-        <footer className={stickyActions.bar}>
+        <footer className={joinCSSClassNames(stickyActions.bar, styles.actionsBar)}>
           <Button type='button' fullWidth onClick={onEdit}>
             {t('layers.directContribution.details.editButton')}
+          </Button>
+          <Button type='button' fullWidth variant='outline' onClick={onReport}>
+            {t('layers.directContribution.details.reportButton')}
           </Button>
         </footer>
       ) : null}

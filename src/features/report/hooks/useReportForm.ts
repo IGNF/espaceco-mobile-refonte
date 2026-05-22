@@ -44,6 +44,8 @@ export interface UseReportFormOptions {
   isOpen?: boolean;
   reportType?: ReportType;
   preselectFirstTheme?: boolean;
+  /** Objects injected by map workflows before the report form opens. */
+  initialObjects?: Feature<Geometry>[];
   /** Sketches injected by map workflows before the report form opens. */
   initialSketches?: Feature<Geometry>[];
 }
@@ -81,6 +83,7 @@ export interface UseReportFormReturn {
 }
 
 const EMPTY_INITIAL_SKETCHES: Feature<Geometry>[] = [];
+const EMPTY_INITIAL_OBJECTS: Feature<Geometry>[] = [];
 
 function getThemeOptionValue(themeConfig: CommunityThemeConfig): string {
   return `${themeConfig.communityId ?? 0}:${themeConfig.theme}`;
@@ -169,6 +172,7 @@ export function useReportForm({
   isOpen,
   reportType,
   preselectFirstTheme = false,
+  initialObjects = EMPTY_INITIAL_OBJECTS,
   initialSketches = EMPTY_INITIAL_SKETCHES,
 }: UseReportFormOptions): UseReportFormReturn {
   const { t } = useTranslation();
@@ -196,6 +200,10 @@ export function useReportForm({
   const [comment, setComment] = useState<string>('');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
   const [objects, setObjects] = useState<Feature<Geometry>[]>(() => {
+    if (mode === 'create' && initialObjects.length > 0) {
+      return splitReportFeatures(initialObjects).objects;
+    }
+
     return splitReportFeatures(report?.features).objects;
   });
   const [sketches, setSketches] = useState<Feature<Geometry>[]>(() => {
@@ -232,12 +240,12 @@ export function useReportForm({
       setAttributeValues(nextTheme ? buildDefaultReportAttributeValues(themes[0]?.attributes ?? []) : {});
       setComment('');
       setPhotos([]);
-      setObjects([]);
+      setObjects(splitReportFeatures(initialObjects).objects);
       setSketches(splitReportFeatures(initialSketches).sketches);
     }
     setErrors({});
     setIsDirty(false);
-  }, [activeCommunity?.id, initialSketches, mode, preselectFirstTheme, themes]);
+  }, [activeCommunity?.id, initialObjects, initialSketches, mode, preselectFirstTheme, themes]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const previousReportRef = useRef(report);

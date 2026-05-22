@@ -65,6 +65,7 @@ export interface CreateOrEditReportPageProps {
   reportType?: ReportType;
   report?: AppReport | null;
   initialPosition?: Position | null;
+  initialObjects?: Feature<Geometry>[];
   initialSketches?: Feature<Geometry>[];
   preselectFirstTheme?: boolean;
   onBack?: () => void;
@@ -152,6 +153,7 @@ export function CreateOrEditReportPage({
   reportType,
   report,
   initialPosition = null,
+  initialObjects,
   initialSketches,
   preselectFirstTheme = false,
   onBack,
@@ -216,6 +218,7 @@ export function CreateOrEditReportPage({
     isOpen,
     reportType: resolvedReportType,
     preselectFirstTheme,
+    initialObjects,
     initialSketches,
   });
 

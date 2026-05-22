@@ -74,6 +74,7 @@ import IconPlay from "@/shared/assets/icons/icon-play.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
+import { applyReportObjectMetadata, buildReportObjectKey } from '@/features/report/utils/reportObjects';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
 import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
@@ -203,6 +204,7 @@ export function HomePage() {
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [newReportType, setReportType] = useState<ReportType>('standard');
   const [newReportInitialPosition, setNewReportInitialPosition] = useState<Position | null>(null);
+  const [newReportInitialObjects, setNewReportInitialObjects] = useState<Feature<Geometry>[]>([]);
   const [newReportInitialSketches, setNewReportInitialSketches] = useState<Feature<Geometry>[]>([]);
   const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
   const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
@@ -324,6 +326,7 @@ export function HomePage() {
   const handleNewReportStandard = () => {
     setReportType('standard');
     setNewReportInitialPosition(null);
+    setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
@@ -336,6 +339,7 @@ export function HomePage() {
   const handleNewReportTrace = () => {
     setReportType('trace');
     setNewReportInitialPosition(null);
+    setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
     setActiveOverlay(null);
@@ -393,6 +397,7 @@ export function HomePage() {
     setNewReportInitialPosition(
       createPositionFromLonLat(longPressMapAction.longitude, longPressMapAction.latitude)
     );
+    setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(true);
     setLongPressMapAction(null);
@@ -436,6 +441,33 @@ export function HomePage() {
     closeConsultedFeatureDetails();
     prepareLayerEdition(getCommunityLayerKey(candidate.layer));
     startDirectContributionFeatureEdition(candidate);
+  };
+
+  const handleReportConsultedFeature = () => {
+    const candidate = consultedFeatureCandidate!;
+
+    const layerKey = getCommunityLayerKey(candidate.layer);
+    const feature = candidate.feature.clone();
+    const featureId = candidate.feature.getId();
+    if (featureId !== undefined) {
+      feature.setId(featureId);
+    }
+
+    applyReportObjectMetadata(feature, {
+      key: buildReportObjectKey(candidate.feature, layerKey),
+      label: candidate.label,
+      layerName: layerKey,
+      layerTitle: candidate.layer.title,
+    });
+
+    setReportType('standard');
+    setNewReportInitialPosition(null);
+    setNewReportInitialObjects([feature]);
+    setNewReportInitialSketches([]);
+    setIsNewReportThemePreselected(true);
+    closeConsultedFeatureDetails();
+    setIsSearchOpen(false);
+    setActiveOverlay('/create-or-edit-report');
   };
 
   const consultedFeatureCanEdit = useMemo(() => {
@@ -589,6 +621,7 @@ export function HomePage() {
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
     setReportType('standard');
     setNewReportInitialPosition(draft.position);
+    setNewReportInitialObjects([]);
     setNewReportInitialSketches(draft.sketches);
     setIsNewReportThemePreselected(true);
     setActiveOverlay('/create-or-edit-report');
@@ -835,6 +868,7 @@ export function HomePage() {
         candidate={consultedFeatureCandidate}
         canEdit={consultedFeatureCanEdit}
         onEdit={handleEditConsultedFeature}
+        onReport={handleReportConsultedFeature}
         onBack={
           consultationFeatureCandidates.length > 1
             ? goBackFromConsultedFeatureDetails
@@ -1000,6 +1034,7 @@ export function HomePage() {
           mode="create"
           reportType={newReportType}
           initialPosition={newReportInitialPosition}
+          initialObjects={newReportInitialObjects}
           initialSketches={newReportInitialSketches}
           preselectFirstTheme={isNewReportThemePreselected}
           map={map}

@@ -47,3 +47,9 @@
 .emptyState {
   margin: 0;
 }
+
+.actionsBar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

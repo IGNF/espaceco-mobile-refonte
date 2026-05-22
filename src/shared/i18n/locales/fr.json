@@ -521,6 +521,7 @@
       "details": {
         "headerTitle": "Fiche objet",
         "editButton": "Editer l'objet",
+        "reportButton": "Signaler cet objet",
         "emptyValue": "-",
         "noAttributes": "Aucun attribut à afficher.",
         "yes": "Oui",

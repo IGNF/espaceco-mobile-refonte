@@ -20,6 +20,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - La page de sélection de groupe actif (à l'ouverture de l'app) affiche maintenant le nom/pseudo de l'utilisateur connecté (ticket #5)
 - La page "À propos" a été ajoutée (ticket #119)
 - La page "Aide" a été ajoutée (ticket #119)
+- On peut maintenant signaler un objet depuis sa fiche (au tap sur un objet sur la carte) (ticket #141)
 
 ### Changed
 - Les pages secondaires comportant un header avec boutons de navigation, on maintenant ce header en "sticky" pour être toujours visible (ticket #140)
