@@ -2,6 +2,10 @@
   padding: 25px;
 }
 
+.screenExtendedContainer {
+  padding: 15px;
+}
+
 /* Shared overlay style for modals and menus */
 .overlay {
   position: fixed;

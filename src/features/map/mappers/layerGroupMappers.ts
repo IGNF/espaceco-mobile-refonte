@@ -10,6 +10,10 @@ import type {
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
+import {
+  getLayerStyleChoices,
+  getSelectedLayerStyleId,
+} from '@/features/map/utils/layerStyles';
 
 function getLayerTextParts(layer: CommunityLayer): string[] {
   const tableAny = layer.table as { title?: unknown; name?: unknown } | undefined;
@@ -63,7 +67,10 @@ function getLayerOpacity(layer: CommunityLayer): number {
   return clampNumber(opacity, 0, 1);
 }
 
-export function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
+export function mapLayerToGroupItem(
+  layer: CommunityLayer,
+  defaultStyleLabel: string
+): LayerGroupItem {
   const layerKey = getCommunityLayerKey(layer);
 
   return {
@@ -73,11 +80,16 @@ export function mapLayerToGroupItem(layer: CommunityLayer): LayerGroupItem {
     visible: getLayerVisibility(layer),
     opacity: getLayerOpacity(layer),
     description: getLayerDescription(layer),
+    styleChoices: getLayerStyleChoices(layer, defaultStyleLabel),
+    selectedStyleId: getSelectedLayerStyleId(layer),
   };
 }
 
-export function mapLayersToGroupItems(layers: CommunityLayer[]): LayerGroupItem[] {
-  return layers.map(mapLayerToGroupItem);
+export function mapLayersToGroupItems(
+  layers: CommunityLayer[],
+  defaultStyleLabel: string
+): LayerGroupItem[] {
+  return layers.map((layer) => mapLayerToGroupItem(layer, defaultStyleLabel));
 }
 
 export function mapLayerGroupsToSummaries(

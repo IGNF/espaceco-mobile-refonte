@@ -42,12 +42,13 @@ interface UseLayerGroupsParams {
 
 function mapLayersToGroupItemsWithDirectContribution(
   layers: CommunityLayer[],
+  defaultStyleLabel: string,
   pendingChangesCountByLayerKey: Record<string, number>,
   lockedByLayerKey: Record<string, boolean>,
   submittingByLayerKey: Record<string, boolean>
 ): LayerGroupItem[] {
   return layers.map((layer) => {
-    const item = mapLayerToGroupItem(layer);
+    const item = mapLayerToGroupItem(layer, defaultStyleLabel);
     const layerKey = item.layerKey;
     const rawPendingChangesCount =
       layerKey ? pendingChangesCountByLayerKey[layerKey] : undefined;
@@ -105,6 +106,7 @@ export function useLayerGroups({
     );
 
     const guichetLayers = vectorLayers;
+    const defaultStyleLabel = t('layers.groupDetails.defaultLayerStyle');
     const mesCartesLayers = layers.filter(
       (layer) => !vectorLayerSet.has(layer) && !geoportailLayerSet.has(layer)
     );
@@ -137,6 +139,7 @@ export function useLayerGroups({
         title: guichetTitle,
         items: mapLayersToGroupItemsWithDirectContribution(
           guichetLayers,
+          defaultStyleLabel,
           pendingChangesCountByLayerKey,
           lockedByLayerKey,
           submittingByLayerKey
@@ -147,6 +150,7 @@ export function useLayerGroups({
         title: t('layers.groups.mesCartes'),
         items: mapLayersToGroupItemsWithDirectContribution(
           mesCartesLayers,
+          defaultStyleLabel,
           pendingChangesCountByLayerKey,
           lockedByLayerKey,
           submittingByLayerKey
@@ -159,6 +163,7 @@ export function useLayerGroups({
           ...defaultGeoportailItems,
           ...mapLayersToGroupItemsWithDirectContribution(
             extraGeoportailLayers,
+            defaultStyleLabel,
             pendingChangesCountByLayerKey,
             lockedByLayerKey,
             submittingByLayerKey

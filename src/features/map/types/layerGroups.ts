@@ -8,6 +8,11 @@ export interface LayerDirectContributionState {
   isSubmitting: boolean;
 }
 
+export interface LayerStyleChoice {
+  id: string;
+  label: string;
+}
+
 export interface LayerGroupDirectContributionState {
   pendingChangesCount: number;
   isSubmitting: boolean;
@@ -21,6 +26,8 @@ export interface LayerGroupItem {
   opacity?: number;
   description?: string;
   directContribution?: LayerDirectContributionState;
+  styleChoices?: LayerStyleChoice[];
+  selectedStyleId?: string;
 }
 
 export interface LayerGroupSummary {

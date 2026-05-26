@@ -2,7 +2,7 @@
 	border: 1px solid var(--color-light-tint);
 	border-radius: 10px;
 	background: white;
-	padding: 1rem;
+	padding: 0.8rem;
 	transition: box-shadow 0.15s ease-out;
 	-webkit-user-select: none;
 	user-select: none;
@@ -51,7 +51,7 @@
 	align-items: center;
 	justify-content: flex-end;
 	gap: 0.5rem;
-	margin-top: 0.75rem;
+	margin-top: 0.65rem;
 }
 
 .layerActionButton {
@@ -87,6 +87,10 @@
 	width: 18px;
 	height: 18px;
 	color: var(--color-medium);
+}
+
+.layerActionIcon path {
+	fill: currentColor;
 }
 
 .layerActionLoading {
@@ -156,5 +160,5 @@
 }
 
 .layerSlider {
-	margin-top: 0.75rem;
+	margin-top: 0.65rem;
 }

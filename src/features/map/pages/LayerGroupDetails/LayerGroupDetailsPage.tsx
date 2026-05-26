@@ -20,6 +20,7 @@ import { LayerGroupDetailsSortableItem } from '@/features/map/components/LayerGr
 
 import { Alert } from '@/shared/ui/Alert/Alert';
 import { clampNumber } from '@/shared/utils/number';
+import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
@@ -58,6 +59,7 @@ export interface LayerGroupDetailsPageProps {
   isLoading?: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
+  onSetLayerStyle?: (layerKey: string, styleId: string) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
   onEditLayer?: (layerKey: string) => void;
   onSendLayerDirectContributions?: (layerKey: string) => void;
@@ -72,6 +74,7 @@ export function LayerGroupDetailsPage({
   isLoading = false,
   onSetLayerVisibility,
   onSetLayerOpacity,
+  onSetLayerStyle,
   onSetGroupLayerOrder,
   onEditLayer,
   onSendLayerDirectContributions,
@@ -81,6 +84,7 @@ export function LayerGroupDetailsPage({
   const { t } = useTranslation();
   const title = group?.title ?? t('layers.title');
   const [selectedItem, setSelectedItem] = useState<LayerGroupItem | null>(null);
+  const [styleItem, setStyleItem] = useState<LayerGroupItem | null>(null);
   const [layerDraftByKey, setLayerDraftByKey] = useState<LayerDraftByKey>({});
   const [itemOrder, setItemOrder] = useState<string[]>([]);
 
@@ -94,6 +98,7 @@ export function LayerGroupDetailsPage({
   const layerOpacityLabel = t('layers.groupDetails.layerOpacity');
   const reorderLayerLabel = t('layers.groupDetails.reorderLayer');
   const editLayerLabel = t('layers.groupDetails.editLayer');
+  const selectLayerStyleLabel = t('layers.groupDetails.selectLayerStyle');
   const sendLayerChangesLabel = t('layers.groupDetails.sendLayerChanges');
   const resetLayerChangesLabel = t('layers.groupDetails.resetLayerChanges');
   const lockLayerLabel = t('layers.groupDetails.lockLayerEdition');
@@ -158,6 +163,7 @@ export function LayerGroupDetailsPage({
     applyLayerOrderChanges();
     setLayerDraftByKey({});
     setSelectedItem(null);
+    setStyleItem(null);
     onClose();
   };
 
@@ -191,6 +197,16 @@ export function LayerGroupDetailsPage({
       ...previousState,
       opacity: nextOpacity,
     }));
+  };
+
+  const handleSetLayerStyle = (item: LayerGroupItem, styleId: string) => {
+    const layerKey = item.layerKey;
+    if (!layerKey || !onSetLayerStyle) {
+      return;
+    }
+
+    onSetLayerStyle(layerKey, styleId);
+    setStyleItem(null);
   };
 
   const reorderFromIds = useCallback((
@@ -245,7 +261,7 @@ export function LayerGroupDetailsPage({
           onBack={handleClose}
         />
 
-        <main className={`${screen.screenContainer} ${styles.content}`}>
+        <main className={`${screen.screenExtendedContainer} ${styles.content}`}>
           <div className={styles.titleSection}>
             <h1 className={typography.title}>{title}</h1>
             <p className={typography.subtitle}>{t('layers.groupDetails.subtitle')}</p>
@@ -285,6 +301,7 @@ export function LayerGroupDetailsPage({
                       layerOpacityLabel={layerOpacityLabel}
                       reorderLayerLabel={`${reorderLayerLabel}: ${item.title}`}
                       editLayerLabel={`${editLayerLabel}: ${item.title}`}
+                      selectLayerStyleLabel={`${selectLayerStyleLabel}: ${item.title}`}
                       sendLayerChangesLabel={`${sendLayerChangesLabel}: ${item.title}`}
                       resetLayerChangesLabel={`${resetLayerChangesLabel}: ${item.title}`}
                       lockLayerLabel={`${lockLayerLabel}: ${item.title}`}
@@ -292,6 +309,11 @@ export function LayerGroupDetailsPage({
                       onToggleVisibility={() => handleToggleVisibility(item)}
                       onShowInfo={() => setSelectedItem(item)}
                       onSetOpacity={(opacity) => handleSetOpacity(item, opacity)}
+                      onSelectLayerStyle={
+                        layerKey && onSetLayerStyle
+                          ? () => setStyleItem(item)
+                          : undefined
+                      }
                       onEditLayer={
                         layerKey && onEditLayer
                           ? () => onEditLayer(layerKey)
@@ -327,6 +349,39 @@ export function LayerGroupDetailsPage({
         title={selectedItem?.title ?? t('layers.info.untitled')}
         subtitle={infoDescription}
       />
+
+      <Alert
+        isOpen={isOpen && styleItem !== null}
+        onClose={() => setStyleItem(null)}
+        title={t('layers.groupDetails.selectLayerStyle')}
+        subtitle={styleItem?.title}
+        buttons={[
+          {
+            label: t('common.cancel'),
+            onClick: () => setStyleItem(null),
+            variant: 'outline',
+          },
+        ]}
+      >
+        <div className={styles.styleChoiceList}>
+          {(styleItem?.styleChoices ?? []).map((choice) => {
+            const isSelected = choice.id === styleItem?.selectedStyleId;
+
+            return (
+              <button
+                key={choice.id}
+                type='button'
+                className={styles.styleChoiceButton}
+                onClick={() => styleItem && handleSetLayerStyle(styleItem, choice.id)}
+                aria-pressed={isSelected}
+              >
+                {isSelected && <IconCheck className={styles.styleChoiceIcon} />}
+                <span>{choice.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </Alert>
     </>
   );
 }

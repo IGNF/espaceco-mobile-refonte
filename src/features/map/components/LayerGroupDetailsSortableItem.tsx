@@ -17,6 +17,7 @@ import IconEdit from '@/shared/assets/icons/icon-edit.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconReset from '@/shared/assets/icons/icon-reset.svg?react';
 import IconLock from '@/shared/assets/icons/icon-lock.svg?react';
+import IconFormatting from '@/shared/assets/icons/icon-formatting.svg?react';
 
 export interface LayerGroupDetailsSortableItemProps {
   item: LayerGroupItem;
@@ -31,6 +32,7 @@ export interface LayerGroupDetailsSortableItemProps {
   layerOpacityLabel: string;
   reorderLayerLabel: string;
   editLayerLabel: string;
+  selectLayerStyleLabel: string;
   sendLayerChangesLabel: string;
   resetLayerChangesLabel: string;
   lockLayerLabel: string;
@@ -39,6 +41,7 @@ export interface LayerGroupDetailsSortableItemProps {
   onShowInfo: () => void;
   onSetOpacity: (opacity: number) => void;
   onEditLayer?: () => void;
+  onSelectLayerStyle?: () => void;
   onSendLayerChanges?: () => void;
   onResetLayerChanges?: () => void;
   onToggleLayerLock?: (locked: boolean) => void;
@@ -57,6 +60,7 @@ export function LayerGroupDetailsSortableItem({
   layerOpacityLabel,
   reorderLayerLabel,
   editLayerLabel,
+  selectLayerStyleLabel,
   sendLayerChangesLabel,
   resetLayerChangesLabel,
   lockLayerLabel,
@@ -65,6 +69,7 @@ export function LayerGroupDetailsSortableItem({
   onShowInfo,
   onSetOpacity,
   onEditLayer,
+  onSelectLayerStyle,
   onSendLayerChanges,
   onResetLayerChanges,
   onToggleLayerLock,
@@ -114,6 +119,8 @@ export function LayerGroupDetailsSortableItem({
       onToggleLayerLock
   );
   const isInteractionDisabled = isSubmittingDirectContribution;
+  const hasStyleChoices = (item.styleChoices?.length ?? 0) > 0;
+  const canSelectLayerStyle = hasStyleChoices && onSelectLayerStyle !== undefined && !isInteractionDisabled;
 
   return (
     <li ref={ref} className={layerItemClasses}>
@@ -189,6 +196,17 @@ export function LayerGroupDetailsSortableItem({
               <IconLock className={styles.layerActionIcon} />
             </button>
           </>
+        )}
+        {hasStyleChoices && (
+          <button
+            type='button'
+            className={styles.layerActionButton}
+            onClick={onSelectLayerStyle}
+            disabled={!canSelectLayerStyle}
+            aria-label={selectLayerStyleLabel}
+          >
+            <IconFormatting className={styles.layerActionIcon} />
+          </button>
         )}
         <button
           type='button'

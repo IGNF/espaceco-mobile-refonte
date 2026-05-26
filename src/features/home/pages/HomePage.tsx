@@ -130,6 +130,7 @@ export function HomePage() {
     isLoading: isLayersLoading,
     setLayerVisibility,
     setLayerOpacity,
+    setLayerStyle,
     setGroupLayerOrder,
     setLayerGroupVisibility,
     setLayerDirectContributionLock,
@@ -834,6 +835,7 @@ export function HomePage() {
         isLoading={isLayersLoading}
         onSetLayerVisibility={setLayerVisibility}
         onSetLayerOpacity={setLayerOpacity}
+        onSetLayerStyle={setLayerStyle}
         onSetGroupVisibility={setLayerGroupVisibility}
         onSetGroupLayerOrder={setGroupLayerOrder}
         onEditLayer={handleEditLayer}

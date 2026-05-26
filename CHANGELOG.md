@@ -8,6 +8,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
+- On peut maintenant changer le style des couches qui supported cette option (ticket #143)
 
 ### Changed
  

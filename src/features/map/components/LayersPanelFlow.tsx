@@ -29,6 +29,7 @@ export interface LayersPanelFlowProps {
   isLoading: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
+  onSetLayerStyle?: (layerKey: string, styleId: string) => void;
   onSetGroupVisibility?: (groupId: LayerGroupId, visible: boolean) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
   onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
@@ -55,6 +56,7 @@ export function LayersPanelFlow({
   isLoading,
   onSetLayerVisibility,
   onSetLayerOpacity,
+  onSetLayerStyle,
   onSetGroupVisibility,
   onSetGroupLayerOrder,
   onSendGroupDirectContributions,
@@ -182,6 +184,7 @@ export function LayersPanelFlow({
         isLoading={isLoading}
         onSetLayerVisibility={onSetLayerVisibility}
         onSetLayerOpacity={onSetLayerOpacity}
+        onSetLayerStyle={onSetLayerStyle}
         onSetGroupLayerOrder={onSetGroupLayerOrder}
         onEditLayer={onEditLayer}
         onSendLayerDirectContributions={onSendLayerDirectContributions}

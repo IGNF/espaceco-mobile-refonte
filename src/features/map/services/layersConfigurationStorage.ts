@@ -11,6 +11,10 @@ import {
 } from '@/shared/constants/map';
 import type { LayerDisplayState } from '@/features/map/types/layerGroups';
 import type { LayerGroupVisibility } from '@/features/map/types/layerGroups';
+import {
+  hasLayerStyleChoices,
+  getSelectedLayerStyleId,
+} from '@/features/map/utils/layerStyles';
 
 import type {
   SignalementLayerKey,
@@ -30,6 +34,7 @@ interface PersistedLayerState {
   visible?: boolean;
   opacity?: number;
   locked?: boolean;
+  styleId?: string;
 }
 
 export interface LayersConfiguration {
@@ -83,6 +88,7 @@ function toLayerStateMap(value: unknown): Record<string, PersistedLayerState> {
       visible?: unknown;
       opacity?: unknown;
       locked?: unknown;
+      styleId?: unknown;
     };
     const nextState: PersistedLayerState = {};
 
@@ -96,6 +102,10 @@ function toLayerStateMap(value: unknown): Record<string, PersistedLayerState> {
 
     if (typeof rawState.locked === 'boolean') {
       nextState.locked = rawState.locked;
+    }
+
+    if (typeof rawState.styleId === 'string' && rawState.styleId.length > 0) {
+      nextState.styleId = rawState.styleId;
     }
 
     result[layerKey] = nextState;
@@ -322,11 +332,14 @@ export async function saveLayersConfiguration({
 
   for (const layer of layers) {
     const layerKey = getCommunityLayerKey(layer);
+    const selectedStyleId = getSelectedLayerStyleId(layer);
+
     layerOrder.push(layerKey);
     layersByKey[layerKey] = {
       visible: layer.visible ?? true,
       opacity: clampNumber(layer.opacity ?? 1, 0, 1),
       locked: lockedByLayerKey[layerKey] === true,
+      ...(hasLayerStyleChoices(layer) && selectedStyleId ? { styleId: selectedStyleId } : {}),
     };
   }
 

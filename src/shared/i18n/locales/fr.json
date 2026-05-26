@@ -488,6 +488,8 @@
       "layerOpacity": "Opacité de la couche",
       "reorderLayer": "Maintenir puis glisser pour réordonner la couche",
       "editLayer": "Éditer la couche",
+      "selectLayerStyle": "Choisir le style de la couche",
+      "defaultLayerStyle": "Style par défaut",
       "sendLayerChanges": "Envoyer les modifications de la couche",
       "resetLayerChanges": "Annuler les modifications de la couche",
       "lockLayerEdition": "Verrouiller l'édition de la couche",

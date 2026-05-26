@@ -44,6 +44,7 @@ import {
   DEFAULT_LAYER_GROUP_VISIBILITY,
   isDefaultGeoportailLayerName,
 } from '@/shared/constants/map';
+import { applyLayerStyleSelection } from '@/features/map/utils/layerStyles';
 
 function getDefaultSignalementLayerOpacity(): SignalementLayerOpacity {
   return { ...DEFAULT_SIGNALEMENT_LAYER_OPACITY };
@@ -155,8 +156,12 @@ function applySavedLayerConfiguration(
       lockedByLayerKey[layerKey] = true;
     }
 
+    const styledLayer = savedLayerState.styleId
+      ? applyLayerStyleSelection(layer, savedLayerState.styleId)
+      : layer;
+
     return {
-      ...layer,
+      ...styledLayer,
       visible: savedLayerState.visible ?? layer.visible,
       opacity: savedLayerState.opacity ?? layer.opacity,
     };
@@ -274,6 +279,16 @@ export function useLayers(
       previous.map((layer) =>
         getCommunityLayerKey(layer) === layerKey
           ? { ...layer, opacity: nextOpacity }
+          : layer
+      )
+    );
+  }, []);
+
+  const setLayerStyle = useCallback((layerKey: string, styleId: string) => {
+    setLayers((previous) =>
+      previous.map((layer) =>
+        getCommunityLayerKey(layer) === layerKey
+          ? applyLayerStyleSelection(layer, styleId)
           : layer
       )
     );
@@ -508,6 +523,7 @@ export function useLayers(
     refetch: refetchLayers,
     setLayerVisibility,
     setLayerOpacity,
+    setLayerStyle,
     setGroupLayerOrder,
     setLayerGroupVisibility,
     setLayerDirectContributionLock,

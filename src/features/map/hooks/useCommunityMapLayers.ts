@@ -39,6 +39,27 @@ function syncLayerDisplayState(
   }
 }
 
+function syncLayerStyleState(olLayer: BaseLayer, layer: CommunityLayer): void {
+  const table = layer.table;
+  if (!table || !(olLayer instanceof CollabVectorLayer)) {
+    return;
+  }
+
+  const runtimeTable = olLayer.getTable();
+
+  if (!runtimeTable) {
+    return;
+  }
+
+  const previousStyle = runtimeTable.style;
+  runtimeTable.style = table.style;
+  runtimeTable.styles = table.styles;
+
+  if (previousStyle !== table.style) {
+    olLayer.changed();
+  }
+}
+
 function areSameOrderedLayers(
   currentLayers: BaseLayer[],
   desiredLayers: BaseLayer[]
@@ -129,6 +150,7 @@ function syncCommunityVectorLayerGroup(
     }
 
     syncLayerDisplayState(olLayer, communityLayer);
+    syncLayerStyleState(olLayer, communityLayer);
 
     orderedLayers.push(olLayer);
   }
