@@ -136,6 +136,8 @@
 	font-weight: 500;
 	color: var(--color-dark);
 	min-width: 0;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .groupMeta {

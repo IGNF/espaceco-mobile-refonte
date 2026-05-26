@@ -13,6 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
  
 ### Fixed
+- La transaction (envoi) d'un polygone après saisie directe fonctionne maintenant (ticket #115)
 
 ## [0.0.9] - 2026-05-22
 

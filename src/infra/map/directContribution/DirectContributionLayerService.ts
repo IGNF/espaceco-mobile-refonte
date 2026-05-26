@@ -7,6 +7,8 @@ import {
 import type Map from 'ol/Map';
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
+import MultiPolygon from 'ol/geom/MultiPolygon';
+import Polygon from 'ol/geom/Polygon';
 import { getCenter } from 'ol/extent';
 import { transform } from 'ol/proj';
 
@@ -39,6 +41,10 @@ type ObservableCollabVectorSource = CollabVectorSource & {
 type DirectContributionPendingFeature = Feature<Geometry> & {
   updates?: Record<string, boolean>;
   state?: string;
+};
+
+type WktFormatter = {
+  writeGeometry: (geometry: Geometry, options?: unknown) => string;
 };
 
 interface DirectContributionConflictResolutionOptions {
@@ -144,6 +150,49 @@ function removePendingFeatureFromSource(
   feature.updates = {};
   delete feature.state;
   return true;
+}
+
+function getTableGeometryType(source: CollabVectorSource): string {
+  const table = source.getTable();
+  const geometryColumn = table.columns[table.geometryName] as { type: string };
+
+  return geometryColumn.type;
+}
+
+function getGeometryForPolygonSubmit(geometry: Geometry): Geometry {
+  // Surface layers are drawn as Polygon, while the collaborative backend stores them in MultiPolygon columns.
+  if (geometry.getType() === 'Polygon') {
+    return new MultiPolygon([(geometry as Polygon).getCoordinates()]);
+  }
+
+  return geometry;
+}
+
+function patchWktFormatterForPolygonSubmit(source: CollabVectorSource): () => void {
+  const tableGeometryType = getTableGeometryType(source);
+  if (!/polygon/i.test(tableGeometryType)) {
+    return () => undefined;
+  }
+
+  const formatWKT = source.localProperties.formatWKT as WktFormatter;
+  const originalWriteGeometry = formatWKT.writeGeometry;
+
+  const patchedWriteGeometry = function (
+    this: WktFormatter,
+    geometry: Geometry,
+    options?: unknown
+  ) {
+    return originalWriteGeometry.call(
+      this,
+      getGeometryForPolygonSubmit(geometry),
+      options
+    );
+  };
+  formatWKT.writeGeometry = patchedWriteGeometry;
+
+  return () => {
+    formatWKT.writeGeometry = originalWriteGeometry;
+  };
 }
 
 /**
@@ -350,7 +399,12 @@ export class DirectContributionLayerService {
       });
     }
 
-    return source.submitChanges();
+    const restoreWktFormatter = patchWktFormatterForPolygonSubmit(source);
+    try {
+      return await source.submitChanges();
+    } finally {
+      restoreWktFormatter();
+    }
   }
 
   /**
