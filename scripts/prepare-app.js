@@ -42,12 +42,6 @@ async function loadAppConfig(selectedName) {
   return configModule.default;
 }
 
-function copyDirectory(src, dest) {
-  fs.rmSync(dest, { recursive: true, force: true });
-  fs.mkdirSync(dest, { recursive: true });
-  fs.cpSync(src, dest, { recursive: true, force: true });
-}
-
 function copyFileIfExists(src, dest, label) {
   if (!fs.existsSync(src)) {
     console.warn(`- Missing ${label}: ${path.relative(root, src)}`);
@@ -339,27 +333,22 @@ const displayName = appCfg.displayName || appCfg.appli || selected;
 const iosBundleId = appCfg.ios?.bundleId ? String(appCfg.ios.bundleId) : undefined;
 const androidPackage = appCfg.android?.packageName ? String(appCfg.android.packageName) : undefined;
 const version = String(appCfg.versionNumber || '').trim();
-
-// 1) Copie les fichiers spécifiques de l'app sélectionnée dans le répertoire src/appli.
-const srcAppliDir = path.join(root, 'src', 'appli');
 const appSourceDir = path.join(root, 'scripts', selected);
-copyDirectory(appSourceDir, srcAppliDir);
-console.log(`- Copied ${path.relative(root, appSourceDir)} to ${path.relative(root, srcAppliDir)}`);
 
-// 2) Copie le logo de l'app sélectionnée dans le répertoire src/assets/img.
+// 1) Copie le logo de l'app sélectionnée dans le répertoire src/assets/img.
 copyFileIfExists(
   path.join(appSourceDir, 'logo.png'),
   path.join(root, 'src', 'assets', 'img', 'logo.png'),
   'app logo',
 );
 
-// 3) Génère la configuration runtime utilisée par le code React.
+// 2) Génère la configuration runtime utilisée par le code React.
 writeAppVariantConfig(selected, appCfg, displayName);
 
-// 4) Met à jour capacitor.config.ts avec le nom et les identifiants de l'app sélectionnée.
+// 3) Met à jour capacitor.config.ts avec le nom et les identifiants de l'app sélectionnée.
 updateCapacitorConfig(displayName, iosBundleId, androidPackage);
 
-// 5) Prépare les entrées pour @capacitor/assets.
+// 4) Prépare les entrées pour @capacitor/assets.
 const resourcesDir = path.join(root, 'resources');
 const originDir = path.join(appSourceDir, 'assets');
 
@@ -379,21 +368,21 @@ copyFileIfExists(
 );
 generateNativeAssets();
 
-// 6) Applique les identifiants et les noms directement dans les projets natifs pour assurer la correction.
+// 5) Applique les identifiants et les noms directement dans les projets natifs pour assurer la correction.
 try {
   updateNativeProjects(displayName, iosBundleId, androidPackage);
 } catch (err) {
   console.warn(`- Warning: unable to fully update native project files: ${err.message}`);
 }
 
-// 7) Renomme le package de l'activité principale Android pour suivre applicationId.
+// 6) Renomme le package de l'activité principale Android pour suivre applicationId.
 try {
   updateAndroidActivityPackage(androidPackage);
 } catch (err) {
   console.warn(`- Warning: unable to update Android activity package: ${err.message}`);
 }
 
-// 8) Synchronise la version de l'app sans incrémenter les numéros de build.
+// 7) Synchronise la version de l'app sans incrémenter les numéros de build.
 try {
   syncVersions(version);
 } catch (err) {
