@@ -1,311 +1,327 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const fse = require('fs-extra');
-const path = require('path');
-const vm = require('vm');
-const { execSync } = require('child_process');
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const root = process.cwd();
-let selectionFile = path.join(root, 'scripts', '.selected-app');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(__dirname, '..');
+const selectionFile = path.join(root, 'scripts', '.selected-app');
 
 /**
- * Lit le fichier contenant le nom de l'app selectionnée et le retourne
- * @returns {string} le nom de l'app selectionnée
+ * Lit le fichier contenant le nom de l'app sélectionnée et le retourne.
+ * @returns {string} le nom de l'app sélectionnée
  */
 function readSelection() {
   try {
     const val = fs.readFileSync(selectionFile, 'utf8').trim();
     if (val === 'EspaceCo' || val === 'NaviForest') return val;
-  } catch (e) {
-    console.log("error in readSelection", e);
+  } catch (err) {
+    console.warn(`- Warning: unable to read selection file: ${err}`);
   }
+
   console.warn('No app selected, using default: EspaceCo');
   return 'EspaceCo';
 }
 
-const selected = readSelection();
-console.log(`Preparing app for: ${selected}`);
-
 /**
- * Charge la configuration de l'app selectionnée à partir du fichier config.js
- * @param {string} selectedName le nom de l'app selectionnée
- * @returns {Object} la configuration de l'app selectionnée
+ * Charge la configuration de l'app sélectionnée à partir du fichier config.js.
+ * Le projet étant en ESM, on importe directement le module au lieu de parser le fichier à la main.
+ * @param {string} selectedName le nom de l'app sélectionnée
+ * @returns {Promise<Object>} la configuration de l'app sélectionnée
  */
-function loadAppConfig(selectedName) {
+async function loadAppConfig(selectedName) {
   const cfgPath = path.join(root, 'scripts', selectedName, 'config.js');
-  const code = fs.readFileSync(cfgPath, 'utf8');
-  const exportIdx = code.indexOf('export default');
-  if (exportIdx === -1) throw new Error('export default not found in config file ');
-  const after = code.slice(exportIdx);
-  const braceStart = after.indexOf('{');
-  if (braceStart === -1) throw new Error('Config object not found in config file ');
-  let i = braceStart;
-  let depth = 0;
-  let end = -1;
-  // Trouve la fin de l'objet config
-  while (i < after.length) {
-    const ch = after[i];
-    if (ch === '{') depth++;
-    if (ch === '}') {
-      depth--;
-      if (depth === 0) { end = i; break; }
-    }
-    i++;
-  }
-  if (end === -1) throw new Error('Malformed config object');
-  const objCode = after.slice(braceStart, end + 1);
+  const moduleUrl = `${pathToFileURL(cfgPath).href}?mtime=${fs.statSync(cfgPath).mtimeMs}`; // Ajout d'un timestamp pour éviter les caches
+  const configModule = await import(moduleUrl);
 
-  // Supprime les commentaires
-  const stripped = objCode
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
-  const script = `(${stripped})`;
-  const sandbox = {};
-  const result = vm.runInNewContext(script, sandbox, { filename: cfgPath });
-  return result;
+  if (!configModule.default) {
+    throw new Error(`No default export found in ${path.relative(root, cfgPath)}`);
+  }
+
+  return configModule.default;
 }
 
-const appCfg = loadAppConfig(selected);
-const displayName = appCfg.displayName || appCfg.appli || selected;
-const iosBundleId = appCfg.ios && appCfg.ios.bundleId ? String(appCfg.ios.bundleId) : undefined;
-const androidPackage = appCfg.android && appCfg.android.packageName ? String(appCfg.android.packageName) : undefined;
-
-// 1) Copie les fichiers spécifiques de l'app selectionnée dans le répertoire src/appli
-const srcAppliDir = path.join(root, 'src', 'appli');
-const appSourceDir = path.join(root, 'scripts', selected);
-fse.ensureDirSync(srcAppliDir);
-fse.emptyDirSync(srcAppliDir);
-fse.copySync(appSourceDir, srcAppliDir, { overwrite: true, errorOnExist: false });
-
-// 2) Copie le logo de l'app selectionnée dans le répertoire src/assets/img
-const logoSrc = path.join(appSourceDir, 'logo.png');
-const logoDest = path.join(root, 'src', 'assets', 'img', 'logo.png');
-try {
-  if (fs.existsSync(logoSrc)) {
-    fse.ensureDirSync(path.dirname(logoDest));
-    fse.copyFileSync(logoSrc, logoDest);
-    console.log(`- Copied logo to ${path.relative(root, logoDest)}`);
-  } else {
-    console.warn(`- No logo found at ${path.relative(root, logoSrc)}; skipping app logo copy`);
-  }
-} catch (e) {
-  console.warn(`- Unable to copy app logo: ${e.message}`);
+function copyDirectory(src, dest) {
+  fs.rmSync(dest, { recursive: true, force: true });
+  fs.mkdirSync(dest, { recursive: true });
+  fs.cpSync(src, dest, { recursive: true, force: true });
 }
 
-// 3) Met à jour la configuration de Capacitor avec le nom de l'app selectionnée et l'identifiant de l'app (si les deux plateformes utilisent le même identifiant)
-const capConfigPath = path.join(root, 'capacitor.config.json');
-try {
-  const raw = fs.readFileSync(capConfigPath, 'utf8');
-  const json = JSON.parse(raw);
-  // Si les deux plateformes utilisent le même bundle id, conserve appId en sync; sinon met à jour appName ici
-  if (iosBundleId && androidPackage && iosBundleId === androidPackage) {
-    json.appId = iosBundleId;
+function copyFileIfExists(src, dest, label) {
+  if (!fs.existsSync(src)) {
+    console.warn(`- Missing ${label}: ${path.relative(root, src)}`);
+    return false;
   }
 
-  if (displayName) json.appName = displayName;
-  fs.writeFileSync(capConfigPath, JSON.stringify(json, null, 2) + '\n', 'utf8');
-  console.log(`- Updated capacitor.config.json (appId=${json.appId}, appName=${json.appName})`);
-} catch (e) {
-  console.warn('- Warning: unable to update capacitor.config.json:', e.message);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.copyFileSync(src, dest);
+  console.log(`- Updated ${path.relative(root, dest)} from ${path.relative(root, src)}`);
+  return true;
 }
 
-// 4) Prépare les entrées pour @capacitor/assets
-// TODO : ajouter la gestion des assets splash et android background/foreground
-const resourcesDir = path.join(root, 'resources');
-fse.ensureDirSync(resourcesDir);
-const originDir = path.join(root, 'scripts', selected, 'assets');
-
-// Définit les images (icon, splash, android-background, android-foreground) à utiliser pour la génération des assets natifs
-const iconPath = path.join(resourcesDir, 'icon.png');
-const splashPath = path.join(resourcesDir, 'splash.png');
-const splashDarkPath = path.join(resourcesDir, 'splash-dark.png');
-const androidBackgroundPath = path.join(resourcesDir, 'android', 'icon-background.png');
-const androidForegroundPath = path.join(resourcesDir, 'android', 'icon-foreground.png');
-try {
-  if (fs.existsSync(iconPath)) {
-    fse.copyFileSync(path.join(originDir, 'icon.png'), iconPath);
-    console.log(`- Updated resources/icon.png from ${selected} icon`);
-  } else {
-    console.log('- Kept existing resources/icon.png');
-  }
-  if (fs.existsSync(splashPath)) {
-    fse.copyFileSync(path.join(originDir, 'splash.png'), splashPath);
-    console.log(`- Updated resources/splash.png from ${selected} splash`);
-  } else {
-    console.log('- Kept existing resources/splash.png');
-  }
-  if (fs.existsSync(splashDarkPath)) {
-    fse.copyFileSync(path.join(originDir, 'splash-dark.png'), splashDarkPath);
-    console.log(`- Updated resources/splash-dark.png from ${selected} splash-dark`);
-  } else {
-    console.log('- Kept existing resources/splash-dark.png');
-  }
-  if (fs.existsSync(androidBackgroundPath)) {
-    fse.copyFileSync(path.join(originDir, 'android', 'icon-background.png'), androidBackgroundPath);
-    console.log(`- Updated resources/android-background.png from ${selected} android-background`);
-  } else {
-    console.log('- Kept existing resources/android-background.png');
-  }
-  if (fs.existsSync(androidForegroundPath)) {
-    fse.copyFileSync(path.join(originDir, 'android', 'icon-foreground.png'), androidForegroundPath);
-    console.log(`- Updated resources/android-foreground.png from ${selected} android-foreground`);
-  } else {
-    console.log('- Kept existing resources/android-foreground.png');
-  }
-
-  // generate assets using capacitor
-  execSync('npx @capacitor/assets generate --android', { stdio: 'inherit' });
-  execSync('npx @capacitor/assets generate --ios', { stdio: 'inherit' });
-
-} catch (e) {
-  console.warn(`- Unable to update resources/icon.png: ${e.message}`);
+function escapeXml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
-console.log('Preparation complete.');
+function toTsString(value) {
+  return `'${String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
 
-// 5) Applique les identifiants et les noms directement dans les projets natifs pour assurer la correction
-try {
-  // iOS: met à jour PRODUCT_BUNDLE_IDENTIFIER et display name
+function toTsValue(value) {
+  return value === undefined ? 'undefined' : JSON.stringify(value);
+}
+
+function setTsObjectStringProperty(text, propertyName, value) {
+  const replacement = `${propertyName}: ${toTsString(value)}`;
+  const propertyPattern = new RegExp(`(${propertyName}\\s*:\\s*)['"\`][^'"\`]*['"\`]`);
+
+  if (propertyPattern.test(text)) {
+    return text.replace(propertyPattern, replacement);
+  }
+
+  return text.replace(/const\s+config(?:\s*:\s*[^{=]+)?\s*=\s*{/, (match) => `${match}\n  ${replacement},`);
+}
+
+function readTsObjectStringProperty(text, propertyName) {
+  const match = text.match(new RegExp(`${propertyName}\\s*:\\s*['"\`]([^'"\`]*)['"\`]`));
+  return match ? match[1] : null;
+}
+
+function setNestedTsObjectStringProperty(text, objectName, propertyName, value) {
+  const objectPattern = new RegExp(`(${objectName}\\s*:\\s*{)([\\s\\S]*?)(\\n\\s*},)`);
+  const objectMatch = text.match(objectPattern);
+
+  if (objectMatch) {
+    const [, opening, body, closing] = objectMatch;
+    const propertyPattern = new RegExp(`(${propertyName}\\s*:\\s*)['"\`][^'"\`]*['"\`]`);
+    const updatedBody = propertyPattern.test(body)
+      ? body.replace(propertyPattern, `${propertyName}: ${toTsString(value)}`)
+      : `${body}\n    ${propertyName}: ${toTsString(value)},`;
+
+    return text.replace(objectPattern, `${opening}${updatedBody}${closing}`);
+  }
+
+  return text.replace(
+    /const\s+config(?:\s*:\s*[^{=]+)?\s*=\s*{/,
+    (match) => `${match}\n  ${objectName}: {\n    ${propertyName}: ${toTsString(value)},\n  },`,
+  );
+}
+
+// Met à jour la configuration de Capacitor avec le nom de l'app sélectionnée et les identifiants natifs.
+// Le nouveau projet utilise capacitor.config.ts et peut avoir des appId différents entre iOS et Android.
+function updateCapacitorConfig(displayName, iosBundleId, androidPackage) {
+  const capConfigPath = path.join(root, 'capacitor.config.ts');
+  if (!fs.existsSync(capConfigPath)) {
+    console.warn('- Warning: capacitor.config.ts not found');
+    return;
+  }
+
+  let text = fs.readFileSync(capConfigPath, 'utf8');
+
+  if (displayName) {
+    text = setTsObjectStringProperty(text, 'appName', displayName);
+  }
+
+  if (iosBundleId) {
+    text = setTsObjectStringProperty(text, 'appId', iosBundleId);
+    text = setNestedTsObjectStringProperty(text, 'ios', 'appId', iosBundleId);
+  }
+
+  if (androidPackage) {
+    text = setNestedTsObjectStringProperty(text, 'android', 'appId', androidPackage);
+  }
+
+  fs.writeFileSync(capConfigPath, text, 'utf8');
+  console.log(
+    `- Updated capacitor.config.ts (appId=${readTsObjectStringProperty(text, 'appId') || '(unset)'}, appName=${displayName || '(unchanged)'})`,
+  );
+}
+
+// Génère la configuration runtime de la variante d'app.
+// guichetID permet notamment à NaviForest de forcer un guichet et de désactiver le changement de groupe.
+function writeAppVariantConfig(selected, appCfg, displayName) {
+  const fixedCommunityId = appCfg.guichetID === undefined || appCfg.guichetID === null
+    ? undefined
+    : Number(appCfg.guichetID);
+  const hasFixedCommunityId = Number.isFinite(fixedCommunityId);
+  const appVariantPath = path.join(root, 'src', 'shared', 'config', 'appVariant.ts');
+  const noAccessTitle = hasFixedCommunityId ? `Accès ${displayName}` : 'Aucun groupe';
+  const noAccessMessage = hasFixedCommunityId
+    ? `Votre compte ne permet pas d'accéder au guichet ${displayName}.`
+    : "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer.";
+  const content = `export interface AppVariantConfig {
+  name: string;
+  displayName: string;
+  fixedCommunityId?: number;
+  canSwitchCommunity: boolean;
+  noAccessTitle: string;
+  noAccessMessage: string;
+}
+
+export const appVariant: AppVariantConfig = {
+  name: ${toTsValue(appCfg.name || selected)},
+  displayName: ${toTsValue(displayName)},
+  fixedCommunityId: ${hasFixedCommunityId ? fixedCommunityId : 'undefined'},
+  canSwitchCommunity: ${!hasFixedCommunityId},
+  noAccessTitle: ${toTsValue(noAccessTitle)},
+  noAccessMessage: ${toTsValue(noAccessMessage)},
+};
+`;
+
+  fs.mkdirSync(path.dirname(appVariantPath), { recursive: true });
+  fs.writeFileSync(appVariantPath, content, 'utf8');
+  console.log(`- Updated ${path.relative(root, appVariantPath)}`);
+}
+
+// Génère les assets natifs à partir des fichiers copiés dans resources/.
+function generateNativeAssets() {
+  execFileSync('npx', ['@capacitor/assets', 'generate', '--android'], { cwd: root, stdio: 'inherit' });
+  execFileSync('npx', ['@capacitor/assets', 'generate', '--ios'], { cwd: root, stdio: 'inherit' });
+}
+
+// Applique les identifiants et les noms directement dans les projets natifs.
+function updateNativeProjects(displayName, iosBundleId, androidPackage) {
+  // iOS: met à jour PRODUCT_BUNDLE_IDENTIFIER et le nom affiché.
   if (iosBundleId) {
     const pbxproj = path.join(root, 'ios', 'App', 'App.xcodeproj', 'project.pbxproj');
     if (fs.existsSync(pbxproj)) {
       let txt = fs.readFileSync(pbxproj, 'utf8');
       txt = txt.replace(/PRODUCT_BUNDLE_IDENTIFIER = [^;]+;/g, `PRODUCT_BUNDLE_IDENTIFIER = ${iosBundleId};`);
       fs.writeFileSync(pbxproj, txt, 'utf8');
-      console.log(`- iOS: Set PRODUCT_BUNDLE_IDENTIFIER to ${iosBundleId}`);
+      console.log(`- iOS: PRODUCT_BUNDLE_IDENTIFIER=${iosBundleId}`);
     }
   }
+
   const iosInfo = path.join(root, 'ios', 'App', 'App', 'Info.plist');
   if (fs.existsSync(iosInfo) && displayName) {
     let txt = fs.readFileSync(iosInfo, 'utf8');
-    // Remplace la valeur de CFBundleDisplayName
-    txt = txt.replace(/<key>CFBundleDisplayName<\/key>\s*<string>[^<]*<\/string>/, `<key>CFBundleDisplayName<\/key>\n\t<string>${displayName}<\/string>`);
+    txt = txt.replace(
+      /<key>CFBundleDisplayName<\/key>\s*<string>[^<]*<\/string>/,
+      `<key>CFBundleDisplayName</key>\n    <string>${escapeXml(displayName)}</string>`,
+    );
     fs.writeFileSync(iosInfo, txt, 'utf8');
-    console.log(`- iOS: Set CFBundleDisplayName to ${displayName}`);
+    console.log(`- iOS: CFBundleDisplayName=${displayName}`);
   }
 
-  // Android: met à jour applicationId, namespace et app_name strings
-  if (androidPackage) {
-    const gradle = path.join(root, 'android', 'app', 'build.gradle');
-    if (fs.existsSync(gradle)) {
-      let txt = fs.readFileSync(gradle, 'utf8');
-      txt = txt.replace(/applicationId\s+"[^"]+"/, `applicationId "${androidPackage}"`);
-      txt = txt.replace(/namespace\s+"[^"]+"/, `namespace "${androidPackage}"`);
-      fs.writeFileSync(gradle, txt, 'utf8');
-      console.log(`- Android: Set applicationId/namespace to ${androidPackage}`);
-    }
+  if (!androidPackage) return;
 
-    // Met à jour les autorités AndroidManifest si présentes
-    const manifest = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
-    if (fs.existsSync(manifest)) {
-      let txt = fs.readFileSync(manifest, 'utf8');
-      txt = txt.replace(/\$\{applicationId\}/g, androidPackage);
-      // Met à jour l'autorité FileProvider pour correspondre au package
-      txt = txt.replace(/android:authorities="[^"]+\.fileprovider"/, `android:authorities="${androidPackage}.fileprovider"`);
-      fs.writeFileSync(manifest, txt, 'utf8');
-      console.log(`- Android: Updated manifest authorities with package (FileProvider: ${androidPackage}.fileprovider)`);
-    }
-
-    // Met à jour strings.xml: app_name, title_activity_main, package_name, custom_url_scheme
-    const stringsXml = path.join(root, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml');
-    if (fs.existsSync(stringsXml)) {
-      let txt = fs.readFileSync(stringsXml, 'utf8');
-      if (displayName) {
-        txt = txt.replace(/<string name=\"app_name\">[^<]*<\/string>/, `<string name=\"app_name\">${displayName}<\/string>`);
-        txt = txt.replace(/<string name=\"title_activity_main\">[^<]*<\/string>/, `<string name=\"title_activity_main\">${displayName}<\/string>`);
-      }
-      txt = txt.replace(/<string name=\"package_name\">[^<]*<\/string>/, `<string name=\"package_name\">${androidPackage}<\/string>`);
-      txt = txt.replace(/<string name=\"custom_url_scheme\">[^<]*<\/string>/, `<string name=\"custom_url_scheme\">${androidPackage}<\/string>`);
-      fs.writeFileSync(stringsXml, txt, 'utf8');
-      console.log('- Android: Updated strings.xml with app name and package');
-    }
-  }
-} catch (e) {
-  console.warn('- Warning: unable to fully update native project files:', e.message);
-}
-
-// 6) Renomme le répertoire de l'activité principale Android pour correspondre au package
-try {
-  if (androidPackage) {
-    const javaBase = path.join(root, 'android', 'app', 'src', 'main', 'java');
-    const newPkgPath = androidPackage.replace(/\./g, path.sep);
-    const newActivityDir = path.join(javaBase, newPkgPath);
-    const newActivityFile = path.join(newActivityDir, 'MainActivity.java');
-
-    // Cherche le fichier MainActivity.java existant dans n'importe quel sous-répertoire
-    let existingActivityFile = null;
-    const findMainActivity = (dir) => {
-      if (!fs.existsSync(dir)) return;
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        if (entry.isDirectory()) {
-          findMainActivity(fullPath);
-        } else if (entry.name === 'MainActivity.java') {
-          existingActivityFile = fullPath;
-        }
-      }
-    };
-    findMainActivity(javaBase);
-
-    if (existingActivityFile) {
-      const existingDir = path.dirname(existingActivityFile);
-
-      // Si le répertoire est différent, déplace le fichier
-      if (existingDir !== newActivityDir) {
-        // Lit le contenu et met à jour la déclaration de package
-        let content = fs.readFileSync(existingActivityFile, 'utf8');
-        content = content.replace(/^package\s+[^;]+;/m, `package ${androidPackage};`);
-
-        // Crée le nouveau répertoire et écrit le fichier
-        fse.ensureDirSync(newActivityDir);
-        fs.writeFileSync(newActivityFile, content, 'utf8');
-        console.log(`- Android: Moved MainActivity.java to ${path.relative(root, newActivityFile)}`);
-
-        // Supprime l'ancien fichier et nettoie les répertoires vides
-        fs.unlinkSync(existingActivityFile);
-        let dirToClean = existingDir;
-        while (dirToClean !== javaBase && dirToClean.startsWith(javaBase)) {
-          const remaining = fs.readdirSync(dirToClean);
-          if (remaining.length === 0) {
-            fs.rmdirSync(dirToClean);
-            dirToClean = path.dirname(dirToClean);
-          } else {
-            break;
-          }
-        }
-      } else {
-        // Même répertoire, met à jour seulement la déclaration de package si nécessaire
-        let content = fs.readFileSync(existingActivityFile, 'utf8');
-        const updatedContent = content.replace(/^package\s+[^;]+;/m, `package ${androidPackage};`);
-        if (content !== updatedContent) {
-          fs.writeFileSync(existingActivityFile, updatedContent, 'utf8');
-          console.log(`- Android: Updated package declaration in MainActivity.java`);
-        }
-      }
-    } else {
-      console.warn('- Android: MainActivity.java not found, skipping activity path rename');
-    }
-  }
-} catch (e) {
-  console.warn('- Warning: unable to rename Android activity path:', e.message);
-}
-
-// 7) Synchronise la version de l'app à partir de la configuration (sans incrémenter les numéros de build)
-try {
-  const version = String(appCfg.versionNumber || '').trim();
-  if (!version) throw new Error('No versionNumber defined in app config');
-
-  // Android: synchronise versionName avec la config (sans modifier versionCode)
+  // Android: met à jour applicationId, namespace et app_name strings.
   const gradle = path.join(root, 'android', 'app', 'build.gradle');
   if (fs.existsSync(gradle)) {
     let txt = fs.readFileSync(gradle, 'utf8');
-    txt = txt.replace(/versionName\s+"[^"]+"/, `versionName "${version}"`);
+    txt = txt.replace(/applicationId\s+["'][^"']+["']/g, `applicationId "${androidPackage}"`);
+    txt = txt.replace(/namespace\s*=\s*["'][^"']+["']/g, `namespace = "${androidPackage}"`);
+    txt = txt.replace(/namespace\s+["'][^"']+["']/g, `namespace "${androidPackage}"`);
+    fs.writeFileSync(gradle, txt, 'utf8');
+    console.log(`- Android: applicationId/namespace=${androidPackage}`);
+  }
+
+  const manifest = path.join(root, 'android', 'app', 'src', 'main', 'AndroidManifest.xml');
+  if (fs.existsSync(manifest)) {
+    let txt = fs.readFileSync(manifest, 'utf8');
+    // Conserve le placeholder Gradle pour que l'autorité suive automatiquement applicationId.
+    txt = txt.replace(/android:authorities="[^"]+\.fileprovider"/, 'android:authorities="${applicationId}.fileprovider"');
+    fs.writeFileSync(manifest, txt, 'utf8');
+    console.log('- Android: FileProvider authority uses ${applicationId}.fileprovider');
+  }
+
+  const stringsXml = path.join(root, 'android', 'app', 'src', 'main', 'res', 'values', 'strings.xml');
+  if (fs.existsSync(stringsXml)) {
+    let txt = fs.readFileSync(stringsXml, 'utf8');
+    if (displayName) {
+      const escapedName = escapeXml(displayName);
+      txt = txt.replace(/<string name="app_name">[^<]*<\/string>/, `<string name="app_name">${escapedName}</string>`);
+      txt = txt.replace(/<string name="title_activity_main">[^<]*<\/string>/, `<string name="title_activity_main">${escapedName}</string>`);
+    }
+    txt = txt.replace(/<string name="package_name">[^<]*<\/string>/, `<string name="package_name">${androidPackage}</string>`);
+    txt = txt.replace(/<string name="custom_url_scheme">[^<]*<\/string>/, `<string name="custom_url_scheme">${androidPackage}</string>`);
+    fs.writeFileSync(stringsXml, txt, 'utf8');
+    console.log('- Android: Updated strings.xml');
+  }
+}
+
+function findMainActivity(javaBase) {
+  if (!fs.existsSync(javaBase)) return null;
+
+  const entries = fs.readdirSync(javaBase, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(javaBase, entry.name);
+    if (entry.isDirectory()) {
+      const found = findMainActivity(fullPath);
+      if (found) return found;
+    } else if (entry.name === 'MainActivity.java') {
+      return fullPath;
+    }
+  }
+
+  return null;
+}
+
+function removeEmptyParentDirs(startDir, stopDir) {
+  let dirToClean = startDir;
+  while (dirToClean !== stopDir && dirToClean.startsWith(stopDir)) {
+    const remaining = fs.readdirSync(dirToClean);
+    if (remaining.length) break;
+
+    fs.rmdirSync(dirToClean);
+    dirToClean = path.dirname(dirToClean);
+  }
+}
+
+// Renomme le répertoire de l'activité principale Android pour correspondre au package.
+function updateAndroidActivityPackage(androidPackage) {
+  if (!androidPackage) return;
+
+  const javaBase = path.join(root, 'android', 'app', 'src', 'main', 'java');
+  const newPkgPath = androidPackage.replace(/\./g, path.sep);
+  const newActivityDir = path.join(javaBase, newPkgPath);
+  const newActivityFile = path.join(newActivityDir, 'MainActivity.java');
+  const existingActivityFile = findMainActivity(javaBase);
+
+  if (!existingActivityFile) {
+    console.warn('- Android: MainActivity.java not found, skipping activity package update');
+    return;
+  }
+
+  const existingDir = path.dirname(existingActivityFile);
+  const content = fs.readFileSync(existingActivityFile, 'utf8');
+  const updatedContent = content.replace(/^package\s+[^;]+;/m, `package ${androidPackage};`);
+
+  if (existingDir === newActivityDir) {
+    if (content !== updatedContent) {
+      fs.writeFileSync(existingActivityFile, updatedContent, 'utf8');
+      console.log('- Android: Updated package declaration in MainActivity.java');
+    }
+    return;
+  }
+
+  fs.mkdirSync(newActivityDir, { recursive: true });
+  fs.writeFileSync(newActivityFile, updatedContent, 'utf8');
+  fs.unlinkSync(existingActivityFile);
+  removeEmptyParentDirs(existingDir, javaBase);
+  console.log(`- Android: Moved MainActivity.java to ${path.relative(root, newActivityFile)}`);
+}
+
+// Synchronise la version de l'app à partir de la configuration, sans incrémenter les numéros de build.
+function syncVersions(version) {
+  if (!version) {
+    throw new Error('No versionNumber defined in app config');
+  }
+
+  const gradle = path.join(root, 'android', 'app', 'build.gradle');
+  if (fs.existsSync(gradle)) {
+    let txt = fs.readFileSync(gradle, 'utf8');
+    txt = txt.replace(/versionName\s+"[^"]+"/g, `versionName "${version}"`);
     fs.writeFileSync(gradle, txt, 'utf8');
     console.log(`- Android: versionName=${version} (build number unchanged)`);
   }
 
-  // iOS: synchronise MARKETING_VERSION avec la config (sans modifier CURRENT_PROJECT_VERSION)
   const pbxproj = path.join(root, 'ios', 'App', 'App.xcodeproj', 'project.pbxproj');
   if (fs.existsSync(pbxproj)) {
     let txt = fs.readFileSync(pbxproj, 'utf8');
@@ -313,6 +329,75 @@ try {
     fs.writeFileSync(pbxproj, txt, 'utf8');
     console.log(`- iOS: MARKETING_VERSION=${version} (build number unchanged)`);
   }
-} catch (e) {
-  console.warn('- Warning: unable to sync versions/build numbers:', e.message);
 }
+
+const selected = readSelection();
+console.log(`Preparing app for: ${selected}`);
+
+const appCfg = await loadAppConfig(selected);
+const displayName = appCfg.displayName || appCfg.appli || selected;
+const iosBundleId = appCfg.ios?.bundleId ? String(appCfg.ios.bundleId) : undefined;
+const androidPackage = appCfg.android?.packageName ? String(appCfg.android.packageName) : undefined;
+const version = String(appCfg.versionNumber || '').trim();
+
+// 1) Copie les fichiers spécifiques de l'app sélectionnée dans le répertoire src/appli.
+const srcAppliDir = path.join(root, 'src', 'appli');
+const appSourceDir = path.join(root, 'scripts', selected);
+copyDirectory(appSourceDir, srcAppliDir);
+console.log(`- Copied ${path.relative(root, appSourceDir)} to ${path.relative(root, srcAppliDir)}`);
+
+// 2) Copie le logo de l'app sélectionnée dans le répertoire src/assets/img.
+copyFileIfExists(
+  path.join(appSourceDir, 'logo.png'),
+  path.join(root, 'src', 'assets', 'img', 'logo.png'),
+  'app logo',
+);
+
+// 3) Génère la configuration runtime utilisée par le code React.
+writeAppVariantConfig(selected, appCfg, displayName);
+
+// 4) Met à jour capacitor.config.ts avec le nom et les identifiants de l'app sélectionnée.
+updateCapacitorConfig(displayName, iosBundleId, androidPackage);
+
+// 5) Prépare les entrées pour @capacitor/assets.
+const resourcesDir = path.join(root, 'resources');
+const originDir = path.join(appSourceDir, 'assets');
+
+// Définit les images (icon, splash, android-background, android-foreground) à utiliser pour la génération des assets natifs.
+copyFileIfExists(path.join(originDir, 'icon.png'), path.join(resourcesDir, 'icon.png'), 'app icon');
+copyFileIfExists(path.join(originDir, 'splash.png'), path.join(resourcesDir, 'splash.png'), 'splash');
+copyFileIfExists(path.join(originDir, 'splash-dark.png'), path.join(resourcesDir, 'splash-dark.png'), 'dark splash');
+copyFileIfExists(
+  path.join(originDir, 'android', 'icon-background.png'),
+  path.join(resourcesDir, 'android', 'icon-background.png'),
+  'Android icon background',
+);
+copyFileIfExists(
+  path.join(originDir, 'android', 'icon-foreground.png'),
+  path.join(resourcesDir, 'android', 'icon-foreground.png'),
+  'Android icon foreground',
+);
+generateNativeAssets();
+
+// 6) Applique les identifiants et les noms directement dans les projets natifs pour assurer la correction.
+try {
+  updateNativeProjects(displayName, iosBundleId, androidPackage);
+} catch (err) {
+  console.warn(`- Warning: unable to fully update native project files: ${err.message}`);
+}
+
+// 7) Renomme le package de l'activité principale Android pour suivre applicationId.
+try {
+  updateAndroidActivityPackage(androidPackage);
+} catch (err) {
+  console.warn(`- Warning: unable to update Android activity package: ${err.message}`);
+}
+
+// 8) Synchronise la version de l'app sans incrémenter les numéros de build.
+try {
+  syncVersions(version);
+} catch (err) {
+  console.warn(`- Warning: unable to sync versions/build numbers: ${err.message}`);
+}
+
+console.log('Preparation complete.');

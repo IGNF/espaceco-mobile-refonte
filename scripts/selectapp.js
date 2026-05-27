@@ -1,17 +1,20 @@
 #!/usr/bin/env node
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const app_names = {
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+const appNames = {
   espaceco: 'EspaceCo',
-  naviforest: 'NaviForest'
+  naviforest: 'NaviForest',
 };
 
 function parseArg(argv) {
   // Acceptés: --naviforest, --espaceco, naviforest, espaceco
-  const raw = argv.slice(2).find(a => !!a) || ''; // récupère l'argument passé en paramètre
+  const raw = argv.slice(2).find(Boolean) || '';
   const cleaned = raw.replace(/^--?/, '').toLowerCase();
-  return app_names[cleaned] || null;
+  return appNames[cleaned] || null;
 }
 
 const selected = parseArg(process.argv);
@@ -22,5 +25,5 @@ if (!selected) {
 
 // Stockage de la sélection dans scripts/.selected-app
 const outFile = path.resolve(__dirname, '.selected-app');
-fs.writeFileSync(outFile, selected + '\n', 'utf8');
+fs.writeFileSync(outFile, `${selected}\n`, 'utf8');
 console.log(`Successfully set selected app to: ${selected}`);

@@ -1,26 +1,28 @@
 #!/usr/bin/env node
-const { execSync } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const { bumpBuild } = require('./bump-build.js');
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { bumpBuild } from './bump-build.js';
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const VALID_TARGETS = new Set(['ios', 'android', 'both']);
 const rootDir = path.resolve(__dirname, '..');
 
-function run(cmd, options = {}) {
-  execSync(cmd, {
+function run(command, args = [], options = {}) {
+  execFileSync(command, args, {
     cwd: rootDir,
     stdio: 'inherit',
     ...options,
   });
 }
 
-function runCapture(cmd) {
-  return execSync(cmd, { cwd: rootDir, stdio: 'pipe' }).toString().trim();
+function runCapture(command, args = []) {
+  return execFileSync(command, args, { cwd: rootDir, stdio: 'pipe' }).toString().trim();
 }
 
 function ensureCleanGit() {
-  const status = runCapture('git status --porcelain');
+  const status = runCapture('git', ['status', '--porcelain']);
   if (status) {
     console.error('Working tree is not clean. Commit or stash changes before deployment.');
     process.exit(1);
@@ -33,6 +35,7 @@ function ensureSelectedApp() {
     console.warn('scripts/.selected-app missing. CI will default to EspaceCo.');
     return;
   }
+
   const content = fs.readFileSync(file, 'utf8').trim();
   if (content !== 'EspaceCo' && content !== 'NaviForest') {
     console.warn(`Unexpected value in scripts/.selected-app (${content}). CI will default to EspaceCo.`);
@@ -40,11 +43,12 @@ function ensureSelectedApp() {
 }
 
 function stageChanges() {
-  run('git add -u');
+  run('git', ['add', '-u']);
 }
 
 function createCommitMessage(targets) {
   if (targets.length === 2) return 'chore: bump build numbers';
+
   const label = targets[0] === 'ios' ? 'iOS' : 'Android';
   return `chore: bump ${label} build number`;
 }
@@ -70,14 +74,14 @@ function generateTags(targets) {
 
 function createTags(tags) {
   for (const tag of tags) {
-    run(`git tag -a ${tag} -m "${tag}"`);
+    run('git', ['tag', '-a', tag, '-m', tag]);
   }
 }
 
 function pushCommitAndTags(tags) {
-  run('git push');
+  run('git', ['push']);
   for (const tag of tags) {
-    run(`git push origin ${tag}`);
+    run('git', ['push', 'origin', tag]);
   }
 }
 
@@ -87,6 +91,7 @@ function main() {
     console.error('Usage: npm run deploy[:ios|:android]');
     process.exit(1);
   }
+
   const targets = targetArg === 'both' ? ['android', 'ios'] : [targetArg];
 
   ensureCleanGit();
@@ -103,8 +108,8 @@ function main() {
 
   const commitMessage = createCommitMessage(targets);
   try {
-    run(`git commit -m "${commitMessage}"`);
-  } catch (err) {
+    run('git', ['commit', '-m', commitMessage]);
+  } catch {
     console.error('Failed to create commit (maybe no staged changes).');
     process.exit(1);
   }
@@ -113,7 +118,7 @@ function main() {
   createTags(tags);
   pushCommitAndTags(tags);
 
-  const branch = runCapture('git rev-parse --abbrev-ref HEAD');
+  const branch = runCapture('git', ['rev-parse', '--abbrev-ref', 'HEAD']);
   console.log('\nDeployment ready. The following tags have been pushed:');
   for (const tag of tags) {
     console.log(`  - ${tag}`);
