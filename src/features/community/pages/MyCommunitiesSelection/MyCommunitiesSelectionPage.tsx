@@ -37,6 +37,9 @@ export function MyCommunitiesSelectionPage({
     activeCommunity,
     communities,
     activeMemberCommunityIds,
+    appVariant,
+    canSwitchCommunity,
+    hasRequiredCommunityAccess,
     selectedCommunityId,
     isLoading,
     selectCommunity,
@@ -70,15 +73,25 @@ export function MyCommunitiesSelectionPage({
 
         <main className={joinCSSClassNames(screen.screenContainer, stickyActions.contentWithStickyActions, styles.content)}>
           <h1 className={typography.title}>{t("myCommunities.title")}</h1>
-          <p className={typography.subtitle}>{t("myCommunities.subtitle")}</p>
+          <p className={typography.subtitle}>
+            {canSwitchCommunity ? t("myCommunities.subtitle") : appVariant.displayName}
+          </p>
 
           <div className={styles.descriptionSection}>
             <p className={joinCSSClassNames(typography.paragraph, typography.italic, styles.description)}>
-              {t("myCommunities.description")}{" "}
-              <ExternalLink href={EXTERNAL_LINKS.ESPACE_COLLABORATIF}>
-                {t("myCommunities.espaceCo")}
-              </ExternalLink>
-              .
+              {canSwitchCommunity ? (
+                <>
+                  {t("myCommunities.description")}{" "}
+                  <ExternalLink href={EXTERNAL_LINKS.ESPACE_COLLABORATIF}>
+                    {t("myCommunities.espaceCo")}
+                  </ExternalLink>
+                  .
+                </>
+              ) : hasRequiredCommunityAccess ? (
+                `Le guichet ${appVariant.displayName} est sélectionné automatiquement pour cette application.`
+              ) : (
+                appVariant.noAccessMessage
+              )}
             </p>
           </div>
 
@@ -101,21 +114,23 @@ export function MyCommunitiesSelectionPage({
           )}
         </main>
 
-        <div className={joinCSSClassNames(stickyActions.bar, styles.bar)}>
-          <div className={styles.actions}>
-            <Button
-              fullWidth
-              onClick={() => setIsConfirmAlertOpen(true)}
-              disabled={selectedCommunityId === null || selectedCommunityId === activeCommunity?.id}
-            >
-              {t("myCommunities.switch")}
-            </Button>
+        {canSwitchCommunity && (
+          <div className={joinCSSClassNames(stickyActions.bar, styles.bar)}>
+            <div className={styles.actions}>
+              <Button
+                fullWidth
+                onClick={() => setIsConfirmAlertOpen(true)}
+                disabled={selectedCommunityId === null || selectedCommunityId === activeCommunity?.id}
+              >
+                {t("myCommunities.switch")}
+              </Button>
 
-            <Button fullWidth variant="outline" onClick={() => setIsAllCommunitiesOpen(true)}>
-              {t("myCommunities.join")}
-            </Button>
+              <Button fullWidth variant="outline" onClick={() => setIsAllCommunitiesOpen(true)}>
+                {t("myCommunities.join")}
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <Alert
@@ -152,10 +167,12 @@ export function MyCommunitiesSelectionPage({
         </div>
       </Alert>
 
-      <AllCommunitiesPage
-        isOpen={isAllCommunitiesOpen}
-        onClose={() => setIsAllCommunitiesOpen(false)}
-      />
+      {canSwitchCommunity && (
+        <AllCommunitiesPage
+          isOpen={isAllCommunitiesOpen}
+          onClose={() => setIsAllCommunitiesOpen(false)}
+        />
+      )}
     </SlideUpPage>
   );
 }

@@ -24,7 +24,11 @@ export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
 	const { user, loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
-  const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
+  const {
+    activeCommunity,
+    fixedCommunityId,
+    isLoading: isCommunityLoading,
+  } = useCommunity();
   const { network, isLoading: isOfflineLoading } = useOffline();
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
@@ -43,6 +47,11 @@ export function LoginPage() {
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
 		if (hasInitialAuthCheckCompleted && hasStartupContextCompleted && isAuthenticated) {
+      if (fixedCommunityId !== null) {
+        navigate(activeCommunity ? '/home' : '/community-selection', { replace: true });
+        return;
+      }
+
       if ((!network.connected && activeCommunity) || (user?.communities_member?.length === 0)) {
         navigate('/home', { replace: true });
         return;
@@ -57,6 +66,7 @@ export function LoginPage() {
     isAuthenticated,
     navigate,
     network.connected,
+    fixedCommunityId,
     user?.communities_member?.length
   ]);
 

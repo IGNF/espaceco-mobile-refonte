@@ -5,11 +5,20 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from "../../hooks/useAuth";
 
 import { handleOAuthCallback } from "@/infra/auth/authService";
+import { appVariant } from "@/shared/config/appVariant";
 
 import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import screen from "@/shared/styles/screen.module.css";
 import typography from "@/shared/styles/typography.module.css";
+
+function canAccessFixedCommunity(userCommunityMembers: { community_id: number; role?: string }[] | undefined): boolean {
+  const fixedCommunityId = appVariant.fixedCommunityId;
+
+  return fixedCommunityId === undefined || (
+    userCommunityMembers?.some((member) => member.community_id === fixedCommunityId && member.role !== 'pending') ?? false
+  );
+}
 
 /**
  * Handles OAuth callback on web platform.
@@ -43,6 +52,16 @@ export function AuthCallbackPage() {
 
         if (result.success && result.user) {
           await setUserFromOAuthCallback(result.user);
+          if (!canAccessFixedCommunity(result.user.communities_member)) {
+            navigate("/community-selection", { replace: true });
+            return;
+          }
+
+          if (appVariant.fixedCommunityId !== undefined) {
+            navigate("/home", { replace: true });
+            return;
+          }
+
           if (result.user.communities_member?.length === 0) {
             navigate("/home", { replace: true });
             return;

@@ -22,6 +22,10 @@ export function CommunityFirstSelectionPage() {
     activeCommunities,
     selectedCommunityId,
     isLoading,
+    appVariant,
+    fixedCommunityId,
+    canSwitchCommunity,
+    hasRequiredCommunityAccess,
     // error,
     selectCommunity,
     confirmSelection,
@@ -95,10 +99,14 @@ export function CommunityFirstSelectionPage() {
                 <line x1="12" y1="9" x2="12" y2="13" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
-              {t("communitySelection.noCommunitiesTitle")}
+              {fixedCommunityId !== null && !hasRequiredCommunityAccess
+                ? appVariant.noAccessTitle
+                : t("communitySelection.noCommunitiesTitle")}
             </div>
             <p className={styles.warningCalloutMessage}>
-              {t("communitySelection.noCommunities")}
+              {fixedCommunityId !== null && !hasRequiredCommunityAccess
+                ? appVariant.noAccessMessage
+                : t("communitySelection.noCommunities")}
             </p>
           </div>
         ) : (
@@ -109,6 +117,7 @@ export function CommunityFirstSelectionPage() {
                 className={inputs.select}
                 value={selectedCommunityId ?? ""}
                 onChange={handleSelectChange}
+                disabled={!canSwitchCommunity}
               >
                 {activeCommunities && activeCommunities.map((community: CommunityMember) => (
                   <option key={community.community_id} value={community.community_id}>
@@ -133,17 +142,15 @@ export function CommunityFirstSelectionPage() {
         )}
       </div>
 
-      {activeCommunities && activeCommunities.length > 0 && (
-        <footer className={styles.backToLoginFooter}>
-          <button
-            type="button"
-            className={styles.backToLoginLink}
-            onClick={() => logout()}
-          >
-            {t("communitySelection.backToLogin")}
-          </button>
-        </footer>
-      )}
+      <footer className={styles.backToLoginFooter}>
+        <button
+          type="button"
+          className={styles.backToLoginLink}
+          onClick={() => logout()}
+        >
+          {t("communitySelection.backToLogin")}
+        </button>
+      </footer>
     </div>
   );
 }

@@ -87,7 +87,7 @@ const standaloneItems: StandaloneItem[] = [
 
 export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
-  const { activeCommunity } = useCommunity();
+  const { activeCommunity, canSwitchCommunity } = useCommunity();
   const { mode } = useOffline();
 
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
@@ -159,6 +159,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
           {menuGroups.map((group) => {
             const IconComponent = group.icon;
             const isExpanded = expandedGroups.has(group.id);
+            const items = group.items.filter((item) => canSwitchCommunity || item.id !== 'mesGroupes');
 
             return (
               <div key={group.id} className={styles.menuGroup}>
@@ -176,7 +177,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                 <div
                   className={`${styles.groupItems} ${isExpanded ? styles.groupItemsExpanded : ""}`}
                 >
-                  {group.items.map((item) => (
+                  {items.map((item) => (
                     <button
                       key={item.id}
                       className={`${styles.menuItem} ${isOffline && item.id === "modeHorsLigne" ? styles.menuItemOffline : ""}`}

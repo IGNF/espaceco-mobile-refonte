@@ -10,6 +10,7 @@ import type { Community, CommunityMember } from '@ign/mobile-core';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import type { AppVariantConfig } from '@/shared/config/appVariant';
 
 interface UseCommunitySelectionResult {
   activeCommunity: Community | null;
@@ -18,6 +19,10 @@ interface UseCommunitySelectionResult {
   selectedCommunityId: number | null;
   isLoading: boolean;
   error: string | null;
+  appVariant: AppVariantConfig;
+  fixedCommunityId: number | null;
+  canSwitchCommunity: boolean;
+  hasRequiredCommunityAccess: boolean;
   selectCommunity: (communityId: number) => void;
   confirmSelection: () => Promise<void>;
   isConfirming: boolean;
@@ -27,6 +32,10 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   const {
     activeCommunity,
     communities: contextCommunities,
+    appVariant,
+    fixedCommunityId,
+    canSwitchCommunity,
+    hasRequiredCommunityAccess,
     setActiveCommunity,
     isLoading: contextLoading
   } = useCommunity();
@@ -34,8 +43,13 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   const { user } = useAuth();
 
   const activeCommunities = useMemo(
-    () => user?.communities_member?.filter((m: CommunityMember) => m.role !== 'pending') ?? [],
-    [user?.communities_member]
+    () => {
+      const memberships = user?.communities_member?.filter((m: CommunityMember) => m.role !== 'pending') ?? [];
+      return fixedCommunityId === null
+        ? memberships
+        : memberships.filter((membership: CommunityMember) => membership.community_id === fixedCommunityId);
+    },
+    [fixedCommunityId, user?.communities_member]
   );
 
   const [selectedCommunityId, setSelectedCommunityId] = useState<number | null>(null);
@@ -45,14 +59,16 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
   useEffect(() => {
     if (contextLoading) return;
 
-    setSelectedCommunityId(activeCommunity?.id ?? contextCommunities[0]?.id ?? null);
-  }, [contextLoading, contextCommunities, activeCommunity]);
+    setSelectedCommunityId(fixedCommunityId ?? activeCommunity?.id ?? contextCommunities[0]?.id ?? null);
+  }, [contextLoading, fixedCommunityId, contextCommunities, activeCommunity]);
 
   // Select a community (in-memory, not persisted yet)
   const selectCommunity = useCallback((communityId: number) => {
+    if (fixedCommunityId !== null) return;
+
     console.log('selectCommunity => communityId', communityId);
     setSelectedCommunityId(communityId);
-  }, []);
+  }, [fixedCommunityId]);
 
   // Confirm and persist the selection via context
   const confirmSelection = useCallback(async () => {
@@ -80,6 +96,10 @@ export function useCommunitySelection(): UseCommunitySelectionResult {
     selectedCommunityId,
     isLoading: contextLoading,
     error,
+    appVariant,
+    fixedCommunityId,
+    canSwitchCommunity,
+    hasRequiredCommunityAccess,
     selectCommunity,
     confirmSelection,
     isConfirming,
