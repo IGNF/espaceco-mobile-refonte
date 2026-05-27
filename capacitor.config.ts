@@ -1,9 +1,13 @@
-import type { CapacitorConfig } from '@capacitor/cli';
-
-const config: CapacitorConfig = {
-  appId: 'fr.ign.espaceco',
-  appName: 'espaceco',
+const config = {
+  appId: 'fr.ign.collaboratif',
+  appName: 'Espace collaboratif IGN',
   webDir: 'dist',
+  ios: {
+    appId: 'fr.ign.collaboratif',
+  },
+  android: {
+    appId: 'fr.ign.guichet',
+  },
   cordova: {
     preferences: {
       bluetooth_restore_state: 'true',

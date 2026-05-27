@@ -1,4 +1,4 @@
-package fr.ign.espaceco;
+package fr.ign.guichet;
 
 import com.getcapacitor.BridgeActivity;
 
