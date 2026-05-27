@@ -1,5 +1,5 @@
 .container {
-  margin-top: 40%;
+  margin-top: 10vh;
   padding-bottom: calc(48px + var(--safe-bottom, 0px));
 }
 

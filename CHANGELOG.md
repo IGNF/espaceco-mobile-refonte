@@ -8,12 +8,23 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-- On peut maintenant changer le style des couches qui supported cette option (ticket #143)
+
+### Changed
+ 
+### Fixed
+
+## [0.0.10] - 2026-05-28
+
+### Added
+- On peut maintenant changer le style des couches qui supportent cette option (ticket #143)
+- La configuration de l'app (bundle ID, nom, icones, etc.) est maintenant correcte
+- La sélection de l'app EspaceCo/Naviforest est maintenant effective, via des scripts, comme sur l'app actuelle
 
 ### Changed
  
 ### Fixed
 - La transaction (envoi) d'un polygone après saisie directe fonctionne maintenant (ticket #115)
+- Correctifs CSS
 
 ## [0.0.9] - 2026-05-22
 
