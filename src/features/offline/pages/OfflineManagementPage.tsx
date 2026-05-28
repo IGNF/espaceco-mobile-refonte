@@ -181,6 +181,7 @@ export function OfflineManagementPage({
   const currentCacheLayers = activeCommunityCache
     ? activeCommunityCache.layers.map((cacheLayer) => cacheLayer.layer)
     : [];
+  const displayedCurrentCacheLayers = [...currentCacheLayers].reverse();
   const hasCurrentCacheLayers = currentCacheLayers.length > 0;
   const addableLayers = eligibleLayers.filter(
     (layer) => !selectedLayerKeys.includes(getCommunityLayerKey(layer))
@@ -217,6 +218,7 @@ export function OfflineManagementPage({
     (hasLoadedCache ? hasAddableLayers : hasEligibleLayers);
   const canToggleOfflineMode = hasOfflineData && isOfflineAllowed && isIdle;
   const layerPickerLayers = layerPickerMode === 'loaded-cache' ? addableLayers : eligibleLayers;
+  const displayedLayerPickerLayers = [...layerPickerLayers].reverse();
   const areAllLayerPickerLayersSelected =
     layerPickerLayers.length > 0 && layerPickerKeys.length === layerPickerLayers.length;
   const currentZoneEditorLayer = zoneEditorState?.layerKey
@@ -1033,7 +1035,7 @@ export function OfflineManagementPage({
           />
 
           <OfflineLayersSection
-            currentCacheLayers={currentCacheLayers}
+            currentCacheLayers={displayedCurrentCacheLayers}
             hasLoadedCache={hasLoadedCache}
             selectedLayerKeys={selectedLayerKeys}
             isOfflineAllowed={isOfflineAllowed}
@@ -1105,7 +1107,7 @@ export function OfflineManagementPage({
         mode={layerPickerMode}
         addableLayers={addableLayers}
         eligibleLayers={eligibleLayers}
-        layers={layerPickerLayers}
+        layers={displayedLayerPickerLayers}
         selectedKeys={layerPickerKeys}
         areAllLayersSelected={areAllLayerPickerLayersSelected}
         isSubmitting={isLayerPickerSubmitting}

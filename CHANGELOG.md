@@ -25,6 +25,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Le bouton de visualisation de la position d'un signalement sur la carte est maintenant sur la page de détails du signalement, plus sur la page d'édition (ticket #100)
  
 ### Fixed
+- Pour le mode hors ligne, la liste des couches sélectionnables est maintenant dans le même ordre que les couches du guichet (ticket #120)
 - La transaction (envoi) d'un polygone après saisie directe fonctionne maintenant (ticket #115)
 - Correctifs CSS
 
