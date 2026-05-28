@@ -19,7 +19,6 @@ import IconObject from '@/shared/assets/icons/icon-object.svg?react';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconTrack from '@/shared/assets/icons/icon-track.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
-import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 
 import inputs from '@/shared/styles/inputs.module.css';
 import styles from './ReportForm.module.css';
@@ -33,7 +32,6 @@ export interface ReportFormProps {
   onAddObject?: () => void;
   onAddSketch?: () => void;
   onAddTrace?: () => void;
-  onViewReportPosition?: () => void;
   isPickingObject?: boolean;
   isPickingSketch?: boolean;
   isPickingTrace?: boolean;
@@ -48,7 +46,6 @@ export function ReportForm({
   onAddObject,
   onAddSketch,
   onAddTrace,
-  onViewReportPosition,
   isPickingObject = false,
   isPickingSketch = false,
   isPickingTrace = false,
@@ -73,18 +70,6 @@ export function ReportForm({
         <div className={styles.positionCard}>
           <IconLocation className={styles.positionIcon} />
           <span className={styles.positionText}>{content}</span>
-          {onViewReportPosition && (
-            <Button
-              type="button"
-              color="medium"
-              variant="ghost"
-              className={styles.positionEditButton}
-              onClick={onViewReportPosition}
-              aria-label={t('reports.createOrEdit.form.viewPosition')}
-            >
-              <IconEye className={styles.positionEditIcon} />
-            </Button>
-          )}
           {onEditPosition && (
             <Button
               type="button"

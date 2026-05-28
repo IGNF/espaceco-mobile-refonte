@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.10] - 2026-05-28
+## [0.0.10] - 2026-05-29
 
 ### Added
 - On peut maintenant changer le style des couches qui supportent cette option (ticket #143)
@@ -21,6 +21,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - La sélection de l'app EspaceCo/Naviforest est maintenant effective, via des scripts, comme sur l'app actuelle
 
 ### Changed
+- L'ordre des boutons d'action sur la page de signalement (en édition ou en brouillon) a été modifié (ticket #100)
+- Le bouton de visualisation de la position d'un signalement sur la carte est maintenant sur la page de détails du signalement, plus sur la page d'édition (ticket #100)
  
 ### Fixed
 - La transaction (envoi) d'un polygone après saisie directe fonctionne maintenant (ticket #115)

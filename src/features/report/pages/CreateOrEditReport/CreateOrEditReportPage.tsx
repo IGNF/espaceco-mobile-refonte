@@ -195,9 +195,7 @@ export function CreateOrEditReportPage({
   const canPickObjects = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const canPickSketches = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const canPickTrace = isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
-  const canViewReportPosition = isEditMode && isDraftReport && Boolean(map) && Boolean(position);
   const isPickingPosition = mapPickerMode === 'position';
-  const isViewingPosition = mapPickerMode === 'view-position';
   const isPickingObject = mapPickerMode === 'object';
   const isPickingSketch = mapPickerMode === 'sketch';
   const isPickingTrace = mapPickerMode === 'trace';
@@ -376,10 +374,6 @@ export function CreateOrEditReportPage({
 
   const handleStartTracePicker = useCallback(() => {
     startMapPicker('trace');
-  }, [startMapPicker]);
-
-  const handleViewReportPosition = useCallback(() => {
-    startMapPicker('view-position');
   }, [startMapPicker]);
 
   const handleValidatePosition = useCallback(() => {
@@ -636,7 +630,7 @@ export function CreateOrEditReportPage({
   const mapPickerOverlay = useMemo(() => {
     if (!isOpen) return null;
 
-    if (isPickingPosition || isViewingPosition) {
+    if (isPickingPosition) {
       return (
         <div className={styles.locationPickerOverlay}>
           <div className={styles.locationTarget} aria-hidden="true">
@@ -645,12 +639,10 @@ export function CreateOrEditReportPage({
           <div className={styles.validateButtonContainer}>
             <Button
               color="primary"
-              onClick={isViewingPosition ? closeMapPickers : handleValidatePosition}
+              onClick={handleValidatePosition}
               className={styles.validateButton}
             >
-              {isViewingPosition
-                ? t('reports.createOrEdit.actions.backToReport')
-                : t('reports.createOrEdit.actions.validatePosition')}
+              {t('reports.createOrEdit.actions.validatePosition')}
             </Button>
           </div>
         </div>
@@ -735,7 +727,6 @@ export function CreateOrEditReportPage({
     isPickingPosition,
     isPickingSketch,
     isPickingTrace,
-    isViewingPosition,
     isTraceAudioEnabled,
     isTracePaused,
     isTraceRecording,
@@ -779,7 +770,6 @@ export function CreateOrEditReportPage({
             position={position}
             isLocating={isLocating}
             isTraceMode={isTraceReport}
-            onViewReportPosition={canViewReportPosition ? handleViewReportPosition : undefined}
             onEditPosition={canEditPosition ? handleStartPositionPicker : undefined}
             onAddObject={canPickObjects ? handleStartObjectPicker : undefined}
             onAddSketch={canPickSketches ? handleStartSketchPicker : undefined}
@@ -791,15 +781,6 @@ export function CreateOrEditReportPage({
 
           <div className={styles.buttonContainer}>
             <Button
-              color="primary"
-              fullWidth
-              loading={form.isSaving}
-              onClick={handleSaveDraft}
-            >
-              <IconSave className={buttonStyles.icon} />
-              {t('reports.createOrEdit.actions.saveDraft')}
-            </Button>
-            <Button
               color="tertiary"
               fullWidth
               loading={form.isSaving}
@@ -807,6 +788,15 @@ export function CreateOrEditReportPage({
             >
               <IconSend className={buttonStyles.icon} />
               {t('reports.createOrEdit.actions.send')}
+            </Button>
+            <Button
+              color="primary"
+              fullWidth
+              loading={form.isSaving}
+              onClick={handleSaveDraft}
+            >
+              <IconSave className={buttonStyles.icon} />
+              {t('reports.createOrEdit.actions.saveDraft')}
             </Button>
             <Button
               color="medium"

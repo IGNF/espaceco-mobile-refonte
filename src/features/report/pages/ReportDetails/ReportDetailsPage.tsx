@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
 import type OlMap from 'ol/Map';
+import Overlay from 'ol/Overlay';
 import { fromLonLat } from 'ol/proj';
 
 import { ReportStatus, type CommunityLayer } from '@ign/mobile-core';
@@ -38,7 +39,6 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
-import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-arrow-right.svg?react';
@@ -103,8 +103,16 @@ export function ReportDetailsPage({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const isDraft = report?.status === ReportStatus.Draft;
-  const position = report ? parsePointGeometry(report.geometry) : null;
+  const reportGeometry = report?.geometry;
+  const position = useMemo(
+    () => reportGeometry ? parsePointGeometry(reportGeometry) : null,
+    [reportGeometry]
+  );
   const canViewOnMap = Boolean(map && position);
+  const positionCoordinate = useMemo(
+    () => position ? fromLonLat([position.lon, position.lat]) : null,
+    [position]
+  );
 
   useEffect(() => {
     onMapPickerActiveChange?.(isViewingOnMap);
@@ -119,6 +127,29 @@ export function ReportDetailsPage({
       setIsViewingOnMap(false);
     }
   }, [isOpen, isViewingOnMap]);
+
+  useEffect(() => {
+    if (!isViewingOnMap || !map || !positionCoordinate || typeof document === 'undefined') {
+      return;
+    }
+
+    const markerElement = document.createElement('div');
+    markerElement.className = styles.reportLocationMarker;
+    markerElement.setAttribute('aria-hidden', 'true');
+
+    const markerOverlay = new Overlay({
+      element: markerElement,
+      positioning: 'center-center',
+      stopEvent: false,
+    });
+
+    markerOverlay.setPosition(positionCoordinate);
+    map.addOverlay(markerOverlay);
+
+    return () => {
+      map.removeOverlay(markerOverlay);
+    };
+  }, [isViewingOnMap, map, positionCoordinate]);
 
   // Check if user is a member of the report's community
   const reportCommunityId = report?.attributes?.raw?.[0]?.community ?? report?.communityId;
@@ -147,10 +178,10 @@ export function ReportDetailsPage({
   };
 
   const handleViewOnMap = () => {
-    if (!map || !position) return;
+    if (!map || !positionCoordinate) return;
 
     map.getView().animate({
-      center: fromLonLat([position.lon, position.lat]),
+      center: positionCoordinate,
       duration: 250,
     });
 
@@ -297,7 +328,22 @@ export function ReportDetailsPage({
 
         <main className={screen.screenContainer + " " + styles.content}>
           <div className={styles.titleSection}>
-            <h1 className={typography.title}>{t('reports.details.title')}</h1>
+            <div className={styles.titleHeadingRow}>
+              <h1 className={typography.title}>{t('reports.details.title')}</h1>
+              {canViewOnMap && (
+                <Button
+                  type="button"
+                  color="secondary"
+                  variant="ghost"
+                  iconOnly
+                  className={styles.positionViewButton}
+                  onClick={handleViewOnMap}
+                  aria-label={t('reports.details.viewOnMapButton')}
+                >
+                  <IconEye className={styles.positionViewIcon} />
+                </Button>
+              )}
+            </div>
             <p className={typography.subtitle}>
               {t('reports.details.subtitle')}{report.id}
             </p>
@@ -350,7 +396,9 @@ export function ReportDetailsPage({
             {position && (
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>{t('reports.details.position')} :</span>
-                <span className={styles.detailValue}>{position.lon.toFixed(6)}, {position.lat.toFixed(6)}</span>
+                <span className={styles.detailValue}>
+                  {position.lon.toFixed(6)}, {position.lat.toFixed(6)}
+                </span>
               </div>
             )}
 
@@ -383,13 +431,13 @@ export function ReportDetailsPage({
             <>
               {isDraft ? (
                 <>
-                  <Button color="primary" onClick={handleEditReport}>
-                    <IconPencil className={buttonStyles.icon} />
-                    {t('reports.details.editButton')}
-                  </Button>
                   <Button color="tertiary" onClick={handleSendReport} loading={isSending}>
                     <IconSend className={buttonStyles.icon} />
                     {t('reports.details.sendButton')}
+                  </Button>
+                  <Button color="primary" onClick={handleEditReport}>
+                    <IconPencil className={buttonStyles.icon} />
+                    {t('reports.details.editButton')}
                   </Button>
                   <Button color="danger" onClick={handleDeleteReport}>
                     <IconDelete className={buttonStyles.icon} />
@@ -406,15 +454,6 @@ export function ReportDetailsPage({
                   <Button color="primary" onClick={handleRespond} disabled={!canReply}>
                     <IconPencil className={buttonStyles.icon} />
                     {t('reports.details.respondButton')}
-                  </Button>
-                  <Button
-                    color="medium"
-                    variant="outline"
-                    onClick={handleViewOnMap}
-                    disabled={!canViewOnMap}
-                  >
-                    <IconEye className={buttonStyles.icon} />
-                    {t('reports.details.viewOnMapButton')}
                   </Button>
                   {!canReply && (
                     <p className={styles.permissionMessage}>
@@ -581,9 +620,6 @@ export function ReportDetailsPage({
       {isViewingOnMap && typeof document !== 'undefined'
         ? createPortal(
           <div className={styles.locationViewerOverlay}>
-            <div className={styles.locationTarget} aria-hidden="true">
-              <IconAdd className={styles.locationTargetIcon} />
-            </div>
             <div className={styles.backToReportButtonContainer}>
               <Button
                 color="primary"
