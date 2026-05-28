@@ -15,6 +15,10 @@
   background: white;
 }
 
+.layerTitle {
+  overflow-wrap: break-word;
+}
+
 .detailsList {
   display: flex;
   flex-direction: column;

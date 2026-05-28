@@ -175,12 +175,14 @@ export function DirectContributionFeatureDetailsPage({
         )}
       >
         <section className={styles.summaryCard}>
-          <h2 className={typography.heading1}>
+          <h2 className={joinCSSClassNames(typography.heading1, styles.layerTitle)}>
             {candidate.label}
           </h2>
-          <p className={typography.caption}>
-            {candidate.layer.title}
-          </p>
+          {(candidate.layer.title && candidate.layer.title.length > 0) ? (
+            <p className={typography.caption}>
+              {candidate.layer.title}
+            </p>
+          ) : null}
         </section>
 
         <section className={styles.detailsCard}>
