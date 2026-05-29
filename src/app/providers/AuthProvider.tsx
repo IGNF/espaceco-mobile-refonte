@@ -5,6 +5,7 @@ import * as authService from "@/infra/auth";
 import type { AppUser } from "@/domain/user/models";
 import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
 import { isAppError, toAppError } from '@/shared/errors/appError';
+import { clearSessionSentReports } from '@/features/report/state/sessionSentReportsStore';
 
 const userStorage = new UserStorageAdapter();
 
@@ -66,6 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await authService.loginWithPassword(email, password);
       if (result.success && result.user) {
+        clearSessionSentReports();
         await userStorage.saveUser(result.user);
         setUser(result.user);
       }
@@ -80,6 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await authService.loginWithOAuth();
       if (result.success && result.user) {
+        clearSessionSentReports();
         await userStorage.saveUser(result.user);
         setUser(result.user);
       }
@@ -90,6 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const setUserFromOAuthCallback = useCallback(async (user: AppUser) => {
+    clearSessionSentReports();
     await userStorage.saveUser(user);
     setUser(user);
   }, []);
@@ -144,6 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.logout();
     } finally {
       await userStorage.clearAll();
+      clearSessionSentReports();
       setUser(null);
       setIsLoading(false);
     }

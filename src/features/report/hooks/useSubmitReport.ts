@@ -15,6 +15,7 @@ import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
 
 import { ReportSubmitError, toReportSubmitError } from '@/features/report/errors/reportSubmitError';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
+import { addSessionSentReport } from '@/features/report/state/sessionSentReportsStore';
 import {
   normalizeSketchForApi,
   sanitizeFeaturesForSketchPayload,
@@ -135,6 +136,11 @@ function toFallbackSubmittedReport(report: Report, serverId: number): AppReport 
   };
 }
 
+function recordSubmittedReport(report: AppReport): AppReport {
+  addSessionSentReport(report);
+  return report;
+}
+
 export function useSubmitReport(): UseSubmitReportReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<ReportSubmitError | null>(null);
@@ -154,7 +160,9 @@ export function useSubmitReport(): UseSubmitReportReturn {
         await deleteLocalReportQuietly(reportPayload.id);
 
         const serverReport = await fetchServerReport(syncState.serverId);
-        return serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId);
+        return recordSubmittedReport(
+          serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId)
+        );
       }
 
       // Retry path for reports already created on server with pending attachment uploads.
@@ -164,7 +172,9 @@ export function useSubmitReport(): UseSubmitReportReturn {
           await deleteLocalReportQuietly(reportPayload.id);
 
           const serverReport = await fetchServerReport(syncState.serverId);
-          return serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId);
+          return recordSubmittedReport(
+            serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId)
+          );
         } catch (attachmentError) {
           await persistAttachmentRetryState(reportPayload, syncState.serverId);
           const submitError = new ReportSubmitError({
@@ -201,7 +211,7 @@ export function useSubmitReport(): UseSubmitReportReturn {
       // Delete the local draft now that the API accepted it
       await deleteLocalReportQuietly(reportPayload.id);
 
-      return appReport;
+      return recordSubmittedReport(appReport);
     } catch (err) {
       setError(toReportSubmitError(err, 'reportCreationFailed'));
       return null;

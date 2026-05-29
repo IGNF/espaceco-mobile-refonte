@@ -163,7 +163,7 @@
     "signalements": {
       "title": "Signalements",
       "signalementsGroupe": "Signalements du groupe",
-      "mesSignalements": "Mes signalements en cours",
+      "mesSignalements": "Mes signalements",
       "nouveauSignalement": "Nouveau signalement",
       "aPropos": "À propos des signalements"
     },
@@ -652,8 +652,25 @@
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
       "loadingReports": "Chargement de vos signalements...",
       "notConnected": "Vous devez être connecté pour voir vos signalements",
-      "noReports": "Aucun brouillon enregistré",
-      "noMoreReports": "Tous vos signalements ont été chargés"
+      "noReports": "Aucun signalement enregistré",
+      "noMoreReports": "Tous vos signalements ont été chargés",
+      "actions": {
+        "sendDrafts": "Envoyer ({{count}})",
+        "delete": "Supprimer"
+      },
+      "deleteChoice": {
+        "title": "Supprimer les signalements",
+        "sessionSentButton": "Signalements envoyés durant cette session",
+        "allButton": "Tous les signalements",
+        "cancelButton": "Annuler",
+        "noSessionSentReports": "Aucun signalement n'a été envoyé durant cette session."
+      },
+      "deleteAll": {
+        "title": "Supprimer tous les signalements",
+        "message": "Tous vos signalements seront supprimés : ceux envoyés durant cette session et les brouillons enregistrés sur cet appareil.",
+        "confirmButton": "Supprimer",
+        "cancelButton": "Annuler"
+      }
     },
     "filters": {
       "headerTitle": "Filtrer",

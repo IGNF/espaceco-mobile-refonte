@@ -2,6 +2,10 @@
 	background-color: var(--color-light-light);
 }
 
+.contentWithActions {
+	padding-bottom: calc(132px + var(--safe-bottom, 0px));
+}
+
 .titleSection {
 	text-align: center;
 	margin-bottom: 24px;
@@ -81,7 +85,30 @@
 	font-style: italic;
 }
 
+.actionsBar {
+	position: fixed;
+	right: var(--safe-right, 0px);
+	bottom: 0;
+	left: var(--safe-left, 0px);
+	z-index: 2;
+	display: flex;
+	gap: 12px;
+	padding: 12px 20px var(--safe-bottom, 0px);
+}
+
 .hiddenBehindChild {
 	visibility: hidden;
 	pointer-events: none;
+}
+
+@media (max-width: 480px) {
+	.contentWithActions {
+		padding-bottom: calc(124px + var(--safe-bottom, 0px));
+	}
+
+	.actionsBar {
+		flex-direction: column;
+		padding-right: 16px;
+		padding-left: 16px;
+	}
 }

@@ -7,16 +7,22 @@ import type { CommunityLayer } from '@ign/mobile-core';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useMyReports } from '@/features/report/hooks/useMyReports';
+import { useMyReportsBulkActions } from '@/features/report/hooks/useMyReportsBulkActions';
 import { ReportRow } from '@/features/report/components/Reports/ReportRow';
 import { ReportDetailsPage } from '@/features/report/pages/ReportDetails/ReportDetailsPage';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
+import { Button } from '@/shared/ui/Button';
+import { Alert } from '@/shared/ui/Alert';
+import { joinCSSClassNames } from '@/shared/utils/join';
+import { showToastSafe } from '@/shared/utils/toast';
 
 import type { AppReport } from '@/domain/report/models';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from "@/shared/styles/typography.module.css";
+import stickyActions from '@/shared/styles/stickyActions.module.css';
 
 import styles from '../reportsListPage.module.css';
 
@@ -40,7 +46,23 @@ export function MyReportsPage({
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
   const { communities, activeCommunity } = useCommunity();
-  const { reports, isLoading, error, refetch } = useMyReports();
+  const { reports, draftReports, sentSessionReports, isLoading, error, refetch } = useMyReports();
+  const [isDeleteChoiceOpen, setIsDeleteChoiceOpen] = useState(false);
+  const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
+  const {
+    isSendingDrafts,
+    isDeletingReports,
+    isBulkActionRunning,
+    sendDraftReports,
+    deleteSentSessionReports,
+    deleteAllReports,
+  } = useMyReportsBulkActions({
+    draftReports,
+    sentSessionReports,
+    refetch,
+    map,
+  });
+  const hasReports = reports.length > 0;
 
   useEffect(() => {
     if (isOpen) {
@@ -82,6 +104,42 @@ export function MyReportsPage({
     refetch();
     onClose();
   }, [onClose, refetch]);
+
+  const handleOpenDeleteChoice = useCallback(() => {
+    setIsDeleteChoiceOpen(true);
+  }, []);
+
+  const handleCloseDeleteChoice = useCallback(() => {
+    setIsDeleteChoiceOpen(false);
+  }, []);
+
+  const handleCloseDeleteAllConfirm = useCallback(() => {
+    setIsDeleteAllConfirmOpen(false);
+  }, []);
+
+  const handleDeleteSentSessionReports = useCallback(async () => {
+    if (sentSessionReports.length === 0) {
+      await showToastSafe({
+        text: t('reports.myReports.deleteChoice.noSessionSentReports'),
+        duration: 'short',
+        position: 'top',
+      });
+      return;
+    }
+
+    await deleteSentSessionReports();
+    setIsDeleteChoiceOpen(false);
+  }, [deleteSentSessionReports, sentSessionReports.length, t]);
+
+  const handleOpenDeleteAllConfirm = useCallback(() => {
+    setIsDeleteChoiceOpen(false);
+    setIsDeleteAllConfirmOpen(true);
+  }, []);
+
+  const handleDeleteAllReports = useCallback(async () => {
+    await deleteAllReports();
+    setIsDeleteAllConfirmOpen(false);
+  }, [deleteAllReports]);
 
   const renderContent = () => {
     if (isUserLoading) {
@@ -135,7 +193,13 @@ export function MyReportsPage({
         onClose={onClose}
       />
 
-      <main className={screen.screenExtendedContainer + " " + styles.content}>
+      <main
+        className={joinCSSClassNames(
+          screen.screenExtendedContainer,
+          styles.content,
+          user && hasReports && styles.contentWithActions
+        )}
+      >
         <div className={styles.titleSection}>
           <h1 className={typography.title}>{t('reports.myReports.title')}</h1>
           <p className={typography.subtitle}>
@@ -148,6 +212,29 @@ export function MyReportsPage({
 
         {renderContent()}
       </main>
+
+      {user && hasReports ? (
+        <footer className={joinCSSClassNames(stickyActions.bar, styles.actionsBar)}>
+          <Button
+            type="button"
+            fullWidth
+            onClick={() => void sendDraftReports()}
+            disabled={draftReports.length === 0 || isBulkActionRunning}
+            loading={isSendingDrafts}
+          >
+            {t('reports.myReports.actions.sendDrafts', { count: draftReports.length })}
+          </Button>
+          <Button
+            type="button"
+            fullWidth
+            color="danger"
+            onClick={handleOpenDeleteChoice}
+            disabled={isBulkActionRunning}
+          >
+            {t('reports.myReports.actions.delete')}
+          </Button>
+        </footer>
+      ) : null}
 
       <ReportDetailsPage
         isOpen={selectedReport !== null}
@@ -162,6 +249,55 @@ export function MyReportsPage({
         hasNextReport={hasNextReport}
         onPreviousReport={hasPreviousReport ? handlePreviousReport : undefined}
         onNextReport={hasNextReport ? handleNextReport : undefined}
+      />
+
+      <Alert
+        isOpen={isDeleteChoiceOpen}
+        onClose={handleCloseDeleteChoice}
+        title={t('reports.myReports.deleteChoice.title')}
+        buttons={[
+          {
+            label: t('reports.myReports.deleteChoice.sessionSentButton'),
+            onClick: () => void handleDeleteSentSessionReports(),
+            color: 'danger',
+            variant: 'outline',
+            disabled: isDeletingReports,
+            loading: isDeletingReports,
+          },
+          {
+            label: t('reports.myReports.deleteChoice.allButton'),
+            onClick: handleOpenDeleteAllConfirm,
+            color: 'danger',
+            disabled: isDeletingReports,
+          },
+          {
+            label: t('reports.myReports.deleteChoice.cancelButton'),
+            onClick: handleCloseDeleteChoice,
+            variant: 'outline',
+            disabled: isDeletingReports,
+          },
+        ]}
+      />
+
+      <Alert
+        isOpen={isDeleteAllConfirmOpen}
+        onClose={handleCloseDeleteAllConfirm}
+        title={t('reports.myReports.deleteAll.title')}
+        subtitle={t('reports.myReports.deleteAll.message')}
+        buttons={[
+          {
+            label: t('reports.myReports.deleteAll.confirmButton'),
+            onClick: () => void handleDeleteAllReports(),
+            color: 'danger',
+            loading: isDeletingReports,
+          },
+          {
+            label: t('reports.myReports.deleteAll.cancelButton'),
+            onClick: handleCloseDeleteAllConfirm,
+            variant: 'outline',
+            disabled: isDeletingReports,
+          },
+        ]}
       />
     </SlideUpPage>
   );
