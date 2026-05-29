@@ -135,7 +135,7 @@ export function MyReportsPage({
         onClose={onClose}
       />
 
-      <main className={screen.screenContainer + " " + styles.content}>
+      <main className={screen.screenExtendedContainer + " " + styles.content}>
         <div className={styles.titleSection}>
           <h1 className={typography.title}>{t('reports.myReports.title')}</h1>
           <p className={typography.subtitle}>

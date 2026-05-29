@@ -648,7 +648,7 @@
       "headerTitle": "Mes signalements en cours",
       "headerSubtitle": "Groupe actif",
       "title": "Mes signalements en cours",
-      "description": "faits sur l'Espace collaboratif IGN mobile",
+      "description": "faits depuis la dernière connexion à l'application",
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
       "loadingReports": "Chargement de vos signalements...",
       "notConnected": "Vous devez être connecté pour voir vos signalements",
