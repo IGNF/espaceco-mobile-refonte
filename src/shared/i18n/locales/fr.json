@@ -648,7 +648,7 @@
       "headerTitle": "Mes signalements en cours",
       "headerSubtitle": "Groupe actif",
       "title": "Mes signalements en cours",
-      "description": "faits depuis la dernière connexion à l'application",
+      "description": "Faits depuis la dernière connexion à l'application",
       "description2": "Gérez vos signalements ici. Vous pouvez les modifier, envoyer ou supprimer.",
       "loadingReports": "Chargement de vos signalements...",
       "notConnected": "Vous devez être connecté pour voir vos signalements",
@@ -656,19 +656,20 @@
       "noMoreReports": "Tous vos signalements ont été chargés",
       "actions": {
         "sendDrafts": "Envoyer ({{count}})",
-        "delete": "Supprimer"
+        "delete": "Vider la liste"
       },
       "deleteChoice": {
-        "title": "Supprimer les signalements",
+        "title": "Vider la liste",
         "sessionSentButton": "Signalements envoyés durant cette session",
         "allButton": "Tous les signalements",
         "cancelButton": "Annuler",
-        "noSessionSentReports": "Aucun signalement n'a été envoyé durant cette session."
+        "noSessionSentReports": "Aucun signalement n'a été envoyé durant cette session.",
+        "success": "Liste nettoyée avec succès."
       },
       "deleteAll": {
-        "title": "Supprimer tous les signalements",
-        "message": "Tous vos signalements seront supprimés : ceux envoyés durant cette session et les brouillons enregistrés sur cet appareil.",
-        "confirmButton": "Supprimer",
+        "title": "Nettoyer tous les signalements",
+        "message": "Les brouillons seront supprimés de cet appareil et les signalements envoyés durant cette session seront retirés de cette liste.",
+        "confirmButton": "Nettoyer",
         "cancelButton": "Annuler"
       }
     },

@@ -22,7 +22,6 @@ import type { AppReport } from '@/domain/report/models';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from "@/shared/styles/typography.module.css";
-import stickyActions from '@/shared/styles/stickyActions.module.css';
 
 import styles from '../reportsListPage.module.css';
 
@@ -51,14 +50,13 @@ export function MyReportsPage({
   const [isDeleteAllConfirmOpen, setIsDeleteAllConfirmOpen] = useState(false);
   const {
     isSendingDrafts,
-    isDeletingReports,
+    isClearingReports,
     isBulkActionRunning,
     sendDraftReports,
-    deleteSentSessionReports,
-    deleteAllReports,
+    clearSentSessionReports,
+    clearAllReports,
   } = useMyReportsBulkActions({
     draftReports,
-    sentSessionReports,
     refetch,
     map,
   });
@@ -117,7 +115,7 @@ export function MyReportsPage({
     setIsDeleteAllConfirmOpen(false);
   }, []);
 
-  const handleDeleteSentSessionReports = useCallback(async () => {
+  const handleClearSentSessionReports = useCallback(async () => {
     if (sentSessionReports.length === 0) {
       await showToastSafe({
         text: t('reports.myReports.deleteChoice.noSessionSentReports'),
@@ -127,19 +125,29 @@ export function MyReportsPage({
       return;
     }
 
-    await deleteSentSessionReports();
+    await clearSentSessionReports();
+    await showToastSafe({
+      text: t('reports.myReports.deleteChoice.success'),
+      duration: 'short',
+      position: 'top',
+    });
     setIsDeleteChoiceOpen(false);
-  }, [deleteSentSessionReports, sentSessionReports.length, t]);
+  }, [clearSentSessionReports, sentSessionReports.length, t]);
 
   const handleOpenDeleteAllConfirm = useCallback(() => {
     setIsDeleteChoiceOpen(false);
     setIsDeleteAllConfirmOpen(true);
   }, []);
 
-  const handleDeleteAllReports = useCallback(async () => {
-    await deleteAllReports();
+  const handleClearAllReports = useCallback(async () => {
+    await clearAllReports();
+    await showToastSafe({
+      text: t('reports.myReports.deleteChoice.success'),
+      duration: 'short',
+      position: 'top',
+    });
     setIsDeleteAllConfirmOpen(false);
-  }, [deleteAllReports]);
+  }, [clearAllReports, t]);
 
   const renderContent = () => {
     if (isUserLoading) {
@@ -214,7 +222,7 @@ export function MyReportsPage({
       </main>
 
       {user && hasReports ? (
-        <footer className={joinCSSClassNames(stickyActions.bar, styles.actionsBar)}>
+        <footer className={styles.actionsBar}>
           <Button
             type="button"
             fullWidth
@@ -258,23 +266,23 @@ export function MyReportsPage({
         buttons={[
           {
             label: t('reports.myReports.deleteChoice.sessionSentButton'),
-            onClick: () => void handleDeleteSentSessionReports(),
+            onClick: () => void handleClearSentSessionReports(),
             color: 'danger',
             variant: 'outline',
-            disabled: isDeletingReports,
-            loading: isDeletingReports,
+            disabled: isClearingReports,
+            loading: isClearingReports,
           },
           {
             label: t('reports.myReports.deleteChoice.allButton'),
             onClick: handleOpenDeleteAllConfirm,
             color: 'danger',
-            disabled: isDeletingReports,
+            disabled: isClearingReports,
           },
           {
             label: t('reports.myReports.deleteChoice.cancelButton'),
             onClick: handleCloseDeleteChoice,
             variant: 'outline',
-            disabled: isDeletingReports,
+            disabled: isClearingReports,
           },
         ]}
       />
@@ -287,15 +295,15 @@ export function MyReportsPage({
         buttons={[
           {
             label: t('reports.myReports.deleteAll.confirmButton'),
-            onClick: () => void handleDeleteAllReports(),
+            onClick: () => void handleClearAllReports(),
             color: 'danger',
-            loading: isDeletingReports,
+            loading: isClearingReports,
           },
           {
             label: t('reports.myReports.deleteAll.cancelButton'),
             onClick: handleCloseDeleteAllConfirm,
             variant: 'outline',
-            disabled: isDeletingReports,
+            disabled: isClearingReports,
           },
         ]}
       />

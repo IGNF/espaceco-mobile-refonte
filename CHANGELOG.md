@@ -19,6 +19,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - On peut maintenant changer le style des couches qui supportent cette option (ticket #143)
 - La configuration de l'app (bundle ID, nom, icones, etc.) est maintenant correcte
 - La sélection de l'app EspaceCo/Naviforest est maintenant effective, via des scripts, comme sur l'app actuelle
+- La page 'Mes signalements' affiche maintenant les signalements envoyés durant la session (ticket #105)
+- Des boutons d'action ont été ajoutés dans la page 'Mes signalements', pour envoyer tous les signalements, ou nettoyer la liste des signalements listés (ticket #105)
 
 ### Changed
 - L'ordre des boutons d'action sur la page de signalement (en édition ou en brouillon) a été modifié (ticket #100)
@@ -28,6 +30,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Pour le mode hors ligne, la liste des couches sélectionnables est maintenant dans le même ordre que les couches du guichet (ticket #120)
 - La transaction (envoi) d'un polygone après saisie directe fonctionne maintenant (ticket #115)
 - Correctifs CSS
+- Correctif d'un bug qui empêchait l'envoi de signalement
 
 ## [0.0.9] - 2026-05-22
 

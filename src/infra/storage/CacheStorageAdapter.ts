@@ -26,6 +26,7 @@ const FEATURE_CACHE_DISABLED_ON_WEB =
 
 export class CacheStorageAdapter implements ICacheStorage {
   private geoJSON: GeoJSON;
+  private unusableFeatureCachePaths = new Set<string>();
 
   constructor() {
     this.geoJSON = new GeoJSON();
@@ -158,6 +159,7 @@ export class CacheStorageAdapter implements ICacheStorage {
       encoding: 'utf8',
       recursive: true,
     });
+    this.unusableFeatureCachePaths.delete(path);
   }
 
   async loadFeatures(layerId: string): Promise<Feature[]> {
@@ -183,19 +185,25 @@ export class CacheStorageAdapter implements ICacheStorage {
       return [];
     }
 
+    const path = this.getFeatureCachePath(layerId);
+    if (this.unusableFeatureCachePaths.has(path)) {
+      return [];
+    }
+
     try {
-      const path = this.getFeatureCachePath(layerId);
       const metadata = await FileSystem.stat({
         path,
         directory: 'DATA',
       });
 
       if (Date.now() - metadata.modifiedAt > maxAgeMs) {
+        this.unusableFeatureCachePaths.add(path);
         return [];
       }
 
       return this.loadFeatures(layerId);
     } catch {
+      this.unusableFeatureCachePaths.add(path);
       return [];
     }
   }
@@ -211,6 +219,7 @@ export class CacheStorageAdapter implements ICacheStorage {
         path,
         directory: 'DATA',
       });
+      this.unusableFeatureCachePaths.add(path);
     } catch {
       console.log(`Features ${layerId} not found`);
     }

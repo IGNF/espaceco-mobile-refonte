@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { get as getProjection } from 'ol/proj';
 
 import type { Report } from '@ign/mobile-core';
-import { ReportManager } from '@ign/mobile-core';
+import { ReportManager, ReportStatus } from '@ign/mobile-core';
 
 import { collabApiClient } from '@/infra/api';
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
@@ -136,8 +136,8 @@ function toFallbackSubmittedReport(report: Report, serverId: number): AppReport 
   };
 }
 
-function recordSubmittedReport(report: AppReport): AppReport {
-  addSessionSentReport(report);
+async function recordSubmittedReport(report: AppReport): Promise<AppReport> {
+  await addSessionSentReport(report);
   return report;
 }
 
@@ -153,14 +153,17 @@ export function useSubmitReport(): UseSubmitReportReturn {
 
     try {
       const localReport = await resolveReportSnapshot(report);
-      const reportPayload = withSketchFromFeatures(localReport);
+      const reportPayload = withSketchFromFeatures({
+        ...localReport,
+        status: ReportStatus.Submit,
+      });
       const syncState = getReportSyncState(reportPayload);
 
       if (syncState.serverId && syncState.photosToSend && !reportPayload.photos?.length) {
         await deleteLocalReportQuietly(reportPayload.id);
 
         const serverReport = await fetchServerReport(syncState.serverId);
-        return recordSubmittedReport(
+        return await recordSubmittedReport(
           serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId)
         );
       }
@@ -172,7 +175,7 @@ export function useSubmitReport(): UseSubmitReportReturn {
           await deleteLocalReportQuietly(reportPayload.id);
 
           const serverReport = await fetchServerReport(syncState.serverId);
-          return recordSubmittedReport(
+          return await recordSubmittedReport(
             serverReport ?? toFallbackSubmittedReport(reportPayload, syncState.serverId)
           );
         } catch (attachmentError) {
@@ -211,7 +214,7 @@ export function useSubmitReport(): UseSubmitReportReturn {
       // Delete the local draft now that the API accepted it
       await deleteLocalReportQuietly(reportPayload.id);
 
-      return recordSubmittedReport(appReport);
+      return await recordSubmittedReport(appReport);
     } catch (err) {
       setError(toReportSubmitError(err, 'reportCreationFailed'));
       return null;

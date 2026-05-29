@@ -67,7 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await authService.loginWithPassword(email, password);
       if (result.success && result.user) {
-        clearSessionSentReports();
+        await clearSessionSentReports();
         await userStorage.saveUser(result.user);
         setUser(result.user);
       }
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const result = await authService.loginWithOAuth();
       if (result.success && result.user) {
-        clearSessionSentReports();
+        await clearSessionSentReports();
         await userStorage.saveUser(result.user);
         setUser(result.user);
       }
@@ -93,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const setUserFromOAuthCallback = useCallback(async (user: AppUser) => {
-    clearSessionSentReports();
+    await clearSessionSentReports();
     await userStorage.saveUser(user);
     setUser(user);
   }, []);
@@ -148,7 +148,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.logout();
     } finally {
       await userStorage.clearAll();
-      clearSessionSentReports();
+      await clearSessionSentReports();
       setUser(null);
       setIsLoading(false);
     }
