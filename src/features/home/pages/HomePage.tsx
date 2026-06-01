@@ -388,6 +388,7 @@ export function HomePage() {
   };
 
   const handleCloseLongPressMapAction = useCallback(() => {
+    console.log('handleCloseLongPressMapAction');
     setLongPressMapAction(null);
   }, []);
 
@@ -401,6 +402,7 @@ export function HomePage() {
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(true);
+    console.log('handleCreateReportFromLongPress');
     setLongPressMapAction(null);
     setIsSearchOpen(false);
     setActiveOverlay('/create-or-edit-report');
@@ -411,6 +413,7 @@ export function HomePage() {
 
     const { latitude, longitude } = longPressMapAction;
     setLongPressMapAction(null);
+    console.log('handleOpenLongPressInMapApp');
     try {
       await openInMapApp(latitude, longitude);
     } catch (error) {

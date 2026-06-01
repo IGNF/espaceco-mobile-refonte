@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/shared/ui/Button';
 import type { ButtonColor, ButtonVariant } from '@/shared/ui/Button';
@@ -7,7 +7,8 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './ActionSheet.module.css';
 
-const ANIMATION_DURATION = 200; // ms, matches CSS transition duration
+const OPEN_ANIMATION_DELAY = 20;
+const ANIMATION_DURATION = 300; // ms, matches CSS transition duration
 
 export interface ActionSheetButton {
   label: string;
@@ -38,6 +39,7 @@ export function ActionSheet({
   const titleId = useId();
   const [isVisible, setIsVisible] = useState(isOpen);
   const [shouldRender, setShouldRender] = useState(isOpen);
+  const canCloseFromOverlayRef = useRef(!isOpen);
 
   if (isOpen && !shouldRender) {
     setShouldRender(true);
@@ -47,18 +49,34 @@ export function ActionSheet({
   }
 
   useEffect(() => {
+    console.log('ActionSheet useEffect', isOpen);
     if (isOpen) {
-      const timer = setTimeout(() => {
+      canCloseFromOverlayRef.current = false;
+      const visibleTimer = setTimeout(() => {
         setIsVisible(true);
-      }, 20);
-      return () => clearTimeout(timer);
+      }, OPEN_ANIMATION_DELAY);
+      const overlayTimer = setTimeout(() => {
+        canCloseFromOverlayRef.current = true;
+      }, OPEN_ANIMATION_DELAY + ANIMATION_DURATION);
+      return () => {
+        clearTimeout(visibleTimer);
+        clearTimeout(overlayTimer);
+      };
     }
 
+    canCloseFromOverlayRef.current = false;
     const timer = setTimeout(() => {
+      console.log('ActionSheet useEffect setTimeout', isOpen);
       setShouldRender(false);
     }, ANIMATION_DURATION);
     return () => clearTimeout(timer);
   }, [isOpen]);
+
+  const handleOverlayClick = useCallback(() => {
+    if (canCloseFromOverlayRef.current) {
+      onClose();
+    }
+  }, [onClose]);
 
   if (!shouldRender) return null;
 
@@ -69,7 +87,7 @@ export function ActionSheet({
           styles.overlay,
           isVisible && styles.overlayVisible
         )}
-        onClick={onClose}
+        onClick={handleOverlayClick}
       />
       <section
         className={joinCSSClassNames(

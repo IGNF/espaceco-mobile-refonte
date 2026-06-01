@@ -10,6 +10,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Amélioration de la gestion de l'appui long sur la carte, pour déclencher l'ouverture de l'action sheet
+- Remplacement des label 'GPS' par 'GNSS'
  
 ### Fixed
 

@@ -30,6 +30,7 @@ export function useMapLongPress({
       pixelTolerance: LONG_PRESS_MOVE_TOLERANCE_PX,
       handleLongTouchEvent: (event) => {
         const [longitude, latitude] = toLonLat(event.coordinate);
+        console.log('longTouch', longitude, latitude);
         onLongPress({ latitude, longitude });
       },
     });

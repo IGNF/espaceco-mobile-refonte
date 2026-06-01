@@ -86,10 +86,10 @@
       "goTo": "Aller à"
     },
     "gpsSketch": {
-      "record": "Enregistrer une trace GPS",
+      "record": "Enregistrer une trace GNSS",
       "pause": "Mettre en pause",
       "resume": "Reprendre l'enregistrement",
-      "selectionTitle": "Trace GPS",
+      "selectionTitle": "Trace GNSS",
       "selectionSubtitle": "{{count}} point(s), {{distance}} m",
       "createReport": "Créer un signalement",
       "exportGpx": "Envoyer au format GPX",
@@ -360,7 +360,7 @@
     "headerSubtitle": "Groupe actif",
     "updated": "Paramètres mis à jour.",
     "gps": {
-      "title": "Source GPS",
+      "title": "Source GNSS",
       "description": "Choisissez la source de géolocalisation utilisée par l'application pour le centrage carte et la saisie de trace.",
       "currentSource": "Source active",
       "chooseSource": "Source souhaitée",
@@ -368,24 +368,24 @@
         "internal": "GPS interne",
         "external": "GPS externe (Bluetooth)"
       },
-      "pluginUnavailable": "Le plugin de sélection de source GPS n'est pas disponible sur cet environnement.",
-      "changeUnsupported": "Le changement de source GPS externe n'est pas supporté sur cette plateforme.",
-      "apply": "Appliquer la source GPS",
-      "applySuccess": "Source GPS mise à jour.",
+      "pluginUnavailable": "Le plugin de sélection de source GNSS n'est pas disponible sur cet environnement.",
+      "changeUnsupported": "Le changement de source GNSS externe n'est pas supporté sur cette plateforme.",
+      "apply": "Appliquer la source GNSS",
+      "applySuccess": "Source GNSS mise à jour.",
       "errors": {
-        "notAvailable": "Impossible de changer la source GPS sur cet appareil.",
-        "unsupportedOnPlatform": "Le changement de source GPS n'est pas supporté sur cette plateforme.",
-        "noPairedDevice": "Aucun GPS externe appairé trouvé.",
+        "notAvailable": "Impossible de changer la source GNSS sur cet appareil.",
+        "unsupportedOnPlatform": "Le changement de source GNSS n'est pas supporté sur cette plateforme.",
+        "noPairedDevice": "Aucun GNSS externe appairé trouvé.",
         "selectionCanceled": "Aucun appareil Bluetooth sélectionné.",
-        "connectionFailed": "Impossible de se connecter au GPS externe.",
-        "unknown": "Une erreur est survenue lors du changement de source GPS."
+        "connectionFailed": "Impossible de se connecter au GNSS externe.",
+        "unknown": "Une erreur est survenue lors du changement de source GNSS."
       }
     },
     "trace": {
-      "title": "Réglages trace GPS",
-      "description": "Personnalisez la précision minimale GPS et la distance minimale entre deux points pour la saisie de trace.",
-      "minAccuracy": "Précision GPS minimale (m)",
-      "tolerance": "Distance GPS (m)",
+      "title": "Réglages trace GNSS",
+      "description": "Personnalisez la précision minimale GNSS et la distance minimale entre deux points pour la saisie de trace.",
+      "minAccuracy": "Précision GNSS minimale (m)",
+      "tolerance": "Distance GNSS (m)",
       "apply": "Appliquer les réglages trace",
       "applySuccess": "Réglages de trace mis à jour.",
       "errors": {
@@ -701,7 +701,7 @@
       "description": "Pensez que lorsque vous faites un signalement celui-ci est public et peut être vu par d'autres utilisateurs. Veillez donc à la qualité des échanges et gardez à l'esprit que vous restez responsable de vos propos.",
       "question": "Quel type de signalement souhaitez-vous faire ?",
       "standardReport": "Signalement standard",
-      "traceReport": "Signalement avec une trace"
+      "traceReport": "Signalement via GNSS"
     },
     "createOrEdit": {
       "headerTitleCreate": "Nouveau signalement",
@@ -792,7 +792,7 @@
         "traceRecording": "Saisie de la trace en cours",
         "traceCount": "{{count}} trace(s)",
         "traceEmpty": "Aucune trace ajoutée pour le moment",
-        "traceItem": "Trace GPS ({{pointCount}} points)",
+        "traceItem": "Trace GNSS ({{pointCount}} points)",
         "traceRemove": "Supprimer la trace",
         "comingSoon": "bientot disponible",
         "validation": {
@@ -818,9 +818,9 @@
         "pdop": "PDOP : {{value}}",
         "heading": "Cap : {{value}}",
         "gpsQuality": {
-          "fix": "Fix GPS",
+          "fix": "Fix GNSS",
           "dgps-fix": "Fix DGPS",
-          "invalid": "Fix GPS invalide"
+          "invalid": "Fix GNSS invalide"
         },
         "cancel": "Annuler la trace",
         "statusIdle": "Appuyez sur enregistrer pour démarrer la trace",
@@ -832,7 +832,7 @@
     "fastReport": {
       "themePicker": {
         "title": "Signalement rapide",
-        "subtitle": "Choisissez un thème GPS.",
+        "subtitle": "Choisissez un thème GNSS.",
         "other": "Autres"
       },
       "gps": {
@@ -846,7 +846,7 @@
         "continue": "Continuer"
       },
       "offset": {
-        "title": "Déports GPS",
+        "title": "Déports GNSS",
         "mode": {
           "car": "Mode voiture",
           "pedestrian": "Mode piéton"
