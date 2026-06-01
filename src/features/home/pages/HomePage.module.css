@@ -170,11 +170,19 @@
 	background-color: var(--color-primary-light);
 }
 
-.gpsSketchRecordDot {
+.gpsSketchRecordDot,
+.gpsSketchStopSquare {
 	width: 18px;
 	height: 18px;
-	border-radius: 100px;
 	background-color: var(--color-danger, #cf1919);
+}
+
+.gpsSketchRecordDot {
+	border-radius: 100px;
+}
+
+.gpsSketchStopSquare {
+	border-radius: 4px;
 }
 
 .gpsSketchActionIcon {

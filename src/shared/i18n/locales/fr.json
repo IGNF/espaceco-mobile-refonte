@@ -85,8 +85,14 @@
       "createReport": "Créer un signalement",
       "goTo": "Aller à"
     },
+    "mapWorkChoice": {
+      "title": "Choisir le type de travail",
+      "guichet": "Travail sur le guichet",
+      "traces": "Travail sur les traces"
+    },
     "gpsSketch": {
       "record": "Enregistrer une trace GNSS",
+      "stop": "Arrêter l'enregistrement",
       "pause": "Mettre en pause",
       "resume": "Reprendre l'enregistrement",
       "selectionTitle": "Trace GNSS",

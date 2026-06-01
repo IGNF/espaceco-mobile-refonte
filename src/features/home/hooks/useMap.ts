@@ -31,6 +31,12 @@ interface UseMapOptions {
   isRotationEnabled?: boolean;
 }
 
+/**
+ * Le mode tracking est activé lorsque l'utilisateur appuie sur le bouton de suivi GPS.
+ * => on recentre automatiquement sur la position de l'utilisateur à intervalles réguliers (voir constante GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS)
+ * Le mode locked est activé lorsque l'utilisateur double-tap sur le bouton de centrage
+ * => on recentre automatiquement sur la position de l'utilisateur à intervalles réguliers (voir constante GEOLOCATION_LOCK_RECENTER_INTERVAL_MS)
+ */
 export type UserFollowingMode = 'none' | 'tracking' | 'locked';
 
 interface UseMapReturn {
@@ -41,6 +47,7 @@ interface UseMapReturn {
   lockUserLocationOnMap: () => void;
   userFollowingMode: UserFollowingMode;
   setUserFollowingMode: Dispatch<SetStateAction<UserFollowingMode>>;
+  setIsTrackingRecenterEnabled: Dispatch<SetStateAction<boolean>>;
   isLocating: boolean;
   isLockedUserLocation: boolean;
   isMapReady: boolean;
@@ -62,6 +69,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   isRotationEnabledRef.current = isRotationEnabled;
   const [map, setMap] = useState<Map | null>(null);
   const [userFollowingMode, setUserFollowingMode] = useState<UserFollowingMode>('none');
+  const [isTrackingRecenterEnabled, setIsTrackingRecenterEnabled] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
   const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
@@ -99,6 +107,11 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     const { longitude, latitude } = position.coords;
     await animateTo(map, [longitude, latitude], DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION, animationDuration);
   }, [animateTo]);
+
+  const centerViewOnPosition = useCallback((map: Map, position: Position) => {
+    const { longitude, latitude } = position.coords;
+    map.getView().setCenter(fromLonLat([longitude, latitude]));
+  }, []);
 
   const centerOnUserLocation = useCallback(async (animationDuration: number = 500) => {
     const map = mapRef.current;
@@ -147,7 +160,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   }, [centerOnUserLocation, userFollowingMode]);
 
   useEffect(() => {
-    if (userFollowingMode !== 'tracking') {
+    if (userFollowingMode !== 'tracking' || !isTrackingRecenterEnabled) {
       return;
     }
 
@@ -160,7 +173,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
           return;
         }
 
-        void animateToPosition(map, position, 0);
+        centerViewOnPosition(map, position);
       }, {
         enableHighAccuracy: true,
         timeout: 10000,
@@ -175,7 +188,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
         void EspaceCo_Geolocation.clearWatch(watchId);
       }
     };
-  }, [animateToPosition, userFollowingMode]);
+  }, [centerViewOnPosition, isTrackingRecenterEnabled, userFollowingMode]);
 
   // Initialize map
   useEffect(() => {
@@ -341,6 +354,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     lockUserLocationOnMap,
     userFollowingMode,
     setUserFollowingMode,
+    setIsTrackingRecenterEnabled,
     isLocating,
     isLockedUserLocation,
     isMapReady,

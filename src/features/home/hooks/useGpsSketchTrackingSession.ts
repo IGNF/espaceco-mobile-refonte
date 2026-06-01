@@ -32,6 +32,7 @@ export interface UseGpsSketchTrackingSessionOptions {
   map: OlMap | null;
   enabled: boolean;
   selectionEnabled: boolean;
+  onSelectSketch?: (feature: Feature<Geometry>, pixel: number[]) => boolean;
 }
 
 export interface UseGpsSketchTrackingSessionReturn {
@@ -44,6 +45,8 @@ export interface UseGpsSketchTrackingSessionReturn {
   togglePause: () => void;
   stopRecording: () => void;
   clearSelection: () => void;
+  selectSketch: (feature: Feature<Geometry>) => void;
+  getSketchesAtPixel: (pixel: number[]) => Feature<Geometry>[];
 }
 
 /**
@@ -55,6 +58,7 @@ export function useGpsSketchTrackingSession({
   map,
   enabled,
   selectionEnabled,
+  onSelectSketch,
 }: UseGpsSketchTrackingSessionOptions): UseGpsSketchTrackingSessionReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -67,8 +71,10 @@ export function useGpsSketchTrackingSession({
   });
 
   const sourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
+  const layerRef = useRef<VectorLayer<VectorSource<Feature<Geometry>>> | null>(null);
   const interactionRef = useRef<GeolocationDraw | null>(null);
   const selectInteractionRef = useRef<Select | null>(null);
+  const onSelectSketchRef = useRef(onSelectSketch);
   const recordingSettingsRef = useRef(recordingSettings);
 
   /**
@@ -108,6 +114,32 @@ export function useGpsSketchTrackingSession({
     setSelectedSketch(null);
   }, []);
 
+  const selectSketch = useCallback((feature: Feature<Geometry>) => {
+    const selectedFeatures = selectInteractionRef.current?.getFeatures();
+    selectedFeatures?.clear();
+    selectedFeatures?.push(feature);
+    setSelectedSketch(feature);
+    syncStatsFromLineString(feature);
+  }, [syncStatsFromLineString]);
+
+  const getSketchesAtPixel = useCallback((pixel: number[]): Feature<Geometry>[] => {
+    if (!map || !layerRef.current) return [];
+
+    const features: Feature<Geometry>[] = [];
+    map.forEachFeatureAtPixel(
+      pixel,
+      (feature) => {
+        features.push(feature as Feature<Geometry>);
+      },
+      {
+        hitTolerance: GPS_SKETCH_SELECT_HIT_TOLERANCE,
+        layerFilter: (layer) => layer === layerRef.current,
+      }
+    );
+
+    return features;
+  }, [map]);
+
   const deactivateInteraction = useCallback(() => {
     const interaction = interactionRef.current;
     if (!interaction) return;
@@ -119,21 +151,18 @@ export function useGpsSketchTrackingSession({
   }, [syncStatsFromSource]);
 
   /**
-   * Starts a fresh GPS sketch. Pause/resume keeps using the same active
-   * interaction, but a new recording clears the previous home-screen draft.
+   * Starts a fresh GPS sketch. Existing finalized traces stay in the source so
+   * users can record several traces in a row before selecting one.
    */
   const startRecording = useCallback(() => {
     const interaction = interactionRef.current;
-    const source = sourceRef.current;
-    if (!interaction || !source) return;
+    if (!interaction) return;
 
     clearSelection();
-    source.clear(true);
     syncStatsFromLineString(null);
     interaction.set('minAccuracy', recordingSettingsRef.current.minAccuracy);
     interaction.set('tolerance', recordingSettingsRef.current.tolerance);
     interaction.setActive(true);
-    interaction.setFollowTrack('auto');
     interaction.pause(false);
     setIsRecording(true);
     setIsPaused(false);
@@ -149,15 +178,16 @@ export function useGpsSketchTrackingSession({
 
     const nextPaused = !interaction.isPaused();
     interaction.pause(nextPaused);
-    if (!nextPaused) {
-      interaction.setFollowTrack('auto');
-    }
     setIsPaused(nextPaused);
   }, []);
 
   const stopRecording = useCallback(() => {
     deactivateInteraction();
   }, [deactivateInteraction]);
+
+  useEffect(() => {
+    onSelectSketchRef.current = onSelectSketch;
+  }, [onSelectSketch]);
 
   useEffect(() => {
     recordingSettingsRef.current = recordingSettings;
@@ -211,7 +241,7 @@ export function useGpsSketchTrackingSession({
       source,
       type: 'LineString',
       minZoom: TRACE_MIN_ZOOM,
-      followTrack: 'auto',
+      followTrack: false,
       tolerance: recordingSettingsRef.current.tolerance,
       minAccuracy: recordingSettingsRef.current.minAccuracy,
       style: TRACE_STYLE,
@@ -230,6 +260,7 @@ export function useGpsSketchTrackingSession({
     map.addInteraction(selectInteraction);
 
     sourceRef.current = source;
+    layerRef.current = sketchLayer;
     interactionRef.current = geolocationInteraction;
     selectInteractionRef.current = selectInteraction;
 
@@ -251,7 +282,13 @@ export function useGpsSketchTrackingSession({
 
     const onSelect = (event: SelectEvent) => {
       const feature = event.selected[0] as Feature<Geometry> | undefined;
+      if (feature && onSelectSketchRef.current?.(feature, event.mapBrowserEvent.pixel)) {
+        selectInteraction.getFeatures().clear();
+        return;
+      }
+
       setSelectedSketch(feature ?? null);
+      syncStatsFromLineString(feature);
     };
 
     const listenerKeys: EventsKey[] = [
@@ -277,6 +314,9 @@ export function useGpsSketchTrackingSession({
 
       if (sourceRef.current === source) {
         sourceRef.current = null;
+      }
+      if (layerRef.current === sketchLayer) {
+        layerRef.current = null;
       }
       if (interactionRef.current === geolocationInteraction) {
         interactionRef.current = null;
@@ -308,5 +348,7 @@ export function useGpsSketchTrackingSession({
     togglePause,
     stopRecording,
     clearSelection,
+    selectSketch,
+    getSketchesAtPixel,
   };
 }

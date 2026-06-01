@@ -17,6 +17,10 @@ export interface UseCommunityFeatureConsultationOptions {
   map: OlMap | null;
   vectorLayers: CommunityLayer[];
   disabled?: boolean;
+  onCandidatesAtPixel?: (
+    pixel: number[],
+    candidates: DirectContributionFeatureCandidate[]
+  ) => boolean;
 }
 export interface UseCommunityFeatureConsultationReturn {
   featureCandidates: DirectContributionFeatureCandidate[];
@@ -26,6 +30,8 @@ export interface UseCommunityFeatureConsultationReturn {
   closeFeatureChoice: () => void;
   closeFeatureDetails: () => void;
   goBackFromFeatureDetails: () => void;
+  getFeatureCandidatesAtPixel: (pixel: number[]) => DirectContributionFeatureCandidate[];
+  openFeatureCandidates: (candidates: DirectContributionFeatureCandidate[]) => void;
 }
 
 function getConsultationCandidateContextLabel(
@@ -45,6 +51,7 @@ export function useCommunityFeatureConsultation({
   map,
   vectorLayers,
   disabled = false,
+  onCandidatesAtPixel,
 }: UseCommunityFeatureConsultationOptions): UseCommunityFeatureConsultationReturn {
   const { t } = useTranslation();
   const [featureCandidates, setFeatureCandidates] = useState<
@@ -97,6 +104,60 @@ export function useCommunityFeatureConsultation({
     closeFeatureDetails();
   }, [closeFeatureDetails, featureCandidates.length]);
 
+  const getFeatureCandidatesAtPixel = useCallback((pixel: number[]) => {
+    if (!map || !layerService) return [];
+
+    const nextCandidatesByKey = new Map<string, DirectContributionFeatureCandidate>();
+
+    for (const communityLayer of vectorLayers) {
+      if (!communityLayer.visible || !communityLayer.table) {
+        continue;
+      }
+
+      const layerKey = getCommunityLayerKey(communityLayer);
+      const collabLayer = layerService.getCollabLayer(layerKey);
+      const collabSource = layerService.getCollabSource(layerKey);
+      if (!collabLayer || !collabSource) {
+        continue;
+      }
+
+      const layerCandidates = getDirectContributionFeatureCandidatesAtPixel({
+        map,
+        pixel,
+        layer: collabLayer,
+        source: collabSource,
+        communityLayer,
+        table: communityLayer.table,
+        hitTolerance: COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE,
+        fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
+      });
+
+      for (const candidate of layerCandidates) {
+        nextCandidatesByKey.set(
+          candidate.key,
+          {
+            ...candidate,
+            secondaryLabel: getConsultationCandidateContextLabel(candidate),
+          }
+        );
+      }
+    }
+
+    return Array.from(nextCandidatesByKey.values());
+  }, [layerService, map, t, vectorLayers]);
+
+  const openFeatureCandidates = useCallback((candidates: DirectContributionFeatureCandidate[]) => {
+    setFeatureCandidates(candidates);
+
+    if (candidates.length === 1) {
+      openFeatureDetails(candidates[0]);
+      return;
+    }
+
+    setSelectedFeatureCandidate(null);
+    setIsFeatureChoiceOpen(true);
+  }, [openFeatureDetails]);
+
   useEffect(() => {
     if (
       !map ||
@@ -109,56 +170,16 @@ export function useCommunityFeatureConsultation({
     }
 
     const handleMapSingleClick = (event: { pixel: number[] }) => {
-      const nextCandidatesByKey = new Map<string, DirectContributionFeatureCandidate>();
-
-      for (const communityLayer of vectorLayers) {
-        if (!communityLayer.visible || !communityLayer.table) {
-          continue;
-        }
-
-        const layerKey = getCommunityLayerKey(communityLayer);
-        const collabLayer = layerService.getCollabLayer(layerKey);
-        const collabSource = layerService.getCollabSource(layerKey);
-        if (!collabLayer || !collabSource) {
-          continue;
-        }
-
-        const layerCandidates = getDirectContributionFeatureCandidatesAtPixel({
-          map,
-          pixel: event.pixel,
-          layer: collabLayer,
-          source: collabSource,
-          communityLayer,
-          table: communityLayer.table,
-          hitTolerance: COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE,
-          fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
-        });
-
-        for (const candidate of layerCandidates) {
-          nextCandidatesByKey.set(
-            candidate.key,
-            {
-              ...candidate,
-              secondaryLabel: getConsultationCandidateContextLabel(candidate),
-            }
-          );
-        }
-      }
-
-      const nextCandidates = Array.from(nextCandidatesByKey.values());
+      const nextCandidates = getFeatureCandidatesAtPixel(event.pixel);
       if (nextCandidates.length === 0) {
         return;
       }
 
-      setFeatureCandidates(nextCandidates);
-
-      if (nextCandidates.length === 1) {
-        openFeatureDetails(nextCandidates[0]);
+      if (onCandidatesAtPixel?.(event.pixel, nextCandidates)) {
         return;
       }
 
-      setSelectedFeatureCandidate(null);
-      setIsFeatureChoiceOpen(true);
+      openFeatureCandidates(nextCandidates);
     };
 
     map.on('singleclick', handleMapSingleClick);
@@ -168,13 +189,13 @@ export function useCommunityFeatureConsultation({
     };
   }, [
     disabled,
+    getFeatureCandidatesAtPixel,
     isFeatureChoiceOpen,
     layerService,
     map,
-    openFeatureDetails,
+    onCandidatesAtPixel,
+    openFeatureCandidates,
     selectedFeatureCandidate,
-    t,
-    vectorLayers,
   ]);
 
   return {
@@ -185,5 +206,7 @@ export function useCommunityFeatureConsultation({
     closeFeatureChoice,
     closeFeatureDetails,
     goBackFromFeatureDetails,
+    getFeatureCandidatesAtPixel,
+    openFeatureCandidates,
   };
 }

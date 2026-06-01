@@ -10,11 +10,25 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+ 
+### Fixed
+
+## [0.0.11] - 2026-06-01
+
+### Added
+
+### Changed
 - Amélioration de la gestion de l'appui long sur la carte, pour déclencher l'ouverture de l'action sheet
 - Remplacement des label 'GPS' par 'GNSS'
 - Une erreur s'affiche systématiquement dans un Toast is l'envoi d'un signalement ne fonctionne pas
+- Lors de la résolution des conflits, on n'affiche que les valeurs n'étant pas 'undefined' (ticket #124)
+- Sur la page 'Mes signalements', en cas d'erreur d'envoi de signalement, on affiche ces erreurs directement sur la page (ticket #124 et #102)
+- Lors de l'enregistrement direct d'une trace, le rond rouge (record) est remplacé par un carré rouge, qui arrête l'enregistrement au tap (ticket #135)
+- S'il y a plusieurs éléments différents à l'endroit où on tap sur la carte (typiquement, trace GPS et objet de couche), on affiche une modal pour demander à l'utilisateur sur quel type d'éléments il veut travailler (ticket #135)
  
 ### Fixed
+- Il n'y a plus de changement brusque de zoom/recentrage lors de l'enregistrement d'une trace (ticket #135)
+- On peut maintenant enregistrer plusieurs traces à la suite sans qu'elles n'écrasent la précédente (ticket #135)
 
 ## [0.0.10] - 2026-05-29
 

@@ -59,6 +59,7 @@ import { useUserLocationMarker } from "@/features/home/hooks/useUserLocationMark
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
 import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
+import type { DirectContributionFeatureCandidate } from "@/features/map/types/directContributionFeatureCandidate";
 import { getCommunityLayerDirectContributionState } from "@/domain/community/directContribution";
 import styles from "./HomePage.module.css";
 import { overlayRoutes } from "@/app/router/routes";
@@ -93,6 +94,11 @@ function isOverlayRoute(route: string): route is OverlayRoute {
   return overlayRoutes.includes(route as OverlayRoute);
 }
 
+interface PendingMapWorkChoice {
+  sketch: Feature<Geometry>;
+  featureCandidates: DirectContributionFeatureCandidate[];
+}
+
 export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -114,6 +120,7 @@ export function HomePage() {
     hasInitialCenterCompleted,
     userFollowingMode,
     setUserFollowingMode,
+    setIsTrackingRecenterEnabled,
   } = useMap({
     centerOnUserLocation: offlineMode !== 'offline',
     skipGeoportailCapabilities: offlineMode === 'offline',
@@ -209,10 +216,15 @@ export function HomePage() {
   const [newReportInitialSketches, setNewReportInitialSketches] = useState<Feature<Geometry>[]>([]);
   const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
   const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
+  const [pendingMapWorkChoice, setPendingMapWorkChoice] = useState<PendingMapWorkChoice | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
   const geolocationTapTimeoutRef = useRef<number | null>(null);
   const geolocationLastTapRef = useRef(0);
+  const getGpsSketchesAtPixelRef = useRef<(pixel: number[]) => Feature<Geometry>[]>(() => []);
+  const getCommunityCandidatesAtPixelRef = useRef<
+    (pixel: number[]) => DirectContributionFeatureCandidate[]
+  >(() => []);
   const isFastReportFlowActive = fastReportFlow.isActive;
   const {
     featureCandidates: consultationFeatureCandidates,
@@ -222,6 +234,8 @@ export function HomePage() {
     closeFeatureChoice: closeConsultationFeatureChoice,
     closeFeatureDetails: closeConsultedFeatureDetails,
     goBackFromFeatureDetails: goBackFromConsultedFeatureDetails,
+    getFeatureCandidatesAtPixel: getConsultationFeatureCandidatesAtPixel,
+    openFeatureCandidates: openConsultationFeatureCandidates,
   } = useCommunityFeatureConsultation({
     map,
     vectorLayers,
@@ -229,9 +243,23 @@ export function HomePage() {
       isDirectContributionSessionActive ||
       isReportMapPickerActive ||
       isFastReportFlowActive ||
+      pendingMapWorkChoice !== null ||
       activeConflict !== null ||
       activeOverlay === '/offline',
+    onCandidatesAtPixel: (pixel, featureCandidates) => {
+      const sketches = getGpsSketchesAtPixelRef.current(pixel);
+      if (sketches.length === 0) {
+        return false;
+      }
+
+      setPendingMapWorkChoice({
+        sketch: sketches[0],
+        featureCandidates,
+      });
+      return true;
+    },
   });
+  getCommunityCandidatesAtPixelRef.current = getConsultationFeatureCandidatesAtPixel;
 
   const {
     showModal: showOnboarding,
@@ -558,6 +586,7 @@ export function HomePage() {
       isReportMapPickerActive ||
       isFastReportFlowActive ||
       activeConflict !== null ||
+      pendingMapWorkChoice !== null ||
       activeOverlay !== null ||
       isLayersPanelOpen ||
       directContributionFeatureFormState !== null ||
@@ -593,6 +622,7 @@ export function HomePage() {
   const isGpsSketchSelectionEnabled =
     isMapReady &&
     userFollowingMode === 'none' &&
+    pendingMapWorkChoice === null &&
     activeOverlay === null &&
     !isLayersPanelOpen &&
     !isFastReportFlowActive &&
@@ -616,11 +646,30 @@ export function HomePage() {
     togglePause: toggleGpsSketchPause,
     stopRecording: stopGpsSketchRecording,
     clearSelection: clearGpsSketchSelection,
+    selectSketch: selectGpsSketch,
+    getSketchesAtPixel: getGpsSketchesAtPixel,
   } = useGpsSketchTrackingSession({
     map,
     enabled: isMapReady,
     selectionEnabled: isGpsSketchSelectionEnabled,
+    onSelectSketch: (sketch, pixel) => {
+      const featureCandidates = getCommunityCandidatesAtPixelRef.current(pixel);
+      if (featureCandidates.length === 0) {
+        return false;
+      }
+
+      setPendingMapWorkChoice({
+        sketch,
+        featureCandidates,
+      });
+      return true;
+    },
   });
+  getGpsSketchesAtPixelRef.current = getGpsSketchesAtPixel;
+
+  useEffect(() => {
+    setIsTrackingRecenterEnabled(!isGpsSketchRecording);
+  }, [isGpsSketchRecording, setIsTrackingRecenterEnabled]);
 
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
     setReportType('standard');
@@ -642,6 +691,26 @@ export function HomePage() {
     onCreateReport: openReportFromGpsSketch,
   });
 
+  const handleCloseMapWorkChoice = () => {
+    setPendingMapWorkChoice(null);
+  };
+
+  const handleChooseGuichetWork = () => {
+    const choice = pendingMapWorkChoice;
+    if (!choice) return;
+
+    setPendingMapWorkChoice(null);
+    openConsultationFeatureCandidates(choice.featureCandidates);
+  };
+
+  const handleChooseTraceWork = () => {
+    const choice = pendingMapWorkChoice;
+    if (!choice) return;
+
+    setPendingMapWorkChoice(null);
+    selectGpsSketch(choice.sketch);
+  };
+
   const handleUserFollowingButtonClick = () => {
     void EspaceCo_DeviceOrientation.ensurePermissions();
     setUserFollowingMode((mode) => {
@@ -658,6 +727,7 @@ export function HomePage() {
   const isMapLongPressEnabled =
     isMapReady &&
     activeOverlay === null &&
+    pendingMapWorkChoice === null &&
     !isLayersPanelOpen &&
     !isDirectContributionSessionActive &&
     !isFastReportFlowActive &&
@@ -773,11 +843,12 @@ export function HomePage() {
           <button
             type="button"
             className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
-            onClick={startGpsSketchRecording}
-            disabled={isGpsSketchRecording}
-            aria-label={t('home.gpsSketch.record')}
+            onClick={isGpsSketchRecording ? stopGpsSketchRecording : startGpsSketchRecording}
+            aria-label={isGpsSketchRecording
+              ? t('home.gpsSketch.stop')
+              : t('home.gpsSketch.record')}
           >
-            <span className={styles.gpsSketchRecordDot} />
+            <span className={isGpsSketchRecording ? styles.gpsSketchStopSquare : styles.gpsSketchRecordDot} />
           </button>
 
           {isGpsSketchRecording && (
@@ -926,6 +997,23 @@ export function HomePage() {
           {
             label: t('home.mapLongPressAction.goTo'),
             onClick: () => void handleOpenLongPressInMapApp(),
+            variant: 'outline',
+          },
+        ]}
+      />
+
+      <Alert
+        isOpen={pendingMapWorkChoice !== null}
+        onClose={handleCloseMapWorkChoice}
+        title={t('home.mapWorkChoice.title')}
+        buttons={[
+          {
+            label: t('home.mapWorkChoice.guichet'),
+            onClick: handleChooseGuichetWork,
+          },
+          {
+            label: t('home.mapWorkChoice.traces'),
+            onClick: handleChooseTraceWork,
             variant: 'outline',
           },
         ]}
