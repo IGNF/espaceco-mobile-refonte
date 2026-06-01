@@ -12,6 +12,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 - Amélioration de la gestion de l'appui long sur la carte, pour déclencher l'ouverture de l'action sheet
 - Remplacement des label 'GPS' par 'GNSS'
+- Une erreur s'affiche systématiquement dans un Toast is l'envoi d'un signalement ne fonctionne pas
  
 ### Fixed
 

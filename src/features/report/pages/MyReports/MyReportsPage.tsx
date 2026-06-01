@@ -52,6 +52,7 @@ export function MyReportsPage({
     isSendingDrafts,
     isClearingReports,
     isBulkActionRunning,
+    sendFailures,
     sendDraftReports,
     clearSentSessionReports,
     clearAllReports,
@@ -175,6 +176,25 @@ export function MyReportsPage({
         <p className={styles.count}>
           <strong>{reports.length} {reports.length === 1 ? t('reports.general.report_singular') : t('reports.general.report_plural')}</strong>
         </p>
+        {sendFailures.length > 0 && (
+          <div className={styles.bulkSendFailures} role="alert">
+            <p className={styles.bulkSendFailuresTitle}>
+              {sendFailures.length === 1
+                ? t('reports.myReports.bulkSendFailure.one')
+                : t('reports.myReports.bulkSendFailure.many', { count: sendFailures.length })}
+            </p>
+            <ul className={styles.bulkSendFailuresList}>
+              {sendFailures.map((failure) => (
+                <li key={failure.reportId}>
+                  {t('reports.myReports.bulkSendFailure.item', {
+                    id: failure.reportId,
+                    message: failure.message,
+                  })}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         <div className={styles.reportList}>
           {reports.map((report) => (
             <ReportRow
@@ -195,54 +215,55 @@ export function MyReportsPage({
       onClose={onClose}
       className={selectedReport ? styles.hiddenBehindChild : undefined}
     >
-      <PageHeader
-        title={t('reports.myReports.headerTitle')}
-        subtitle={activeCommunity?.name ?? t('reports.myReports.headerSubtitle')}
-        onClose={onClose}
-      />
+      <div className={styles.page}>
+        <PageHeader
+          title={t('reports.myReports.headerTitle')}
+          subtitle={activeCommunity?.name ?? t('reports.myReports.headerSubtitle')}
+          onClose={onClose}
+        />
 
-      <main
-        className={joinCSSClassNames(
-          screen.screenExtendedContainer,
-          styles.content,
-          user && hasReports && styles.contentWithActions
-        )}
-      >
-        <div className={styles.titleSection}>
-          <h1 className={typography.title}>{t('reports.myReports.title')}</h1>
-          <p className={typography.subtitle}>
-            {t('reports.myReports.description')}
+        <main
+          className={joinCSSClassNames(
+            screen.screenExtendedContainer,
+            styles.content
+          )}
+        >
+          <div className={styles.titleSection}>
+            <h1 className={typography.title}>{t('reports.myReports.title')}</h1>
+            <p className={typography.subtitle}>
+              {t('reports.myReports.description')}
+            </p>
+          </div>
+          <p className={typography.paragraph + " " + typography.textSmall}>
+            <span className={typography.italic}>{t('reports.myReports.description2')}</span>
           </p>
-        </div>
-        <p className={typography.paragraph + " " + typography.textSmall}>
-          <span className={typography.italic}>{t('reports.myReports.description2')}</span>
-        </p>
 
-        {renderContent()}
-      </main>
+          {renderContent()}
+        </main>
 
-      {user && hasReports ? (
-        <footer className={styles.actionsBar}>
-          <Button
-            type="button"
-            fullWidth
-            onClick={() => void sendDraftReports()}
-            disabled={draftReports.length === 0 || isBulkActionRunning}
-            loading={isSendingDrafts}
-          >
-            {t('reports.myReports.actions.sendDrafts', { count: draftReports.length })}
-          </Button>
-          <Button
-            type="button"
-            fullWidth
-            color="danger"
-            onClick={handleOpenDeleteChoice}
-            disabled={isBulkActionRunning}
-          >
-            {t('reports.myReports.actions.delete')}
-          </Button>
-        </footer>
-      ) : null}
+        {user && hasReports ? (
+          <footer className={styles.actionsBar}>
+            <Button
+              type="button"
+              fullWidth
+              onClick={() => void sendDraftReports()}
+              disabled={draftReports.length === 0 || isBulkActionRunning}
+              loading={isSendingDrafts}
+            >
+              {t('reports.myReports.actions.sendDrafts', { count: draftReports.length })}
+            </Button>
+            <Button
+              type="button"
+              fullWidth
+              color="danger"
+              onClick={handleOpenDeleteChoice}
+              disabled={isBulkActionRunning}
+            >
+              {t('reports.myReports.actions.delete')}
+            </Button>
+          </footer>
+        ) : null}
+      </div>
 
       <ReportDetailsPage
         isOpen={selectedReport !== null}

@@ -155,8 +155,8 @@ export function DirectContributionConflictAlert({
   });
   const unresolvedConflictCount = conflict
     ? conflict.conflicts.filter((conflictObject) => {
-        return !resolutionsByConflictKey[conflictObject.key];
-      }).length
+      return !resolutionsByConflictKey[conflictObject.key];
+    }).length
     : 0;
 
   const canConfirm =
@@ -221,11 +221,11 @@ export function DirectContributionConflictAlert({
 
   const subtitle = conflict
     ? t('layers.directContribution.conflicts.subtitle', {
-        count: conflict.conflicts.length,
-        layerTitle:
-          conflict.layerTitle ||
-          t('layers.info.untitled'),
-      })
+      count: conflict.conflicts.length,
+      layerTitle:
+        conflict.layerTitle ||
+        t('layers.info.untitled'),
+    })
     : undefined;
 
   return (
@@ -269,7 +269,7 @@ export function DirectContributionConflictAlert({
                         selectedConflictKey === conflictObject.key && styles.objectButtonSelected
                       )}
                       onClick={() => setSelectedConflictKey(conflictObject.key)}
-                  >
+                    >
                       <span className={styles.objectButtonHeader}>
                         {selectedChoice ? (
                           <span className={styles.objectResolvedIconWrapper}>
@@ -283,11 +283,11 @@ export function DirectContributionConflictAlert({
                       <span className={styles.objectButtonMeta}>
                         {selectedChoice
                           ? t(
-                              'layers.directContribution.conflicts.currentChoice',
-                              {
-                                choice: t(getResolutionTranslationKey(selectedChoice)),
-                              }
-                            )
+                            'layers.directContribution.conflicts.currentChoice',
+                            {
+                              choice: t(getResolutionTranslationKey(selectedChoice)),
+                            }
+                          )
                           : t('layers.directContribution.conflicts.noChoice')}
                       </span>
                     </button>
@@ -372,8 +372,8 @@ export function DirectContributionConflictAlert({
                             styles.fieldRow,
                             fieldDiff.state === 'same' && styles.fieldRowSame,
                             fieldDiff.state === 'different' &&
-                              fieldDiff.isServerValueReturned &&
-                              styles.fieldRowDifferent
+                            fieldDiff.isServerValueReturned &&
+                            styles.fieldRowDifferent
                           )}
                         >
                           <div className={styles.fieldHeader}>
@@ -399,19 +399,23 @@ export function DirectContributionConflictAlert({
                                 {getRenderedFieldValue(fieldDiff.localValue)}
                               </span>
                             </div>
-                            <div className={styles.fieldValueCard}>
-                              <span className={styles.fieldValueLabel}>
-                                {t('layers.directContribution.conflicts.serverValue')}
-                              </span>
-                              <span
-                                className={joinCSSClassNames(
-                                  styles.fieldValue,
-                                  fieldDiff.serverValue === undefined && styles.fieldValueMissing
-                                )}
-                              >
-                                {getRenderedFieldValue(fieldDiff.serverValue)}
-                              </span>
-                            </div>
+                            {
+                              getRenderedFieldValue(fieldDiff.serverValue) != 'undefined' ? (
+                                <div className={styles.fieldValueCard}>
+                                  <span className={styles.fieldValueLabel}>
+                                    {t('layers.directContribution.conflicts.serverValue')}
+                                  </span>
+                                  <span
+                                    className={joinCSSClassNames(
+                                      styles.fieldValue,
+                                      fieldDiff.serverValue === undefined && styles.fieldValueMissing
+                                    )}
+                                  >
+                                    {getRenderedFieldValue(fieldDiff.serverValue)}
+                                  </span>
+                                </div>
+                              ) : null
+                            }
                           </div>
                         </div>
                       ))

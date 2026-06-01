@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { get as getProjection } from 'ol/proj';
 
@@ -12,8 +13,10 @@ import { mapAppReportToApiBody, mapApiReportToAppReport, type ApiReportResponse 
 import type { AppReport } from '@/domain/report/models';
 
 import { WEB_MERCATOR_PROJECTION } from '@/shared/constants/projections';
+import { showToastSafe } from '@/shared/utils/toast';
+import { getUserFacingErrorMessage } from '@/shared/errors/appError';
 
-import { ReportSubmitError, toReportSubmitError } from '@/features/report/errors/reportSubmitError';
+import { type ReportSubmitError, toReportSubmitError } from '@/features/report/errors/reportSubmitError';
 import { getReportSyncState, setReportSyncState } from '@/features/report/utils/reportSyncState';
 import { addSessionSentReport } from '@/features/report/state/sessionSentReportsStore';
 import {
@@ -85,10 +88,15 @@ async function uploadReportAttachments(reportId: number, report: Report): Promis
 }
 
 interface UseSubmitReportReturn {
-  submitReport: (report: Report) => Promise<AppReport | null>;
+  submitReport: (report: Report, options?: SubmitReportOptions) => Promise<AppReport | null>;
   isSubmitting: boolean;
   error: ReportSubmitError | null;
   clearError: () => void;
+}
+
+interface SubmitReportOptions {
+  showErrorToast?: boolean;
+  onError?: (error: ReportSubmitError) => void | Promise<void>;
 }
 
 async function resolveReportSnapshot(report: Report): Promise<Report> {
@@ -142,12 +150,35 @@ async function recordSubmittedReport(report: AppReport): Promise<AppReport> {
 }
 
 export function useSubmitReport(): UseSubmitReportReturn {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<ReportSubmitError | null>(null);
 
   const clearError = useCallback(() => setError(null), []);
+  const showSubmitError = useCallback(async (submitError: ReportSubmitError): Promise<void> => {
+    await showToastSafe({
+      text: getUserFacingErrorMessage(submitError, t, submitError.translationKey),
+      duration: 'long',
+      position: 'top',
+    });
+  }, [t]);
 
-  const submitReport = useCallback(async (report: Report): Promise<AppReport | null> => {
+  const handleSubmitError = useCallback(async (
+    submitError: ReportSubmitError,
+    options?: SubmitReportOptions
+  ): Promise<void> => {
+    setError(submitError);
+    await options?.onError?.(submitError);
+
+    if (options?.showErrorToast !== false) {
+      await showSubmitError(submitError);
+    }
+  }, [showSubmitError]);
+
+  const submitReport = useCallback(async (
+    report: Report,
+    options?: SubmitReportOptions
+  ): Promise<AppReport | null> => {
     setIsSubmitting(true);
     setError(null);
 
@@ -180,11 +211,8 @@ export function useSubmitReport(): UseSubmitReportReturn {
           );
         } catch (attachmentError) {
           await persistAttachmentRetryState(reportPayload, syncState.serverId);
-          const submitError = new ReportSubmitError({
-            kind: 'attachmentUploadFailed',
-            cause: attachmentError,
-          });
-          setError(submitError);
+          const submitError = toReportSubmitError(attachmentError, 'attachmentUploadFailed');
+          await handleSubmitError(submitError, options);
           return null;
         }
       }
@@ -200,10 +228,8 @@ export function useSubmitReport(): UseSubmitReportReturn {
         } catch (attachmentError) {
           console.error('Report created but attachment upload failed', attachmentError);
           await persistAttachmentRetryState(reportPayload, createdReportId);
-          setError(new ReportSubmitError({
-            kind: 'attachmentUploadFailed',
-            cause: attachmentError,
-          }));
+          const submitError = toReportSubmitError(attachmentError, 'attachmentUploadFailed');
+          await handleSubmitError(submitError, options);
           return null;
         }
       }
@@ -216,12 +242,13 @@ export function useSubmitReport(): UseSubmitReportReturn {
 
       return await recordSubmittedReport(appReport);
     } catch (err) {
-      setError(toReportSubmitError(err, 'reportCreationFailed'));
+      const submitError = toReportSubmitError(err, 'reportCreationFailed');
+      await handleSubmitError(submitError, options);
       return null;
     } finally {
       setIsSubmitting(false);
     }
-  }, []);
+  }, [handleSubmitError]);
 
   return { submitReport, isSubmitting, error, clearError };
 }

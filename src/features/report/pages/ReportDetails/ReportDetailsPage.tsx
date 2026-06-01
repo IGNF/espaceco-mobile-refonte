@@ -431,6 +431,11 @@ export function ReportDetailsPage({
             <>
               {isDraft ? (
                 <>
+                  {sendError && (
+                    <p className={styles.permissionMessage}>
+                      {t(sendErrorKey)}
+                    </p>
+                  )}
                   <Button color="tertiary" onClick={handleSendReport} loading={isSending}>
                     <IconSend className={buttonStyles.icon} />
                     {t('reports.details.sendButton')}
@@ -443,11 +448,6 @@ export function ReportDetailsPage({
                     <IconDelete className={buttonStyles.icon} />
                     {t('reports.details.deleteButton')}
                   </Button>
-                  {sendError && (
-                    <p className={styles.permissionMessage}>
-                      {t(sendErrorKey)}
-                    </p>
-                  )}
                 </>
               ) : (
                 <>
