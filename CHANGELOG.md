@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Le "Signalement via GNSS" (depuis la page de nouveau signalement) suit maintenant le chemin attendu, via l'ajout direct d'une trace
+- Amélioration de l'affichage de l'icone représentant la localisation de l'utilisateur
 
 ### Fixed
 - Correctifs CSS
