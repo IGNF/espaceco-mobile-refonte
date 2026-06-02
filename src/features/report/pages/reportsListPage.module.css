@@ -1,8 +1,8 @@
 .page {
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - var(--safe-top, 0px) - var(--safe-bottom, 0px));
-	height: calc(100dvh - var(--safe-top, 0px) - var(--safe-bottom, 0px));
+	height: calc(100vh - var(--safe-top, 0px) - var(--safe-bottom, 0px) - 73px);
+	height: calc(100dvh - var(--safe-top, 0px) - var(--safe-bottom, 0px) - 73px);
 	min-height: 0;
 	overflow: hidden;
 	background-color: var(--color-light-light);

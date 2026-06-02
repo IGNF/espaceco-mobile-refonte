@@ -215,13 +215,13 @@ export function MyReportsPage({
       onClose={onClose}
       className={selectedReport ? styles.hiddenBehindChild : undefined}
     >
-      <div className={styles.page}>
-        <PageHeader
-          title={t('reports.myReports.headerTitle')}
-          subtitle={activeCommunity?.name ?? t('reports.myReports.headerSubtitle')}
-          onClose={onClose}
-        />
+      <PageHeader
+        title={t('reports.myReports.headerTitle')}
+        subtitle={activeCommunity?.name ?? t('reports.myReports.headerSubtitle')}
+        onClose={onClose}
+      />
 
+      <div className={styles.page}>
         <main
           className={joinCSSClassNames(
             screen.screenExtendedContainer,
