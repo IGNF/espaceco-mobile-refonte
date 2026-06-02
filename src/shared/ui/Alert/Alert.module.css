@@ -32,6 +32,10 @@
 	max-width: 960px;
 }
 
+.title {
+  width: 90%
+}
+
 .overlayVisible .card {
 	opacity: 1;
 	transform: scale(1);

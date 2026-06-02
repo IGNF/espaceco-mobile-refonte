@@ -205,12 +205,11 @@ export function TraceToolbar({
           <IconClose className={styles.actionIcon} />
         </button>
 
-        {isFastReport && (
+        {isFastReport && onChooseTheme && (
           <button
             type="button"
             className={styles.actionButton}
             onClick={onChooseTheme}
-            disabled={!onChooseTheme}
             aria-label={t('reports.createOrEdit.traceToolbar.chooseTheme')}
           >
             <IconMenu className={styles.actionIcon} />

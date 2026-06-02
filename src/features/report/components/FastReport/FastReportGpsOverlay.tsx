@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { Report } from '@ign/mobile-core';
 
 import type { CommunityThemeConfig } from '@/domain/community/models';
 import { FastReportOffsetSettingsModal } from '@/features/report/components/FastReport/FastReportOffsetSettingsModal';
@@ -9,6 +10,7 @@ import { useReportTraceSession } from '@/features/report/hooks/useReportTraceSes
 import { useSaveFastReportTrace } from '@/features/report/hooks/useSaveFastReportTrace';
 import { formatTraceToolbarStatus } from '@/features/report/utils/traceStatus';
 import { getLineStringGeometry } from '@/features/report/utils/traceGeometry';
+import { getReportTemplateTheme } from '@/features/report/utils/reportTemplate';
 import { addLocalReportToMap } from '@/features/map/utils/signalementReportFeatures';
 import { Alert } from '@/shared/ui/Alert';
 import { showToastSafe } from '@/shared/utils/toast';
@@ -19,9 +21,10 @@ import styles from './FastReportGpsOverlay.module.css';
 interface FastReportGpsOverlayProps {
   isOpen: boolean;
   map: OlMap;
-  theme: CommunityThemeConfig;
+  theme?: CommunityThemeConfig;
   onClose: () => void;
-  onChooseTheme: () => void;
+  onChooseTheme?: () => void;
+  reportTemplate?: Report | null;
 }
 
 export function FastReportGpsOverlay({
@@ -30,10 +33,13 @@ export function FastReportGpsOverlay({
   theme,
   onClose,
   onChooseTheme,
+  reportTemplate = null,
 }: FastReportGpsOverlayProps) {
   const { t } = useTranslation();
   const [isOffsetSettingsOpen, setIsOffsetSettingsOpen] = useState(false);
   const [isCancelConfirmOpen, setIsCancelConfirmOpen] = useState(false);
+  const usesReportTemplate = reportTemplate !== null;
+  const selectedTheme = theme ?? (reportTemplate ? getReportTemplateTheme(reportTemplate) : null);
   const { settings: gpsSettings, saveSettings: saveGpsSettings } = useFastReportGpsSettings();
   const {
     isRecording,
@@ -69,21 +75,26 @@ export function FastReportGpsOverlay({
   }, [hasTrace, isPaused, isRecording, t, traceDistanceMeters, tracePointCount]);
 
   const saveTrace = async (continueRecording: boolean) => {
+    if (!selectedTheme) return;
+
     const traceFeature = finalizeRecording().find((feature) => getLineStringGeometry(feature));
     if (!traceFeature) return;
 
     try {
       const report = await saveFastReportTrace({
         map,
-        theme,
+        theme: selectedTheme,
         traceFeature,
         gpsSettings,
         transportMode,
+        reportTemplate,
       });
       addLocalReportToMap(map, report);
 
       await showToastSafe({
-        text: t('reports.fastReport.gps.saveSuccess'),
+        text: usesReportTemplate
+          ? t('reports.createOrEdit.actions.draftSaved')
+          : t('reports.fastReport.gps.saveSuccess'),
         duration: 'short',
         position: 'top',
       });
@@ -96,7 +107,9 @@ export function FastReportGpsOverlay({
     } catch (error) {
       console.error('Failed to save fast report trace', error);
       await showToastSafe({
-        text: t('reports.fastReport.gps.saveError'),
+        text: usesReportTemplate
+          ? t('reports.fastReport.gps.draftSaveError')
+          : t('reports.fastReport.gps.saveError'),
         duration: 'short',
         position: 'top',
       });
@@ -126,16 +139,16 @@ export function FastReportGpsOverlay({
     discardTrace();
   };
 
-  const handleChooseTheme = () => {
+  const handleChooseTheme = onChooseTheme ? () => {
     setIsOffsetSettingsOpen(false);
     onChooseTheme();
-  };
+  } : undefined;
 
-  if (!isOpen) return null;
+  if (!isOpen || !selectedTheme) return null;
 
   return (
     <>
-      <div className={styles.themePill}>{theme.theme}</div>
+      <div className={styles.themePill}>{selectedTheme.theme}</div>
       <TraceToolbar
         variant="fastReport"
         isRecording={isRecording}
@@ -152,7 +165,7 @@ export function FastReportGpsOverlay({
         onToggleAudio={toggleAudio}
         onValidate={handleValidate}
         onValidateAndContinue={handleValidateAndContinue}
-        onChooseTheme={handleChooseTheme}
+        onChooseTheme={usesReportTemplate ? undefined : handleChooseTheme}
         onOpenOffsetSettings={() => setIsOffsetSettingsOpen(true)}
         onCancel={handleCancel}
       />

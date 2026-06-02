@@ -733,11 +733,18 @@
         "saveDraft": "Enregistrer le brouillon",
         "draftSaved": "Signalement enregistré dans les brouillons",
         "send": "Envoyer",
+        "startGnssRecording": "Commencer",
         "validatePosition": "Valider la position",
         "backToReport": "Retour à la fiche",
         "cancel": "Annuler",
         "submitError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
         "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer."
+      },
+      "gnssCancelConfirmation": {
+        "title": "Annuler le signalement via GNSS ?",
+        "message": "Les informations saisies ne seront pas conservées.",
+        "confirm": "Annuler le signalement",
+        "stay": "Continuer la saisie"
       },
       "unsavedChanges": {
         "title": "Quitter la page ?",
@@ -848,7 +855,8 @@
       },
       "gps": {
         "saveSuccess": "Le signalement rapide a été enregistré.",
-        "saveError": "Impossible d'enregistrer le signalement rapide."
+        "saveError": "Impossible d'enregistrer le signalement rapide.",
+        "draftSaveError": "Impossible d'enregistrer le brouillon de signalement."
       },
       "cancelConfirm": {
         "title": "Trace en cours...",

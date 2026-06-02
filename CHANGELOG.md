@@ -13,6 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.12] - 2026-06-02
+
+### Added
+
+### Changed
+- Le "Signalement via GNSS" (depuis la page de nouveau signalement) suit maintenant le chemin attendu, via l'ajout direct d'une trace
+
+### Fixed
+- Correctifs CSS
+
 ## [0.0.11] - 2026-06-01
 
 ### Added

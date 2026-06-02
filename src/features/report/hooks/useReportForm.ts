@@ -44,6 +44,7 @@ export interface UseReportFormOptions {
   isOpen?: boolean;
   reportType?: ReportType;
   preselectFirstTheme?: boolean;
+  initialComment?: string;
   /** Objects injected by map workflows before the report form opens. */
   initialObjects?: Feature<Geometry>[];
   /** Sketches injected by map workflows before the report form opens. */
@@ -78,6 +79,7 @@ export interface UseReportFormReturn {
   replaceSketches: (features: Feature<Geometry>[]) => void;
   removeSketch: (index: number) => void;
   validate: () => boolean;
+  buildDraft: () => Report;
   saveDraft: () => Promise<void>;
   submit: () => Promise<boolean>;
 }
@@ -172,6 +174,7 @@ export function useReportForm({
   isOpen,
   reportType,
   preselectFirstTheme = false,
+  initialComment = '',
   initialObjects = EMPTY_INITIAL_OBJECTS,
   initialSketches = EMPTY_INITIAL_SKETCHES,
 }: UseReportFormOptions): UseReportFormReturn {
@@ -197,7 +200,7 @@ export function useReportForm({
   const [selectedTheme, setSelectedThemeRaw] = useState<string>(initialTheme);
   const [selectedThemeCommunityId, setSelectedThemeCommunityId] = useState<number | undefined>(initialThemeCommunityId);
   const [attributeValues, setAttributeValues] = useState<Record<string, string>>(initialAttributeValues);
-  const [comment, setComment] = useState<string>('');
+  const [comment, setComment] = useState<string>(mode === 'create' ? initialComment : report?.comment ?? '');
   const [photos, setPhotos] = useState<ReportPhoto[]>(report?.photos ?? []);
   const [objects, setObjects] = useState<Feature<Geometry>[]>(() => {
     if (mode === 'create' && initialObjects.length > 0) {
@@ -238,14 +241,14 @@ export function useReportForm({
       setSelectedThemeRaw(nextTheme);
       setSelectedThemeCommunityId(nextTheme ? themes[0]?.communityId ?? activeCommunity?.id : undefined);
       setAttributeValues(nextTheme ? buildDefaultReportAttributeValues(themes[0]?.attributes ?? []) : {});
-      setComment('');
+      setComment(initialComment);
       setPhotos([]);
       setObjects(splitReportFeatures(initialObjects).objects);
       setSketches(splitReportFeatures(initialSketches).sketches);
     }
     setErrors({});
     setIsDirty(false);
-  }, [activeCommunity?.id, initialObjects, initialSketches, mode, preselectFirstTheme, themes]);
+  }, [activeCommunity?.id, initialComment, initialObjects, initialSketches, mode, preselectFirstTheme, themes]);
 
   // Reset form state when the report prop changes (e.g. opening a different draft)
   const previousReportRef = useRef(report);
@@ -468,14 +471,9 @@ export function useReportForm({
       }
     }
 
-    if (resolvedReportType === 'trace' && sketches.length === 0) {
-      newErrors.trace = t('reports.createOrEdit.form.validation.traceRequired');
-      valid = false;
-    }
-
     setErrors(newErrors);
     return valid;
-  }, [selectedTheme, currentAttributes, attributeValues, resolvedReportType, sketches.length, t]);
+  }, [selectedTheme, currentAttributes, attributeValues, t]);
 
   const buildReport = useCallback((status: ReportStatus): Report => {
     const lon = position?.coords.longitude ?? 0;
@@ -527,6 +525,10 @@ export function useReportForm({
     } finally {
       setIsSaving(false);
     }
+  }, []);
+
+  const buildDraft = useCallback(() => {
+    return buildReportRef.current(ReportStatus.Draft);
   }, []);
 
   const submitForm = useCallback(async (): Promise<boolean> => {
@@ -585,6 +587,7 @@ export function useReportForm({
     replaceSketches,
     removeSketch,
     validate,
+    buildDraft,
     saveDraft,
     submit: submitForm,
   };

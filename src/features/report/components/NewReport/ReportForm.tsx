@@ -97,6 +97,7 @@ export function ReportForm({
   const renderError = (error?: string) =>
     error ? <span className={inputs.error}>{error}</span> : null;
 
+  // @ts-expect-error - fonction non utilisée pour l'instant, affichait le bloc 'Trace' dans la section des pièces jointes
   const renderTraceCard = () => {
     const traceAction = onAddTrace
       ? {
@@ -397,7 +398,8 @@ export function ReportForm({
       {/* Attachment placeholders */}
       <div className={styles.section}>
         {isTraceMode ? (
-          renderTraceCard()
+          // renderTraceCard()
+          <></>
         ) : (
           <>
             <AttachmentSection

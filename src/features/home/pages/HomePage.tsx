@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import { getUid } from "ol/util";
+import type { Report } from '@ign/mobile-core';
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
 
@@ -75,7 +76,10 @@ import IconPlay from "@/shared/assets/icons/icon-play.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
-import { applyReportObjectMetadata, buildReportObjectKey } from '@/features/report/utils/reportObjects';
+import {
+  applyReportObjectMetadata,
+  buildReportObjectKey,
+} from '@/features/report/utils/reportObjects';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
 import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
@@ -103,7 +107,7 @@ export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { setActiveCommunity } = useCommunity();
+  const { activeCommunity, setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
   const { mapSettings, displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
@@ -215,6 +219,8 @@ export function HomePage() {
   const [newReportInitialObjects, setNewReportInitialObjects] = useState<Feature<Geometry>[]>([]);
   const [newReportInitialSketches, setNewReportInitialSketches] = useState<Feature<Geometry>[]>([]);
   const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
+  const [isNewReportGnssDraftSetup, setIsNewReportGnssDraftSetup] = useState(false);
+  const [gnssReportTemplate, setGnssReportTemplate] = useState<Report | null>(null);
   const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
   const [pendingMapWorkChoice, setPendingMapWorkChoice] = useState<PendingMapWorkChoice | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
@@ -225,7 +231,7 @@ export function HomePage() {
   const getCommunityCandidatesAtPixelRef = useRef<
     (pixel: number[]) => DirectContributionFeatureCandidate[]
   >(() => []);
-  const isFastReportFlowActive = fastReportFlow.isActive;
+  const isFastReportFlowActive = fastReportFlow.isActive || gnssReportTemplate !== null;
   const {
     featureCandidates: consultationFeatureCandidates,
     selectedFeatureCandidate: consultedFeatureCandidate,
@@ -358,6 +364,7 @@ export function HomePage() {
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
+    setIsNewReportGnssDraftSetup(false);
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {
@@ -370,7 +377,8 @@ export function HomePage() {
     setNewReportInitialPosition(null);
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
-    setIsNewReportThemePreselected(false);
+    setIsNewReportThemePreselected(true);
+    setIsNewReportGnssDraftSetup(true);
     setActiveOverlay(null);
     setIsSearchOpen(false);
     setTimeout(() => {
@@ -430,6 +438,7 @@ export function HomePage() {
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(true);
+    setIsNewReportGnssDraftSetup(false);
     console.log('handleCreateReportFromLongPress');
     setLongPressMapAction(null);
     setIsSearchOpen(false);
@@ -497,6 +506,7 @@ export function HomePage() {
     setNewReportInitialObjects([feature]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(true);
+    setIsNewReportGnssDraftSetup(false);
     closeConsultedFeatureDetails();
     setIsSearchOpen(false);
     setActiveOverlay('/create-or-edit-report');
@@ -677,6 +687,7 @@ export function HomePage() {
     setNewReportInitialObjects([]);
     setNewReportInitialSketches(draft.sketches);
     setIsNewReportThemePreselected(true);
+    setIsNewReportGnssDraftSetup(false);
     setActiveOverlay('/create-or-edit-report');
   }, []);
 
@@ -723,6 +734,17 @@ export function HomePage() {
       return 'tracking';
     });
   };
+
+  const handleBackToNewReportChoice = useCallback(() => {
+    setActiveOverlay('/new-report-choice');
+  }, []);
+
+  const handleStartGnssReportRecording = useCallback((draftTemplate: Report) => {
+    setGnssReportTemplate(draftTemplate);
+    setActiveOverlay(null);
+    setIsSearchOpen(false);
+    clearGpsSketchSelection();
+  }, [clearGpsSketchSelection]);
 
   const isMapLongPressEnabled =
     isMapReady &&
@@ -1072,6 +1094,15 @@ export function HomePage() {
         />
       )}
 
+      {map && gnssReportTemplate && (
+        <FastReportGpsOverlay
+          isOpen
+          map={map}
+          reportTemplate={gnssReportTemplate}
+          onClose={() => setGnssReportTemplate(null)}
+        />
+      )}
+
       {/* Overlay pages */}
       {activeOverlay === '/my-informations' && (
         <MyInformationsPage
@@ -1130,6 +1161,10 @@ export function HomePage() {
           initialObjects={newReportInitialObjects}
           initialSketches={newReportInitialSketches}
           preselectFirstTheme={isNewReportThemePreselected}
+          initialComment={isNewReportGnssDraftSetup ? activeCommunity?.default_comment ?? '' : ''}
+          isGnssDraftSetup={isNewReportGnssDraftSetup}
+          onStartGnssRecording={handleStartGnssReportRecording}
+          onBack={isNewReportGnssDraftSetup ? handleBackToNewReportChoice : undefined}
           map={map}
           vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}

@@ -18,7 +18,7 @@ import {
   getLineStringGeometry,
 } from '@/features/report/utils/traceGeometry';
 
-const FAST_REPORT_COMMENT = 'Signalement GPS rapide.';
+const FAST_REPORT_COMMENT = 'Signalement GNSS rapide.';
 const reportStorage = new ReportStorageAdapter();
 
 interface SaveFastReportTraceOptions {
@@ -27,6 +27,52 @@ interface SaveFastReportTraceOptions {
   traceFeature: Feature<Geometry>;
   gpsSettings: FastReportGpsSettings;
   transportMode: TraceTransportMode;
+  reportTemplate?: Report | null;
+}
+
+interface BuildFastReportDraftOptions {
+  theme: CommunityThemeConfig;
+  reportTemplate?: Report | null;
+  geometry: string;
+  feature: Feature<Geometry>;
+}
+
+function buildFastReportDraft({
+  theme,
+  reportTemplate,
+  geometry,
+  feature,
+}: BuildFastReportDraftOptions): Report {
+  const now = new Date();
+
+  if (reportTemplate) {
+    return {
+      ...reportTemplate,
+      id: Date.now(),
+      geometry,
+      status: ReportStatus.Draft,
+      createdAt: now,
+      modifiedAt: now,
+      features: [feature],
+    };
+  }
+
+  return {
+    id: Date.now(),
+    communityId: theme.communityId!,
+    themeId: 0,
+    geometry,
+    comment: FAST_REPORT_COMMENT,
+    attributes: {
+      ...buildDefaultReportAttributeValues(theme.attributes),
+      themeName: theme.theme,
+    },
+    status: ReportStatus.Draft,
+    createdAt: now,
+    modifiedAt: now,
+    photos: [],
+    features: [feature],
+  };
 }
 
 export function useSaveFastReportTrace() {
@@ -38,6 +84,7 @@ export function useSaveFastReportTrace() {
     traceFeature,
     gpsSettings,
     transportMode,
+    reportTemplate,
   }: SaveFastReportTraceOptions): Promise<Report> => {
     setIsSaving(true);
     try {
@@ -51,23 +98,12 @@ export function useSaveFastReportTrace() {
         line.getFirstCoordinate(),
         map.getView().getProjection()
       );
-      const now = new Date();
-      const report: Report = {
-        id: Date.now(),
-        communityId: theme.communityId!,
-        themeId: 0,
+      const report = buildFastReportDraft({
+        theme,
+        reportTemplate,
         geometry: `POINT(${longitude} ${latitude})`,
-        comment: FAST_REPORT_COMMENT,
-        attributes: {
-          ...buildDefaultReportAttributeValues(theme.attributes),
-          themeName: theme.theme,
-        },
-        status: ReportStatus.Draft,
-        createdAt: now,
-        modifiedAt: now,
-        photos: [],
-        features: [feature],
-      };
+        feature,
+      });
 
       await reportStorage.saveReport(report);
       return report;

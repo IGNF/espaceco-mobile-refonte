@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ReportStatus, type CommunityLayer } from '@ign/mobile-core';
+import { ReportStatus, type CommunityLayer, type Report } from '@ign/mobile-core';
 import { createPortal } from 'react-dom';
 import Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
@@ -68,6 +68,9 @@ export interface CreateOrEditReportPageProps {
   initialObjects?: Feature<Geometry>[];
   initialSketches?: Feature<Geometry>[];
   preselectFirstTheme?: boolean;
+  initialComment?: string;
+  isGnssDraftSetup?: boolean;
+  onStartGnssRecording?: (draftTemplate: Report) => void;
   onBack?: () => void;
   level?: number;
   map?: OlMap | null;
@@ -156,6 +159,9 @@ export function CreateOrEditReportPage({
   initialObjects,
   initialSketches,
   preselectFirstTheme = false,
+  initialComment,
+  isGnssDraftSetup = false,
+  onStartGnssRecording,
   onBack,
   level = 2,
   map,
@@ -175,6 +181,7 @@ export function CreateOrEditReportPage({
   const [isObjectChoiceOpen, setIsObjectChoiceOpen] = useState(false);
   const [isSendConfirmOpen, setIsSendConfirmOpen] = useState(false);
   const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
+  const [isGnssCancelConfirmOpen, setIsGnssCancelConfirmOpen] = useState(false);
 
   const { position: geoPosition, isLocating, error, fetchPosition } = useGeolocation({
     fetchOnMount: !isEditMode && !initialPosition, // fetch position only when create mode has no preset location
@@ -216,6 +223,7 @@ export function CreateOrEditReportPage({
     isOpen,
     reportType: resolvedReportType,
     preselectFirstTheme,
+    initialComment,
     initialObjects,
     initialSketches,
   });
@@ -569,6 +577,30 @@ export function CreateOrEditReportPage({
     setIsSendConfirmOpen(true);
   };
 
+  const handleStartGnssRecording = () => {
+    if (!form.validate()) return;
+    closeMapPickers();
+    onStartGnssRecording?.(form.buildDraft());
+  };
+
+  const handleCancelGnssSetup = useCallback(() => {
+    setIsGnssCancelConfirmOpen(true);
+  }, []);
+
+  const handleCloseGnssCancelConfirm = useCallback(() => {
+    setIsGnssCancelConfirmOpen(false);
+  }, []);
+
+  const handleConfirmGnssCancel = useCallback(() => {
+    setIsGnssCancelConfirmOpen(false);
+    resetMapPickers();
+    if (onBack) {
+      onBack();
+      return;
+    }
+    onClose();
+  }, [onBack, onClose, resetMapPickers]);
+
   const handleCloseSendConfirm = useCallback(() => {
     setIsSendConfirmOpen(false);
   }, []);
@@ -779,34 +811,54 @@ export function CreateOrEditReportPage({
             isPickingTrace={isPickingTrace}
           />
 
-          <div className={styles.buttonContainer}>
-            <Button
-              color="tertiary"
-              fullWidth
-              loading={form.isSaving}
-              onClick={handleSend}
-            >
-              <IconSend className={buttonStyles.icon} />
-              {t('reports.createOrEdit.actions.send')}
-            </Button>
-            <Button
-              color="primary"
-              fullWidth
-              loading={form.isSaving}
-              onClick={handleSaveDraft}
-            >
-              <IconSave className={buttonStyles.icon} />
-              {t('reports.createOrEdit.actions.saveDraft')}
-            </Button>
-            <Button
-              color="medium"
-              fullWidth
-              onClick={handlePageBack}
-            >
-              <IconClose className={buttonStyles.icon} />
-              {t('reports.createOrEdit.actions.cancel')}
-            </Button>
-          </div>
+          {isGnssDraftSetup ? (
+            <div className={styles.buttonContainer}>
+              <Button
+                color="primary"
+                fullWidth
+                loading={form.isSaving}
+                onClick={handleStartGnssRecording}
+              >
+                {t('reports.createOrEdit.actions.startGnssRecording')}
+              </Button>
+              <Button
+                color="medium"
+                fullWidth
+                onClick={handleCancelGnssSetup}
+              >
+                {t('reports.createOrEdit.actions.cancel')}
+              </Button>
+            </div>
+          ) : (
+            <div className={styles.buttonContainer}>
+              <Button
+                color="tertiary"
+                fullWidth
+                loading={form.isSaving}
+                onClick={handleSend}
+              >
+                <IconSend className={buttonStyles.icon} />
+                {t('reports.createOrEdit.actions.send')}
+              </Button>
+              <Button
+                color="primary"
+                fullWidth
+                loading={form.isSaving}
+                onClick={handleSaveDraft}
+              >
+                <IconSave className={buttonStyles.icon} />
+                {t('reports.createOrEdit.actions.saveDraft')}
+              </Button>
+              <Button
+                color="medium"
+                fullWidth
+                onClick={handlePageBack}
+              >
+                <IconClose className={buttonStyles.icon} />
+                {t('reports.createOrEdit.actions.cancel')}
+              </Button>
+            </div>
+          )}
 
           {form.submitError && (
             <p className={styles.submitError}>
@@ -897,6 +949,25 @@ export function CreateOrEditReportPage({
           {
             label: t('reports.createOrEdit.unsavedChanges.stayButton'),
             onClick: closeLeaveAlert,
+            variant: 'outline',
+          },
+        ]}
+      />
+
+      <Alert
+        isOpen={isGnssCancelConfirmOpen}
+        onClose={handleCloseGnssCancelConfirm}
+        title={t('reports.createOrEdit.gnssCancelConfirmation.title')}
+        subtitle={t('reports.createOrEdit.gnssCancelConfirmation.message')}
+        buttons={[
+          {
+            label: t('reports.createOrEdit.gnssCancelConfirmation.confirm'),
+            onClick: handleConfirmGnssCancel,
+            color: 'danger',
+          },
+          {
+            label: t('reports.createOrEdit.gnssCancelConfirmation.stay'),
+            onClick: handleCloseGnssCancelConfirm,
             variant: 'outline',
           },
         ]}
