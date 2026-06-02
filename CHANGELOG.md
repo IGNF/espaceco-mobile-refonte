@@ -13,13 +13,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.12] - 2026-06-02
+## [0.0.12] - 2026-06-03
 
 ### Added
+- Lorsqu'on visualise un signalement sur la carte depuis la fiche de signalement, les objets ou croquis sont mis en évidence (surlignés en orange, et l'opacité du reste de la carte - les couches visibles - passe à 0.25) (ticket #109)
 
 ### Changed
-- Le "Signalement via GNSS" (depuis la page de nouveau signalement) suit maintenant le chemin attendu, via l'ajout direct d'une trace
-- Amélioration de l'affichage de l'icone représentant la localisation de l'utilisateur
+- Le "Signalement via GNSS" (depuis la page de nouveau signalement) suit maintenant le chemin attendu, via l'ajout direct d'une trace (ticket #122)
+- Amélioration de l'affichage de l'icone représentant la localisation de l'utilisateur (ticket #122)
 
 ### Fixed
 - Correctifs CSS

@@ -18,6 +18,7 @@ import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/rep
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
 import { removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
+import { applyReportDetailsMapFocus } from '@/features/report/utils/reportDetailsMap';
 
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 
@@ -150,6 +151,14 @@ export function ReportDetailsPage({
       map.removeOverlay(markerOverlay);
     };
   }, [isViewingOnMap, map, positionCoordinate]);
+
+  useEffect(() => {
+    if (!isViewingOnMap || !map || !report) {
+      return;
+    }
+
+    return applyReportDetailsMapFocus(map, report);
+  }, [isViewingOnMap, map, report]);
 
   // Check if user is a member of the report's community
   const reportCommunityId = report?.attributes?.raw?.[0]?.community ?? report?.communityId;
