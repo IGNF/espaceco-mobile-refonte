@@ -25,6 +25,7 @@ export interface LayerGroupItem {
   visible?: boolean;
   opacity?: number;
   description?: string;
+  removable?: boolean;
   directContribution?: LayerDirectContributionState;
   styleChoices?: LayerStyleChoice[];
   selectedStyleId?: string;

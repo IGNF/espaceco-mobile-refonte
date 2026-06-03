@@ -27,6 +27,8 @@ import {
   GEOPORTAIL_LAYER_TITLES,
   isDefaultGeoportailLayerName,
 } from '@/shared/constants/map';
+import { isUserWmsCommunityLayer } from '@/features/map/services/userWmsLayers';
+import { filterMesCartesLayers } from '@/features/map/utils/layerCollections';
 
 interface UseLayerGroupsParams {
   layers: CommunityLayer[];
@@ -59,6 +61,7 @@ function mapLayersToGroupItemsWithDirectContribution(
 
     return {
       ...item,
+      removable: isUserWmsCommunityLayer(layer),
       directContribution: getCommunityLayerDirectContributionState(layer, {
         pendingChangesCount,
         locked: layerKey ? lockedByLayerKey[layerKey] === true : false,
@@ -83,8 +86,6 @@ export function useLayerGroups({
   const { activeCommunity } = useCommunity();
 
   const layerGroups = useMemo<LayerGroupDetails[]>(() => {
-    const vectorLayerSet = new Set(vectorLayers);
-    const geoportailLayerSet = new Set(geoportailLayers);
     const normalizedSignalementLayerOrder = normalizeSignalementLayerOrder(
       signalementLayerState.order
     );
@@ -107,8 +108,10 @@ export function useLayerGroups({
 
     const guichetLayers = vectorLayers;
     const defaultStyleLabel = t('layers.groupDetails.defaultLayerStyle');
-    const mesCartesLayers = layers.filter(
-      (layer) => !vectorLayerSet.has(layer) && !geoportailLayerSet.has(layer)
+    const mesCartesLayers = filterMesCartesLayers(
+      layers,
+      geoportailLayers,
+      vectorLayers
     );
     const defaultGeoportailItems: LayerGroupItem[] = DEFAULT_GEOPORTAIL_LAYERS.map(
       (layerName) => ({

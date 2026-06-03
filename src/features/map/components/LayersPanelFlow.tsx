@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CommunityLayer } from '@ign/mobile-core';
 import type {
   LayerDisplayState,
@@ -7,7 +8,10 @@ import type {
 } from '@/features/map/types/layerGroups';
 import { useLayerGroups } from '@/features/map/hooks/useLayerGroups';
 import { LayersPanel } from '@/features/map/components/LayersPanel';
+import { UserWmsLayerDialog } from '@/features/map/components/UserWmsLayerDialog';
 import { LayerGroupDetailsPage } from '@/features/map/pages/LayerGroupDetails/LayerGroupDetailsPage';
+import { Alert } from '@/shared/ui/Alert';
+import type { RemoteWmsLayer } from '@/features/map/types/userWmsLayers';
 import type {
   SignalementLayerState
 } from '@/features/map/constants/signalementLayers.constants';
@@ -32,6 +36,9 @@ export interface LayersPanelFlowProps {
   onSetLayerStyle?: (layerKey: string, styleId: string) => void;
   onSetGroupVisibility?: (groupId: LayerGroupId, visible: boolean) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
+  onLoadRemoteWmsLayers?: (url: string) => Promise<RemoteWmsLayer[]>;
+  onAddUserWmsLayer?: (layer: RemoteWmsLayer) => void;
+  onRemoveUserWmsLayer?: (layerKey: string) => void;
   onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
   onEditLayer?: (layerKey: string) => void;
   onSendLayerDirectContributions?: (layerKey: string) => void;
@@ -59,12 +66,16 @@ export function LayersPanelFlow({
   onSetLayerStyle,
   onSetGroupVisibility,
   onSetGroupLayerOrder,
+  onLoadRemoteWmsLayers,
+  onAddUserWmsLayer,
+  onRemoveUserWmsLayer,
   onSendGroupDirectContributions,
   onEditLayer,
   onSendLayerDirectContributions,
   onResetLayerDirectContributions,
   onToggleLayerDirectContributionLock,
 }: LayersPanelFlowProps) {
+  const { t } = useTranslation();
   const { layerGroups, layerGroupSummaries } = useLayerGroups({
     layers,
     geoportailLayers,
@@ -78,6 +89,8 @@ export function LayersPanelFlow({
   });
 
   const [activeLayerGroupState, setActiveLayerGroupState] = useState<LayerGroupId | null>(null);
+  const [isMesCartesInfoOpen, setIsMesCartesInfoOpen] = useState(false);
+  const [isUserWmsDialogOpen, setIsUserWmsDialogOpen] = useState(false);
   const [
     dismissedInitialLayerGroupRequestKey,
     setDismissedInitialLayerGroupRequestKey,
@@ -175,6 +188,8 @@ export function LayersPanelFlow({
         isLoading={isLoading}
         onOpenGroup={handleOpenLayerGroup}
         onToggleGroupVisibility={handleToggleGroupVisibility}
+        onShowMesCartesInfo={() => setIsMesCartesInfoOpen(true)}
+        onOpenMesCartesWmsDialog={() => setIsUserWmsDialogOpen(true)}
         onSendGroupDirectContributions={handleSendGroupDirectContributions}
       />
       <LayerGroupDetailsPage
@@ -186,10 +201,23 @@ export function LayersPanelFlow({
         onSetLayerOpacity={onSetLayerOpacity}
         onSetLayerStyle={onSetLayerStyle}
         onSetGroupLayerOrder={onSetGroupLayerOrder}
+        onRemoveLayer={onRemoveUserWmsLayer}
         onEditLayer={onEditLayer}
         onSendLayerDirectContributions={onSendLayerDirectContributions}
         onResetLayerDirectContributions={onResetLayerDirectContributions}
         onToggleLayerDirectContributionLock={onToggleLayerDirectContributionLock}
+      />
+      <Alert
+        isOpen={isOpen && isMesCartesInfoOpen}
+        onClose={() => setIsMesCartesInfoOpen(false)}
+        title={t('layers.groups.mesCartes')}
+        subtitle={t('layers.groups.mesCartesDescription')}
+      />
+      <UserWmsLayerDialog
+        isOpen={isOpen && isUserWmsDialogOpen}
+        onClose={() => setIsUserWmsDialogOpen(false)}
+        onLoadRemoteWmsLayers={onLoadRemoteWmsLayers}
+        onAddUserWmsLayer={onAddUserWmsLayer}
       />
     </>
   );

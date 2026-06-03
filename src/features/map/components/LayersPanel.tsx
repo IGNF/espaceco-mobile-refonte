@@ -10,6 +10,8 @@ import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-angle-right.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
+import IconInfo from '@/shared/assets/icons/icon-info.svg?react';
+import IconDownload from '@/shared/assets/icons/icon-download.svg?react';
 
 const ANIMATION_DURATION = 300;
 
@@ -20,6 +22,8 @@ export interface LayersPanelProps {
 	isLoading: boolean;
 	onOpenGroup: (groupId: LayerGroupId) => void;
 	onToggleGroupVisibility: (groupId: LayerGroupId) => void;
+	onShowMesCartesInfo?: () => void;
+	onOpenMesCartesWmsDialog?: () => void;
 	onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
 }
 
@@ -30,12 +34,16 @@ export function LayersPanel({
 	isLoading,
 	onOpenGroup,
 	onToggleGroupVisibility,
+	onShowMesCartesInfo,
+	onOpenMesCartesWmsDialog,
 	onSendGroupDirectContributions,
 }: LayersPanelProps) {
 	const { t } = useTranslation();
 	const [isVisible, setIsVisible] = useState(false);
 	const [shouldRender, setShouldRender] = useState(false);
 	const sendDirectContributionsLabel = t('layers.groups.sendDirectContributions');
+	const mesCartesInfoLabel = t('layers.groups.mesCartesInfo');
+	const mesCartesDownloadLabel = t('layers.groups.mesCartesDownload');
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -121,6 +129,28 @@ export function LayersPanel({
 											<IconArrowRight className={styles.groupArrowIcon} />
 										</span>
 									</button>
+									{group.id === 'mesCartes' && (
+										<>
+											<button
+												type='button'
+												className={styles.groupActionButton}
+												onClick={onShowMesCartesInfo}
+												disabled={!onShowMesCartesInfo || isSubmittingDirectContribution}
+												aria-label={mesCartesInfoLabel}
+											>
+												<IconInfo className={styles.groupActionIcon} />
+											</button>
+											<button
+												type='button'
+												className={styles.groupActionButton}
+												onClick={onOpenMesCartesWmsDialog}
+												disabled={!onOpenMesCartesWmsDialog || isSubmittingDirectContribution}
+												aria-label={mesCartesDownloadLabel}
+											>
+												<IconDownload className={styles.groupActionIcon} />
+											</button>
+										</>
+									)}
 									{group.directContribution && (
 										<button
 											type='button'

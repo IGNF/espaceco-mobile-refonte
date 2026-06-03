@@ -61,6 +61,7 @@ export interface LayerGroupDetailsPageProps {
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
   onSetLayerStyle?: (layerKey: string, styleId: string) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
+  onRemoveLayer?: (layerKey: string) => void;
   onEditLayer?: (layerKey: string) => void;
   onSendLayerDirectContributions?: (layerKey: string) => void;
   onResetLayerDirectContributions?: (layerKey: string) => void;
@@ -76,6 +77,7 @@ export function LayerGroupDetailsPage({
   onSetLayerOpacity,
   onSetLayerStyle,
   onSetGroupLayerOrder,
+  onRemoveLayer,
   onEditLayer,
   onSendLayerDirectContributions,
   onResetLayerDirectContributions,
@@ -85,6 +87,7 @@ export function LayerGroupDetailsPage({
   const title = group?.title ?? t('layers.title');
   const [selectedItem, setSelectedItem] = useState<LayerGroupItem | null>(null);
   const [styleItem, setStyleItem] = useState<LayerGroupItem | null>(null);
+  const [deleteItem, setDeleteItem] = useState<LayerGroupItem | null>(null);
   const [layerDraftByKey, setLayerDraftByKey] = useState<LayerDraftByKey>({});
   const [itemOrder, setItemOrder] = useState<string[]>([]);
 
@@ -103,6 +106,7 @@ export function LayerGroupDetailsPage({
   const resetLayerChangesLabel = t('layers.groupDetails.resetLayerChanges');
   const lockLayerLabel = t('layers.groupDetails.lockLayerEdition');
   const unlockLayerLabel = t('layers.groupDetails.unlockLayerEdition');
+  const deleteLayerLabel = t('layers.groupDetails.deleteLayer');
 
   const orderedItems = group
     ? [...orderItemsByStringKey(group.items, (item) => item.id, itemOrder)].reverse()
@@ -164,6 +168,7 @@ export function LayerGroupDetailsPage({
     setLayerDraftByKey({});
     setSelectedItem(null);
     setStyleItem(null);
+    setDeleteItem(null);
     onClose();
   };
 
@@ -207,6 +212,17 @@ export function LayerGroupDetailsPage({
 
     onSetLayerStyle(layerKey, styleId);
     setStyleItem(null);
+  };
+
+  const handleConfirmDeleteLayer = () => {
+    const layerKey = deleteItem?.layerKey;
+    if (!layerKey || !onRemoveLayer) {
+      setDeleteItem(null);
+      return;
+    }
+
+    onRemoveLayer(layerKey);
+    setDeleteItem(null);
   };
 
   const reorderFromIds = useCallback((
@@ -306,9 +322,15 @@ export function LayerGroupDetailsPage({
                       resetLayerChangesLabel={`${resetLayerChangesLabel}: ${item.title}`}
                       lockLayerLabel={`${lockLayerLabel}: ${item.title}`}
                       unlockLayerLabel={`${unlockLayerLabel}: ${item.title}`}
+                      deleteLayerLabel={`${deleteLayerLabel}: ${item.title}`}
                       onToggleVisibility={() => handleToggleVisibility(item)}
                       onShowInfo={() => setSelectedItem(item)}
                       onSetOpacity={(opacity) => handleSetOpacity(item, opacity)}
+                      onDeleteLayer={
+                        item.removable && layerKey && onRemoveLayer
+                          ? () => setDeleteItem(item)
+                          : undefined
+                      }
                       onSelectLayerStyle={
                         layerKey && onSetLayerStyle
                           ? () => setStyleItem(item)
@@ -382,6 +404,27 @@ export function LayerGroupDetailsPage({
           })}
         </div>
       </Alert>
+
+      <Alert
+        isOpen={isOpen && deleteItem !== null}
+        onClose={() => setDeleteItem(null)}
+        title={t('layers.groupDetails.deleteLayerTitle')}
+        subtitle={t('layers.groupDetails.deleteLayerMessage', {
+          title: deleteItem?.title ?? '',
+        })}
+        buttons={[
+          {
+            label: t('common.cancel'),
+            onClick: () => setDeleteItem(null),
+            variant: 'outline',
+          },
+          {
+            label: t('layers.groupDetails.deleteLayer'),
+            onClick: handleConfirmDeleteLayer,
+            color: 'danger',
+          },
+        ]}
+      />
     </>
   );
 }

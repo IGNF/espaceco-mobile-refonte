@@ -18,6 +18,7 @@ import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconReset from '@/shared/assets/icons/icon-reset.svg?react';
 import IconLock from '@/shared/assets/icons/icon-lock.svg?react';
 import IconFormatting from '@/shared/assets/icons/icon-formatting.svg?react';
+import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 
 export interface LayerGroupDetailsSortableItemProps {
   item: LayerGroupItem;
@@ -37,9 +38,11 @@ export interface LayerGroupDetailsSortableItemProps {
   resetLayerChangesLabel: string;
   lockLayerLabel: string;
   unlockLayerLabel: string;
+  deleteLayerLabel: string;
   onToggleVisibility: () => void;
   onShowInfo: () => void;
   onSetOpacity: (opacity: number) => void;
+  onDeleteLayer?: () => void;
   onEditLayer?: () => void;
   onSelectLayerStyle?: () => void;
   onSendLayerChanges?: () => void;
@@ -65,9 +68,11 @@ export function LayerGroupDetailsSortableItem({
   resetLayerChangesLabel,
   lockLayerLabel,
   unlockLayerLabel,
+  deleteLayerLabel,
   onToggleVisibility,
   onShowInfo,
   onSetOpacity,
+  onDeleteLayer,
   onEditLayer,
   onSelectLayerStyle,
   onSendLayerChanges,
@@ -217,6 +222,17 @@ export function LayerGroupDetailsSortableItem({
         >
           <IconInfo className={styles.layerActionIcon} />
         </button>
+        {item.removable && (
+          <button
+            type='button'
+            className={styles.layerActionButton}
+            onClick={onDeleteLayer}
+            aria-label={deleteLayerLabel}
+            disabled={!onDeleteLayer || isInteractionDisabled}
+          >
+            <IconDelete className={styles.layerActionIcon} />
+          </button>
+        )}
         <button
           ref={handleRef}
           type='button'

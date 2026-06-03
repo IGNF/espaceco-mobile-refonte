@@ -18,6 +18,7 @@ import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { getCommunityLayerKeyFromOlLayer } from '@/infra/map/openlayers/layerMetadata';
 import { createCommunityVectorLayer } from '@/infra/map/openlayers/vectorLayers';
 import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
+import { createCommunityWmsLayers } from '@/infra/map/openlayers/wmsLayers';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
@@ -172,6 +173,7 @@ export function useCommunityMapLayers(
   geoportailLayers: CommunityLayer[],
   geoportailLayerState: LayerDisplayState,
   groupVisibility: LayerGroupVisibility,
+  mesCartesLayers: CommunityLayer[],
   vectorLayers: CommunityLayer[],
   isMapReady: boolean,
   mode: OfflineMode,
@@ -210,12 +212,26 @@ export function useCommunityMapLayers(
       ...layer,
       visible: groupVisibility.geoservices && (layer.visible ?? true),
     }));
+    const visibleMesCartesLayers = mesCartesLayers.map((layer) => ({
+      ...layer,
+      visible: groupVisibility.mesCartes && (layer.visible ?? true),
+    }));
 
     replaceLayerGroupContent(
       groupe,
-      createCommunityGeoportailLayers(visibleGeoportailLayers)
+      [
+        ...createCommunityGeoportailLayers(visibleGeoportailLayers),
+        ...createCommunityWmsLayers(visibleMesCartesLayers),
+      ]
     );
-  }, [geoportailLayers, groupVisibility.geoservices, isMapReady, mapRef]);
+  }, [
+    geoportailLayers,
+    groupVisibility.geoservices,
+    groupVisibility.mesCartes,
+    isMapReady,
+    mapRef,
+    mesCartesLayers,
+  ]);
 
   useEffect(() => {
     if (!isMapReady) return;

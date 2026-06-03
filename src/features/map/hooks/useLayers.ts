@@ -30,9 +30,20 @@ import {
   type LayersConfiguration,
 } from '@/features/map/services/layersConfigurationStorage';
 import {
+  createUserWmsLayer,
+  fetchRemoteWmsLayers,
+  getUserWmsLayerIdFromCommunityLayer,
+  userWmsLayerToCommunityLayer,
+} from '@/features/map/services/userWmsLayers';
+import type {
+  RemoteWmsLayer,
+  UserWmsLayer,
+} from '@/features/map/types/userWmsLayers';
+import {
   orderItemsByStringKey,
   uniqueOrderedStrings,
 } from '@/features/map/utils/order';
+import { filterMesCartesLayers } from '@/features/map/utils/layerCollections';
 
 import { clampNumber } from '@/shared/utils/number';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
@@ -185,6 +196,7 @@ export function useLayers(
   const activeCommunityId = activeCommunity?.id;
   const userId = user?.id ?? null;
   const [layers, setLayers] = useState<CommunityLayer[]>([]);
+  const [userWmsLayers, setUserWmsLayers] = useState<UserWmsLayer[]>([]);
   const [signalementLayerState, setSignalementLayerState] =
     useState<SignalementLayerState>(() => getDefaultSignalementLayerState());
   const [geoportailLayerState, setGeoportailLayerState] =
@@ -207,6 +219,24 @@ export function useLayers(
 
   const geoportailLayers = useMemo(() => filterGeoportailLayers(layers), [layers]);
   const vectorLayers = useMemo(() => filterVectorLayers(layers), [layers]);
+  const mesCartesLayers = useMemo(
+    () => filterMesCartesLayers(layers, geoportailLayers, vectorLayers),
+    [geoportailLayers, layers, vectorLayers]
+  );
+
+  const updateUserWmsLayerState = useCallback((
+    layerKey: string,
+    update: (layer: UserWmsLayer) => UserWmsLayer
+  ) => {
+    setUserWmsLayers((previous) =>
+      previous.map((userLayer) => {
+        const communityLayer = userWmsLayerToCommunityLayer(userLayer);
+        return getCommunityLayerKey(communityLayer) === layerKey
+          ? update(userLayer)
+          : userLayer;
+      })
+    );
+  }, []);
 
   const setLayerVisibility = useCallback((layerKey: string, visible: boolean) => {
     if (isSignalementLayerKey(layerKey)) {
@@ -241,7 +271,8 @@ export function useLayers(
         getCommunityLayerKey(layer) === layerKey ? { ...layer, visible } : layer
       )
     );
-  }, []);
+    updateUserWmsLayerState(layerKey, (layer) => ({ ...layer, visible }));
+  }, [updateUserWmsLayerState]);
 
   const setLayerOpacity = useCallback((layerKey: string, opacity: number) => {
     const nextOpacity = clampNumber(opacity, 0, 1);
@@ -282,7 +313,8 @@ export function useLayers(
           : layer
       )
     );
-  }, []);
+    updateUserWmsLayerState(layerKey, (layer) => ({ ...layer, opacity: nextOpacity }));
+  }, [updateUserWmsLayerState]);
 
   const setLayerStyle = useCallback((layerKey: string, styleId: string) => {
     setLayers((previous) =>
@@ -334,7 +366,13 @@ export function useLayers(
     const {
       layers: nextLayers,
       lockedByLayerKey: nextLockedByLayerKey,
-    } = applySavedLayerConfiguration(baseLayers, savedConfiguration);
+    } = applySavedLayerConfiguration(
+      [
+        ...baseLayers,
+        ...(savedConfiguration?.userWmsLayers ?? []).map(userWmsLayerToCommunityLayer),
+      ],
+      savedConfiguration
+    );
     const nextGeoportailLayerState =
       savedConfiguration?.geoportailLayerState ?? getDefaultGeoportailLayerState();
 
@@ -347,6 +385,7 @@ export function useLayers(
       nextLayers,
       nextGeoportailLayerState
     ));
+    setUserWmsLayers(savedConfiguration?.userWmsLayers ?? []);
     setLockedByLayerKey(nextLockedByLayerKey);
     setGeoportailLayerState(nextGeoportailLayerState);
     setSignalementLayerState(nextSignalementLayerState);
@@ -365,6 +404,7 @@ export function useLayers(
     if (!activeCommunityId) {
       setIsLoading(false);
       setLayers([]);
+      setUserWmsLayers([]);
       resetLayerPreferences();
       return;
     }
@@ -386,6 +426,7 @@ export function useLayers(
       console.error('Failed to fetch layers:', err);
       setError('Failed to fetch layers');
       setLayers([]);
+      setUserWmsLayers([]);
       resetLayerPreferences();
     } finally {
       setIsLoading(false);
@@ -406,6 +447,7 @@ export function useLayers(
     if (!activeCommunityId) {
       setIsLoading(false);
       setLayers([]);
+      setUserWmsLayers([]);
       resetLayerPreferences();
       return;
     }
@@ -433,6 +475,7 @@ export function useLayers(
       console.error('Failed to fetch layers:', err);
       setError('Failed to fetch layers');
       setLayers([]);
+      setUserWmsLayers([]);
       resetLayerPreferences();
     } finally {
       setIsLoading(false);
@@ -467,6 +510,7 @@ export function useLayers(
       groupVisibility,
       geoportailLayerState,
       signalementLayerState,
+      userWmsLayers,
     });
   }, [
     activeCommunityId,
@@ -479,6 +523,7 @@ export function useLayers(
     groupVisibility,
     geoportailLayerState,
     signalementLayerState,
+    userWmsLayers,
     userId,
   ]);
 
@@ -510,10 +555,44 @@ export function useLayers(
     });
   }, []);
 
+  const loadRemoteWmsLayers = useCallback((url: string): Promise<RemoteWmsLayer[]> => {
+    return fetchRemoteWmsLayers(url);
+  }, []);
+
+  const addUserWmsLayer = useCallback((remoteLayer: RemoteWmsLayer) => {
+    const nextUserLayer = createUserWmsLayer(remoteLayer, userWmsLayers);
+    const nextCommunityLayer = userWmsLayerToCommunityLayer(nextUserLayer);
+
+    setUserWmsLayers((previousUserLayers) => [
+      ...previousUserLayers,
+      nextUserLayer,
+    ]);
+    setLayers((previousLayers) => [...previousLayers, nextCommunityLayer]);
+    setGroupVisibility((previous) => ({
+      ...previous,
+      mesCartes: true,
+    }));
+  }, [userWmsLayers]);
+
+  const removeUserWmsLayer = useCallback((layerKey: string) => {
+    setLayers((previousLayers) => {
+      const layerToRemove = previousLayers.find(
+        (layer) => getCommunityLayerKey(layer) === layerKey
+      )!;
+      const userLayerId = getUserWmsLayerIdFromCommunityLayer(layerToRemove);
+
+      setUserWmsLayers((previousUserLayers) =>
+        previousUserLayers.filter((layer) => layer.id !== userLayerId)
+      );
+      return previousLayers.filter((layer) => layer !== layerToRemove);
+    });
+  }, []);
+
   return {
     layers,
     geoportailLayers,
     vectorLayers,
+    mesCartesLayers,
     lockedByLayerKey,
     groupVisibility,
     geoportailLayerState,
@@ -527,5 +606,8 @@ export function useLayers(
     setGroupLayerOrder,
     setLayerGroupVisibility,
     setLayerDirectContributionLock,
+    loadRemoteWmsLayers,
+    addUserWmsLayer,
+    removeUserWmsLayer,
   };
 }

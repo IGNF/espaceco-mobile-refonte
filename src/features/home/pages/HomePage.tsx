@@ -135,6 +135,7 @@ export function HomePage() {
     layers,
     geoportailLayers,
     vectorLayers,
+    mesCartesLayers,
     lockedByLayerKey,
     groupVisibility,
     geoportailLayerState,
@@ -146,6 +147,9 @@ export function HomePage() {
     setGroupLayerOrder,
     setLayerGroupVisibility,
     setLayerDirectContributionLock,
+    loadRemoteWmsLayers,
+    addUserWmsLayer,
+    removeUserWmsLayer,
   } = useLayers(offlineMode, activeCommunityCache);
   useSignalementMapLayers(
     mapRef,
@@ -198,6 +202,7 @@ export function HomePage() {
     geoportailLayers,
     geoportailLayerState,
     groupVisibility,
+    mesCartesLayers,
     mountedVectorLayers,
     isMapReady,
     offlineMode,
@@ -950,6 +955,9 @@ export function HomePage() {
         onSetLayerStyle={setLayerStyle}
         onSetGroupVisibility={setLayerGroupVisibility}
         onSetGroupLayerOrder={setGroupLayerOrder}
+        onLoadRemoteWmsLayers={loadRemoteWmsLayers}
+        onAddUserWmsLayer={addUserWmsLayer}
+        onRemoveUserWmsLayer={removeUserWmsLayer}
         onEditLayer={handleEditLayer}
         onSendLayerDirectContributions={sendLayerDirectContributions}
         onResetLayerDirectContributions={resetLayerDirectContributions}

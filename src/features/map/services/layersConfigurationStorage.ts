@@ -15,6 +15,7 @@ import {
   hasLayerStyleChoices,
   getSelectedLayerStyleId,
 } from '@/features/map/utils/layerStyles';
+import type { UserWmsLayer } from '@/features/map/types/userWmsLayers';
 
 import type {
   SignalementLayerKey,
@@ -40,6 +41,7 @@ interface PersistedLayerState {
 export interface LayersConfiguration {
   layersByKey: Record<string, PersistedLayerState>;
   layerOrder: string[];
+  userWmsLayers: UserWmsLayer[];
   groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
@@ -53,6 +55,7 @@ export interface SaveLayersConfigurationParams {
   groupVisibility: LayerGroupVisibility;
   geoportailLayerState: LayerDisplayState;
   signalementLayerState: SignalementLayerState;
+  userWmsLayers: UserWmsLayer[];
 }
 
 function getDefaultLayerGroupVisibility(): LayerGroupVisibility {
@@ -139,6 +142,10 @@ function toLayerOrder(value: unknown): string[] {
   }
 
   return orderedLayerKeys;
+}
+
+function toUserWmsLayers(value: unknown): UserWmsLayer[] {
+  return (value as UserWmsLayer[] | undefined) ?? [];
 }
 
 function toBooleanRecord(value: unknown): Record<string, boolean> {
@@ -303,6 +310,7 @@ export async function loadLayersConfiguration(
     return {
       layersByKey: toLayerStateMap(payload.layersByKey),
       layerOrder: toLayerOrder(payload.layerOrder),
+      userWmsLayers: toUserWmsLayers(payload.userWmsLayers),
       groupVisibility: toLayerGroupVisibility(payload.groupVisibility),
       geoportailLayerState: toGeoportailLayerState(payload.geoportailLayerState),
       signalementLayerState,
@@ -326,6 +334,7 @@ export async function saveLayersConfiguration({
   groupVisibility,
   geoportailLayerState,
   signalementLayerState,
+  userWmsLayers,
 }: SaveLayersConfigurationParams): Promise<void> {
   const layerOrder: string[] = [];
   const layersByKey: Record<string, PersistedLayerState> = {};
@@ -346,6 +355,7 @@ export async function saveLayersConfiguration({
   const payload: LayersConfiguration = {
     layersByKey,
     layerOrder,
+    userWmsLayers,
     groupVisibility,
     geoportailLayerState,
     signalementLayerState: {

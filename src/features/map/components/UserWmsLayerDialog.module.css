@@ -1,0 +1,209 @@
+.form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.label {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--color-dark);
+}
+
+.input {
+	min-height: 2.75rem;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 8px;
+	padding: 0 0.875rem;
+	font: inherit;
+	color: var(--color-dark);
+	background: white;
+}
+
+.input:focus {
+	outline: 2px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+	border-color: var(--color-primary);
+}
+
+.error {
+	margin: 0.75rem 0 0;
+	color: var(--color-danger);
+	font-size: 0.9rem;
+}
+
+.layerList {
+	list-style: none;
+	margin: 1rem 0 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.layerItem {
+	border: 1px solid var(--color-light-tint);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.layerButton {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.75rem;
+	width: 100%;
+	border: 0;
+	background: white;
+	padding: 0.75rem;
+	text-align: left;
+	cursor: pointer;
+	font: inherit;
+}
+
+.layerButton[aria-expanded='true'] {
+	background: var(--color-light);
+}
+
+.layerTitleBlock {
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.layerTitle {
+	color: var(--color-dark);
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.layerName {
+	color: var(--color-medium);
+	font-size: 0.85rem;
+	overflow-wrap: anywhere;
+}
+
+.previewPanel {
+	padding: 0.75rem;
+	border-top: 1px solid var(--color-light-tint);
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.previewTitle {
+	margin: 0;
+	color: var(--color-dark);
+	font-size: 1rem;
+	font-weight: 700;
+}
+
+.visualPreview {
+	display: grid;
+	grid-template-columns: minmax(8rem, 1fr) minmax(4rem, 0.55fr);
+	gap: 0.75rem;
+	align-items: start;
+}
+
+.previewImage,
+.previewFallback {
+	width: 100%;
+	aspect-ratio: 1;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 6px;
+	background: var(--color-light);
+	object-fit: cover;
+}
+
+.previewFallback {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.75rem;
+	color: var(--color-medium);
+	font-size: 0.85rem;
+	text-align: center;
+}
+
+.legendBlock {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	min-width: 0;
+}
+
+.legendTitle {
+	color: var(--color-medium);
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.legendImages {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: flex-start;
+}
+
+.legendImage {
+	max-width: 100%;
+	max-height: 8rem;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 4px;
+	background: white;
+	object-fit: contain;
+}
+
+.legendSwatch {
+	width: 2rem;
+	height: 2rem;
+	border: 1px solid var(--color-light-tint);
+	border-radius: 3px;
+	background: var(--color-dark);
+}
+
+.previewDescription {
+	margin: 0;
+	color: var(--color-dark);
+	font-size: 0.9rem;
+	overflow-wrap: anywhere;
+}
+
+.preview {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	color: var(--color-dark);
+}
+
+.preview div {
+	display: grid;
+	grid-template-columns: 6rem 1fr;
+	gap: 0.75rem;
+}
+
+.preview dt {
+	color: var(--color-medium);
+	font-size: 0.85rem;
+}
+
+.preview dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+	.layerButton {
+		flex-direction: column;
+	}
+
+	.visualPreview {
+		grid-template-columns: 1fr;
+	}
+
+	.preview div {
+		grid-template-columns: 1fr;
+		gap: 0.125rem;
+	}
+}
