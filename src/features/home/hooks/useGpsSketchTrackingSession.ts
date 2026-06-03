@@ -145,6 +145,7 @@ export function useGpsSketchTrackingSession({
     if (!interaction) return;
 
     interaction.setActive(false);
+    interaction.reset();
     setIsRecording(false);
     setIsPaused(false);
     syncStatsFromSource();

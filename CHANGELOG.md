@@ -25,6 +25,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Correctifs CSS
 - Les triggers du centrage/reset de zoom ont été changés (ticket #122)
+- L'interruption d'une trace GPS, puis l'enregistrement d'une nouvelle, ne la lie plus à la trace précédemment arrêtée (ticket #135)
 
 ## [0.0.11] - 2026-06-01
 
