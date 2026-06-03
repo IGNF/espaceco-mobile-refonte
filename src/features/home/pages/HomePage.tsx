@@ -124,7 +124,8 @@ export function HomePage() {
     hasInitialCenterCompleted,
     userFollowingMode,
     setUserFollowingMode,
-    setIsTrackingRecenterEnabled,
+    setIsGeolocationRecenterActive,
+    onUserViewportChange,
   } = useMap({
     centerOnUserLocation: offlineMode !== 'offline',
     skipGeoportailCapabilities: offlineMode === 'offline',
@@ -678,8 +679,17 @@ export function HomePage() {
   getGpsSketchesAtPixelRef.current = getGpsSketchesAtPixel;
 
   useEffect(() => {
-    setIsTrackingRecenterEnabled(!isGpsSketchRecording);
-  }, [isGpsSketchRecording, setIsTrackingRecenterEnabled]);
+    setIsGeolocationRecenterActive(
+      isGpsSketchRecording ||
+      fastReportFlow.isGpsOpen ||
+      gnssReportTemplate !== null
+    );
+  }, [
+    fastReportFlow.isGpsOpen,
+    gnssReportTemplate,
+    isGpsSketchRecording,
+    setIsGeolocationRecenterActive,
+  ]);
 
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
     setReportType('standard');
@@ -720,6 +730,12 @@ export function HomePage() {
 
     setPendingMapWorkChoice(null);
     selectGpsSketch(choice.sketch);
+  };
+
+  const handleZoomClick = (zoomDelta: number) => {
+    onUserViewportChange();
+    const view = map?.getView();
+    view?.setZoom((view.getZoom() ?? 0) + zoomDelta);
   };
 
   const handleUserFollowingButtonClick = () => {
@@ -825,7 +841,7 @@ export function HomePage() {
           <button
             type="button"
             className={styles.zoomInButton}
-            onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) + 1)}
+            onClick={() => handleZoomClick(1)}
             aria-label="Zoom in"
           >
             <IconZoomIn className={styles.zoomInIcon} />
@@ -834,7 +850,7 @@ export function HomePage() {
           <button
             type="button"
             className={styles.zoomOutButton}
-            onClick={() => map?.getView()?.setZoom((map?.getView()?.getZoom() ?? 0) - 1)}
+            onClick={() => handleZoomClick(-1)}
             aria-label="Zoom out"
           >
             <IconZoomOut className={styles.zoomOutIcon} />

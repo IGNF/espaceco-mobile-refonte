@@ -24,6 +24,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 - Correctifs CSS
+- Les triggers du centrage/reset de zoom ont été changés (ticket #122)
 
 ## [0.0.11] - 2026-06-01
 
