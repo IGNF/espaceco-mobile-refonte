@@ -99,6 +99,7 @@
     "gpsSketch": {
       "record": "Enregistrer une trace GNSS",
       "stop": "Arrêter l'enregistrement",
+      "cancel": "Annuler l'enregistrement",
       "pause": "Mettre en pause",
       "resume": "Reprendre l'enregistrement",
       "selectionTitle": "Trace GNSS",

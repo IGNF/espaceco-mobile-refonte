@@ -49,6 +49,7 @@ export interface UseGpsSketchTrackingSessionReturn {
   startRecording: () => void;
   togglePause: () => void;
   stopRecording: () => void;
+  cancelRecording: () => void;
   clearSelection: () => void;
   selectSketch: (feature: Feature<Geometry>) => void;
   getSketchesAtPixel: (pixel: number[]) => Feature<Geometry>[];
@@ -197,6 +198,22 @@ export function useGpsSketchTrackingSession({
   const stopRecording = useCallback(() => {
     deactivateInteraction();
   }, [deactivateInteraction]);
+
+  const cancelRecording = useCallback(() => {
+    const interaction = interactionRef.current;
+    if (!interaction) return;
+
+    ignoredStartCoordinateRef.current = lastRecordedCoordinateRef.current
+      ? [...lastRecordedCoordinateRef.current]
+      : null;
+    lastRecordedCoordinateRef.current = null;
+    interaction.reset();
+    interaction.setActive(false);
+    interaction.reset();
+    setIsRecording(false);
+    setIsPaused(false);
+    syncStatsFromLineString(null);
+  }, [syncStatsFromLineString]);
 
   useEffect(() => {
     onSelectSketchRef.current = onSelectSketch;
@@ -381,6 +398,7 @@ export function useGpsSketchTrackingSession({
     startRecording,
     togglePause,
     stopRecording,
+    cancelRecording,
     clearSelection,
     selectSketch,
     getSketchesAtPixel,

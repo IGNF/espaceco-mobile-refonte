@@ -73,6 +73,7 @@ import IconZoomOut from "@/shared/assets/icons/icon-minus.svg?react";
 import IconCompass from "@/shared/assets/icons/icon-compass.svg?react";
 import IconPause from "@/shared/assets/icons/icon-pause.svg?react";
 import IconPlay from "@/shared/assets/icons/icon-play.svg?react";
+import IconClose from "@/shared/assets/icons/icon-close.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
@@ -661,6 +662,7 @@ export function HomePage() {
     startRecording: startGpsSketchRecording,
     togglePause: toggleGpsSketchPause,
     stopRecording: stopGpsSketchRecording,
+    cancelRecording: cancelGpsSketchRecording,
     clearSelection: clearGpsSketchSelection,
     selectSketch: selectGpsSketch,
     getSketchesAtPixel: getGpsSketchesAtPixel,
@@ -895,20 +897,31 @@ export function HomePage() {
           </button>
 
           {isGpsSketchRecording && (
-            <button
-              type="button"
-              className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
-              onClick={toggleGpsSketchPause}
-              aria-label={isGpsSketchPaused
-                ? t('home.gpsSketch.resume')
-                : t('home.gpsSketch.pause')}
-            >
-              {isGpsSketchPaused ? (
-                <IconPlay className={styles.gpsSketchActionIcon} />
-              ) : (
-                <IconPause className={styles.gpsSketchActionIcon} />
-              )}
-            </button>
+            <>
+              <button
+                type="button"
+                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton}`}
+                onClick={cancelGpsSketchRecording}
+                aria-label={t('home.gpsSketch.cancel')}
+              >
+                <IconClose className={styles.gpsSketchActionIcon} />
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
+                onClick={toggleGpsSketchPause}
+                aria-label={isGpsSketchPaused
+                  ? t('home.gpsSketch.resume')
+                  : t('home.gpsSketch.pause')}
+              >
+                {isGpsSketchPaused ? (
+                  <IconPlay className={styles.gpsSketchActionIcon} />
+                ) : (
+                  <IconPause className={styles.gpsSketchActionIcon} />
+                )}
+              </button>
+            </>
           )}
         </div>
       )}
