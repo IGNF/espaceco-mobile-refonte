@@ -8,6 +8,7 @@ import VectorLayer from 'ol/layer/Vector';
 import VectorSource from 'ol/source/Vector';
 import Cluster from 'ol/source/Cluster';
 import Feature from 'ol/Feature';
+import type { Extent } from 'ol/extent';
 import { bbox as bboxStrategy } from 'ol/loadingstrategy';
 import type Projection from 'ol/proj/Projection';
 import { transformExtent } from 'ol/proj';
@@ -98,6 +99,34 @@ function deduplicateFeatures(features: Feature[]): Feature[] {
   return Array.from(byId.values());
 }
 
+function shouldLoadNextReportsPage(status: number, contentRange: unknown): boolean {
+  if (status !== 206 || typeof contentRange !== 'string') {
+    return false;
+  }
+
+  const [range, total] = contentRange.split('/');
+  const [, end] = range.split('-');
+
+  return Boolean(end && total && end !== total);
+}
+
+async function loadCommunityReports(extent: Extent, communityId: number, page = 1): Promise<Report[]> {
+  const response = await collabApiClient.report.getAll({
+    box: extent.join(','),
+    limit: 100,
+    page,
+    communities: [communityId],
+  });
+
+  const reports = response.data as Report[];
+  if (shouldLoadNextReportsPage(response.status, response.headers?.['content-range'])) {
+    const nextReports = await loadCommunityReports(extent, communityId, page + 1);
+    return reports.concat(nextReports);
+  }
+
+  return reports;
+}
+
 export function useSignalementMapLayers(
   mapRef: RefObject<OlMap | null>,
   signalementLayerState: SignalementLayerState,
@@ -160,7 +189,9 @@ export function useSignalementMapLayers(
               mapProjectionCode,
               WGS84_PROJECTION
             );
-            const reports = await reportSource.loadReports(extent4326);
+            const reports = activeCommunity?.id
+              ? await loadCommunityReports(extent4326, activeCommunity.id)
+              : [];
             const loadedFeatures = await reportSource.loadFeatures(
               reports,
               projection as Projection

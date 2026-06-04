@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
@@ -18,7 +18,10 @@ import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/rep
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
 import { removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
-import { applyReportDetailsMapFocus } from '@/features/report/utils/reportDetailsMap';
+import {
+  applyReportDetailsMapFocus,
+  suspendReportDetailsMapReportLoading,
+} from '@/features/report/utils/reportDetailsMap';
 
 import { ReportStorageAdapter } from '@/infra/storage/ReportStorageAdapter';
 
@@ -102,6 +105,7 @@ export function ReportDetailsPage({
   const [replyText, setReplyText] = useState('');
   const [replyStatus, setReplyStatus] = useState(ReportStatus.Submit);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const reportMapLoadingSuspensionCleanupRef = useRef<(() => void) | null>(null);
 
   const isDraft = report?.status === ReportStatus.Draft;
   const reportGeometry = report?.geometry;
@@ -128,6 +132,22 @@ export function ReportDetailsPage({
       setIsViewingOnMap(false);
     }
   }, [isOpen, isViewingOnMap]);
+
+  useEffect(() => {
+    if (isViewingOnMap) {
+      return;
+    }
+
+    reportMapLoadingSuspensionCleanupRef.current?.();
+    reportMapLoadingSuspensionCleanupRef.current = null;
+  }, [isViewingOnMap]);
+
+  useEffect(() => {
+    return () => {
+      reportMapLoadingSuspensionCleanupRef.current?.();
+      reportMapLoadingSuspensionCleanupRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isViewingOnMap || !map || !positionCoordinate || typeof document === 'undefined') {
@@ -189,13 +209,16 @@ export function ReportDetailsPage({
   const handleViewOnMap = () => {
     if (!map || !positionCoordinate) return;
 
+    reportMapLoadingSuspensionCleanupRef.current?.();
+    reportMapLoadingSuspensionCleanupRef.current = suspendReportDetailsMapReportLoading(map);
+    onMapPickerActiveChange?.(true);
+    onSearchPanelVisibilityChange?.(false);
+    setIsViewingOnMap(true);
+
     map.getView().animate({
       center: positionCoordinate,
       duration: 250,
     });
-
-    onSearchPanelVisibilityChange?.(false);
-    setIsViewingOnMap(true);
   };
 
   const handleBackToReport = () => {

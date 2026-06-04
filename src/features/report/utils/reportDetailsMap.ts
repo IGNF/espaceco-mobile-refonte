@@ -15,6 +15,7 @@ import {
   REPORT_DETAILS_ATTACHMENT_HIGHLIGHT_STYLE,
   REPORT_DETAILS_MAP_DIMMED_OPACITY_FACTOR,
 } from '@/features/report/constants/reportDetailsMap.constants';
+import { LAYER_NAME_SIGNALEMENTS } from '@/features/map/constants/signalementLayers.constants';
 import { WGS84_PROJECTION } from '@/shared/constants/projections';
 
 const sketchGeometryFormat = new WKT();
@@ -115,6 +116,23 @@ export function applyReportDetailsMapFocus(map: OlMap, report: AppReport): () =>
 
     for (const [layer, opacity] of previousLayerOpacities) {
       layer.setOpacity(opacity);
+    }
+  };
+}
+
+export function suspendReportDetailsMapReportLoading(map: OlMap): () => void {
+  const previousLayerVisibilities = new Map<BaseLayer, boolean>();
+
+  for (const layer of getMapLeafLayers(map)) {
+    if (layer.get('name') !== LAYER_NAME_SIGNALEMENTS) continue;
+
+    previousLayerVisibilities.set(layer, layer.getVisible());
+    layer.setVisible(false);
+  }
+
+  return () => {
+    for (const [layer, visible] of previousLayerVisibilities) {
+      layer.setVisible(visible);
     }
   };
 }
