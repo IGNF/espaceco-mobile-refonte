@@ -35,10 +35,9 @@ export function AuthCallbackPage() {
     async function processCallback() {
       const code = searchParams.get("code");
       const errorParam = searchParams.get("error");
-      const errorDescription = searchParams.get("error_description");
 
       if (errorParam) {
-        setError(errorDescription || errorParam);
+        setError(t('errors.auth.oauthCallbackFailed'));
         return;
       }
 
@@ -81,13 +80,13 @@ export function AuthCallbackPage() {
   if (error) {
     return (
       <div className={screen.screenContainer} style={{ padding: "2rem", textAlign: "center" }}>
-        <h1 className={typography.title}>Authentication Error</h1>
+        <h1 className={typography.title}>{t('authCallback.errorTitle')}</h1>
         <p className={typography.error}>{error}</p>
         <button
           onClick={() => navigate("/login", { replace: true })}
           style={{ marginTop: "1rem", padding: "0.5rem 1rem", cursor: "pointer" }}
         >
-          Back to Login
+          {t('authCallback.backToLogin')}
         </button>
       </div>
     );
@@ -95,8 +94,8 @@ export function AuthCallbackPage() {
 
   return (
     <div className={screen.screenContainer} style={{ padding: "2rem", textAlign: "center" }}>
-      <h1 className={typography.title}>Authenticating...</h1>
-      <p>Please wait while we complete your sign-in.</p>
+      <h1 className={typography.title}>{t('authCallback.authenticating')}</h1>
+      <p>{t('authCallback.completingSignIn')}</p>
     </div>
   );
 }

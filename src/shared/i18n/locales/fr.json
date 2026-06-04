@@ -25,6 +25,12 @@
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
     "restoringSession": "Restauration de votre session..."
   },
+  "authCallback": {
+    "errorTitle": "Erreur d'authentification",
+    "backToLogin": "Retour à la connexion",
+    "authenticating": "Authentification en cours...",
+    "completingSignIn": "Veuillez patienter pendant la finalisation de votre connexion."
+  },
   "errors": {
     "global": {
       "network": "Réseau indisponible. Vérifiez votre connexion puis réessayez.",
