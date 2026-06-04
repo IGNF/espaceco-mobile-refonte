@@ -22,6 +22,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Amélioration des styles CSS pour plus de cohérence
  
 ### Fixed
+- Amélioration des performances
 
 ## [0.0.13] - 2026-06-04
 
