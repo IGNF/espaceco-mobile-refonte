@@ -37,6 +37,7 @@ export function DeleteOfflineItemDialog({
           label: t('offline.dialog.cancel'),
           onClick: onClose,
           variant: 'outline',
+          color: 'medium',
           disabled: isProcessing,
         },
       ]}

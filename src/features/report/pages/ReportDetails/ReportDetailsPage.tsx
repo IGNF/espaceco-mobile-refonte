@@ -483,6 +483,7 @@ export function ReportDetailsPage({
             {
               label: t('reports.details.reply.cancelButton'),
               onClick: handleReplyClose,
+              color: 'medium',
               variant: 'outline',
             },
             {
@@ -548,6 +549,7 @@ export function ReportDetailsPage({
             {
               label: t('reports.details.delete.cancelButton'),
               onClick: handleDeleteClose,
+              color: 'medium',
               variant: 'outline',
             },
           ]}

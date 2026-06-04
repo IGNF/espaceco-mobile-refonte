@@ -32,6 +32,7 @@ export function DirectContributionFeatureChoiceAlert({
           label: t('layers.directContribution.objectChoice.actions.cancel'),
           onClick: onClose,
           variant: 'outline',
+          color: 'medium',
         },
       ]}
     >

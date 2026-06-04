@@ -16,9 +16,10 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.14] - 2026-06-05
 
 ### Added
-- Un bouton d'annulation lors de la capture d'une trace a été ajouté, pour arrêter l'enregistrement et annuler cette trace
+- Un bouton d'annulation lors de la capture d'une trace a été ajouté, pour arrêter l'enregistrement et annuler cette trace (ticket #110)
 
 ### Changed
+- Amélioration des styles CSS pour plus de cohérence
  
 ### Fixed
 

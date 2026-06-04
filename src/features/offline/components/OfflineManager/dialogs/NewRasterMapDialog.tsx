@@ -117,7 +117,7 @@ export function NewRasterMapDialog({
         <div className={styles.dialogActions}>
           <Button
             variant='outline'
-            color='secondary'
+            color='medium'
             onClick={onClose}
             disabled={isSubmitting}
           >

@@ -303,6 +303,7 @@ export function MyReportsPage({
             label: t('reports.myReports.deleteChoice.cancelButton'),
             onClick: handleCloseDeleteChoice,
             variant: 'outline',
+            color: 'medium',
             disabled: isClearingReports,
           },
         ]}
@@ -324,6 +325,7 @@ export function MyReportsPage({
             label: t('reports.myReports.deleteAll.cancelButton'),
             onClick: handleCloseDeleteAllConfirm,
             variant: 'outline',
+            color: 'medium',
             disabled: isClearingReports,
           },
         ]}

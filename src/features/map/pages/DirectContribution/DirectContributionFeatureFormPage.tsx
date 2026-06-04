@@ -462,7 +462,7 @@ function DirectContributionFeatureFormContent({
           </Button>
           <Button
             type="button"
-            color="primary"
+            color="medium"
             variant="outline"
             className={styles.actionButton}
             onClick={onCancel}

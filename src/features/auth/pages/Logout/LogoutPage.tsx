@@ -29,7 +29,7 @@ export function LogoutPage({ isOpen, onClose, handleLogout }: LogoutPageProps) {
 					<Button color="primary" onClick={handleLogout}>
 						{t("logout.confirm")}
 					</Button>
-					<Button color="primary" variant="outline" onClick={onClose}>
+					<Button color="medium" variant="outline" onClick={onClose}>
 						{t("logout.cancel")}
 					</Button>
 				</div>

@@ -102,6 +102,7 @@ export function UserWmsLayerDialog({
         {
           label: t('common.cancel'),
           onClick: onClose,
+          color: 'medium',
           variant: 'outline',
         },
         {

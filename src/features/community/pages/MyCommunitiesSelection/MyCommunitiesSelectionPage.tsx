@@ -158,6 +158,7 @@ export function MyCommunitiesSelectionPage({
 
             <Button
               variant="outline"
+              color="medium"
               onClick={() => setIsConfirmAlertOpen(false)}
               style={{ width: "auto", margin: 0, flex: 1 }}
             >

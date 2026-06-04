@@ -253,6 +253,7 @@ export function AllCommunitiesPage({ isOpen, onClose }: AllCommunitiesPageProps)
 
             <Button
               variant="outline"
+              color="medium"
               onClick={() => setSelectedCommunityId(null)}
               style={{ width: "auto", margin: 0, flex: 1 }}
             >

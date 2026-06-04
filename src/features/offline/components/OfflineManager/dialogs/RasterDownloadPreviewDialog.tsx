@@ -40,6 +40,7 @@ export function RasterDownloadPreviewDialog({
           label: t('offline.dialog.cancel'),
           onClick: onClose,
           variant: 'outline',
+          color: 'medium',
         },
       ]}
     >
