@@ -322,6 +322,8 @@ export function useReportForm({
         resultType: CameraResultType.DataUrl,
         quality: 85,
         webUseInput: true,
+        promptLabelPhoto: t('reports.createOrEdit.form.photoPromptFromAlbum'),
+        promptLabelPicture: t('reports.createOrEdit.form.photoPromptTakePicture'),
       });
 
       if (!capturedPhoto.dataUrl) return;
@@ -346,7 +348,7 @@ export function useReportForm({
     } finally {
       setIsAddingPhoto(false);
     }
-  }, [isAddingPhoto, photos.length, reportId]);
+  }, [isAddingPhoto, photos.length, reportId, t]);
 
   const removePhoto = useCallback((index: number) => {
     setPhotos(prev => prev.filter((_, itemIndex) => itemIndex !== index));

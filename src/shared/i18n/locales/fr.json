@@ -808,6 +808,8 @@
         "photoEmpty": "Aucune photo ajoutée pour le moment",
         "photoRemove": "Supprimer la photo",
         "photoPreviewAlt": "Photo {{index}}",
+        "photoPromptFromAlbum": "Depuis l'album",
+        "photoPromptTakePicture": "Prendre une photo",
         "object": "Objet",
         "objectAdd": "Ajouter un objet",
         "objectPicking": "Touchez un objet sur la carte",

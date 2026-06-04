@@ -28,6 +28,11 @@ import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 const GPS_SKETCH_LAYER_NAME = 'HomeGpsSketch';
 const GPS_SKETCH_SELECT_HIT_TOLERANCE = 12;
 
+interface GeolocationDrawLocation {
+  getAccuracy: () => number | undefined;
+  getPosition: () => number[] | undefined;
+}
+
 export interface UseGpsSketchTrackingSessionOptions {
   map: OlMap | null;
   enabled: boolean;
@@ -76,6 +81,8 @@ export function useGpsSketchTrackingSession({
   const selectInteractionRef = useRef<Select | null>(null);
   const onSelectSketchRef = useRef(onSelectSketch);
   const recordingSettingsRef = useRef(recordingSettings);
+  const lastRecordedCoordinateRef = useRef<number[] | null>(null);
+  const ignoredStartCoordinateRef = useRef<number[] | null>(null);
 
   /**
    * Syncs the lightweight UI stats from the current recorded LineString.
@@ -144,6 +151,10 @@ export function useGpsSketchTrackingSession({
     const interaction = interactionRef.current;
     if (!interaction) return;
 
+    ignoredStartCoordinateRef.current = lastRecordedCoordinateRef.current
+      ? [...lastRecordedCoordinateRef.current]
+      : null;
+    lastRecordedCoordinateRef.current = null;
     interaction.setActive(false);
     interaction.reset();
     setIsRecording(false);
@@ -160,6 +171,7 @@ export function useGpsSketchTrackingSession({
     if (!interaction) return;
 
     clearSelection();
+    lastRecordedCoordinateRef.current = null;
     syncStatsFromLineString(null);
     interaction.set('minAccuracy', recordingSettingsRef.current.minAccuracy);
     interaction.set('tolerance', recordingSettingsRef.current.tolerance);
@@ -245,6 +257,23 @@ export function useGpsSketchTrackingSession({
       followTrack: false,
       tolerance: recordingSettingsRef.current.tolerance,
       minAccuracy: recordingSettingsRef.current.minAccuracy,
+      condition: (location: GeolocationDrawLocation) => {
+        const position = location.getPosition();
+        if (!position) return false;
+
+        const ignoredStartCoordinate = ignoredStartCoordinateRef.current;
+        if (
+          ignoredStartCoordinate &&
+          position[0] === ignoredStartCoordinate[0] &&
+          position[1] === ignoredStartCoordinate[1]
+        ) {
+          return false;
+        }
+
+        ignoredStartCoordinateRef.current = null;
+        const accuracy = location.getAccuracy();
+        return accuracy !== undefined && accuracy < recordingSettingsRef.current.minAccuracy;
+      },
       style: TRACE_STYLE,
     });
     geolocationInteraction.setActive(false);
@@ -266,6 +295,10 @@ export function useGpsSketchTrackingSession({
     selectInteractionRef.current = selectInteraction;
 
     const onDrawing = (event: GeolocationDrawEvent) => {
+      const line = getLineStringGeometry(event.feature as Feature<Geometry>);
+      if (line) {
+        lastRecordedCoordinateRef.current = line.getLastCoordinate();
+      }
       syncStatsFromLineString(event.feature as Feature<Geometry>);
     };
 

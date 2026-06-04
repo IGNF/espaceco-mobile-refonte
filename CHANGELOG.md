@@ -19,8 +19,10 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Gestion des flux externes (ticket #6)
 
 ### Changed
+- Les textes de l'action sheet pour l'ajout/la prise de photo lors d'un signalement sont maintenant en français (ticket #113)
  
 ### Fixed
+- L'interruption d'une trace GPS, puis l'enregistrement d'une nouvelle, ne la lie plus à la trace précédemment arrêtée (ticket #135)
 
 ## [0.0.12] - 2026-06-03
 
