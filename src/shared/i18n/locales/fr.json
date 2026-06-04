@@ -516,10 +516,11 @@
     "userWms": {
       "title": "WMS",
       "urlLabel": "URL",
-      "urlPlaceholder": "url du service WMS...",
+      "urlPlaceholder": "URL du service WMS...",
       "search": "Rechercher",
       "preview": "Aperçu",
       "load": "Charger",
+      "addSuccess": "Flux ajouté",
       "noLayers": "Aucune couche WMS n'a été trouvée.",
       "loadError": "Impossible de charger les couches WMS.",
       "previewTitle": "Titre",

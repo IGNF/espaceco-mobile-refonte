@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next';
 
 import { Alert } from '@/shared/ui/Alert';
 import { Button } from '@/shared/ui/Button';
+import { Divider } from '@/shared/ui/Divider/Divider';
+import { showToastSafe } from '@/shared/utils/toast';
 import type { RemoteWmsLayer } from '@/features/map/types/userWmsLayers';
 
 import styles from './UserWmsLayerDialog.module.css';
-import { Divider } from '@/shared/ui/Divider/Divider';
 
 interface UserWmsLayerDialogProps {
   isOpen: boolean;
@@ -67,6 +68,11 @@ export function UserWmsLayerDialog({
 
   const handleAddLayer = (layer: RemoteWmsLayer) => {
     onAddUserWmsLayer?.(layer);
+    void showToastSafe({
+      text: t('layers.userWms.addSuccess'),
+      duration: 'short',
+      position: 'bottom',
+    });
     onClose();
   };
 
