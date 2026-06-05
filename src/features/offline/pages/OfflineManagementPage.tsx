@@ -55,7 +55,7 @@ import { Divider } from '@/shared/ui/Divider/Divider';
 type LayerPickerMode = 'draft-cache' | 'loaded-cache';
 type DeleteAlertState =
   | { kind: 'zone'; zoneName: string }
-  | { kind: 'layer'; layerKey: string }
+  | { kind: 'layer'; layerKey: string; layerTitle: string }
   | { kind: 'raster-map'; mapId: string }
   | { kind: 'cache' };
 
@@ -224,9 +224,6 @@ export function OfflineManagementPage({
   const currentZoneEditorLayer = zoneEditorState?.layerKey
     ? eligibleLayers.find((layer) => getCommunityLayerKey(layer) === zoneEditorState.layerKey) ?? null
     : null;
-  const layerToDelete = deleteAlert?.kind === 'layer'
-    ? currentCacheLayers.find((layer) => getCommunityLayerKey(layer) === deleteAlert.layerKey) ?? null
-    : null;
   const rasterMapToDelete = deleteAlert?.kind === 'raster-map'
     ? rasterMaps.find((rasterMap) => rasterMap.id === deleteAlert.mapId) ?? null
     : null;
@@ -378,6 +375,7 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+      throw error;
     }
   }
 
@@ -681,6 +679,7 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+      throw error;
     }
   }
 
@@ -709,12 +708,12 @@ export function OfflineManagementPage({
     if (deleteAlert?.kind === 'layer') {
       if (currentCacheLayers.length === 1) {
         return t('offline.layers.confirmDeleteLastLayerMessage', {
-          title: getCommunityLayerTitle(layerToDelete!),
+          title: deleteAlert.layerTitle,
         });
       }
 
       return t('offline.layers.confirmDeleteMessage', {
-        title: getCommunityLayerTitle(layerToDelete!),
+        title: deleteAlert.layerTitle,
       });
     }
 
@@ -928,6 +927,7 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+      throw error;
     }
   }
 
@@ -947,6 +947,7 @@ export function OfflineManagementPage({
       });
     } catch (error) {
       await showOfflineError(error);
+      throw error;
     }
   }
 
@@ -1044,7 +1045,17 @@ export function OfflineManagementPage({
             canOpenLayerPicker={canOpenLayerPicker}
             onOpenLayerPicker={openLayerPicker}
             onRefreshLayer={(layerKey) => void handleRefreshLayer(layerKey)}
-            onRequestDeleteLayer={(layerKey) => setDeleteAlert({ kind: 'layer', layerKey })}
+            onRequestDeleteLayer={(layerKey) => {
+              const layer = currentCacheLayers.find(
+                (currentLayer) => getCommunityLayerKey(currentLayer) === layerKey
+              )!;
+
+              setDeleteAlert({
+                kind: 'layer',
+                layerKey,
+                layerTitle: getCommunityLayerTitle(layer),
+              });
+            }}
           />
 
           <OfflineCacheSection
