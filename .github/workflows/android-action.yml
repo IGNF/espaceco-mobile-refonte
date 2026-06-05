@@ -55,24 +55,6 @@ jobs:
           [ -n "${{ secrets.VITE_APPLI_ID }}" ] && echo "VITE_APPLI_ID=${{ secrets.VITE_APPLI_ID }}" >> .env || true
           [ -n "${{ secrets.VITE_APPLI_NAME }}" ] && echo "VITE_APPLI_NAME=${{ secrets.VITE_APPLI_NAME }}" >> .env || true
 
-          # DEBUG: remove this block after verifying secrets
-          echo "::group::DEBUG - Generated .env"
-          echo "SELECTED_APP=$SELECTED_APP"
-          if [[ ! -s .env ]]; then
-            echo "WARNING: .env is empty (no secrets were written)"
-          else
-            echo "--- full .env ---"
-            cat .env
-            echo "--- per-variable summary ---"
-            while IFS= read -r line || [[ -n "$line" ]]; do
-              [[ -z "$line" || "$line" =~ ^# ]] && continue
-              key="${line%%=*}"
-              value="${line#*=}"
-              echo "$key (length: ${#value})"
-            done < .env
-          fi
-          echo "::endgroup::"
-
       - name: Install dependencies
         run: npm ci
 

@@ -3,7 +3,7 @@ export default {
   guichetID: 658, // naviforest
   name: "Naviforest",
   displayName: "Naviforest",
-  versionNumber: "0.0.6",
+  versionNumber: "3.0.8",
   ios:{
     bundleId: "fr.ign.navi-forest"
   },

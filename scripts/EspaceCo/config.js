@@ -5,7 +5,7 @@ export default {
   displayName: "Espace collaboratif IGN",
   // Guichet concerne (si undefined tous les guichets de l'utilisateur)
   guichetID: undefined,
-  versionNumber: "0.0.6",
+  versionNumber: "3.0.8",
   ios:{
     bundleId: "fr.ign.collaboratif"
   },
