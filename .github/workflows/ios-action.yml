@@ -17,7 +17,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Detect selected app
@@ -40,19 +40,20 @@ jobs:
           set -euo pipefail
           # Set COLLAB_API_CLIENT_ID and COLLAB_API_CLIENT_SECRET based on selected app
           if [[ "$SELECTED_APP" == "NaviForest" ]]; then
-            [ -n "${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_NAVIFOREST }}" ] && echo "OAUTH_IOS_REDIRECT_URI=${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_NAVIFOREST }}" >> .env || true
-            [ -n "${{ secrets.VITE_OAUTH_CLIENT_ID_NAVIFOREST }}" ] && echo "OAUTH_CLIENT_ID=${{ secrets.VITE_OAUTH_CLIENT_ID_NAVIFOREST }}" >> .env || true
+            [ -n "${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_NAVIFOREST }}" ] && echo "VITE_OAUTH_IOS_REDIRECT_URI=${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_NAVIFOREST }}" >> .env || true
+            [ -n "${{ secrets.VITE_OAUTH_CLIENT_ID_NAVIFOREST }}" ] && echo "VITE_OAUTH_CLIENT_ID=${{ secrets.VITE_OAUTH_CLIENT_ID_NAVIFOREST }}" >> .env || true
           else
-            [ -n "${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_ESPACECO }}" ] && echo "OAUTH_IOS_REDIRECT_URI=${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_ESPACECO }}" >> .env || true
-            [ -n "${{ secrets.VITE_OAUTH_CLIENT_ID_ESPACECO }}" ] && echo "OAUTH_CLIENT_ID=${{ secrets.VITE_OAUTH_CLIENT_ID_ESPACECO }}" >> .env || true
+            [ -n "${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_ESPACECO }}" ] && echo "VITE_OAUTH_IOS_REDIRECT_URI=${{ secrets.VITE_OAUTH_IOS_REDIRECT_URI_ESPACECO }}" >> .env || true
+            [ -n "${{ secrets.VITE_OAUTH_CLIENT_ID_ESPACECO }}" ] && echo "VITE_OAUTH_CLIENT_ID=${{ secrets.VITE_OAUTH_CLIENT_ID_ESPACECO }}" >> .env || true
           fi
           # Other secrets (not app-dependent)
-          [ -n "${{ secrets.VITE_OAUTH_BASE_URL }}" ] && echo "OAUTH_BASE_URL=${{ secrets.VITE_OAUTH_BASE_URL }}" >> .env || true
-          [ -n "${{ secrets.VITE_BASE_API_URL }}" ] && echo "BASE_API_URL=${{ secrets.VITE_BASE_API_URL }}" >> .env || true
+          [ -n "${{ secrets.VITE_OAUTH_WEB_REDIRECT_URI }}" ] && echo "VITE_OAUTH_WEB_REDIRECT_URI=${{ secrets.VITE_OAUTH_WEB_REDIRECT_URI }}" >> .env || true
+          [ -n "${{ secrets.VITE_OAUTH_BASE_URL }}" ] && echo "VITE_OAUTH_BASE_URL=${{ secrets.VITE_OAUTH_BASE_URL }}" >> .env || true
+          [ -n "${{ secrets.VITE_BASE_API_URL }}" ] && echo "VITE_BASE_API_URL=${{ secrets.VITE_BASE_API_URL }}" >> .env || true
           # App selection/name identifiers (optional overrides, defined in the config.js files)
-          [ -n "${{ secrets.VITE_APPLI }}" ] && echo "APPLI=${{ secrets.VITE_APPLI }}" >> .env || true
-          [ -n "${{ secrets.VITE_APPLI_ID }}" ] && echo "APPLI_ID=${{ secrets.VITE_APPLI_ID }}" >> .env || true
-          [ -n "${{ secrets.VITE_APPLI_NAME }}" ] && echo "APPLI_NAME=${{ secrets.VITE_APPLI_NAME }}" >> .env || true
+          [ -n "${{ secrets.VITE_APPLI }}" ] && echo "VITE_APPLI=${{ secrets.VITE_APPLI }}" >> .env || true
+          [ -n "${{ secrets.VITE_APPLI_ID }}" ] && echo "VITE_APPLI_ID=${{ secrets.VITE_APPLI_ID }}" >> .env || true
+          [ -n "${{ secrets.VITE_APPLI_NAME }}" ] && echo "VITE_APPLI_NAME=${{ secrets.VITE_APPLI_NAME }}" >> .env || true
 
       - name: Install dependencies
         run: npm ci
