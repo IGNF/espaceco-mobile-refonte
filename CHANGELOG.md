@@ -13,7 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.14] - 2026-06-05
+## [0.0.15] - 2026-06-05
+
+### Added
+
+### Changed
+ 
+### Fixed
+- Correction d'un bug qui faisait planter l'application au moment de la suppression d'une couche du cache hors-ligne (ticket #120)
+
+## [0.0.14] - 2026-06-04
 
 ### Added
 - Un bouton d'annulation lors de la capture d'une trace a été ajouté, pour arrêter l'enregistrement et annuler cette trace (ticket #110)
