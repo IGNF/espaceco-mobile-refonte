@@ -1,0 +1,2 @@
+Le fichier android-keystore.jks présent dans ce dossier ne sert qu'à signer l'application Espace Collaboratif (pas NaviForest).
+Le keystore utilisé pour signer l'application NaviForest est un keystore qui sert à signer d'autres apps également (non présent dans ce repo).
