@@ -90,6 +90,7 @@ interface OfflineManagementPageProps {
   pendingChangesCountByLayerKey: Record<string, number>;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onCenterOnUserLocation?: () => Promise<void>;
+  onZoneEditorOpenChange?: (isOpen: boolean) => void;
   isLocating?: boolean;
 }
 
@@ -101,6 +102,7 @@ export function OfflineManagementPage({
   pendingChangesCountByLayerKey,
   onSetLayerVisibility,
   onCenterOnUserLocation,
+  onZoneEditorOpenChange,
   isLocating = false,
 }: OfflineManagementPageProps) {
   const { t } = useTranslation();
@@ -249,12 +251,21 @@ export function OfflineManagementPage({
     zoneNameBeingAddedToCache !== null ||
     layerKeyBeingRefreshed !== null ||
     rasterMapIdBeingRefreshed !== null;
+  const isZoneEditorOpen = zoneEditorState !== null && isOpen;
 
   useEffect(() => {
     if (isPreparingDownload || isDownloading) {
       scrollToTop();
     }
   }, [isPreparingDownload, isDownloading]);
+
+  useEffect(() => {
+    onZoneEditorOpenChange?.(isZoneEditorOpen);
+
+    return () => {
+      onZoneEditorOpenChange?.(false);
+    };
+  }, [isZoneEditorOpen, onZoneEditorOpenChange]);
 
   async function showOfflineError(error: unknown): Promise<void> {
     await showToastSafe({

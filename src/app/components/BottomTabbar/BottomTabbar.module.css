@@ -23,6 +23,16 @@
 	color: var(--color-primary);
 }
 
+.disabled {
+	cursor: default;
+	opacity: 0.55;
+}
+
+.disabled:hover,
+.disabled:focus {
+	color: var(--color-medium-shade) !important;
+}
+
 .tabIcon {
 	width: 32px;
 	height: 32px;

@@ -31,8 +31,8 @@ Ces variables alimentent les appels à l'API collaborative et le parcours d'auth
 | `VITE_BASE_API_URL` | URL de base de l'API collaborative. Elle est utilisée par le client API partagé et par certains appels directs comme la récupération des communautés. | `https://espacecollaboratif.ign.fr/api/` |
 | `VITE_OAUTH_CLIENT_ID` | Identifiant du client OAuth déclaré côté Keycloak. Il est transmis à `AuthManager` et au client API collaboratif. | `my_client_id` |
 | `VITE_OAUTH_BASE_URL` | URL de base du realm Keycloak, jusqu'au protocole OpenID Connect. Elle sert aux échanges OAuth et PKCE. | `monurldauthentification/auth/realms/mon_realm/protocol/openid-connect/` |
-| `VITE_OAUTH_ANDROID_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur Android. | `fr.ign.espaceco://callback-url` |
-| `VITE_OAUTH_IOS_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur iOS. | `fr.ign.guichet://callback-url` |
+| `VITE_OAUTH_ANDROID_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur Android. Son schéma doit être déclaré dans `AndroidManifest.xml`. | `fr.ign.espaceco://callback-url` |
+| `VITE_OAUTH_IOS_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur iOS. Son schéma doit être déclaré dans `Info.plist`. | `fr.ign.guichet://callback-url` |
 | `VITE_OAUTH_WEB_REDIRECT_URI` | URI de redirection utilisée en mode web, et valeur de repli si la plateforme n'est pas reconnue. | `http://localhost:5173/auth/callback` |
 
 ## API collaborative
@@ -97,6 +97,60 @@ La valeur doit être cohérente avec :
 - la configuration du client OAuth dans Keycloak ;
 - le schéma d'URL déclaré côté iOS ;
 - le bundle identifier utilisé par la variante buildée.
+
+### Déclaration des schémas natifs Android et iOS
+
+Les redirect URIs mobiles utilisent généralement un schéma applicatif custom, par exemple :
+
+```env
+VITE_OAUTH_ANDROID_REDIRECT_URI=fr.ign.guichet://auth/callback
+VITE_OAUTH_IOS_REDIRECT_URI=fr.ign.collaboratif://auth/callback
+```
+
+Dans cet exemple, les schémas sont `fr.ign.collaboratif` et`fr.ign.guichet` . Ce sont ces schémas qui permettent aux systèmes d'exploitation de rouvrir l'application après la redirection OAuth. Ils doivent être déclarés côté natif, sinon Android ou iOS ne saura pas quelle application doit recevoir le callback.
+
+Il y a donc trois niveaux à garder cohérents :
+
+- la redirect URI complète déclarée dans Keycloak, par exemple `fr.ign.guichet://auth/callback` ;
+- la variable d'environnement utilisée par l'application, par exemple `VITE_OAUTH_ANDROID_REDIRECT_URI` ou `VITE_OAUTH_IOS_REDIRECT_URI` ;
+- le schéma natif déclaré dans le projet Android ou iOS, par exemple `fr.ign.guichet`.
+
+Sur Android, le schéma est déclaré dans `android/app/src/main/AndroidManifest.xml`, dans un `intent-filter` de l'activité principale :
+
+```xml
+<intent-filter>
+  <action android:name="android.intent.action.VIEW" />
+  <category android:name="android.intent.category.DEFAULT" />
+  <category android:name="android.intent.category.BROWSABLE" />
+  <data android:scheme="fr.ign.guichet" />
+</intent-filter>
+```
+
+Sur iOS, le schéma est déclaré dans `ios/App/App/Info.plist`, via `CFBundleURLTypes` :
+
+```xml
+<key>CFBundleURLTypes</key>
+<array>
+  <dict>
+    <key>CFBundleURLName</key>
+    <string>fr.ign.collaboratif</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>fr.ign.collaboratif</string>
+    </array>
+  </dict>
+</array>
+```
+
+Le projet déclare déjà plusieurs schémas utilisés par les variantes existantes, notamment `fr.ign.espaceco`, `fr.ign.guichet`, `fr.ign.navi-forest` et `fr.ign.naviforest`.
+
+Si une redirect URI change, il faut vérifier les trois endroits :
+
+1. le secret GitHub ou le fichier `.env` ;
+2. la configuration du client OAuth côté Keycloak ;
+3. `AndroidManifest.xml` et/ou `Info.plist`.
+
+`scripts/prepare-app.js` met à jour les identifiants natifs et certains fichiers de configuration, mais il ne faut pas supposer qu'un nouveau schéma OAuth sera automatiquement ajouté aux deep links Android ou iOS. Si un nouveau schéma est introduit, il faut l'ajouter explicitement dans les fichiers natifs.
 
 ### `VITE_OAUTH_WEB_REDIRECT_URI`
 
@@ -182,6 +236,7 @@ VITE_OAUTH_WEB_REDIRECT_URI=http://localhost:5173/auth/callback
 - Après modification d'un fichier `.env`, il faut redémarrer le serveur Vite pour que les nouvelles valeurs soient prises en compte.
 - Les variables `VITE_` sont disponibles côté navigateur et ne doivent pas contenir de secret serveur.
 - Les redirect URIs OAuth doivent être déclarées côté Keycloak et correspondre aux schémas natifs configurés pour Android et iOS.
+- Pour Android et iOS, le schéma de la redirect URI doit être présent dans `AndroidManifest.xml` ou `Info.plist`; Keycloak doit contenir l'URI complète.
 - En développement web local, `localhost` doit aussi être autorisé côté Keycloak pour éviter le blocage CORS lors de l'échange du code OAuth contre les tokens.
 - `VITE_BASE_API_URL` possède une valeur de repli vers la production dans `env.ts`; une valeur explicite par environnement évite les erreurs de cible.
 - Les variables OAuth sont les variables à privilégier pour l'authentification actuelle.

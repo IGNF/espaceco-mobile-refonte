@@ -221,6 +221,7 @@ export function HomePage() {
   const [initialLayerGroupRequestKey, setInitialLayerGroupRequestKey] = useState(0);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
+  const [isOfflineZoneEditorOpen, setIsOfflineZoneEditorOpen] = useState(false);
   const [newReportType, setReportType] = useState<ReportType>('standard');
   const [newReportInitialPosition, setNewReportInitialPosition] = useState<Position | null>(null);
   const [newReportInitialObjects, setNewReportInitialObjects] = useState<Feature<Geometry>[]>([]);
@@ -951,6 +952,7 @@ export function HomePage() {
         onTabClick={handleTabClick}
         highlightedTab={getHighlightedTab()}
         activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
+        disabled={isOfflineZoneEditorOpen}
       />
 
       <LayersPanelFlow
@@ -1230,6 +1232,7 @@ export function HomePage() {
           pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
           onSetLayerVisibility={setLayerVisibility}
           onCenterOnUserLocation={centerOnUserLocation}
+          onZoneEditorOpenChange={setIsOfflineZoneEditorOpen}
           isLocating={isLocating}
         />
       )}

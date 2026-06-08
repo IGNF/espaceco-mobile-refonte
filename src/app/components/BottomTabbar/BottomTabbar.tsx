@@ -16,15 +16,20 @@ export interface BottomTabbarProps {
   onTabClick?: (tab: TabId) => void;
   highlightedTab?: TabId | null;
   activeTab?: TabId | null;
+  disabled?: boolean;
 }
 
-export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTabbarProps) {
+export function BottomTabbar({ onTabClick, highlightedTab, activeTab, disabled = false }: BottomTabbarProps) {
   const { t } = useTranslation();
   const { displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const displaySignalementRapideTab = fastReportThemes.length > 0;
 
   const handleTabClick = (tab: TabId) => {
+    if (disabled) {
+      return;
+    }
+
     onTabClick?.(tab);
   };
 
@@ -36,6 +41,9 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
     if (activeTab === tab) {
       classes.push(styles.active);
     }
+    if (disabled) {
+      classes.push(styles.disabled);
+    }
     return classes.join(" ");
   };
 
@@ -44,6 +52,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
       <button
         className={getTabClassName("signalement")}
         onClick={() => handleTabClick("signalement")}
+        disabled={disabled}
         data-onboarding-target="signalement"
       >
         <IconLocation className={styles.tabIcon} />
@@ -52,6 +61,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
       <button
         className={getTabClassName("guichet")}
         onClick={() => handleTabClick("guichet")}
+        disabled={disabled}
         data-onboarding-target="guichet"
       >
         <IconGuichet className={styles.tabIcon} />
@@ -60,6 +70,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
       <button
         className={getTabClassName("couches")}
         onClick={() => handleTabClick("couches")}
+        disabled={disabled}
         data-onboarding-target="couches"
       >
         <IconLayers className={styles.tabIcon} />
@@ -69,6 +80,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab }: BottomTa
         <button
           className={getTabClassName("signalementRapide")}
           onClick={() => handleTabClick("signalementRapide")}
+          disabled={disabled}
           data-onboarding-target="signalementRapide"
         >
           <IconFlag className={styles.tabIcon} />

@@ -217,8 +217,9 @@
   .headerCard,
   .choicesCard,
   .footerCard {
-    left: auto;
-    right: 24px;
+    left: 50%;
+    right: auto;
     width: min(420px, calc(100vw - 48px));
+    transform: translateX(-50%);
   }
 }

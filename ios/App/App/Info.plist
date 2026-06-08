@@ -55,18 +55,10 @@
     <array>
       <dict>
         <key>CFBundleURLName</key>
-        <string>fr.ign.espaceco</string>
+        <string>fr.ign.collaboratif</string>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>fr.ign.espaceco</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLName</key>
-        <string>fr.ign.guichet</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>fr.ign.guichet</string>
+          <string>fr.ign.collaboratif</string>
         </array>
       </dict>
       <dict>
@@ -75,14 +67,6 @@
         <key>CFBundleURLSchemes</key>
         <array>
           <string>fr.ign.navi-forest</string>
-        </array>
-      </dict>
-      <dict>
-        <key>CFBundleURLName</key>
-        <string>fr.ign.naviforest</string>
-        <key>CFBundleURLSchemes</key>
-        <array>
-          <string>fr.ign.naviforest</string>
         </array>
       </dict>
     </array>

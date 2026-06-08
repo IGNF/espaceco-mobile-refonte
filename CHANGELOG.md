@@ -20,6 +20,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Une déconnexion désactive maintenant le mode hors ligne
+- Les principaux boutons d'action (tabs) sont désactivés lors de la saisie des zones du mode hors ligne (ticket #120)
+- Les blocs qui s'affichent lors de la saisie des zones du mode hors ligne sont maintenant centrés pour ne plus se superposer à d'autres éléments visuels (ticket #120)
  
 ### Fixed
 
