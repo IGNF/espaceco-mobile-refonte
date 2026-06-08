@@ -73,6 +73,7 @@
   },
   "home": {
     "title": "Espace collaboratif",
+    "offlineModeActive": "Mode hors ligne activé",
     "subtitle": "Groupe actif",
     "welcome": "Bienvenue sur l'application",
     "logout": "Déconnexion",

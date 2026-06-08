@@ -13,6 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.16] - 2026-06-08
+
+### Added
+- Un message a été ajouté dans le header de l'app si l'utilisateur est en mode hors ligne
+
+### Changed
+- Une déconnexion désactive maintenant le mode hors ligne
+ 
+### Fixed
+
 ## [0.0.15] - 2026-06-05
 
 ### Added

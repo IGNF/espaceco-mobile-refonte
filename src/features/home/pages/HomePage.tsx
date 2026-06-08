@@ -810,7 +810,12 @@ export function HomePage() {
         >
           <IconBurger className={styles.burgerIcon} />
         </button>
-        <h1 className={styles.title}>{t("home.title")}</h1>
+        <div className={styles.titleBlock}>
+          <h1 className={styles.title}>{t("home.title")}</h1>
+          {offlineMode === 'offline' && (
+            <p className={styles.offlineModeLabel}>{t('home.offlineModeActive')}</p>
+          )}
+        </div>
         {mapSettings.isSearchEnabled && (
           <button
             className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}

@@ -19,6 +19,7 @@ import {
   type OfflineZone,
 } from '@/domain/offline/models';
 import type { OfflineNetworkStatus } from '@/app/providers/OfflineContext';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { OfflineCacheRepository } from '@/infra/offline/OfflineCacheRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';
@@ -84,7 +85,9 @@ function replaceOfflineRasterMap(currentMaps: OfflineRasterMap[], nextMap: Offli
 }
 
 export function OfflineProvider({ children }: OfflineProviderProps) {
+  const { user, isLoading: isAuthLoading } = useAuth();
   const { activeCommunity } = useCommunity();
+  const authUserId = user?.id ?? null;
   const activeCommunityId = activeCommunity?.id ?? null;
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -161,6 +164,24 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (isAuthLoading || authUserId !== null || requestedMode === 'online') {
+      return;
+    }
+
+    let isActive = true;
+
+    void offlineModeRepository.saveRequestedMode('online').then((persistedMode) => {
+      if (isActive) {
+        setRequestedModeState(persistedMode);
+      }
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [authUserId, isAuthLoading, requestedMode]);
 
   const activeCommunityCache =
     activeCommunityId == null

@@ -56,13 +56,24 @@
 	fill: var(--color-dark);
 }
 
-.title {
+.titleBlock {
 	flex: 1;
+	align-self: center;
 	text-align: center;
-  align-self:center;
+}
+
+.title {
+	margin: 0;
 	font-size: 1.25rem;
 	font-weight: 500;
 	color: var(--color-dark);
+}
+
+.offlineModeLabel {
+	margin: 0.125rem 0 0;
+	font-size: 0.75rem;
+	font-weight: 500;
+	color: var(--color-primary);
 }
 
 /* Main content (map area) */
