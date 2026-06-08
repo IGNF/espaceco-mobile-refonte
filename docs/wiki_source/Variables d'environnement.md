@@ -28,11 +28,11 @@ Ces variables alimentent les appels à l'API collaborative et le parcours d'auth
 
 | Variable | Rôle | Exemple dans `.env.dist` |
 | --- | --- | --- |
-| `VITE_BASE_API_URL` | URL de base de l'API collaborative. Elle est utilisée par le client API partagé et par certains appels directs comme la récupération des communautés. | `https://espacecollaboratif.ign.fr/api/` |
+| `VITE_BASE_API_URL` | URL de base de l'API collaborative. Elle est utilisée par le client API partagé et par certains appels directs comme la récupération des communautés. | `https://espacecollaboratif.ign.fr/gcms/api` |
 | `VITE_OAUTH_CLIENT_ID` | Identifiant du client OAuth déclaré côté Keycloak. Il est transmis à `AuthManager` et au client API collaboratif. | `my_client_id` |
 | `VITE_OAUTH_BASE_URL` | URL de base du realm Keycloak, jusqu'au protocole OpenID Connect. Elle sert aux échanges OAuth et PKCE. | `monurldauthentification/auth/realms/mon_realm/protocol/openid-connect/` |
-| `VITE_OAUTH_ANDROID_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur Android. Son schéma doit être déclaré dans `AndroidManifest.xml`. | `fr.ign.espaceco://callback-url` |
-| `VITE_OAUTH_IOS_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur iOS. Son schéma doit être déclaré dans `Info.plist`. | `fr.ign.guichet://callback-url` |
+| `VITE_OAUTH_ANDROID_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur Android. Son schéma doit être déclaré dans `AndroidManifest.xml`. | `com.bundle.id://callback-url` |
+| `VITE_OAUTH_IOS_REDIRECT_URI` | URI de redirection utilisée lorsque l'application tourne sur iOS. Son schéma doit être déclaré dans `Info.plist`. | `com.bundle.id://callback-url` |
 | `VITE_OAUTH_WEB_REDIRECT_URI` | URI de redirection utilisée en mode web, et valeur de repli si la plateforme n'est pas reconnue. | `http://localhost:5173/auth/callback` |
 
 ## API collaborative
@@ -50,7 +50,7 @@ Elle est utilisée dans :
 Si la variable n'est pas renseignée, `env.ts` utilise la valeur par défaut :
 
 ```text
-https://espacecollaboratif.ign.fr/api/
+https://espacecollaboratif.ign.fr/gcms/api
 ```
 
 En pratique, il est préférable de la renseigner explicitement dans chaque environnement afin d'éviter de pointer accidentellement vers la production.
@@ -103,17 +103,17 @@ La valeur doit être cohérente avec :
 Les redirect URIs mobiles utilisent généralement un schéma applicatif custom, par exemple :
 
 ```env
-VITE_OAUTH_ANDROID_REDIRECT_URI=fr.ign.guichet://auth/callback
-VITE_OAUTH_IOS_REDIRECT_URI=fr.ign.collaboratif://auth/callback
+VITE_OAUTH_ANDROID_REDIRECT_URI=com.bundle.id://auth/callback
+VITE_OAUTH_IOS_REDIRECT_URI=com.bundle.ex://auth/callback
 ```
 
-Dans cet exemple, les schémas sont `fr.ign.collaboratif` et`fr.ign.guichet` . Ce sont ces schémas qui permettent aux systèmes d'exploitation de rouvrir l'application après la redirection OAuth. Ils doivent être déclarés côté natif, sinon Android ou iOS ne saura pas quelle application doit recevoir le callback.
+Dans cet exemple, les schémas sont `com.bundle.ex` et`com.bundle.id` . Ce sont ces schémas qui permettent aux systèmes d'exploitation de rouvrir l'application après la redirection OAuth. Ils doivent être déclarés côté natif, sinon Android ou iOS ne saura pas quelle application doit recevoir le callback.
 
 Il y a donc trois niveaux à garder cohérents :
 
-- la redirect URI complète déclarée dans Keycloak, par exemple `fr.ign.guichet://auth/callback` ;
+- la redirect URI complète déclarée dans Keycloak, par exemple `com.bundle.id://auth/callback` ;
 - la variable d'environnement utilisée par l'application, par exemple `VITE_OAUTH_ANDROID_REDIRECT_URI` ou `VITE_OAUTH_IOS_REDIRECT_URI` ;
-- le schéma natif déclaré dans le projet Android ou iOS, par exemple `fr.ign.guichet`.
+- le schéma natif déclaré dans le projet Android ou iOS, par exemple `com.bundle.id`.
 
 Sur Android, le schéma est déclaré dans `android/app/src/main/AndroidManifest.xml`, dans un `intent-filter` de l'activité principale :
 
@@ -122,7 +122,7 @@ Sur Android, le schéma est déclaré dans `android/app/src/main/AndroidManifest
   <action android:name="android.intent.action.VIEW" />
   <category android:name="android.intent.category.DEFAULT" />
   <category android:name="android.intent.category.BROWSABLE" />
-  <data android:scheme="fr.ign.guichet" />
+  <data android:scheme="com.bundle.id" />
 </intent-filter>
 ```
 
@@ -133,16 +133,16 @@ Sur iOS, le schéma est déclaré dans `ios/App/App/Info.plist`, via `CFBundleUR
 <array>
   <dict>
     <key>CFBundleURLName</key>
-    <string>fr.ign.collaboratif</string>
+    <string>com.bundle.ex</string>
     <key>CFBundleURLSchemes</key>
     <array>
-      <string>fr.ign.collaboratif</string>
+      <string>com.bundle.ex</string>
     </array>
   </dict>
 </array>
 ```
 
-Le projet déclare déjà plusieurs schémas utilisés par les variantes existantes, notamment `fr.ign.espaceco`, `fr.ign.guichet`, `fr.ign.navi-forest` et `fr.ign.naviforest`.
+Le projet déclare déjà plusieurs schémas utilisés par les variantes existantes.
 
 Si une redirect URI change, il faut vérifier les trois endroits :
 
@@ -206,10 +206,10 @@ Dans les usages actuels repérés, l'authentification active passe par `config.o
 
 ### Paramètres applicatifs
 
-| Variable | Mapping dans `env.ts` | Valeur par défaut |
+| Variable | Mapping dans `env.ts` | Valeur exemple |
 | --- | --- | --- |
 | `VITE_APPLI` | `config.app.type` | `EspaceCo` |
-| `VITE_APPLI_ID` | `config.app.id` | `fr.ign.guichet` |
+| `VITE_APPLI_ID` | `config.app.id` | `com.bundle.id` |
 | `VITE_APPLI_NAME` | `config.app.name` | `Espace collaboratif IGN` |
 | `VITE_SECRET` | `config.app.secret` | chaîne vide |
 
@@ -222,12 +222,12 @@ Ces variables sont exposées par `config.app`, mais les variantes applicatives s
 Exemple minimal pour un environnement local :
 
 ```env
-VITE_BASE_API_URL=https://espacecollaboratif.ign.fr/api/
+VITE_BASE_API_URL=https://espacecollaboratif.ign.fr/gcms/api
 
 VITE_OAUTH_CLIENT_ID=my_client_id
 VITE_OAUTH_BASE_URL=https://auth.example.fr/auth/realms/my_realm/protocol/openid-connect/
-VITE_OAUTH_ANDROID_REDIRECT_URI=fr.ign.espaceco://callback-url
-VITE_OAUTH_IOS_REDIRECT_URI=fr.ign.guichet://callback-url
+VITE_OAUTH_ANDROID_REDIRECT_URI=com.bundle.id://callback-url
+VITE_OAUTH_IOS_REDIRECT_URI=com.bundle.id://callback-url
 VITE_OAUTH_WEB_REDIRECT_URI=http://localhost:5173/auth/callback
 ```
 

@@ -73,7 +73,7 @@ export const config: Config = {
 	isProduction: !useQualification,
 
 	api: {
-		baseUrl: env.VITE_BASE_API_URL || "https://espacecollaboratif.ign.fr/api/",
+		baseUrl: env.VITE_BASE_API_URL || "https://espacecollaboratif.ign.fr/gcms/api",
 	},
 
 	auth: useQualification ? qualificationAuth : productionAuth,
