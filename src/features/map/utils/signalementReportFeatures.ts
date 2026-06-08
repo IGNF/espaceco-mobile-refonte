@@ -12,6 +12,7 @@ import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import {
   LAYER_NAME_CROQUIS,
   LAYER_NAME_MES_SIGNALEMENTS,
+  LAYER_NAME_SIGNALEMENTS,
   SIGNAL_GROUP_NAME,
 } from '@/features/map/constants/signalementLayers.constants';
 import { parsePointGeometry } from '@/shared/utils/geometry';
@@ -78,6 +79,11 @@ export function getLocalReportsLayer(map: OlMap): VectorLayer<VectorSource<Featu
 /** Finds the Croquis layer used to display local report sketches. */
 export function getLocalReportSketchesLayer(map: OlMap): VectorLayer<VectorSource<Feature<Geometry>>> | null {
   return getSignalementVectorLayer(map, LAYER_NAME_CROQUIS);
+}
+
+/** Finds the grouped Signalements layer used to display remote report points. */
+export function getRemoteReportsLayer(map: OlMap): VectorLayer<VectorSource<Feature<Geometry>>> | null {
+  return getSignalementVectorLayer(map, LAYER_NAME_SIGNALEMENTS);
 }
 
 function replaceSourceFeatures(

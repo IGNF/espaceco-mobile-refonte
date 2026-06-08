@@ -12,7 +12,7 @@ import type { Extent } from 'ol/extent';
 import { bbox as bboxStrategy } from 'ol/loadingstrategy';
 import type Projection from 'ol/proj/Projection';
 import { transformExtent } from 'ol/proj';
-import { Style, Stroke } from 'ol/style';
+import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
 
 import { ReportSource, type Report } from '@ign/mobile-core';
 
@@ -36,6 +36,7 @@ import {
   createLocalReportFeatures,
   createLocalReportsSketchFeatures,
 } from '@/features/map/utils/signalementReportFeatures';
+import { REPORT_CLUSTER_RADIUS } from '@/shared/constants/map';
 
 const CROQUIS_STYLE = new Style({
   stroke: new Stroke({
@@ -43,6 +44,40 @@ const CROQUIS_STYLE = new Style({
     width: 6,
   }),
 });
+
+function createReportsClusterStyle(featuresCount: number): Style {
+  return new Style({
+    image: new CircleStyle({
+      radius: REPORT_CLUSTER_RADIUS,
+      fill: new Fill({
+        color: getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-primary')
+          .trim(),
+      }),
+      stroke: new Stroke({
+        color: '#ffffff',
+        width: 3,
+      }),
+    }),
+    text: new Text({
+      text: String(featuresCount),
+      fill: new Fill({
+        color: '#ffffff',
+      }),
+      font: '700 14px system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+    }),
+  });
+}
+
+function getReportClusterStyle(feature: Feature, reportSource: ReportSource): Style {
+  const features = feature.get('features') as Feature[] | undefined;
+
+  if (features && features.length > 1) {
+    return createReportsClusterStyle(features.length);
+  }
+
+  return reportSource.getStatusStyle(feature);
+}
 
 function getOrCreateSignalementGroup(map: OlMap): LayerGroup {
   const existingGroup = findLayerGroupByName(map, SIGNAL_GROUP_NAME);
@@ -245,7 +280,7 @@ export function useSignalementMapLayers(
 
     const signalementsLayer = new VectorLayer({
       source: clusteredReportsSource,
-      style: (feature) => reportSource.getStatusStyle(feature as Feature),
+      style: (feature) => getReportClusterStyle(feature as Feature, reportSource),
       properties: {
         title: 'Signalements',
         name: LAYER_NAME_SIGNALEMENTS,

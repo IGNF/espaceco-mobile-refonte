@@ -17,11 +17,13 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Un message a été ajouté dans le header de l'app si l'utilisateur est en mode hors ligne
+- On peut maintenant ouvrir la fiche de détails d'un signalement en tapant sur ce signalement sur la carte (ticket #145)
 
 ### Changed
 - Une déconnexion désactive maintenant le mode hors ligne
 - Les principaux boutons d'action (tabs) sont désactivés lors de la saisie des zones du mode hors ligne (ticket #120)
 - Les blocs qui s'affichent lors de la saisie des zones du mode hors ligne sont maintenant centrés pour ne plus se superposer à d'autres éléments visuels (ticket #120)
+- Amélioration de l'affichage des clusters de signalement sur la carte (ticket #145)
  
 ### Fixed
 
