@@ -7,6 +7,7 @@ import { OfflineProvider } from './providers/OfflineProvider';
 import { router } from './router/routes';
 import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
 import { AppSettingsProvider } from './providers/AppSettingsProvider';
+import { ExternalGpsProvider } from './providers/ExternalGpsProvider';
 
 export function App() {
   useEffect(() => {
@@ -15,15 +16,17 @@ export function App() {
 
   return (
     <I18nProvider>
-      <AuthProvider>
-        <AppSettingsProvider>
-          <CommunityProvider>
-            <OfflineProvider>
-              <RouterProvider router={router} />
-            </OfflineProvider>
-          </CommunityProvider>
-        </AppSettingsProvider>
-      </AuthProvider>
+      <ExternalGpsProvider>
+        <AuthProvider>
+          <AppSettingsProvider>
+            <CommunityProvider>
+              <OfflineProvider>
+                <RouterProvider router={router} />
+              </OfflineProvider>
+            </CommunityProvider>
+          </AppSettingsProvider>
+        </AuthProvider>
+      </ExternalGpsProvider>
     </I18nProvider>
   );
 }

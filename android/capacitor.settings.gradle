@@ -44,5 +44,8 @@ project(':capacitor-status-bar').projectDir = new File('../node_modules/@capacit
 include ':capacitor-toast'
 project(':capacitor-toast').projectDir = new File('../node_modules/@capacitor/toast/android')
 
+include ':e-is-capacitor-bluetooth-serial'
+project(':e-is-capacitor-bluetooth-serial').projectDir = new File('../node_modules/@e-is/capacitor-bluetooth-serial/android')
+
 include ':capacitor-email-composer'
 project(':capacitor-email-composer').projectDir = new File('../node_modules/capacitor-email-composer/android')
