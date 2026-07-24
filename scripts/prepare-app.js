@@ -175,8 +175,11 @@ export const appVariant: AppVariantConfig = {
 
 // Génère les assets natifs à partir des fichiers copiés dans resources/.
 function generateNativeAssets() {
-  execFileSync('npx', ['@capacitor/assets', 'generate', '--android'], { cwd: root, stdio: 'inherit' });
-  execFileSync('npx', ['@capacitor/assets', 'generate', '--ios'], { cwd: root, stdio: 'inherit' });
+  const isWindows = process.platform === 'win32';
+  const npx = isWindows ? 'npx.cmd' : 'npx';
+  const options = { cwd: root, stdio: 'inherit', shell: isWindows };
+  execFileSync(npx, ['@capacitor/assets', 'generate', '--android'], options);
+  execFileSync(npx, ['@capacitor/assets', 'generate', '--ios'], options);
 }
 
 // Applique les identifiants et les noms directement dans les projets natifs.

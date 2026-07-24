@@ -4,6 +4,7 @@ import type { CommunityLayer } from '@ign/mobile-core';
 import type { Extent } from 'ol/extent';
 import { boundingExtent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
+import { Network as CapacitorNetwork } from '@capacitor/network';
 import {
   type OfflineCacheDownloadResult,
   type OfflineCommunityCache,
@@ -141,7 +142,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       }
     });
 
-    void Network.watch((status) => {
+    void CapacitorNetwork.addListener('networkStatusChange', (status) => {
       if (!isActive) {
         return;
       }
@@ -149,7 +150,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       setNetwork(status);
     }).then((handle) => {
       if (!isActive) {
-        void Network.unwatch(handle);
+        void handle.remove();
         return;
       }
 
@@ -160,7 +161,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       isActive = false;
 
       if (listener) {
-        void Network.unwatch(listener);
+        void listener.remove();
       }
     };
   }, []);
