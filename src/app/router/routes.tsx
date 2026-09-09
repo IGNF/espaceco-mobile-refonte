@@ -67,5 +67,6 @@ export const overlayRoutes = [
   '/offline',
   '/my-layers',
   '/about',
-  '/help'
+  '/help',
+  '/performance',
 ] as const;

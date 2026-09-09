@@ -434,6 +434,11 @@
           "fileCount_one": "{{count}} fichier",
           "fileCount_other": "{{count}} fichiers"
         }
+      },
+      "performance": {
+        "title": "Monitoring performance",
+        "description": "Enregistrer CPU, mémoire, GPU, stockage, thermique et capteurs pour les benchmarks.",
+        "open": "Ouvrir"
       }
     },
     "map": {
@@ -1151,6 +1156,70 @@
           "answer": "Depuis la page <createAccountLink>https://cartes.gouv.fr/aide/fr/guides-utilisateur/presentation-utilisateur/connexion/</createAccountLink>"
         }
       ]
+    }
+  },
+  "performance": {
+    "title": "Monitoring performance",
+    "subtitle": "Benchmarks appareil",
+    "recording": {
+      "title": "Enregistrement",
+      "active": "{{count}} échantillons · {{duration}}",
+      "inactive": "Arrêté"
+    },
+    "interval": "Intervalle d'échantillonnage",
+    "scenario": "Scénario de test",
+    "scenarioPlaceholder": "Ex. navigation carte, téléchargement hors ligne…",
+    "notes": "Notes / protocole",
+    "notesPlaceholder": "Décrivez le scénario pour le rapport produit.",
+    "markerPlaceholder": "Marqueur (ex. ouverture du panneau couches)",
+    "addMarker": "Marquer",
+    "exportCurrent": "Exporter HTML + CSV + JSON",
+    "hardware": {
+      "title": "Matériel",
+      "platform": "Plateforme",
+      "device": "Appareil",
+      "os": "Système",
+      "cpu": "CPU / SoC",
+      "architecture": "Architecture",
+      "cores": "Cœurs",
+      "frequency": "Fréquence max",
+      "gpu": "GPU",
+      "gpuApi": "API GPU",
+      "plugin": "Plugin"
+    },
+    "live": {
+      "title": "Métriques live",
+      "cpu": "CPU",
+      "memory": "Mémoire système",
+      "appMemory": "Mémoire app",
+      "storage": "Stockage",
+      "cpuTemp": "Température CPU",
+      "gpuTemp": "Température GPU",
+      "batteryTemp": "Température batterie",
+      "thermal": "État thermique",
+      "lowPower": "Économie d'énergie",
+      "lowMemory": "Mémoire basse",
+      "pressure": "Pression mémoire",
+      "memoryUsed": "Mémoire utilisée",
+      "memoryFree": "Mémoire libre",
+      "storageUsed": "Stockage utilisé",
+      "storageFree": "Stockage libre",
+      "humidity": "Humidité",
+      "pressureHpa": "Pression (hPa)",
+      "light": "Luminosité (lux)",
+      "proximity": "Proximité (cm)",
+      "ambientTemp": "Température ambiante",
+      "appActive": "App au premier plan"
+    },
+    "sensors": {
+      "title": "Capteurs embarqués",
+      "empty": "Aucun capteur exposé par cette plateforme."
+    },
+    "sessions": {
+      "title": "Sessions enregistrées",
+      "empty": "Aucune session sauvegardée pour le moment.",
+      "samples": "échantillons",
+      "export": "Exporter"
     }
   }
 }

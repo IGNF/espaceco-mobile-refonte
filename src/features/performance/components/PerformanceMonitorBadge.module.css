@@ -1,0 +1,42 @@
+.badge {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  max-width: calc(100% - 5rem);
+  padding: 0.4rem 0.7rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.16);
+  color: var(--color-medium-shade);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.active {
+  color: var(--color-primary-shade);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-medium);
+  flex-shrink: 0;
+}
+
+.active .dot {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(38, 165, 129, 0.2);
+}
+
+.text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

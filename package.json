@@ -43,6 +43,7 @@
     "@capacitor/preferences": "^8.0.0",
     "@capacitor/status-bar": "^8.0.2",
     "@capacitor/toast": "^8.0.0",
+    "@capgo/capacitor-device-info": "^8.0.10",
     "@dnd-kit/react": "^0.3.2",
     "@ign/mobile-core": "https://github.com/IGNF/mobile-core.git#main",
     "@ign/mobile-device": "https://github.com/IGNF/mobile-device.git#main",

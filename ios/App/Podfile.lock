@@ -35,6 +35,8 @@ PODS:
     - Capacitor
   - CapacitorToast (8.0.0):
     - Capacitor
+  - CapgoCapacitorDeviceInfo (8.0.10):
+    - Capacitor
   - CordovaPlugins (8.0.0):
     - CapacitorCordova
   - IONFilesystemLib (1.0.1)
@@ -59,6 +61,7 @@ DEPENDENCIES:
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapacitorToast (from `../../node_modules/@capacitor/toast`)"
+  - "CapgoCapacitorDeviceInfo (from `../../node_modules/@capgo/capacitor-device-info`)"
   - CordovaPlugins (from `../capacitor-cordova-ios-plugins`)
 
 SPEC REPOS:
@@ -102,6 +105,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/status-bar"
   CapacitorToast:
     :path: "../../node_modules/@capacitor/toast"
+  CapgoCapacitorDeviceInfo:
+    :path: "../../node_modules/@capgo/capacitor-device-info"
   CordovaPlugins:
     :path: "../capacitor-cordova-ios-plugins"
 
@@ -123,11 +128,12 @@ SPEC CHECKSUMS:
   CapacitorPreferences: 83f13cc19660ca9649a4769ec255be93f8c2ff68
   CapacitorStatusBar: b692a4cf12b3fe3a7b7ece86da62106065d78fdc
   CapacitorToast: 6275c84283ac9c424a20554e71b8a6263f44554c
+  CapgoCapacitorDeviceInfo: ece7106e3008bf7c3787fd3aab39543b61999ef9
   CordovaPlugins: a980f7fb90e21148d1e703497cfc65de9e7888ac
   IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
 
-PODFILE CHECKSUM: 28aca9c0301e40bc8b16036088f1c1b1cbd2669e
+PODFILE CHECKSUM: 3e9f296d4916ec9d5d219a625326d25132c3c3cb
 
 COCOAPODS: 1.16.2

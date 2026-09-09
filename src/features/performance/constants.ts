@@ -1,0 +1,6 @@
+export const PERFORMANCE_SESSION_DIRECTORY = 'performance-sessions';
+export const PERFORMANCE_SAMPLE_INTERVAL_MS = 1000;
+export const PERFORMANCE_LIVE_SAMPLE_LIMIT = 180;
+export const PERFORMANCE_MIN_INTERVAL_MS = 250;
+
+export const PERFORMANCE_INTERVAL_OPTIONS_MS = [500, 1000, 2000, 5000] as const;

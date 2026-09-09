@@ -64,6 +64,8 @@ import type { DirectContributionFeatureCandidate } from "@/features/map/types/di
 import { getCommunityLayerDirectContributionState } from "@/domain/community/directContribution";
 import styles from "./HomePage.module.css";
 import { overlayRoutes } from "@/app/router/routes";
+import { PerformanceMonitorBadge } from "@/features/performance/components/PerformanceMonitorBadge";
+import { PerformanceMonitorPage } from "@/features/performance/pages/PerformanceMonitorPage";
 
 import IconBurger from "@/shared/assets/icons/icon-burger.svg?react";
 import IconSearch from "@/shared/assets/icons/icon-search.svg?react";
@@ -841,6 +843,7 @@ export function HomePage() {
           onClose={() => setIsSearchOpen(false)}
           map={map}
         />
+        <PerformanceMonitorBadge onOpen={() => setActiveOverlay('/performance')} />
       </main>
 
       {/* <p className={styles.copyright}>
@@ -1158,6 +1161,7 @@ export function HomePage() {
         <SettingsPage
           isOpen
           onClose={handleCloseOverlay}
+          onOpenPerformance={() => setActiveOverlay('/performance')}
         />
       )}
       {activeOverlay === '/logout-verification' && (
@@ -1250,6 +1254,12 @@ export function HomePage() {
       )}
       {activeOverlay === '/help' && (
         <HelpPage
+          isOpen
+          onClose={handleCloseOverlay}
+        />
+      )}
+      {activeOverlay === '/performance' && (
+        <PerformanceMonitorPage
           isOpen
           onClose={handleCloseOverlay}
         />

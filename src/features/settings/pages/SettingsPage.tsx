@@ -29,9 +29,10 @@ import { Divider } from '@/shared/ui/Divider/Divider';
 export interface SettingsPageProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenPerformance?: () => void;
 }
 
-export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
+export function SettingsPage({ isOpen, onClose, onOpenPerformance }: SettingsPageProps) {
   const { t } = useTranslation();
   const [isMapSectionExpanded, setIsMapSectionExpanded] = useState(false);
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
@@ -453,6 +454,23 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                   </button>
                 </>
               )}
+
+              <Divider />
+              <button
+                type='button'
+                className={styles.maintenanceEntry}
+                onClick={() => onOpenPerformance?.()}
+              >
+                <span className={styles.maintenanceEntryText}>
+                  <span className={inputs.label}>{t('settings.advanced.performance.title')}</span>
+                  <span className={`${typography.caption} ${styles.maintenanceEntryDescription}`}>
+                    {t('settings.advanced.performance.description')}
+                  </span>
+                </span>
+                <span className={styles.maintenanceEntryAction}>
+                  {t('settings.advanced.performance.open')}
+                </span>
+              </button>
 
             </>
           )}
