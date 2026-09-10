@@ -5,6 +5,7 @@ import type { CommunityLayer } from '@ign/mobile-core';
 import type { Extent } from 'ol/extent';
 import { boundingExtent } from 'ol/extent';
 import { Network } from '@ign/mobile-device';
+import { Network as CapacitorNetwork } from '@capacitor/network';
 import {
   type OfflineCacheDownloadResult,
   type OfflineCommunityCache,
