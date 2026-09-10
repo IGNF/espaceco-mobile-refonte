@@ -154,42 +154,139 @@ function formatStat(value: number | null, digits = 1): string {
   return value.toFixed(digits);
 }
 
-function polylinePoints(values: number[], width: number, height: number): string {
-  if (values.length === 0) {
-    return '';
-  }
-
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const span = max - min || 1;
-
-  return values
-    .map((value, index) => {
-      const x = values.length === 1 ? 0 : (index / (values.length - 1)) * width;
-      const y = height - ((value - min) / span) * height;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+function formatAxisTime(elapsedMs: number): string {
+  const totalSeconds = Math.max(0, Math.round(elapsedMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
 }
 
-function chartSvg(title: string, values: number[], unit: string): string {
-  if (values.length < 2) {
-    return `<section class="chart"><h3>${title}</h3><p>Pas assez d'échantillons pour tracer une courbe.</p></section>`;
+interface ChartPoint {
+  t: number;
+  v: number;
+}
+
+function collectSeries(
+  samples: PerformanceSample[],
+  read: (sample: PerformanceSample) => number | null | undefined,
+): ChartPoint[] {
+  const points: ChartPoint[] = [];
+  for (const sample of samples) {
+    const value = read(sample);
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      points.push({ t: sample.elapsedMs, v: value });
+    }
+  }
+  return points;
+}
+
+function pickTickStepMs(durationMs: number): number {
+  if (durationMs <= 60_000) {
+    return 10_000;
+  }
+  if (durationMs <= 180_000) {
+    return 20_000;
+  }
+  if (durationMs <= 600_000) {
+    return 30_000;
+  }
+  return 60_000;
+}
+
+function chartSvg(
+  title: string,
+  samples: PerformanceSample[],
+  read: (sample: PerformanceSample) => number | null | undefined,
+  unit: string,
+  markers: PerformanceSessionMeta['markers'],
+): string {
+  const series = collectSeries(samples, read);
+  if (series.length < 2) {
+    return `<section class="chart card"><h3>${escapeHtml(title)}</h3><p>Pas assez d'échantillons pour tracer une courbe.</p></section>`;
   }
 
-  const width = 720;
-  const height = 160;
-  const points = polylinePoints(values, width, height);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const padLeft = 52;
+  const padRight = 16;
+  const padTop = 12;
+  const padBottom = 44;
+  const plotWidth = 720;
+  const plotHeight = 160;
+  const width = padLeft + plotWidth + padRight;
+  const height = padTop + plotHeight + padBottom;
+
+  const min = Math.min(...series.map((point) => point.v));
+  const max = Math.max(...series.map((point) => point.v));
+  const span = max - min || 1;
+  const t0 = series[0].t;
+  const t1 = series[series.length - 1].t;
+  const durationMs = Math.max(t1 - t0, 1);
+
+  const xAt = (elapsedMs: number) => padLeft + ((elapsedMs - t0) / durationMs) * plotWidth;
+  const yAt = (value: number) => padTop + plotHeight - ((value - min) / span) * plotHeight;
+
+  const points = series
+    .map((point) => `${xAt(point.t).toFixed(1)},${yAt(point.v).toFixed(1)}`)
+    .join(' ');
+
+  const tickStepMs = pickTickStepMs(durationMs);
+  const ticks: number[] = [];
+  const firstTick = Math.ceil(t0 / tickStepMs) * tickStepMs;
+  for (let tick = firstTick; tick <= t1; tick += tickStepMs) {
+    ticks.push(tick);
+  }
+  if (ticks[0] !== t0) {
+    ticks.unshift(t0);
+  }
+  if (ticks[ticks.length - 1] !== t1) {
+    ticks.push(t1);
+  }
+
+  const grid = ticks
+    .map((tick) => {
+      const x = xAt(tick).toFixed(1);
+      return `<line class="grid" x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop + plotHeight}" />`;
+    })
+    .join('');
+
+  const axisLabels = ticks
+    .map((tick) => {
+      const x = xAt(tick).toFixed(1);
+      const y = padTop + plotHeight + 18;
+      return `<text class="tick" x="${x}" y="${y}" text-anchor="middle">${formatAxisTime(tick)}</text>`;
+    })
+    .join('');
+
+  const markerLines = markers
+    .filter((marker) => marker.elapsedMs >= t0 && marker.elapsedMs <= t1)
+    .map((marker) => {
+      const x = xAt(marker.elapsedMs).toFixed(1);
+      return `
+        <line class="marker" x1="${x}" y1="${padTop}" x2="${x}" y2="${padTop + plotHeight}" />
+        <text class="marker-label" x="${x}" y="${padTop + 10}" text-anchor="middle">${escapeHtml(marker.label)}</text>
+      `;
+    })
+    .join('');
+
+  const seriesJson = JSON.stringify(series).replace(/</g, '\\u003c');
 
   return `
-    <section class="chart">
-      <h3>${title}</h3>
-      <p class="chart-range">${min.toFixed(1)} → ${max.toFixed(1)} ${unit}</p>
-      <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${title}">
-        <polyline fill="none" stroke="#26A581" stroke-width="2" points="${points}" />
+    <section class="chart card" data-unit="${escapeHtml(unit)}">
+      <h3>${escapeHtml(title)}</h3>
+      <p class="chart-range">${min.toFixed(1)} → ${max.toFixed(1)} ${escapeHtml(unit)} · survolez la courbe pour l'instant exact</p>
+      <p class="chart-hover">t = — · valeur = —</p>
+      <svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(title)}">
+        ${grid}
+        <line class="axis" x1="${padLeft}" y1="${padTop}" x2="${padLeft}" y2="${padTop + plotHeight}" />
+        <line class="axis" x1="${padLeft}" y1="${padTop + plotHeight}" x2="${padLeft + plotWidth}" y2="${padTop + plotHeight}" />
+        <text class="tick" x="${padLeft - 8}" y="${padTop + 4}" text-anchor="end">${max.toFixed(1)}</text>
+        <text class="tick" x="${padLeft - 8}" y="${padTop + plotHeight}" text-anchor="end">${min.toFixed(1)}</text>
+        <polyline class="line" fill="none" stroke="#26A581" stroke-width="2" points="${points}" />
+        ${markerLines}
+        ${axisLabels}
+        <text class="axis-title" x="${padLeft + plotWidth / 2}" y="${height - 6}" text-anchor="middle">Temps écoulé depuis le début de la session (min:s)</text>
+        <rect class="chart-hit" x="${padLeft}" y="${padTop}" width="${plotWidth}" height="${plotHeight}" fill="transparent" />
       </svg>
+      <script type="application/json" class="chart-data">${seriesJson}</script>
     </section>
   `;
 }
@@ -248,15 +345,25 @@ export function buildSessionHtmlReport(
     .map(([state, count]) => `<tr><td>${escapeHtml(state)}</td><td>${count}</td></tr>`)
     .join('') || '<tr><td colspan="2">n/d</td></tr>';
 
-  const cpuValues = collectNumbers(samples, (sample) => sample.cpu?.usagePercent ?? null);
-  const memoryValues = collectNumbers(samples, (sample) => sample.memory?.usedPercent);
-  const appMemoryValues = collectNumbers(samples, (sample) =>
-    typeof sample.memory?.appUsedBytes === 'number' ? sample.memory.appUsedBytes / 1024 / 1024 : null,
+  const cpuChart = chartSvg('CPU (%)', samples, (sample) => sample.cpu?.usagePercent ?? null, '%', session.markers);
+  const memoryChart = chartSvg('Mémoire système (%)', samples, (sample) => sample.memory?.usedPercent, '%', session.markers);
+  const appMemoryChart = chartSvg(
+    'Mémoire application (Mo)',
+    samples,
+    (sample) => typeof sample.memory?.appUsedBytes === 'number' ? sample.memory.appUsedBytes / 1024 / 1024 : null,
+    'Mo',
+    session.markers,
   );
-  const storageValues = collectNumbers(samples, (sample) => sample.storage?.usedPercent);
-  const cpuTempValues = collectNumbers(samples, (sample) => sample.cpu?.temperatureCelsius);
-  const gpuTempValues = collectNumbers(samples, (sample) => sample.gpu?.temperatureCelsius);
-  const batteryTempValues = collectNumbers(samples, (sample) => sample.sensors?.batteryTemperatureCelsius);
+  const storageChart = chartSvg('Stockage (%)', samples, (sample) => sample.storage?.usedPercent, '%', session.markers);
+  const cpuTempChart = chartSvg('Température CPU (°C)', samples, (sample) => sample.cpu?.temperatureCelsius, '°C', session.markers);
+  const gpuTempChart = chartSvg('Température GPU (°C)', samples, (sample) => sample.gpu?.temperatureCelsius, '°C', session.markers);
+  const batteryTempChart = chartSvg(
+    'Température batterie (°C)',
+    samples,
+    (sample) => sample.sensors?.batteryTemperatureCelsius,
+    '°C',
+    session.markers,
+  );
 
   const payload = JSON.stringify({ session, samples }).replace(/</g, '\\u003c');
 
@@ -272,9 +379,16 @@ export function buildSessionHtmlReport(
     .card { background: #fff; border-radius: 12px; padding: 16px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #dde1e6; font-size: 14px; }
-    svg { width: 100%; height: 160px; background: #f8fbfa; border-radius: 8px; }
+    svg.chart-svg { width: 100%; height: 240px; background: #f8fbfa; border-radius: 8px; }
     .muted { color: #6a727a; }
-    .chart-range { margin: 0 0 8px; font-size: 13px; color: #6a727a; }
+    .chart-range, .chart-hover { margin: 0 0 8px; font-size: 13px; color: #6a727a; }
+    .chart-hover { font-variant-numeric: tabular-nums; color: #1c7b66; font-weight: 600; min-height: 1.2em; }
+    .axis { stroke: #b8bcc1; stroke-width: 1; }
+    .grid { stroke: #e9ecef; stroke-width: 1; }
+    .tick { fill: #6a727a; font-size: 11px; font-family: system-ui, sans-serif; }
+    .axis-title { fill: #6a727a; font-size: 11px; font-family: system-ui, sans-serif; }
+    .marker { stroke: #f18345; stroke-width: 1.5; stroke-dasharray: 4 3; }
+    .marker-label { fill: #a8592e; font-size: 10px; font-family: system-ui, sans-serif; }
   </style>
 </head>
 <body>
@@ -323,15 +437,63 @@ export function buildSessionHtmlReport(
     </table>
   </section>
 
-  ${chartSvg('CPU (%)', cpuValues, '%')}
-  ${chartSvg('Mémoire système (%)', memoryValues, '%')}
-  ${chartSvg('Mémoire application (Mo)', appMemoryValues, 'Mo')}
-  ${chartSvg('Stockage (%)', storageValues, '%')}
-  ${chartSvg('Température CPU (°C)', cpuTempValues, '°C')}
-  ${chartSvg('Température GPU (°C)', gpuTempValues, '°C')}
-  ${chartSvg('Température batterie (°C)', batteryTempValues, '°C')}
+  ${cpuChart}
+  ${memoryChart}
+  ${appMemoryChart}
+  ${storageChart}
+  ${cpuTempChart}
+  ${gpuTempChart}
+  ${batteryTempChart}
 
   <script type="application/json" id="performance-session-data">${payload}</script>
+  <script>
+    function formatTime(ms) {
+      const totalSeconds = Math.max(0, Math.round(ms / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return minutes + ':' + String(seconds).padStart(2, '0');
+    }
+
+    document.querySelectorAll('.chart').forEach((section) => {
+      const svg = section.querySelector('.chart-svg');
+      const hover = section.querySelector('.chart-hover');
+      const dataNode = section.querySelector('.chart-data');
+      const hit = section.querySelector('.chart-hit');
+      if (!svg || !hover || !dataNode || !hit) return;
+
+      const series = JSON.parse(dataNode.textContent || '[]');
+      if (series.length < 2) return;
+
+      const viewBox = (svg.getAttribute('viewBox') || '0 0 788 216').split(' ').map(Number);
+      const padLeft = 52;
+      const plotWidth = 720;
+      const t0 = series[0].t;
+      const durationMs = Math.max(series[series.length - 1].t - t0, 1);
+      const unit = section.getAttribute('data-unit') || '';
+
+      hit.addEventListener('mousemove', (event) => {
+        const bounds = svg.getBoundingClientRect();
+        const scaleX = viewBox[2] / bounds.width;
+        const x = (event.clientX - bounds.left) * scaleX;
+        const ratio = Math.min(1, Math.max(0, (x - padLeft) / plotWidth));
+        const elapsed = t0 + ratio * durationMs;
+        let nearest = series[0];
+        let best = Math.abs(series[0].t - elapsed);
+        for (const point of series) {
+          const delta = Math.abs(point.t - elapsed);
+          if (delta < best) {
+            best = delta;
+            nearest = point;
+          }
+        }
+        hover.textContent = 't = ' + formatTime(nearest.t) + ' (' + Math.round(nearest.t / 1000) + ' s) · valeur = ' + nearest.v.toFixed(2) + ' ' + unit;
+      });
+
+      hit.addEventListener('mouseleave', () => {
+        hover.textContent = 't = — · valeur = —';
+      });
+    });
+  </script>
 </body>
 </html>`;
 }
