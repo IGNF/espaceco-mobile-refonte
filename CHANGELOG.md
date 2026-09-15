@@ -13,6 +13,15 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.17] - 2026-09-xx
+
+### Added
+
+### Changed
+ 
+### Fixed
+- Correction d'une faute d'orthographe dans les paramtètres de l'app (ticket #149)
+
 ## [0.0.16] - 2026-06-08
 
 ### Added
