@@ -422,7 +422,7 @@
       },
       "maintenance": {
         "title": "Maintenance",
-        "description": "Afficher le status de l'application et le contenu télécharger",
+        "description": "Afficher le status de l'application et le contenu téléchargé",
         "open": "Afficher",
         "content": {
           "rasterCache": "Cache image",
