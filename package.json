@@ -55,6 +55,7 @@
     "cordova-plugin-listpicker": "^2.2.2",
     "i18next": "^25.7.3",
     "install": "^0.13.0",
+    "nmea-simple": "^3.3.0",
     "npm": "^11.7.0",
     "ol": "^10.7.0",
     "ol-ext": "^4.0.37",

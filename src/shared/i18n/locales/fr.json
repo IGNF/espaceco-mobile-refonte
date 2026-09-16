@@ -804,6 +804,7 @@
         "positionUnavailable": "Position non disponible",
         "editPosition": "Modifier la position",
         "viewPosition": "Voir la position",
+        "nmeaDetails": "Détails NMEA",
         "photo": "Photo",
         "photoAdd": "Ajouter une photo",
         "photoCount": "{{count}} / {{max}} photo(s)",

@@ -347,6 +347,11 @@ export function ReportForm({
       {/* Position */}
       {renderPositionCard()}
 
+      {/* NMEA details */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionLabel}>{t('reports.createOrEdit.form.nmeaDetails')}</h2>
+      </div>
+
       {/* Theme */}
       <div className={styles.section}>
         <div className={inputs.field}>
