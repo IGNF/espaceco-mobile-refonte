@@ -2,7 +2,7 @@
 	--map-action-button-size: 48px;
 	--map-action-button-gap: 1rem;
 	--map-action-button-right: 1rem;
-	--map-action-button-bottom: 110px;
+	--map-action-button-bottom: calc(110px + var(--safe-bottom, 0px));
 	position: relative;
 	flex: 1;
 	display: flex;

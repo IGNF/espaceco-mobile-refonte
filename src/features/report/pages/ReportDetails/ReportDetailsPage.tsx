@@ -33,6 +33,7 @@ import { parsePointGeometry } from '@/shared/utils/geometry';
 import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 
 import { Button } from '@/shared/ui/Button';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
@@ -225,6 +226,8 @@ export function ReportDetailsPage({
     setIsViewingOnMap(false);
     onSearchPanelVisibilityChange?.(false);
   };
+
+  useBackHandler(isViewingOnMap, handleBackToReport, 130);
 
   const handlePageBack = () => {
     if (isViewingOnMap) {

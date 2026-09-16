@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
@@ -24,9 +25,12 @@ export interface SlideUpPageProps {
 	fullPage?: boolean;
 }
 
-export function SlideUpPage({ children, isOpen, className, level = 1, fullPage = true }: SlideUpPageProps) {
+export function SlideUpPage({ children, isOpen, onClose, className, level = 1, fullPage = true }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
+	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
+
+	useBackHandler(isOpen, onClose, zIndex);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -61,8 +65,6 @@ export function SlideUpPage({ children, isOpen, className, level = 1, fullPage =
 		styles.slideUpPageInner,
 		fullPage ? styles.slideUpPageInnerFullPage : ''
 	);
-
-	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
 
 	const content = (
 		<div className={classNames} style={{ zIndex }} data-scroll-root='true'>

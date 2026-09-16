@@ -1,6 +1,7 @@
 .tabbar {
 	display: flex;
 	background-color: var(--color-dark-contrast);
+	padding-bottom: var(--safe-bottom, 0px);
 }
 
 .tab {
