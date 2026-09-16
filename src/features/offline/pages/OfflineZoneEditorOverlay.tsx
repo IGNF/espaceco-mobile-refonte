@@ -24,6 +24,7 @@ import IconGeolocation from '@/shared/assets/icons/icon-geolocation.svg?react';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { Button } from '@/shared/ui/Button';
 
 import screen from '@/shared/styles/screen.module.css';
@@ -88,6 +89,7 @@ export function OfflineZoneEditorOverlay({
   onSave,
 }: OfflineZoneEditorOverlayProps) {
   const { t } = useTranslation();
+  useBackHandler(isOpen, onCancel, 140);
   const [draftExtents, setDraftExtents] = useState<Extent[]>([]);
   const [selectedCandidates, setSelectedCandidates] = useState<
     DirectContributionFeatureCandidate[]

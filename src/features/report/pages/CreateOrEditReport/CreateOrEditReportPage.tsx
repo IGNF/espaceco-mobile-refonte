@@ -17,6 +17,7 @@ import { Alert } from '@/shared/ui/Alert';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
@@ -335,6 +336,8 @@ export function CreateOrEditReportPage({
     clearTraceSession();
     onSearchPanelVisibilityChange?.(false);
   }, [clearSketchSession, clearTraceSession, onSearchPanelVisibilityChange]);
+
+  useBackHandler(isPickingOnMap, closeMapPickers, 130);
 
   const handleSketchToolClick = useCallback((toolId: string) => {
     if (toolId === 'close') {

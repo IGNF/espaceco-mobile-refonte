@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useBackHandler } from "@/shared/hooks/useBackHandler";
 import styles from "./LeftMenu.module.css";
 import screen from "@/shared/styles/screen.module.css";
 
@@ -89,6 +90,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
   const { activeCommunity, canSwitchCommunity } = useCommunity();
   const { mode } = useOffline();
+  useBackHandler(isOpen, onClose, 1000);
 
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])

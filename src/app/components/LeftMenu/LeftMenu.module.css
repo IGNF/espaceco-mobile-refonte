@@ -27,6 +27,7 @@
 	flex-direction: column;
 	overflow-y: auto;
 	padding-top: var(--safe-top, 0px);
+	padding-bottom: var(--safe-bottom, 0px);
 }
 
 .menuOpen {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
 import { Loading } from '@/shared/ui/Loading/Loading';
 import styles from './LayersPanel.module.css';
@@ -44,6 +45,8 @@ export function LayersPanel({
 	const sendDirectContributionsLabel = t('layers.groups.sendDirectContributions');
 	const mesCartesInfoLabel = t('layers.groups.mesCartesInfo');
 	const mesCartesDownloadLabel = t('layers.groups.mesCartesDownload');
+
+	useBackHandler(isOpen, onClose, 100);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);

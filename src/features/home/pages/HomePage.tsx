@@ -187,6 +187,7 @@ export function HomePage() {
     cancelFeatureForm: cancelDirectContributionFeatureForm,
     selectFeatureCandidate: selectDirectContributionFeatureCandidate,
     closeFeatureChoice: closeDirectContributionFeatureChoice,
+    closeSession: closeDirectContributionSession,
   } = useDirectContributionSession({
     map,
     isMapReady,
@@ -989,6 +990,7 @@ export function HomePage() {
         items={directContributionToolbarItems}
         statusText={directContributionToolbarStatusText}
         onItemClick={triggerDirectContributionToolbarAction}
+        onClose={closeDirectContributionSession}
       />
 
       <DirectContributionFeatureFormPage

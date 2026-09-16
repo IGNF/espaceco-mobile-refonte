@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { Button } from '@/shared/ui/Button';
 import type { ButtonColor, ButtonVariant } from '@/shared/ui/Button';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
@@ -40,6 +41,8 @@ export function ActionSheet({
   const [isVisible, setIsVisible] = useState(isOpen);
   const [shouldRender, setShouldRender] = useState(isOpen);
   const canCloseFromOverlayRef = useRef(!isOpen);
+
+  useBackHandler(isOpen, onClose, 200);
 
   if (isOpen && !shouldRender) {
     setShouldRender(true);
