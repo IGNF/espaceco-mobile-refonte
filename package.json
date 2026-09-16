@@ -47,6 +47,7 @@
     "@ign/mobile-core": "https://github.com/IGNF/mobile-core.git#main",
     "@ign/mobile-device": "https://github.com/IGNF/mobile-device.git#main",
     "@ionic/pwa-elements": "^3.3.0",
+    "capacitor-android-nav-mode": "^3.0.0",
     "capacitor-email-composer": "^8.0.0",
     "collaboratif-client-api": "github:IGNF/collaboratif-client-api#2.0",
     "cordova-plugin-bluetooth-geolocation": "github:viglino/cordova-plugin-bluetooth-geolocation",

@@ -1,6 +1,8 @@
 PODS:
   - Capacitor (8.0.0):
     - CapacitorCordova
+  - CapacitorAndroidNavMode (3.0.0):
+    - Capacitor
   - CapacitorApp (8.1.0):
     - Capacitor
   - CapacitorAppLauncher (8.0.1):
@@ -43,6 +45,7 @@ PODS:
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
+  - CapacitorAndroidNavMode (from `../../node_modules/capacitor-android-nav-mode`)
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorAppLauncher (from `../../node_modules/@capacitor/app-launcher`)"
   - "CapacitorBrowser (from `../../node_modules/@capacitor/browser`)"
@@ -70,6 +73,8 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   Capacitor:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorAndroidNavMode:
+    :path: "../../node_modules/capacitor-android-nav-mode"
   CapacitorApp:
     :path: "../../node_modules/@capacitor/app"
   CapacitorAppLauncher:
@@ -107,6 +112,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Capacitor: 79e40e5e76f852965dce30406c65253fa154e24a
+  CapacitorAndroidNavMode: 59bda37fe8c603957b6d31cea35bc757d72a562b
   CapacitorApp: a4d8d936cc4390859a3766f141048abe55d4076f
   CapacitorAppLauncher: fc7c313549920528d0f28493b60d20de679deba4
   CapacitorBrowser: f42210052d25867e64cda9ee28906ca830835ebe
@@ -128,6 +134,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
 
-PODFILE CHECKSUM: 28aca9c0301e40bc8b16036088f1c1b1cbd2669e
+PODFILE CHECKSUM: 26cb58c737798f716662fb5655428ebc29934eea
 
 COCOAPODS: 1.16.2
