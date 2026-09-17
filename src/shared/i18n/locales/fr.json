@@ -499,6 +499,7 @@
       "subtitle": "Couches du groupe",
       "loading": "Chargement des couches du groupe...",
       "empty": "Aucune couche dans ce groupe",
+      "hideAllLayers": "Masquer toutes les couches",
       "showLayer": "Afficher la couche",
       "hideLayer": "Masquer la couche",
       "layerInfo": "Informations sur la couche",
