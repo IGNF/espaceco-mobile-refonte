@@ -1,47 +1,49 @@
 PODS:
-  - Capacitor (8.0.0):
+  - Capacitor (8.5.2):
     - CapacitorCordova
   - CapacitorAndroidNavMode (3.0.0):
     - Capacitor
-  - CapacitorApp (8.1.0):
+  - CapacitorApp (8.1.1):
     - Capacitor
   - CapacitorAppLauncher (8.0.1):
     - Capacitor
-  - CapacitorBrowser (8.0.3):
+  - CapacitorBrowser (8.0.4):
     - Capacitor
-  - CapacitorCamera (8.0.0):
+  - CapacitorCamera (8.2.4):
     - Capacitor
+    - IONCameraLib (~> 2.0.0)
   - CapacitorCommunityDevice (8.0.0):
     - Capacitor
-  - CapacitorCommunityKeepAwake (8.0.0):
+  - CapacitorCommunityKeepAwake (8.0.1):
     - Capacitor
-  - CapacitorCordova (8.0.0)
-  - CapacitorDevice (8.0.2):
+  - CapacitorCordova (8.5.2)
+  - CapacitorDevice (8.0.3):
     - Capacitor
   - CapacitorEmailComposer (8.0.0):
     - Capacitor
-  - CapacitorFilesystem (8.0.0):
+  - CapacitorFilesystem (8.1.3):
     - Capacitor
-    - IONFilesystemLib (~> 1.0.1)
-  - CapacitorGeolocation (8.0.0):
+    - IONFilesystemLib (~> 1.1.1)
+  - CapacitorGeolocation (8.2.2):
     - Capacitor
-    - IONGeolocationLib (= 2.0.0)
-  - CapacitorInappbrowser (3.0.0):
+    - IONGeolocationLib (= 2.1.0)
+  - CapacitorInappbrowser (3.0.3):
     - Capacitor
-    - OSInAppBrowserLib (~> 2.3.1)
-  - CapacitorNetwork (8.0.0):
+    - OSInAppBrowserLib (~> 2.3.2)
+  - CapacitorNetwork (8.0.1):
     - Capacitor
-  - CapacitorPreferences (8.0.0):
+  - CapacitorPreferences (8.0.1):
     - Capacitor
-  - CapacitorStatusBar (8.0.2):
+  - CapacitorStatusBar (8.0.3):
     - Capacitor
-  - CapacitorToast (8.0.0):
+  - CapacitorToast (8.0.1):
     - Capacitor
-  - CordovaPlugins (8.0.0):
+  - CordovaPlugins (8.5.2):
     - CapacitorCordova
-  - IONFilesystemLib (1.0.1)
-  - IONGeolocationLib (2.0.0)
-  - OSInAppBrowserLib (2.3.1)
+  - IONCameraLib (2.0.0)
+  - IONFilesystemLib (1.1.4)
+  - IONGeolocationLib (2.1.0)
+  - OSInAppBrowserLib (2.3.2)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -66,6 +68,7 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
+    - IONCameraLib
     - IONFilesystemLib
     - IONGeolocationLib
     - OSInAppBrowserLib
@@ -111,28 +114,29 @@ EXTERNAL SOURCES:
     :path: "../capacitor-cordova-ios-plugins"
 
 SPEC CHECKSUMS:
-  Capacitor: 79e40e5e76f852965dce30406c65253fa154e24a
+  Capacitor: 59aea4e8bd98b24b798919b4c55ae90c6ded1b0d
   CapacitorAndroidNavMode: 59bda37fe8c603957b6d31cea35bc757d72a562b
-  CapacitorApp: a4d8d936cc4390859a3766f141048abe55d4076f
+  CapacitorApp: 9fd99482b6536ddf1a54721ce678145fc7fa3418
   CapacitorAppLauncher: fc7c313549920528d0f28493b60d20de679deba4
-  CapacitorBrowser: f42210052d25867e64cda9ee28906ca830835ebe
-  CapacitorCamera: 05ac5bd4499ed4b8cf5358d1b4a874b385de7b4d
+  CapacitorBrowser: 553fcb154526484a5d12efc38093d3f781cb6a82
+  CapacitorCamera: 3756cf094b1db48839ea5e4eee82e22edcb1c9d9
   CapacitorCommunityDevice: 4b1c180a28bf7b639c1f33348629f02627fc8f17
-  CapacitorCommunityKeepAwake: 2dffdfe2c56a49b15bef37da2e1a7bf5a8675989
-  CapacitorCordova: 5dc3912d25ef770a3fe0f431bb65c9fbfa2e92f9
-  CapacitorDevice: b50f119138a2b69a1e9213f4468d1e75e4239cca
+  CapacitorCommunityKeepAwake: 4eaeafc83573f2520fac18e136254ef34694f75b
+  CapacitorCordova: 5bec5648cbd09a176ce34ce5e7b6cdabb2c8a327
+  CapacitorDevice: e5599fa82274e59220170995826a16095ad20c40
   CapacitorEmailComposer: 4dc7fde6f40db29b10cc1e998aa3b577e06164fb
-  CapacitorFilesystem: 608bca984a5b6b2cba85a2972ea22974a37659d8
-  CapacitorGeolocation: a8381371f7b460e6be569576557285e70f0c9d6c
-  CapacitorInappbrowser: 419fca64e69be39249eee70958ebfd0dc0ff2490
-  CapacitorNetwork: e03b0c02b4a9d76e58c19e15e9e0c200929529b9
-  CapacitorPreferences: 83f13cc19660ca9649a4769ec255be93f8c2ff68
-  CapacitorStatusBar: b692a4cf12b3fe3a7b7ece86da62106065d78fdc
-  CapacitorToast: 6275c84283ac9c424a20554e71b8a6263f44554c
-  CordovaPlugins: a980f7fb90e21148d1e703497cfc65de9e7888ac
-  IONFilesystemLib: 89258b8e3e85465da93127d25d7ce37f977e8a6f
-  IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
-  OSInAppBrowserLib: bf7cdcc072394ae827f8cfe3f5f9c807691834c0
+  CapacitorFilesystem: 8ad396fd0d680c15d018577f3d92dc1397f477de
+  CapacitorGeolocation: cb788b96802c17b055cbbbdda7c871b2a813b5bc
+  CapacitorInappbrowser: 22d5e81825942c167f4841c3e1f57aed7497ab4e
+  CapacitorNetwork: 7afc28ed4d9abe1d9801264fa485db32e4420546
+  CapacitorPreferences: 0fa33b3affebf12d96358b491ed7c2b39bec3270
+  CapacitorStatusBar: 40bdc21352ecc617ec71c45ea06d669cdd2da8df
+  CapacitorToast: 0432f40d66143ab56a322095e09740aa2c9a88a5
+  CordovaPlugins: fbc74bdb71c735df05cab233e0c3f84b7b81346d
+  IONCameraLib: 729cae576e1a952602ce750a9790b6dc7d7e2e95
+  IONFilesystemLib: e6610c2b260d15e4b9cb9d5e37a87095479b669e
+  IONGeolocationLib: 6a7b6f76063fb1b01cfb14fae7d0f526e3c9b271
+  OSInAppBrowserLib: c21c8fa3d886654d2f553b9f1bded9d27a0530c7
 
 PODFILE CHECKSUM: 26cb58c737798f716662fb5655428ebc29934eea
 
