@@ -25,6 +25,10 @@ export function createPositionFromLonLat(
       altitudeAccuracy: fallback?.coords.altitudeAccuracy ?? null,
       heading: fallback?.coords.heading ?? null,
       speed: fallback?.coords.speed ?? null,
+      magneticHeading: fallback?.coords.magneticHeading ?? null,
+      trueHeading: fallback?.coords.trueHeading ?? null,
+      headingAccuracy: fallback?.coords.headingAccuracy ?? null,
+      course: fallback?.coords.course ?? null,
     },
     timestamp,
   };

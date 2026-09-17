@@ -10,7 +10,6 @@ import Cluster from 'ol/source/Cluster';
 import Feature from 'ol/Feature';
 import type { Extent } from 'ol/extent';
 import { bbox as bboxStrategy } from 'ol/loadingstrategy';
-import type Projection from 'ol/proj/Projection';
 import { transformExtent } from 'ol/proj';
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style';
 
@@ -216,9 +215,9 @@ export function useSignalementMapLayers(
       ? new VectorSource()
       : new VectorSource({
         strategy: bboxStrategy,
-        loader: async (extent, _resolution, projection, success, failure) => {
+        loader: async (extent, _resolution, projection) => {
           try {
-            const mapProjectionCode = (projection as Projection).getCode();
+            const mapProjectionCode = projection.getCode();
             const extent4326 = transformExtent(
               extent,
               mapProjectionCode,
@@ -229,7 +228,7 @@ export function useSignalementMapLayers(
               : [];
             const loadedFeatures = await reportSource.loadFeatures(
               reports,
-              projection as Projection
+              projection
             );
             const normalizedFeatures = deduplicateFeatures(
               loadedFeatures.map(copyReportProperties)
@@ -242,7 +241,7 @@ export function useSignalementMapLayers(
                 .map((featureId) => String(featureId))
             );
 
-            const featuresToAdd = normalizedFeatures.filter((feature) => {
+            return normalizedFeatures.filter((feature) => {
               const featureId = feature.getId();
               if (featureId === undefined) {
                 return true;
@@ -256,19 +255,9 @@ export function useSignalementMapLayers(
               knownFeatureIds.add(key);
               return true;
             });
-
-            if (featuresToAdd.length > 0) {
-              remoteReportsSource.addFeatures(featuresToAdd);
-            }
-
-            if (success) {
-              success(featuresToAdd);
-            }
           } catch (error) {
             console.error('[Signalements] Failed to load reports layer', error);
-            if (failure) {
-              failure();
-            }
+            throw error;
           }
         },
       });
