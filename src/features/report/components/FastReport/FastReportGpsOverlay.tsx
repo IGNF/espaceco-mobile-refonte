@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import type { Report } from '@ign/mobile-core';
 
 import type { CommunityThemeConfig } from '@/domain/community/models';
@@ -133,6 +134,8 @@ export function FastReportGpsOverlay({
 
     onClose();
   };
+
+  useBackHandler(isOpen, handleCancel, 141);
 
   const interruptRecording = () => {
     setIsCancelConfirmOpen(false);

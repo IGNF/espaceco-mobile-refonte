@@ -1,19 +1,34 @@
 import { App } from '@capacitor/app';
+import { dismissTopBackHandler } from '@/shared/hooks/useBackHandler';
+import { getNavigationMode, SimplifiedNavigationMode } from '../device/androidNavMode';
 
 export function initAppEvents() {
-  console.log('initAppEvents');
   initAppLifecycleListener();
 }
 
-/**
- * Simple listener to listen to the app state changes
- */
 function initAppLifecycleListener() {
   App.addListener('appStateChange', ({ isActive }) => {
     console.log('App state changed. Is active?', isActive);
   });
 
-  App.addListener('backButton', (data: any) => {
-    console.log('Back button pressed', data);
+  App.addListener('backButton', async ({ canGoBack }) => {
+    const navigationMode = await getNavigationMode().catch(
+      () => SimplifiedNavigationMode.Buttons,
+    );
+
+    if (navigationMode !== SimplifiedNavigationMode.Buttons) {
+      return;
+    }
+
+    if (dismissTopBackHandler()) {
+      return;
+    }
+
+    if (canGoBack) {
+      window.history.back();
+      return;
+    }
+
+    await App.minimizeApp();
   });
 }

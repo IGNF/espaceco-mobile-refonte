@@ -77,7 +77,6 @@
           <string>fr.ign.navi-forest</string>
         </array>
       </dict>
-      
     </array>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
@@ -85,5 +84,24 @@
     <string>Nous avons besoin de votre localisation pour afficher la carte et votre position sur la carte</string>
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>Nous avons besoin du Bluetooth pour utiliser un GPS externe.</string>
+    <key>UIApplicationSceneManifest</key>
+    <dict>
+      <key>UIApplicationSupportsMultipleScenes</key>
+      <false/>
+      <key>UISceneConfigurations</key>
+      <dict>
+        <key>UIWindowSceneSessionRoleApplication</key>
+        <array>
+          <dict>
+            <key>UISceneConfigurationName</key>
+            <string>Default Configuration</string>
+            <key>UISceneDelegateClassName</key>
+            <string>$(PRODUCT_MODULE_NAME).SceneDelegate</string>
+            <key>UISceneStoryboardFile</key>
+            <string>Main</string>
+          </dict>
+        </array>
+      </dict>
+    </dict>
   </dict>
 </plist>

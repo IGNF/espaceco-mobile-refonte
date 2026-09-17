@@ -197,9 +197,11 @@ export function LayersPanelFlow({
         onClose={handleCloseLayerGroup}
         group={selectedLayerGroup}
         isLoading={isLoading}
+        groupVisible={selectedLayerGroup ? groupVisibility[selectedLayerGroup.id] : true}
         onSetLayerVisibility={onSetLayerVisibility}
         onSetLayerOpacity={onSetLayerOpacity}
         onSetLayerStyle={onSetLayerStyle}
+        onSetGroupVisibility={onSetGroupVisibility}
         onSetGroupLayerOrder={onSetGroupLayerOrder}
         onRemoveLayer={onRemoveUserWmsLayer}
         onEditLayer={onEditLayer}

@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
+import { useBackHandler } from "@/shared/hooks/useBackHandler";
 import type Map from "ol/Map";
 import { useSearchGeoportail } from "../hooks/useSearchGeoportail";
 import type { SearchMode } from "../types";
@@ -31,6 +32,8 @@ export function SearchPanel({ isOpen, onClose, map }: SearchPanelProps) {
 		clearMarker();
 		onClose();
 	};
+
+	useBackHandler(isOpen, handleClose, 50);
 
 	if (!isOpen) return null;
 

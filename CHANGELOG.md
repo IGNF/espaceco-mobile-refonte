@@ -16,6 +16,9 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.17] - 2026-09-xx
 
 ### Added
+- La fonction 'retour' est active si le périphérique a le mode de navigation par bouton activé (ticket #153)
+- L'appui sur le bouton 'retour' du périphérique ferme les modales et pages (ticket #153)
+- Possibilité de masquer/afficher toutes les couches d'un guichet à partir de la page du guichet (ticket #150)
 
 ### Changed
  

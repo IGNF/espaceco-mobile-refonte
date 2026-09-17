@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useBackHandler } from "@/shared/hooks/useBackHandler";
 import { Button } from "@/shared/ui/Button";
 import { type OnboardingStep, ONBOARDING_STEPS } from "../hooks/useOnboarding";
 import styles from "./OnboardingModal.module.css";
@@ -35,6 +36,7 @@ export function OnboardingModal({
 	onClose,
 }: OnboardingModalProps) {
 	const { t } = useTranslation();
+	useBackHandler(isOpen, isTourMode ? onClose : onSkip, 1000);
 
 	if (!isOpen) return null;
 

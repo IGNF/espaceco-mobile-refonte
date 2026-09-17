@@ -1,4 +1,5 @@
 import { createPortal } from 'react-dom';
+import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import type { MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { MapToolbar } from '@/features/map/components/MapToolbar';
 import styles from './DirectContributionMapOverlay.module.css';
@@ -8,6 +9,7 @@ export interface DirectContributionMapOverlayProps {
   items: MapToolbarItem[];
   statusText?: string;
   onItemClick: (toolId: string) => void;
+  onClose: () => void;
 }
 
 export function DirectContributionMapOverlay({
@@ -15,7 +17,10 @@ export function DirectContributionMapOverlay({
   items,
   statusText,
   onItemClick,
+  onClose,
 }: DirectContributionMapOverlayProps) {
+  useBackHandler(isOpen, onClose, 130);
+
   if (!isOpen || typeof document === 'undefined') {
     return null;
   }
