@@ -19,6 +19,7 @@ import {
 import { LayerGroupDetailsSortableItem } from '@/features/map/components/LayerGroupDetailsSortableItem';
 
 import { Alert } from '@/shared/ui/Alert/Alert';
+import { Toggle } from '@/shared/ui/Toggle';
 import { clampNumber } from '@/shared/utils/number';
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 
@@ -57,9 +58,11 @@ export interface LayerGroupDetailsPageProps {
   onClose: () => void;
   group: LayerGroupDetails | null;
   isLoading?: boolean;
+  groupVisible?: boolean;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
   onSetLayerStyle?: (layerKey: string, styleId: string) => void;
+  onSetGroupVisibility?: (groupId: LayerGroupId, visible: boolean) => void;
   onSetGroupLayerOrder?: (groupId: LayerGroupId, orderedLayerKeys: string[]) => void;
   onRemoveLayer?: (layerKey: string) => void;
   onEditLayer?: (layerKey: string) => void;
@@ -73,9 +76,11 @@ export function LayerGroupDetailsPage({
   onClose,
   group,
   isLoading = false,
+  groupVisible = true,
   onSetLayerVisibility,
   onSetLayerOpacity,
   onSetLayerStyle,
+  onSetGroupVisibility,
   onSetGroupLayerOrder,
   onRemoveLayer,
   onEditLayer,
@@ -90,6 +95,7 @@ export function LayerGroupDetailsPage({
   const [deleteItem, setDeleteItem] = useState<LayerGroupItem | null>(null);
   const [layerDraftByKey, setLayerDraftByKey] = useState<LayerDraftByKey>({});
   const [itemOrder, setItemOrder] = useState<string[]>([]);
+  const [groupVisibleDraft, setGroupVisibleDraft] = useState<boolean | null>(null);
 
   const infoDescription =
     typeof selectedItem?.description === 'string' && selectedItem.description.trim().length > 0
@@ -120,6 +126,38 @@ export function LayerGroupDetailsPage({
     return layerDraftByKey[item.layerKey] ?? getInitialLayerDraftState(item);
   };
 
+  const hideableItems = group
+    ? group.items.filter((item) => typeof item.layerKey === 'string' && item.layerKey.length > 0)
+    : [];
+  const isGroupVisible = groupVisibleDraft ?? groupVisible;
+  const areAllLayersHidden =
+    hideableItems.length > 0 &&
+    hideableItems.every((item) => !getLayerDraftState(item).visible);
+  const isHideAllChecked = !isGroupVisible || areAllLayersHidden;
+
+  const setLayerDraftsVisibility = (
+    getVisible: (item: LayerGroupItem) => boolean
+  ) => {
+    if (!group) return;
+
+    setLayerDraftByKey((current) => {
+      const nextDrafts: LayerDraftByKey = { ...current };
+
+      for (const item of group.items) {
+        const layerKey = item.layerKey;
+        if (!layerKey) continue;
+
+        const previousState = nextDrafts[layerKey] ?? getInitialLayerDraftState(item);
+        nextDrafts[layerKey] = {
+          ...previousState,
+          visible: getVisible(item),
+        };
+      }
+
+      return nextDrafts;
+    });
+  };
+
   const applyDraftChanges = () => {
     if (!group) return;
 
@@ -139,6 +177,15 @@ export function LayerGroupDetailsPage({
       if (onSetLayerOpacity && Math.abs(draftState.opacity - originalState.opacity) > 0.001) {
         onSetLayerOpacity(layerKey, draftState.opacity);
       }
+    }
+
+    if (!onSetGroupVisibility || hideableItems.length === 0) {
+      return;
+    }
+
+    const nextGroupVisible = !isHideAllChecked;
+    if (nextGroupVisible !== groupVisible) {
+      onSetGroupVisibility(group.id, nextGroupVisible);
     }
   };
 
@@ -166,6 +213,7 @@ export function LayerGroupDetailsPage({
     applyDraftChanges();
     applyLayerOrderChanges();
     setLayerDraftByKey({});
+    setGroupVisibleDraft(null);
     setSelectedItem(null);
     setStyleItem(null);
     setDeleteItem(null);
@@ -189,11 +237,38 @@ export function LayerGroupDetailsPage({
     });
   };
 
+  const handleToggleHideAll = (hideAll: boolean) => {
+    setGroupVisibleDraft(!hideAll);
+  };
+
   const handleToggleVisibility = (item: LayerGroupItem) => {
+    if (!item.layerKey || !group) return;
+
+    if (isHideAllChecked) {
+      setGroupVisibleDraft(true);
+      setLayerDraftsVisibility((groupItem) => groupItem.layerKey === item.layerKey);
+      return;
+    }
+
+    const nextVisible = !getLayerDraftState(item).visible;
     updateLayerDraft(item, (previousState) => ({
       ...previousState,
-      visible: !previousState.visible,
+      visible: nextVisible,
     }));
+
+    if (!nextVisible) {
+      const remainingVisible = hideableItems.some((groupItem) => {
+        if (groupItem.layerKey === item.layerKey) {
+          return false;
+        }
+
+        return getLayerDraftState(groupItem).visible;
+      });
+
+      if (!remainingVisible) {
+        setGroupVisibleDraft(false);
+      }
+    }
   };
 
   const handleSetOpacity = (item: LayerGroupItem, opacity: number) => {
@@ -283,6 +358,17 @@ export function LayerGroupDetailsPage({
             <p className={typography.subtitle}>{t('layers.groupDetails.subtitle')}</p>
           </div>
 
+          {hideableItems.length > 0 && (
+            <div className={styles.hideAllRow}>
+              <Toggle
+                checked={isHideAllChecked}
+                onChange={handleToggleHideAll}
+                label={t('layers.groupDetails.hideAllLayers')}
+                disabled={isLoading}
+              />
+            </div>
+          )}
+
           {isLoading ? (
             <p className={styles.loading}>{t('layers.groupDetails.loading')}</p>
           ) : !group || orderedItems.length === 0 ? (
@@ -299,6 +385,7 @@ export function LayerGroupDetailsPage({
               <ul className={styles.layerList}>
                 {orderedItems.map((item, index) => {
                   const draftState = getLayerDraftState(item);
+                  const visible = isHideAllChecked ? false : draftState.visible;
                   const canReorder = Boolean(item.layerKey && onSetGroupLayerOrder);
                   const layerKey = item.layerKey;
 
@@ -309,7 +396,7 @@ export function LayerGroupDetailsPage({
                       index={index}
                       groupId={group.id}
                       canReorder={canReorder}
-                      visible={draftState.visible}
+                      visible={visible}
                       opacity={draftState.opacity}
                       showLayerLabel={showLayerLabel}
                       hideLayerLabel={hideLayerLabel}
