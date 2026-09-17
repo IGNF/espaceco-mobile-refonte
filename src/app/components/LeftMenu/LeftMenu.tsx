@@ -16,6 +16,10 @@ import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 import type { AppUser } from "@/domain/user/models";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { useOffline } from "@/features/offline/hooks/useOffline";
+import { useMyReports } from '@/features/report/hooks/useMyReports';
+
+import { MAX_DRAFT_REPORTS_WARNING, MAX_DRAFT_REPORTS_BLOCK } from "@/shared/constants/report";
+import { Alert } from "@/shared/ui/Alert/Alert";
 
 export interface LeftMenuProps {
   isOpen: boolean;
@@ -92,6 +96,11 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { mode } = useOffline();
   useBackHandler(isOpen, onClose, 1000);
 
+  const { draftReports } = useMyReports();
+  const [showWarning, setShowWarning] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const hasDraftReports = draftReports.length > 0;
+
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])
   );
@@ -109,8 +118,19 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
     });
   };
 
-  const handleItemClick = (route: string) => {
+  const handleItemClick = (item: MenuItem | StandaloneItem) => {
+    if(item.id === "nouveauSignalement" && hasDraftReports) {
+      console.log("new report before navigate, number", draftReports.length);
+      if (draftReports.length >= MAX_DRAFT_REPORTS_WARNING) {
+        setShowWarning(true);
+      }
+      if (draftReports.length >= MAX_DRAFT_REPORTS_BLOCK) {
+        setShowError(true);
+        return;
+      }
+    }
     // Close the menu first
+    const route = item.route;
     onClose();
 
     // Wait for menu close animation before navigating
@@ -183,7 +203,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                     <button
                       key={item.id}
                       className={`${styles.menuItem} ${isOffline && item.id === "modeHorsLigne" ? styles.menuItemOffline : ""}`}
-                      onClick={() => handleItemClick(item.route)}
+                      onClick={() => handleItemClick(item)}
                     >
                       {isOffline && item.id === "modeHorsLigne" ? (
                         <IconCheck  className={styles.offlineModeIcon} />
@@ -205,7 +225,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                 <button
                   key={item.id}
                   className={styles.standaloneItem}
-                  onClick={() => handleItemClick(item.route)}
+                  onClick={() => handleItemClick(item)}
                 >
                   <IconComponent className={styles.standaloneIcon} />
                   <span>{t(item.labelKey)}</span>
@@ -213,6 +233,24 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
               );
             })}
           </div>
+
+          {/* Warning alert */}
+            <Alert
+              isOpen={showWarning}
+              title={t("leftMenu.signalements.nouveauSignalement")}
+              subtitle={t("leftMenu.signalements.nouveauSignalementSubtitle")}
+              onClose={() => setShowWarning(false)}
+            />
+          {/* Error alert */}
+
+          {showError && (
+            <Alert
+              isOpen={showError}
+              title={t("leftMenu.signalements.nouveauSignalement")}
+              subtitle={t("leftMenu.signalements.nouveauSignalementSubtitle")}
+              onClose={() => setShowError(false)}
+            />
+          )}
         </div>
       </nav>
     </>
