@@ -379,8 +379,8 @@
       "currentSource": "Source active",
       "chooseSource": "Source souhaitée",
       "source": {
-        "internal": "GPS interne",
-        "external": "GPS externe (Bluetooth)"
+        "internal": "GNSS interne",
+        "external": "GNSS externe (Bluetooth)"
       },
       "pluginUnavailable": "Le plugin de sélection de source GNSS n'est pas disponible sur cet environnement.",
       "changeUnsupported": "Le changement de source GNSS externe n'est pas supporté sur cette plateforme.",
