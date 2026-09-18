@@ -118,20 +118,24 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
     });
   };
 
-  const handleItemClick = (item: MenuItem | StandaloneItem) => {
-    if(item.id === "nouveauSignalement" && hasDraftReports) {
-      console.log("new report before navigate, number", draftReports.length);
-      if (draftReports.length >= MAX_DRAFT_REPORTS_WARNING) {
-        setShowWarning(true);
-      }
+  const handleItemClick = (id: string) => {
+    // Close the menu first
+    onClose();
+
+    const item = menuGroups.find((group) => group.items.some((item) => item.id === id))?.items.find((item) => item.id === id) || standaloneItems.find((item) => item.id === id);
+    if (!item) return;
+
+    if (item.id === "nouveauSignalement" && hasDraftReports && showWarning === false) {
       if (draftReports.length >= MAX_DRAFT_REPORTS_BLOCK) {
         setShowError(true);
-        return;
+        return false;
+      }
+      if (draftReports.length >= MAX_DRAFT_REPORTS_WARNING) {
+        setShowWarning(true);
+        return false;
       }
     }
-    // Close the menu first
     const route = item.route;
-    onClose();
 
     // Wait for menu close animation before navigating
     setTimeout(() => {
@@ -203,10 +207,10 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                     <button
                       key={item.id}
                       className={`${styles.menuItem} ${isOffline && item.id === "modeHorsLigne" ? styles.menuItemOffline : ""}`}
-                      onClick={() => handleItemClick(item)}
+                      onClick={() => handleItemClick(item.id)}
                     >
                       {isOffline && item.id === "modeHorsLigne" ? (
-                        <IconCheck  className={styles.offlineModeIcon} />
+                        <IconCheck className={styles.offlineModeIcon} />
                       ) : null
                       }
                       {t(item.labelKey)}
@@ -225,7 +229,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                 <button
                   key={item.id}
                   className={styles.standaloneItem}
-                  onClick={() => handleItemClick(item)}
+                  onClick={() => handleItemClick(item.id)}
                 >
                   <IconComponent className={styles.standaloneIcon} />
                   <span>{t(item.labelKey)}</span>
@@ -235,20 +239,34 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
           </div>
 
           {/* Warning alert */}
-            <Alert
-              isOpen={showWarning}
-              title={t("leftMenu.signalements.nouveauSignalement")}
-              subtitle={t("leftMenu.signalements.nouveauSignalementSubtitle")}
-              onClose={() => setShowWarning(false)}
-            />
+          <Alert
+            isOpen={showWarning}
+            title={t("reportsLimitReached.alert.warning.title")}
+            subtitle={t("reportsLimitReached.alert.warning.subtitle", { count: draftReports.length, limit: MAX_DRAFT_REPORTS_BLOCK })}
+            onClose={() => setShowWarning(false)}
+            buttons={[{
+              label: t("reportsLimitReached.alert.warning.button"),
+              color: "primary",
+              onClick: () => { handleItemClick("nouveauSignalement"); setShowWarning(false); },
+            }, {
+              label: t("reportsLimitReached.alert.warning.cancel"),
+              color: "medium",
+              onClick: () => setShowWarning(false),
+            }]}
+          />
           {/* Error alert */}
 
           {showError && (
             <Alert
               isOpen={showError}
-              title={t("leftMenu.signalements.nouveauSignalement")}
-              subtitle={t("leftMenu.signalements.nouveauSignalementSubtitle")}
+              title={t("reportsLimitReached.alert.error.title")}
+              subtitle={t("reportsLimitReached.alert.error.subtitle", { limit: MAX_DRAFT_REPORTS_BLOCK })}
               onClose={() => setShowError(false)}
+              buttons={[{
+                label: t("reportsLimitReached.alert.error.button"),
+                color: "primary",
+                onClick: () => setShowError(false),
+              }]}
             />
           )}
         </div>

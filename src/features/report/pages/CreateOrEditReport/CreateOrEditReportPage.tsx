@@ -14,11 +14,13 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { Alert } from '@/shared/ui/Alert';
+import { Banner } from '@/shared/ui/Banner';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
+import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
@@ -56,7 +58,7 @@ import styles from './CreateOrEditReportPage.module.css';
 import buttonStyles from '@/shared/ui/Button/Button.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
-import { NON_SELECTABLE_LAYER_NAMES } from '@/shared/constants/report';
+import { NON_SELECTABLE_LAYER_NAMES, MAX_DRAFT_REPORTS_WARNING, MAX_DRAFT_REPORTS_BLOCK } from "@/shared/constants/report";
 
 export type ReportPageMode = 'create' | 'edit';
 
@@ -173,6 +175,7 @@ export function CreateOrEditReportPage({
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
+  const { draftReports } = useMyReports();
   const isEditMode = mode === 'edit';
   const isDraftReport = report?.status === ReportStatus.Draft;
   const resolvedReportType: ReportType = reportType ?? 'standard';
@@ -793,6 +796,15 @@ export function CreateOrEditReportPage({
           onClose={handlePageClose}
         />
 
+        {draftReports.length > MAX_DRAFT_REPORTS_WARNING && (
+          <Banner
+            title={t('reportsLimitReached.banner.warning.title')}
+            message={t('reportsLimitReached.banner.warning.subtitle', { count: draftReports.length, limit: MAX_DRAFT_REPORTS_BLOCK })}
+            canBeClosed={true}
+            color="warning"
+          />
+        )}
+        
         <main className={screen.screenContainer}>
           <div className={styles.titleSection}>
             <h1 className={typography.title}>{pageTitle}</h1>
