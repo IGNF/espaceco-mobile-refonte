@@ -16,10 +16,8 @@ import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 import type { AppUser } from "@/domain/user/models";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { useOffline } from "@/features/offline/hooks/useOffline";
-import { useMyReports } from '@/features/report/hooks/useMyReports';
-
-import { MAX_DRAFT_REPORTS_WARNING, MAX_DRAFT_REPORTS_BLOCK } from "@/shared/constants/report";
-import { Alert } from "@/shared/ui/Alert/Alert";
+import { DraftReportsLimitAlerts } from "@/features/report/components/DraftReportsLimitAlerts";
+import { useDraftReportsLimitGuard } from "@/features/report/hooks/useDraftReportsLimitGuard";
 
 export interface LeftMenuProps {
   isOpen: boolean;
@@ -96,10 +94,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
   const { mode } = useOffline();
   useBackHandler(isOpen, onClose, 1000);
 
-  const { draftReports } = useMyReports();
-  const [showWarning, setShowWarning] = useState(false);
-  const [showError, setShowError] = useState(false);
-  const hasDraftReports = draftReports.length > 0;
+  const draftReportsLimit = useDraftReportsLimitGuard();
 
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])
@@ -125,22 +120,19 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
     const item = menuGroups.find((group) => group.items.some((item) => item.id === id))?.items.find((item) => item.id === id) || standaloneItems.find((item) => item.id === id);
     if (!item) return;
 
-    if (item.id === "nouveauSignalement" && hasDraftReports && showWarning === false) {
-      if (draftReports.length >= MAX_DRAFT_REPORTS_BLOCK) {
-        setShowError(true);
-        return false;
-      }
-      if (draftReports.length >= MAX_DRAFT_REPORTS_WARNING) {
-        setShowWarning(true);
-        return false;
-      }
-    }
-    const route = item.route;
+    const navigate = () => {
+      // Wait for menu close animation before navigating
+      setTimeout(() => {
+        onNavigate?.(item.route);
+      }, 300);
+    };
 
-    // Wait for menu close animation before navigating
-    setTimeout(() => {
-      onNavigate?.(route);
-    }, 300);
+    if (item.id === "nouveauSignalement") {
+      draftReportsLimit.requestCreate(navigate);
+      return;
+    }
+
+    navigate();
   };
 
   const handleOverlayClick = () => {
@@ -238,39 +230,9 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
             })}
           </div>
 
-          {/* Warning alert */}
-          <Alert
-            isOpen={showWarning}
-            title={t("reportsLimitReached.alert.warning.title")}
-            subtitle={t("reportsLimitReached.alert.warning.subtitle", { count: draftReports.length, limit: MAX_DRAFT_REPORTS_BLOCK })}
-            onClose={() => setShowWarning(false)}
-            buttons={[{
-              label: t("reportsLimitReached.alert.warning.button"),
-              color: "primary",
-              onClick: () => { handleItemClick("nouveauSignalement"); setShowWarning(false); },
-            }, {
-              label: t("reportsLimitReached.alert.warning.cancel"),
-              color: "medium",
-              onClick: () => setShowWarning(false),
-            }]}
-          />
-          {/* Error alert */}
-
-          {showError && (
-            <Alert
-              isOpen={showError}
-              title={t("reportsLimitReached.alert.error.title")}
-              subtitle={t("reportsLimitReached.alert.error.subtitle", { limit: MAX_DRAFT_REPORTS_BLOCK })}
-              onClose={() => setShowError(false)}
-              buttons={[{
-                label: t("reportsLimitReached.alert.error.button"),
-                color: "primary",
-                onClick: () => setShowError(false),
-              }]}
-            />
-          )}
         </div>
       </nav>
+      <DraftReportsLimitAlerts {...draftReportsLimit} />
     </>
   );
 }

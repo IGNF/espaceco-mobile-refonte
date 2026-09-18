@@ -6,6 +6,8 @@ import IconGuichet from "@/shared/assets/icons/icon-guichet.svg?react";
 import IconLayers from "@/shared/assets/icons/icon-layers.svg?react";
 import IconFlag from "@/shared/assets/icons/icon-flag.svg?react";
 
+import { DraftReportsLimitAlerts } from "@/features/report/components/DraftReportsLimitAlerts";
+import { useDraftReportsLimitGuard } from "@/features/report/hooks/useDraftReportsLimitGuard";
 import { useFastReportThemes } from "@/features/report/hooks/useFastReportThemes";
 
 import { useAppSettings } from "@/features/settings/hooks/useAppSettings";
@@ -23,10 +25,16 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab, disabled =
   const { t } = useTranslation();
   const { displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
+  const draftReportsLimit = useDraftReportsLimitGuard();
   const displaySignalementRapideTab = fastReportThemes.length > 0;
 
   const handleTabClick = (tab: TabId) => {
     if (disabled) {
+      return;
+    }
+
+    if (tab === "signalement") {
+      draftReportsLimit.requestCreate(() => onTabClick?.(tab));
       return;
     }
 
@@ -48,45 +56,48 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab, disabled =
   };
 
   return (
-    <nav className={styles.tabbar}>
-      <button
-        className={getTabClassName("signalement")}
-        onClick={() => handleTabClick("signalement")}
-        disabled={disabled}
-        data-onboarding-target="signalement"
-      >
-        <IconLocation className={styles.tabIcon} />
-        {t("home.tabs.signalement")}
-      </button>
-      <button
-        className={getTabClassName("guichet")}
-        onClick={() => handleTabClick("guichet")}
-        disabled={disabled}
-        data-onboarding-target="guichet"
-      >
-        <IconGuichet className={styles.tabIcon} />
-        {t("home.tabs.guichet")}
-      </button>
-      <button
-        className={getTabClassName("couches")}
-        onClick={() => handleTabClick("couches")}
-        disabled={disabled}
-        data-onboarding-target="couches"
-      >
-        <IconLayers className={styles.tabIcon} />
-        {t("home.tabs.couches")}
-      </button>
-      {displayMode === 'expert' && displaySignalementRapideTab && (
+    <>
+      <nav className={styles.tabbar}>
         <button
-          className={getTabClassName("signalementRapide")}
-          onClick={() => handleTabClick("signalementRapide")}
+          className={getTabClassName("signalement")}
+          onClick={() => handleTabClick("signalement")}
           disabled={disabled}
-          data-onboarding-target="signalementRapide"
+          data-onboarding-target="signalement"
         >
-          <IconFlag className={styles.tabIcon} />
-          {t("home.tabs.signalementRapide")}
+          <IconLocation className={styles.tabIcon} />
+          {t("home.tabs.signalement")}
         </button>
-      )}
-    </nav>
+        <button
+          className={getTabClassName("guichet")}
+          onClick={() => handleTabClick("guichet")}
+          disabled={disabled}
+          data-onboarding-target="guichet"
+        >
+          <IconGuichet className={styles.tabIcon} />
+          {t("home.tabs.guichet")}
+        </button>
+        <button
+          className={getTabClassName("couches")}
+          onClick={() => handleTabClick("couches")}
+          disabled={disabled}
+          data-onboarding-target="couches"
+        >
+          <IconLayers className={styles.tabIcon} />
+          {t("home.tabs.couches")}
+        </button>
+        {displayMode === 'expert' && displaySignalementRapideTab && (
+          <button
+            className={getTabClassName("signalementRapide")}
+            onClick={() => handleTabClick("signalementRapide")}
+            disabled={disabled}
+            data-onboarding-target="signalementRapide"
+          >
+            <IconFlag className={styles.tabIcon} />
+            {t("home.tabs.signalementRapide")}
+          </button>
+        )}
+      </nav>
+      <DraftReportsLimitAlerts {...draftReportsLimit} />
+    </>
   );
 }
