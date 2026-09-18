@@ -19,6 +19,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - La fonction 'retour' est active si le périphérique a le mode de navigation par bouton activé (ticket #153)
 - L'appui sur le bouton 'retour' du périphérique ferme les modales et pages (ticket #153)
 - Possibilité de masquer/afficher toutes les couches d'un guichet à partir de la page du guichet (ticket #150)
+- Ajout d'une fonctionnalité d'avertissement en cas de création de nouveau signalement, si un utilisateur a plus de 40 signalements en attente (ticket #71)
+- Ajout d'une fonctionnalité de bloquage de création de nouveau signalement, si un utilisateur a plus de 80 signalements en attente (ticket #71)
 
 ### Changed
  
