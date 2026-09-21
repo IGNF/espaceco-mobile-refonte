@@ -14,7 +14,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.17] - 2026-09-xx
+## [0.0.17] - 2026-09-21
 
 ### Added
 - La fonction 'retour' est active si le périphérique a le mode de navigation par bouton activé (ticket #153)
