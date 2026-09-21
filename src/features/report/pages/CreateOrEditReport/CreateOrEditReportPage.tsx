@@ -14,6 +14,7 @@ import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { Alert } from '@/shared/ui/Alert';
+import { FeatureChoiceAlert } from '@/features/map/components/FeatureChoiceAlert';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
@@ -880,35 +881,21 @@ export function CreateOrEditReportPage({
         ? createPortal(mapPickerOverlay, document.body)
         : null}
 
-      <Alert
+      <FeatureChoiceAlert
         isOpen={isObjectChoiceOpen}
-        onClose={handleCloseObjectChoice}
         title={t('reports.createOrEdit.form.objectChooseTitle')}
         subtitle={t('reports.createOrEdit.form.objectChooseSubtitle', {
           count: objectCandidates.length,
         })}
-        buttons={[
-          {
-            label: t('reports.createOrEdit.actions.cancel'),
-            onClick: handleCloseObjectChoice,
-            variant: 'outline',
-          },
-        ]}
-      >
-        <div className={styles.objectChoiceList}>
-          {objectCandidates.map((candidate) => (
-            <button
-              key={candidate.key}
-              type="button"
-              className={styles.objectChoiceButton}
-              onClick={() => handleSelectObjectCandidate(candidate.key)}
-            >
-              <span className={styles.objectChoiceLabel}>{candidate.label}</span>
-              <span className={styles.objectChoiceLayer}>{candidate.layerTitle}</span>
-            </button>
-          ))}
-        </div>
-      </Alert>
+        cancelLabel={t('reports.createOrEdit.actions.cancel')}
+        candidates={objectCandidates.map((candidate) => ({
+          key: candidate.key,
+          label: candidate.label,
+          secondaryLabel: candidate.layerTitle,
+        }))}
+        onSelectCandidate={handleSelectObjectCandidate}
+        onClose={handleCloseObjectChoice}
+      />
 
       <Alert
         isOpen={isSendConfirmOpen}

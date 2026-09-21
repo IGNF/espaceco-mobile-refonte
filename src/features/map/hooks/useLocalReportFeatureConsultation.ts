@@ -1,21 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Feature from 'ol/Feature';
-import type Geometry from 'ol/geom/Geometry';
-import type VectorLayer from 'ol/layer/Vector';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import type OlMap from 'ol/Map';
-import type VectorSource from 'ol/source/Vector';
 
 import type { AppReport } from '@/domain/report/models';
 import { mapApiReportToAppReport, type ApiReportResponse } from '@/domain/report/mappers';
 import { collabApiClient } from '@/infra/api';
 import { ReportStorageAdapter } from '@/infra/storage';
 import {
-  getLocalReportSketchesLayer,
-  getLocalReportsLayer,
-  getRemoteReportsLayer,
-} from '@/features/map/utils/signalementReportFeatures';
+  LAYER_NAME_CROQUIS,
+  LAYER_NAME_MES_SIGNALEMENTS,
+} from '@/features/map/constants/signalementLayers.constants';
+import {
+  canZoomToSeparateCluster,
+  getRemoteReportChoiceInfo,
+  getRemoteReportMembersAtPixel,
+  zoomToClusterFeatures,
+} from '@/features/map/utils/reportClusters';
 import { COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE } from '@/shared/constants/map';
 
 const reportStorage = new ReportStorageAdapter();
@@ -24,90 +27,151 @@ type ReportFeatureHit =
   | { source: 'local'; reportId: number }
   | { source: 'remote'; reportId: number };
 
+export interface ReportMapChoiceCandidate {
+  key: string;
+  label: string;
+  secondaryLabel?: string;
+  source: ReportFeatureHit['source'];
+  reportId: number;
+}
+
 export interface UseLocalReportFeatureConsultationOptions {
   map: OlMap | null;
   disabled?: boolean;
+}
+
+function isLocalReportLayer(layer: { get: (key: string) => unknown } | null | undefined): boolean {
+  const layerName = layer?.get('name');
+  return layerName === LAYER_NAME_MES_SIGNALEMENTS || layerName === LAYER_NAME_CROQUIS;
 }
 
 export function useLocalReportFeatureConsultation({
   map,
   disabled = false,
 }: UseLocalReportFeatureConsultationOptions) {
+  const { t } = useTranslation();
   const [selectedReport, setSelectedReport] = useState<AppReport | null>(null);
+  const [reportCandidates, setReportCandidates] = useState<ReportMapChoiceCandidate[]>([]);
+  const [isReportChoiceOpen, setIsReportChoiceOpen] = useState(false);
 
   const closeReportDetails = useCallback(() => {
     setSelectedReport(null);
+    setReportCandidates([]);
+    setIsReportChoiceOpen(false);
   }, []);
 
+  const closeReportChoice = useCallback(() => {
+    setIsReportChoiceOpen(false);
+  }, []);
+
+  const goBackFromReportDetails = useCallback(() => {
+    if (reportCandidates.length > 1) {
+      setSelectedReport(null);
+      setIsReportChoiceOpen(true);
+      return;
+    }
+
+    closeReportDetails();
+  }, [closeReportDetails, reportCandidates.length]);
+
+  const loadSelectedReport = useCallback(async (hit: ReportFeatureHit) => {
+    if (hit.source === 'local') {
+      const report = await reportStorage.getReport(hit.reportId);
+      if (report) {
+        setSelectedReport(report as AppReport);
+      }
+      return;
+    }
+
+    const response = await collabApiClient.report.get(hit.reportId);
+    setSelectedReport(mapApiReportToAppReport(response.data as ApiReportResponse));
+  }, []);
+
+  const openReportDetails = useCallback((hit: ReportFeatureHit) => {
+    setIsReportChoiceOpen(false);
+    void loadSelectedReport(hit).catch((error) => {
+      console.error('[Signalements] Failed to open report details from map', error);
+    });
+  }, [loadSelectedReport]);
+
+  const selectReportCandidate = useCallback((candidateKey: string) => {
+    const candidate = reportCandidates.find(
+      (currentCandidate) => currentCandidate.key === candidateKey
+    );
+    if (!candidate) {
+      return;
+    }
+
+    openReportDetails({
+      source: candidate.source,
+      reportId: candidate.reportId,
+    });
+  }, [openReportDetails, reportCandidates]);
+
   useEffect(() => {
-    if (!map || disabled || selectedReport) {
+    if (!map || disabled || selectedReport || isReportChoiceOpen) {
       return;
     }
 
-    const localReportsLayer = getLocalReportsLayer(map);
-    const localReportSketchesLayer = getLocalReportSketchesLayer(map);
-    const remoteReportsLayer = getRemoteReportsLayer(map);
-    const clickableLayers: VectorLayer<VectorSource<Feature<Geometry>>>[] = [];
-    if (localReportsLayer) {
-      clickableLayers.push(localReportsLayer);
-    }
-    if (localReportSketchesLayer) {
-      clickableLayers.push(localReportSketchesLayer);
-    }
-    if (remoteReportsLayer) {
-      clickableLayers.push(remoteReportsLayer);
-    }
+    const buildRemoteReportCandidates = (members: Feature[]): ReportMapChoiceCandidate[] => {
+      const candidates: ReportMapChoiceCandidate[] = [];
 
-    if (clickableLayers.length === 0) {
-      return;
-    }
-
-    const loadSelectedReport = async (hit: ReportFeatureHit) => {
-      if (hit.source === 'local') {
-        const report = await reportStorage.getReport(hit.reportId);
-        if (report) {
-          setSelectedReport(report as AppReport);
+      for (const member of members) {
+        const reportInfo = getRemoteReportChoiceInfo(member);
+        if (!reportInfo) {
+          continue;
         }
-        return;
+
+        const statusLabel = reportInfo.status
+          ? t(`reports.status.${reportInfo.status}`, reportInfo.status)
+          : undefined;
+        const secondaryLabel = [reportInfo.themeName, statusLabel]
+          .filter((label): label is string => Boolean(label))
+          .join(' · ');
+
+        candidates.push({
+          key: `remote-${reportInfo.reportId}`,
+          label: `${t('reports.groupReports.reportNumber')}${reportInfo.reportId}`,
+          secondaryLabel: secondaryLabel || undefined,
+          source: 'remote',
+          reportId: reportInfo.reportId,
+        });
       }
 
-      const response = await collabApiClient.report.get(hit.reportId);
-      setSelectedReport(mapApiReportToAppReport(response.data as ApiReportResponse));
-    };
-
-    const getRemoteReportId = (feature: Feature): number | null => {
-      const clusteredFeatures = feature.get('features') as Feature[] | undefined;
-      if (!clusteredFeatures || clusteredFeatures.length !== 1) {
-        return null;
-      }
-
-      const reportFeature = clusteredFeatures[0].get('report');
-      if (!(reportFeature instanceof Feature)) {
-        return null;
-      }
-
-      const reportId = Number(reportFeature.get('id'));
-      return Number.isFinite(reportId) ? reportId : null;
+      return candidates;
     };
 
     const handleMapSingleClick = (event: MapBrowserEvent) => {
+      const remoteMembers = getRemoteReportMembersAtPixel(map, event.pixel);
+      // Nearby points: zoom in a step. Coincident points, or already at max zoom: open a chooser.
+      if (remoteMembers.length > 1 && canZoomToSeparateCluster(map, remoteMembers)) {
+        zoomToClusterFeatures(map, remoteMembers);
+        return;
+      }
+
+      if (remoteMembers.length > 0) {
+        const candidates = buildRemoteReportCandidates(remoteMembers);
+        if (candidates.length === 1) {
+          setReportCandidates([]);
+          openReportDetails(candidates[0]);
+          return;
+        }
+
+        if (candidates.length > 1) {
+          setReportCandidates(candidates);
+          setIsReportChoiceOpen(true);
+        }
+
+        return;
+      }
+
       let reportHit: ReportFeatureHit | null = null;
 
       map.forEachFeatureAtPixel(
         event.pixel,
         (featureLike, layerLike) => {
-          if (!(featureLike instanceof Feature)) {
+          if (!(featureLike instanceof Feature) || !isLocalReportLayer(layerLike)) {
             return undefined;
-          }
-
-          if (remoteReportsLayer && layerLike === remoteReportsLayer) {
-            const reportId = getRemoteReportId(featureLike);
-            if (reportId === null) {
-              return undefined;
-            }
-
-            reportHit = { source: 'remote', reportId };
-            return true;
           }
 
           const reportId = Number(featureLike.get('reportId'));
@@ -120,9 +184,7 @@ export function useLocalReportFeatureConsultation({
         },
         {
           hitTolerance: COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE,
-          layerFilter: (layer) => clickableLayers.some(
-            (clickableLayer) => clickableLayer === layer
-          ),
+          layerFilter: (layer) => isLocalReportLayer(layer),
         }
       );
 
@@ -130,9 +192,8 @@ export function useLocalReportFeatureConsultation({
         return;
       }
 
-      void loadSelectedReport(reportHit).catch((error) => {
-        console.error('[Signalements] Failed to open report details from map', error);
-      });
+      setReportCandidates([]);
+      openReportDetails(reportHit);
     };
 
     map.on('singleclick', handleMapSingleClick);
@@ -140,10 +201,15 @@ export function useLocalReportFeatureConsultation({
     return () => {
       map.un('singleclick', handleMapSingleClick);
     };
-  }, [disabled, map, selectedReport]);
+  }, [disabled, isReportChoiceOpen, map, openReportDetails, selectedReport, t]);
 
   return {
     selectedReport,
+    reportCandidates,
+    isReportChoiceOpen,
+    selectReportCandidate,
+    closeReportChoice,
     closeReportDetails,
+    goBackFromReportDetails,
   };
 }

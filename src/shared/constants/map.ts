@@ -14,6 +14,12 @@ export const DEFAULT_MAP_SEARCH_ZOOM = 16;
 export const DEFAULT_MAP_SHOW_SCALELINE = true;
 
 export const REPORT_CLUSTER_RADIUS = 22;
+// OpenLayers Cluster grouping distance, also used to detect coincident reports.
+export const REPORT_CLUSTER_DISTANCE = 30;
+export const REPORT_CLUSTER_FIT_PADDING = [80, 48, 80, 48] as const;
+// Max zoom levels applied on a single cluster click.
+export const REPORT_CLUSTER_ZOOM_STEP = 2;
+export const REPORT_CLUSTER_FIT_DURATION_MS = 500;
 
 export const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
 

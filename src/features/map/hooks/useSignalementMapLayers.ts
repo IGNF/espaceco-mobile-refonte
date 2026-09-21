@@ -36,7 +36,7 @@ import {
   createLocalReportFeatures,
   createLocalReportsSketchFeatures,
 } from '@/features/map/utils/signalementReportFeatures';
-import { REPORT_CLUSTER_RADIUS } from '@/shared/constants/map';
+import { REPORT_CLUSTER_DISTANCE, REPORT_CLUSTER_RADIUS } from '@/shared/constants/map';
 
 const CROQUIS_STYLE = new Style({
   stroke: new Stroke({
@@ -275,7 +275,7 @@ export function useSignalementMapLayers(
 
     const clusteredReportsSource = new Cluster({
       source: remoteReportsSource,
-      distance: 30,
+      distance: REPORT_CLUSTER_DISTANCE,
     });
 
     const signalementsLayer = new VectorLayer({
