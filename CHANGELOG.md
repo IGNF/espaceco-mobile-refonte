@@ -25,6 +25,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 - Correction d'une faute d'orthographe dans les paramtètres de l'app (ticket #149)
+- Correction du problème de récupération des styles et symbologies (ticket #142)
 
 ## [0.0.16] - 2026-06-08
 
