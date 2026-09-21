@@ -20,6 +20,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - La fonction 'retour' est active si le périphérique a le mode de navigation par bouton activé (ticket #153)
 - L'appui sur le bouton 'retour' du périphérique ferme les modales et pages (ticket #153)
 - Possibilité de masquer/afficher toutes les couches d'un guichet à partir de la page du guichet (ticket #150)
+- Ajout du Plan IGN J+1 aux couches téléchargeables hors ligne (ticket #151)
 
 ### Changed
  
