@@ -8,7 +8,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Le fond Géoportail « Plan J+1 » peut maintenant être téléchargé en mode hors ligne (ticket #151)
+
+### Changed
+ 
+### Fixed
+
+## [0.0.18] - 2026-09-xx
+
+### Added
 
 ### Changed
  
