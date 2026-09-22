@@ -1039,6 +1039,27 @@
       "cancel": "Annuler"
     }
   },
+  "reportsLimitReached": {
+    "alert": {
+      "warning": {
+        "title": "Limite de signalements",
+        "subtitle": "Vous avez {{count}} signalement(s) en cours. Pensez à les traiter avant d'atteindre la limite de {{limit}} signalements.",
+        "button": "Nouveau signalement",
+        "cancel": "Annuler"
+      },
+      "error": {
+        "title": "Limite de signalements atteinte",
+        "subtitle": "Vous avez atteint la limite de signalements ({{limit}}). Veuillez enregistrer ou annuler vos signalements pour en créer un nouveau.",
+        "button": "OK"
+      }
+    },
+    "banner": {
+      "warning": {
+        "title": "Limite de signalements",
+        "subtitle": "Vous avez {{count}} signalement(s) en cours. Pensez à les traiter avant d'atteindre la limite de {{limit}} signalements."
+      }
+    }
+  },
   "about": {
     "title": "À propos",
     "subtitle": "de l'Espace collaboratif IGN"

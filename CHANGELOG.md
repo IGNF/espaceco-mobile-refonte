@@ -18,6 +18,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 - Si un utilisateur est en cours de signalement/modification d'un objet et que le verrouillage de position est activé, ce dernier reste en pause jusqu'à ce que l'utilisateur ait fini son activité (ticket #16)
+- Ajout d'une fonctionnalité d'avertissement en cas de création de nouveau signalement, si un utilisateur a plus de 40 signalements en attente (ticket #71)
+- Ajout d'une fonctionnalité de bloquage de création de nouveau signalement, si un utilisateur a plus de 80 signalements en attente (ticket #71)
 
 ### Changed
 
