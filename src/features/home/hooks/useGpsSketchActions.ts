@@ -88,7 +88,7 @@ export function useGpsSketchActions({
         position: 'top',
       });
     } catch (error) {
-      console.error('Failed to export GPS sketch as GPX', error);
+      console.error('Failed to export GNSS sketch as GPX', error);
       await showToastSafe({
         text: t('home.gpsSketch.exportError'),
         duration: 'short',

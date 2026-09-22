@@ -5,6 +5,7 @@ import {
   WFSLayer,
   type CommunityLayer,
 } from '@ign/mobile-core';
+import { getStyleDocument } from '@/infra/api/styleDocument';
 import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 import { stripQueryParams } from '@/shared/utils/query';
 import { cacheStorage, onlineVectorCacheStorage } from '@/infra/storage/cacheStorage';
@@ -67,6 +68,11 @@ export function createCommunityVectorLayer(
         useCacheWhenOnline: shouldUseOnlineVectorCache,
         ...(runtimeCacheStorage ? { cache: runtimeCacheStorage } : {}),
         legacyCacheFallback: !isOfflineMode,
+        userManager: {
+          apiClient: {
+            getDocument: (url: string) => getStyleDocument(apiClient, url),
+          },
+        },
       } as any
     );
 

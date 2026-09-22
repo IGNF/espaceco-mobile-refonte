@@ -58,7 +58,7 @@ import { useLocalReportFeatureConsultation } from "@/features/map/hooks/useLocal
 import { useMapLongPress, type MapLongPressCoordinate } from "@/features/map/hooks/useMapLongPress";
 import { useUserLocationMarker } from "@/features/home/hooks/useUserLocationMarker";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
-import { DirectContributionFeatureChoiceAlert } from "@/features/map/components/DirectContributionFeatureChoiceAlert";
+import { FeatureChoiceAlert } from "@/features/map/components/FeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
 import type { DirectContributionFeatureCandidate } from "@/features/map/types/directContributionFeatureCandidate";
 import { getCommunityLayerDirectContributionState } from "@/domain/community/directContribution";
@@ -333,6 +333,7 @@ export function HomePage() {
 
   const handleBurgerClick = () => {
     setIsMenuOpen(true);
+    closeDirectContributionSession();
   };
 
   const handleMenuClose = () => {
@@ -420,6 +421,7 @@ export function HomePage() {
     }
     else if (tab === "signalement") {
       setActiveOverlay('/new-report-choice');
+      closeDirectContributionSession();
     }
     else if (tab === "guichet") {
       setActiveOverlay(null);
@@ -429,6 +431,7 @@ export function HomePage() {
     }
     else if (tab === "signalementRapide") {
       handleFastReportTabClick();
+      closeDirectContributionSession();
     }
   };
 
@@ -597,7 +600,12 @@ export function HomePage() {
 
   const {
     selectedReport: selectedLocalReport,
+    reportCandidates: localReportCandidates,
+    isReportChoiceOpen: isLocalReportChoiceOpen,
+    selectReportCandidate: selectLocalReportCandidate,
+    closeReportChoice: closeLocalReportChoice,
     closeReportDetails: closeLocalReportDetails,
+    goBackFromReportDetails: goBackFromLocalReportDetails,
   } = useLocalReportFeatureConsultation({
     map,
     disabled:
@@ -652,6 +660,7 @@ export function HomePage() {
     selectedLocalReport === null &&
     !isDirectContributionFeatureChoiceOpen &&
     !isConsultationFeatureChoiceOpen &&
+    !isLocalReportChoiceOpen &&
     !isHomeLoadingOverlayVisible &&
     !shouldShowOnboarding;
 
@@ -786,6 +795,7 @@ export function HomePage() {
     selectedLocalReport === null &&
     !isDirectContributionFeatureChoiceOpen &&
     !isConsultationFeatureChoiceOpen &&
+    !isLocalReportChoiceOpen &&
     !isHomeLoadingOverlayVisible &&
     !shouldShowOnboarding;
 
@@ -987,6 +997,7 @@ export function HomePage() {
 
       <DirectContributionMapOverlay
         isOpen={isDirectContributionSessionActive && directContributionFeatureFormState === null}
+        isBehind={isSearchOpen || isLayersPanelOpen}
         items={directContributionToolbarItems}
         statusText={directContributionToolbarStatusText}
         onItemClick={triggerDirectContributionToolbarAction}
@@ -1024,7 +1035,11 @@ export function HomePage() {
       <ReportDetailsPage
         isOpen={selectedLocalReport !== null}
         report={selectedLocalReport}
-        onBack={closeLocalReportDetails}
+        onBack={
+          localReportCandidates.length > 1
+            ? goBackFromLocalReportDetails
+            : closeLocalReportDetails
+        }
         onClose={closeLocalReportDetails}
         map={map}
         vectorLayers={vectorLayers}
@@ -1032,11 +1047,28 @@ export function HomePage() {
         onMapPickerActiveChange={setIsReportMapPickerActive}
       />
 
-      <DirectContributionFeatureChoiceAlert
+      <FeatureChoiceAlert
         isOpen={isDirectContributionFeatureChoiceOpen || isConsultationFeatureChoiceOpen}
+        title={t('layers.directContribution.objectChoice.title')}
+        subtitle={t('layers.directContribution.objectChoice.subtitle', {
+          count: activeFeatureChoiceCandidates.length,
+        })}
+        cancelLabel={t('layers.directContribution.objectChoice.actions.cancel')}
         candidates={activeFeatureChoiceCandidates}
         onSelectCandidate={handleSelectFeatureCandidate}
         onClose={handleCloseFeatureChoice}
+      />
+
+      <FeatureChoiceAlert
+        isOpen={isLocalReportChoiceOpen}
+        title={t('reports.mapChoice.title')}
+        subtitle={t('reports.mapChoice.subtitle', {
+          count: localReportCandidates.length,
+        })}
+        cancelLabel={t('common.cancel')}
+        candidates={localReportCandidates}
+        onSelectCandidate={selectLocalReportCandidate}
+        onClose={closeLocalReportChoice}
       />
 
       <DirectContributionConflictAlert
