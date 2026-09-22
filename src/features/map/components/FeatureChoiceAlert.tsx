@@ -1,35 +1,41 @@
-import { useTranslation } from 'react-i18next';
 import { Alert } from '@/shared/ui/Alert';
-import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
 
-import styles from './DirectContributionFeatureChoiceAlert.module.css';
+import styles from './FeatureChoiceAlert.module.css';
 
-export interface DirectContributionFeatureChoiceAlertProps {
+export interface FeatureChoiceItem {
+  key: string;
+  label: string;
+  secondaryLabel?: string;
+}
+
+export interface FeatureChoiceAlertProps {
   isOpen: boolean;
-  candidates: DirectContributionFeatureCandidate[];
+  title: string;
+  subtitle?: string;
+  cancelLabel: string;
+  candidates: FeatureChoiceItem[];
   onSelectCandidate: (candidateKey: string) => void;
   onClose: () => void;
 }
 
-export function DirectContributionFeatureChoiceAlert({
+export function FeatureChoiceAlert({
   isOpen,
+  title,
+  subtitle,
+  cancelLabel,
   candidates,
   onSelectCandidate,
   onClose,
-}: DirectContributionFeatureChoiceAlertProps) {
-  const { t } = useTranslation();
-
+}: FeatureChoiceAlertProps) {
   return (
     <Alert
       isOpen={isOpen}
       onClose={onClose}
-      title={t('layers.directContribution.objectChoice.title')}
-      subtitle={t('layers.directContribution.objectChoice.subtitle', {
-        count: candidates.length,
-      })}
+      title={title}
+      subtitle={subtitle}
       buttons={[
         {
-          label: t('layers.directContribution.objectChoice.actions.cancel'),
+          label: cancelLabel,
           onClick: onClose,
           variant: 'outline',
           color: 'medium',

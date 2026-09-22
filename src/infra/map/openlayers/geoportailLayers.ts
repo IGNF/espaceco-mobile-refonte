@@ -4,6 +4,7 @@ import {
   DEFAULT_GEOPORTAIL_LAYERS,
   GEOPORTAIL_API_KEY,
   GEOPORTAIL_LAYER_TITLES,
+  OFFLINE_GEOPORTAIL_LAYERS,
 } from '@/shared/constants/map';
 import type { CommunityLayer } from '@ign/mobile-core';
 
@@ -124,7 +125,7 @@ export function getOfflineGeoportailLayerOptions(): Array<{
   name: string;
   title: string;
 }> {
-  return DEFAULT_GEOPORTAIL_LAYERS.map((layerName) => ({
+  return OFFLINE_GEOPORTAIL_LAYERS.map((layerName) => ({
     name: layerName,
     title: getGeoportailLayerTitle(layerName),
   }));

@@ -11,10 +11,10 @@ Le depot contient aussi les projets natifs iOS et Android generes par Capacitor 
 - Recherche Geoportail et recentrage sur la position utilisateur.
 - Gestion des communautes et selection de la communaute active.
 - Creation, edition, consultation et synchronisation de signalements.
-- Signalement rapide par GPS avec suivi de trace.
+- Signalement rapide par GNSS avec suivi de trace.
 - Contribution directe sur les couches communautaires, avec gestion des conflits.
 - Mode hors ligne : cache de couches, zones, fonds raster telecharges et consultation en mobilite.
-- Parametres applicatifs, choix de source GPS, aide, a propos et informations utilisateur.
+- Parametres applicatifs, choix de source GNSS, aide, a propos et informations utilisateur.
 - Support de plusieurs variantes applicatives via les scripts `selectapp` (`EspaceCo` et `NaviForest`).
 
 ## Stack technique
@@ -193,7 +193,7 @@ src/
 
 - `domain/` reste pur et ne depend pas des autres couches.
 - `infra/` implemente les acces externes : API collaborative, stockage local, cache, synchronisation, OpenLayers.
-- `platform/` isole les APIs natives Capacitor : geolocalisation, camera, fichiers, partage, orientation, source GPS, lancement d'applications externes.
+- `platform/` isole les APIs natives Capacitor : geolocalisation, camera, fichiers, partage, orientation, source GNSS, lancement d'applications externes.
 - `features/` contient les pages, composants, hooks et etats propres aux parcours utilisateur.
 - `shared/` regroupe ce qui est transverse : composants UI, i18n, styles partages, constantes, erreurs et utilitaires.
 
@@ -210,7 +210,7 @@ Le point d'entree React est `src/main.tsx`, qui monte `src/app/App.tsx`.
 - `OfflineProvider` pour l'etat et les caches hors ligne ;
 - `RouterProvider` pour la navigation.
 
-Au demarrage, l'application restaure aussi la source GPS preferee via `platform/device/gpsSource`.
+Au demarrage, l'application restaure aussi la source GNSS preferee via `platform/device/gpsSource`.
 
 Le router declare les routes publiques `welcome`, `login` et `auth/callback`. Les routes `home` et `community-selection` sont protegees par `AuthGuard`. Les ecrans secondaires sont declares comme `overlayRoutes` et ouverts par-dessus la page carte.
 
@@ -263,7 +263,7 @@ Contient les implementations concretes :
 Regroupe les wrappers natifs :
 
 - geolocalisation ;
-- source GPS ;
+- source GNSS ;
 - orientation ;
 - partage ;
 - stockage fichier ;
@@ -278,7 +278,7 @@ Chaque fonctionnalite suit autant que possible la structure `pages/`, `component
 Modules principaux :
 
 - `auth/` : connexion, callback OAuth, deconnexion, informations utilisateur.
-- `home/` : page carte, navigation principale, actions GPS et orchestration globale.
+- `home/` : page carte, navigation principale, actions GNSS et orchestration globale.
 - `map/` : panneaux de couches, couches communautaires, contributions directes, consultation d'objets.
 - `report/` : creation, edition, liste, filtres, details, traces et signalement rapide.
 - `community/` : selection, adhesion et gestion des communautes.
@@ -341,7 +341,7 @@ La documentation projet se trouve dans `docs/` :
 - `docs/developper/Doc_commit.md` : convention de commit.
 - `docs/contributions-directes-refonte.md` et `docs/contributions-directes-conflits.md` : contribution directe.
 - `docs/mode-hors-ligne-refonte.md` : mode hors ligne.
-- `docs/signalement-rapide-gps-plan.md` et `docs/gps-sketch-tracking-plan.md` : signalement rapide et suivi GPS.
+- `docs/signalement-rapide-gps-plan.md` et `docs/gps-sketch-tracking-plan.md` : signalement rapide et suivi GNSS.
 
 ## Conventions de contribution
 
