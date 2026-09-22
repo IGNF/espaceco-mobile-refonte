@@ -113,6 +113,7 @@ export function HomePage() {
   const { mapSettings, displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
+  const [skipGeolocationTracking, setSkipGeolocationTracking] = useState(false);
   const {
     mapElementRef,
     mapRef,
@@ -131,6 +132,7 @@ export function HomePage() {
     centerOnUserLocation: offlineMode !== 'offline',
     skipGeoportailCapabilities: offlineMode === 'offline',
     isRotationEnabled: mapSettings.isRotationEnabled ?? false,
+    skipGeolocationTracking,
   });
   const {
     layers,
@@ -707,6 +709,25 @@ export function HomePage() {
     gnssReportTemplate,
     isGpsSketchRecording,
     setIsGeolocationRecenterActive,
+  ]);
+
+  useEffect(() => {
+    // Keep the map where the user is editing, instead of snapping back to the GPS fix.
+    setSkipGeolocationTracking(
+      isReportMapPickerActive ||
+      isDirectContributionSessionActive ||
+      isOfflineZoneEditorOpen ||
+      isGpsSketchRecording ||
+      fastReportFlow.isGpsOpen ||
+      gnssReportTemplate !== null
+    );
+  }, [
+    fastReportFlow.isGpsOpen,
+    gnssReportTemplate,
+    isDirectContributionSessionActive,
+    isGpsSketchRecording,
+    isOfflineZoneEditorOpen,
+    isReportMapPickerActive,
   ]);
 
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
