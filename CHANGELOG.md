@@ -17,6 +17,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Si un utilisateur est en cours de signalement/modification d'un objet et que le verrouillage de position est activé, ce dernier reste en pause jusqu'à ce que l'utilisateur ait fini son activité (ticket #16)
+
 ### Changed
 
 - Au clic sur un cluster de signalements, on zoome maintenant sur le cluster, et si les signalements qui y sont sont indivisbles, on les affiche dans une alerte pour choisir le bon signalement (ticket #145)
