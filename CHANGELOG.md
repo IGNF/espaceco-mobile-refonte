@@ -18,6 +18,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+
+- Au clic sur un cluster de signalements, on zoome maintenant sur le cluster, et si les signalements qui y sont sont indivisbles, on les affiche dans une alerte pour choisir le bon signalement (ticket #145)
  
 ### Fixed
 
