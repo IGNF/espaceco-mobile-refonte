@@ -32,6 +32,11 @@ interface UseMapOptions {
   centerOnUserLocation?: boolean;
   skipGeoportailCapabilities?: boolean;
   isRotationEnabled?: boolean;
+  /**
+   * Pauses location lock and compass follow while the user edits the map.
+   * Dedicated GPS-follow sessions (GNSS trace, GPS sketch) stay active.
+   */
+  skipGeolocationTracking?: boolean;
 }
 
 /**
@@ -85,6 +90,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     centerOnUserLocation: shouldCenterOnMount = true,
     skipGeoportailCapabilities = false,
     isRotationEnabled = false,
+    skipGeolocationTracking = false,
   } = options;
 
   const mapElementRef = useRef<HTMLDivElement | null>(null);
@@ -110,7 +116,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const isLockedUserLocation = userFollowingMode === 'locked';
   const isAutoRecenterActive =
     isFeatureGeolocationRecenterActive ||
-    userFollowingMode === 'tracking';
+    (userFollowingMode === 'tracking' && !skipGeolocationTracking);
 
   /**
    * Marks app-driven viewport changes so they do not start the "user moved the
@@ -349,7 +355,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   }, [isAutoRecenterActive]);
 
   useEffect(() => {
-    if (userFollowingMode !== 'locked') {
+    if (userFollowingMode !== 'locked' || skipGeolocationTracking) {
       return;
     }
 
@@ -362,7 +368,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [centerOnUserLocation, userFollowingMode]);
+  }, [centerOnUserLocation, userFollowingMode, skipGeolocationTracking]);
 
   useEffect(() => {
     if (!isAutoRecenterActive) {
