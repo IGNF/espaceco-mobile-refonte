@@ -13,19 +13,36 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.17] - 2026-09-xx
+## [0.0.18] - 2026-09-xx
+
+### Added
+
+- Si un utilisateur est en cours de signalement/modification d'un objet et que le verrouillage de position est activé, ce dernier reste en pause jusqu'à ce que l'utilisateur ait fini son activité (ticket #16)
+- Ajout d'une fonctionnalité d'avertissement en cas de création de nouveau signalement, si un utilisateur a plus de 40 signalements en attente (ticket #71)
+- Ajout d'une fonctionnalité de bloquage de création de nouveau signalement, si un utilisateur a plus de 80 signalements en attente (ticket #71)
+
+### Changed
+
+- Au clic sur un cluster de signalements, on zoome maintenant sur le cluster, et si les signalements qui y sont sont indivisbles, on les affiche dans une alerte pour choisir le bon signalement (ticket #145)
+ 
+### Fixed
+
+- La barre d'outils d'édition est maintenant masquée / cachée lorsqu'on n'en a pas besoin (ticket #157)
+
+## [0.0.17] - 2026-09-21
 
 ### Added
 - La fonction 'retour' est active si le périphérique a le mode de navigation par bouton activé (ticket #153)
 - L'appui sur le bouton 'retour' du périphérique ferme les modales et pages (ticket #153)
 - Possibilité de masquer/afficher toutes les couches d'un guichet à partir de la page du guichet (ticket #150)
-- Ajout d'une fonctionnalité d'avertissement en cas de création de nouveau signalement, si un utilisateur a plus de 40 signalements en attente (ticket #71)
-- Ajout d'une fonctionnalité de bloquage de création de nouveau signalement, si un utilisateur a plus de 80 signalements en attente (ticket #71)
+- Ajout du Plan IGN J+1 aux couches téléchargeables hors ligne (ticket #151)
 
 ### Changed
  
 ### Fixed
 - Correction d'une faute d'orthographe dans les paramtètres de l'app (ticket #149)
+- Correction du problème de récupération des styles et symbologies (ticket #142)
+- L'affichage de la bottom tabbar se fait sans superposition avec le dock/boutons d'action du périphérique (ticket #146)
 
 ## [0.0.16] - 2026-06-08
 
