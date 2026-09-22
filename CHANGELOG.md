@@ -28,6 +28,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Fixed
 
 - La barre d'outils d'édition est maintenant masquée / cachée lorsqu'on n'en a pas besoin (ticket #157)
+- Corrige un problème qui pouvait dupliquer certaines requêtes (ticket #158)
 
 ## [0.0.17] - 2026-09-21
 
