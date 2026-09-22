@@ -1,7 +1,7 @@
 import { ClosedReportStatus, ReportStatus } from "@ign/mobile-core";
 
-export const MAX_DRAFT_REPORTS_WARNING = 3; // has to be 40
-export const MAX_DRAFT_REPORTS_BLOCK = 10; // has to bo 80
+export const MAX_DRAFT_REPORTS_WARNING = 40;
+export const MAX_DRAFT_REPORTS_BLOCK = 80;
 
 export const NON_SELECTABLE_LAYER_NAMES = new Set(['MesSignalements', 'Croquis', 'Signalements']);
 export const MAX_REPORT_PHOTOS = 4;
