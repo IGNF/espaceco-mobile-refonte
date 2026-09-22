@@ -672,6 +672,11 @@
       "filter": "Filtrer",
       "error": "Erreur"
     },
+    "mapChoice": {
+      "title": "Choisir un signalement",
+      "subtitle_one": "{{count}} signalement est à cet emplacement",
+      "subtitle_other": "{{count}} signalements sont à cet emplacement"
+    },
     "groupReports": {
       "headerTitle": "Signalements du groupe",
       "headerSubtitle": "Groupe actif",
