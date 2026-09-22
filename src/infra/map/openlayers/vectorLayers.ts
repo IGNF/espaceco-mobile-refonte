@@ -37,6 +37,10 @@ export function createCommunityVectorLayer(
       tileZoom: getWfsTileZoom(layer),
       maxFeatures: getLayerMaxFeatures(layer),
       useCacheWhenOnline: shouldUseOnlineVectorCache,
+      // Capabilities XML is discarded; GetFeature does not need it
+      getCapabilities: false,
+      // A filter already baked into the service URL makes every tile download the same full dataset. Load that set only once
+      once: hasPrebakedWfsFilter(geoservice),
     } as any, runtimeCacheStorage as any);
     // Keep a link back to the originating CommunityLayer for layer-panel actions.
     applyCommunityLayerMetadata(wfsLayer, layer);
@@ -95,6 +99,13 @@ export function createCommunityVectorLayer(
   }
 
   return null;
+}
+
+function hasPrebakedWfsFilter(geoservice: CommunityLayer['geoservice']): boolean {
+  if (!geoservice) return false;
+
+  const spec = `${geoservice.url ?? ''}\n${geoservice.layers ?? ''}`;
+  return /(?:^|[?&\n])(?:cql_filter|filter)=/i.test(spec);
 }
 
 function getLayerVisibility(layer: CommunityLayer): boolean | undefined {
