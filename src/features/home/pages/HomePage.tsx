@@ -333,6 +333,7 @@ export function HomePage() {
 
   const handleBurgerClick = () => {
     setIsMenuOpen(true);
+    closeDirectContributionSession();
   };
 
   const handleMenuClose = () => {
@@ -420,6 +421,7 @@ export function HomePage() {
     }
     else if (tab === "signalement") {
       setActiveOverlay('/new-report-choice');
+      closeDirectContributionSession();
     }
     else if (tab === "guichet") {
       setActiveOverlay(null);
@@ -429,6 +431,7 @@ export function HomePage() {
     }
     else if (tab === "signalementRapide") {
       handleFastReportTabClick();
+      closeDirectContributionSession();
     }
   };
 
@@ -994,6 +997,7 @@ export function HomePage() {
 
       <DirectContributionMapOverlay
         isOpen={isDirectContributionSessionActive && directContributionFeatureFormState === null}
+        isBehind={isSearchOpen || isLayersPanelOpen}
         items={directContributionToolbarItems}
         statusText={directContributionToolbarStatusText}
         onItemClick={triggerDirectContributionToolbarAction}
