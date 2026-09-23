@@ -1295,6 +1295,7 @@ export function HomePage() {
         <AboutCommunityPage
           isOpen
           onClose={handleCloseOverlay}
+          layers={vectorLayers}
         />
       )}
       {activeOverlay === '/about' && (
