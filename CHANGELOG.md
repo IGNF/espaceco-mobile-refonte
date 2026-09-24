@@ -20,6 +20,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 
 ### Fixed
+- Le warning/bloquage dans la création de nouveau signalement s'applique maintenant au signalements rapides et à l'appui long sur la carte (ticket #71)
 
 ## [0.0.18] - 2026-09-23
 

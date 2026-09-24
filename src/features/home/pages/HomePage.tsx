@@ -32,6 +32,8 @@ import { CreateOrEditReportPage } from "@/features/report/pages/CreateOrEditRepo
 import { NewReportPage } from "@/features/report/pages/NewReportChoice/NewReportPage";
 import { FastReportGpsOverlay } from "@/features/report/components/FastReport/FastReportGpsOverlay";
 import { FastReportThemePicker } from "@/features/report/components/FastReport/FastReportThemePicker";
+import { DraftReportsLimitAlerts } from "@/features/report/components/DraftReportsLimitAlerts";
+import { useDraftReportsLimitGuard } from "@/features/report/hooks/useDraftReportsLimitGuard";
 import { useFastReportFlow } from "@/features/report/hooks/useFastReportFlow";
 import { useFastReportThemes } from "@/features/report/hooks/useFastReportThemes";
 import { AboutPage } from "@/features/about/pages/AboutPage";
@@ -113,6 +115,7 @@ export function HomePage() {
   const { mapSettings, displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
+  const draftReportsLimit = useDraftReportsLimitGuard();
   const [skipGeolocationTracking, setSkipGeolocationTracking] = useState(false);
   const {
     mapElementRef,
@@ -445,18 +448,20 @@ export function HomePage() {
   const handleCreateReportFromLongPress = () => {
     if (!longPressMapAction) return;
 
-    setReportType('standard');
-    setNewReportInitialPosition(
-      createPositionFromLonLat(longPressMapAction.longitude, longPressMapAction.latitude)
-    );
-    setNewReportInitialObjects([]);
-    setNewReportInitialSketches([]);
-    setIsNewReportThemePreselected(true);
-    setIsNewReportGnssDraftSetup(false);
-    console.log('handleCreateReportFromLongPress');
+    const { longitude, latitude } = longPressMapAction;
     setLongPressMapAction(null);
-    setIsSearchOpen(false);
-    setActiveOverlay('/create-or-edit-report');
+
+    draftReportsLimit.requestCreate(() => {
+      setReportType('standard');
+      setNewReportInitialPosition(createPositionFromLonLat(longitude, latitude));
+      setNewReportInitialObjects([]);
+      setNewReportInitialSketches([]);
+      setIsNewReportThemePreselected(true);
+      setIsNewReportGnssDraftSetup(false);
+      console.log('handleCreateReportFromLongPress');
+      setIsSearchOpen(false);
+      setActiveOverlay('/create-or-edit-report');
+    });
   };
 
   const handleOpenLongPressInMapApp = async () => {
@@ -1105,6 +1110,8 @@ export function HomePage() {
         onClose={clearActiveConflict}
         onConfirmResolutions={confirmConflictResolutions}
       />
+
+      <DraftReportsLimitAlerts {...draftReportsLimit} />
 
       <ActionSheet
         isOpen={longPressMapAction !== null}

@@ -33,7 +33,7 @@ export function BottomTabbar({ onTabClick, highlightedTab, activeTab, disabled =
       return;
     }
 
-    if (tab === "signalement") {
+    if (tab === "signalement" || tab === "signalementRapide") {
       draftReportsLimit.requestCreate(() => onTabClick?.(tab));
       return;
     }
