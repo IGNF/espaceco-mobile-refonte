@@ -444,7 +444,10 @@
       "draftReports": "Signalements non envoyés",
       "draftReportsHint": "Brouillons enregistrés sur cet appareil.",
       "export": "Exporter",
-      "importPreferences": "Importer les préférences"
+      "importPreferences": "Importer les préférences",
+      "exportSuccess": "Préférences exportées ({{fileName}}).",
+      "exportError": "L'export des préférences a échoué.",
+      "draftReportsLater": "L'export des signalements n'est pas encore disponible."
     },
     "map": {
       "title": "Affichage de la carte",

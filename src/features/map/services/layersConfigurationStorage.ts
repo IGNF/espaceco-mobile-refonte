@@ -270,6 +270,33 @@ function toSignalementLayerState(value: unknown): SignalementLayerState {
 }
 
 /**
+ * Lists every stored layer configuration for one user, across communities.
+ */
+export async function listUserLayersConfigurations(
+  userId: number
+): Promise<Array<{ communityId: number; configuration: LayersConfiguration }>> {
+  const keyPattern = new RegExp(
+    `^${storageKey(LAYERS_CONFIGURATION_STORAGE_KEY)}_(\\d+)_${userId}$`
+  );
+  const keys = await Storage.keys();
+  const configurations: Array<{ communityId: number; configuration: LayersConfiguration }> = [];
+
+  for (const key of keys) {
+    const match = key.match(keyPattern);
+    if (!match) continue;
+
+    const communityId = Number(match[1]);
+    const configuration = await loadLayersConfiguration(communityId, userId);
+    if (!configuration) continue;
+
+    configurations.push({ communityId, configuration });
+  }
+
+  configurations.sort((first, second) => first.communityId - second.communityId);
+  return configurations;
+}
+
+/**
  * Load one community layer configuration from storage.
  * @param communityId Active community identifier.
  * @returns Sanitized configuration or null when not found/unreadable.

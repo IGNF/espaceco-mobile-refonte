@@ -18,6 +18,8 @@ import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { exportLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
@@ -44,6 +46,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const { activeCommunity } = useCommunity();
+  const { user } = useAuth();
   const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
   const {
     stats: maintenanceStats,
@@ -125,6 +128,35 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const handleOpenMaintenance = async () => {
     setIsMaintenanceAlertOpen(true);
     await loadMaintenanceStats();
+  };
+
+  const handleExport = async () => {
+    if (!exportPreferences) {
+      await showToastSafe({
+        text: t('settings.dataExchange.draftReportsLater'),
+        duration: 'short',
+        position: 'bottom',
+      });
+      return;
+    }
+
+    if (!user) return;
+
+    try {
+      const fileName = await exportLayerPreferences(user.id);
+      await showToastSafe({
+        text: t('settings.dataExchange.exportSuccess', { fileName }),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('[Settings] Failed to export layer preferences', error);
+      await showToastSafe({
+        text: t('settings.dataExchange.exportError'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    }
   };
 
   const handleImportPreferences = () => {
@@ -529,6 +561,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                     color='primary'
                     fullWidth
                     disabled={!exportPreferences && !exportDraftReports}
+                    onClick={handleExport}
                   >
                     {t('settings.dataExchange.export')}
                   </Button>
