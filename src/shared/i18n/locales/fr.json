@@ -436,6 +436,16 @@
         }
       }
     },
+    "dataExchange": {
+      "title": "Import / export",
+      "description": "Exportez les préférences de l'application ou les signalements non envoyés, et réimportez un fichier de préférences.",
+      "preferences": "Préférences",
+      "preferencesHint": "Ordre, opacité et visibilité des couches, zones hors-ligne et paramètres GNSS.",
+      "draftReports": "Signalements non envoyés",
+      "draftReportsHint": "Brouillons enregistrés sur cet appareil.",
+      "export": "Exporter",
+      "importPreferences": "Importer les préférences"
+    },
     "map": {
       "title": "Affichage de la carte",
       "description": "Personnalisez l'affichage de la carte.",

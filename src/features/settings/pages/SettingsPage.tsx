@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
@@ -37,7 +37,11 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
+  const [isDataExchangeSectionExpanded, setIsDataExchangeSectionExpanded] = useState(false);
+  const [exportPreferences, setExportPreferences] = useState(false);
+  const [exportDraftReports, setExportDraftReports] = useState(false);
   const [isMaintenanceAlertOpen, setIsMaintenanceAlertOpen] = useState(false);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const { activeCommunity } = useCommunity();
   const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
@@ -121,6 +125,16 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const handleOpenMaintenance = async () => {
     setIsMaintenanceAlertOpen(true);
     await loadMaintenanceStats();
+  };
+
+  const handleImportPreferences = () => {
+    importFileInputRef.current?.click();
+  };
+
+  const handleImportFileSelected = () => {
+    if (importFileInputRef.current) {
+      importFileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -458,6 +472,87 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
           )}
 
         </section>
+
+        {displayMode !== 'beginner' && (
+          <section className={styles.section}>
+            <button
+              type='button'
+              className={styles.sectionHeaderButton}
+              onClick={() => setIsDataExchangeSectionExpanded((value) => !value)}
+              aria-expanded={isDataExchangeSectionExpanded}
+            >
+              <h2 className={styles.sectionTitle}>{t('settings.dataExchange.title')}</h2>
+              <IconAngleDown
+                className={`${styles.chevron} ${isDataExchangeSectionExpanded ? styles.chevronExpanded : ''}`}
+                aria-hidden='true'
+              />
+            </button>
+
+            {isDataExchangeSectionExpanded && (
+              <>
+                <p className={`${typography.caption} ${styles.sectionDescription}`}>
+                  {t('settings.dataExchange.description')}
+                </p>
+
+                <div className={styles.checkboxList}>
+                  <label className={styles.checkboxOption}>
+                    <input
+                      type='checkbox'
+                      checked={exportPreferences}
+                      onChange={(event) => setExportPreferences(event.target.checked)}
+                    />
+                    <span>
+                      <span className={styles.checkboxLabel}>{t('settings.dataExchange.preferences')}</span>
+                      <span className={`${typography.caption} ${styles.checkboxHint}`}>
+                        {t('settings.dataExchange.preferencesHint')}
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className={styles.checkboxOption}>
+                    <input
+                      type='checkbox'
+                      checked={exportDraftReports}
+                      onChange={(event) => setExportDraftReports(event.target.checked)}
+                    />
+                    <span>
+                      <span className={styles.checkboxLabel}>{t('settings.dataExchange.draftReports')}</span>
+                      <span className={`${typography.caption} ${styles.checkboxHint}`}>
+                        {t('settings.dataExchange.draftReportsHint')}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
+                <div className={styles.exchangeActions}>
+                  <Button
+                    color='primary'
+                    fullWidth
+                    disabled={!exportPreferences && !exportDraftReports}
+                  >
+                    {t('settings.dataExchange.export')}
+                  </Button>
+                  <Button
+                    color='primary'
+                    variant='outline'
+                    fullWidth
+                    onClick={handleImportPreferences}
+                  >
+                    {t('settings.dataExchange.importPreferences')}
+                  </Button>
+                </div>
+
+                <input
+                  ref={importFileInputRef}
+                  type='file'
+                  accept='.json,application/json'
+                  className={styles.fileInput}
+                  onChange={handleImportFileSelected}
+                />
+              </>
+            )}
+          </section>
+        )}
       </main>
 
       <Alert
