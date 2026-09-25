@@ -18,6 +18,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Le switch de masquage/affichage des couches complètes devient un icone œil, qui agit maintenant comme un toggle complet plutôt que de réafficher les préférences précédentes (ticket #150)
 
 ### Fixed
 - Le warning/bloquage dans la création de nouveau signalement s'applique maintenant au signalements rapides et à l'appui long sur la carte (ticket #71)

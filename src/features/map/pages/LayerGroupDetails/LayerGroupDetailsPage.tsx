@@ -19,9 +19,10 @@ import {
 import { LayerGroupDetailsSortableItem } from '@/features/map/components/LayerGroupDetailsSortableItem';
 
 import { Alert } from '@/shared/ui/Alert/Alert';
-import { Toggle } from '@/shared/ui/Toggle';
 import { clampNumber } from '@/shared/utils/number';
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
+import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
+import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
@@ -237,8 +238,10 @@ export function LayerGroupDetailsPage({
     });
   };
 
-  const handleToggleHideAll = (hideAll: boolean) => {
-    setGroupVisibleDraft(!hideAll);
+  const handleToggleAllVisibility = () => {
+    const nextVisible = isHideAllChecked;
+    setGroupVisibleDraft(nextVisible);
+    setLayerDraftsVisibility(() => nextVisible);
   };
 
   const handleToggleVisibility = (item: LayerGroupItem) => {
@@ -359,14 +362,28 @@ export function LayerGroupDetailsPage({
           </div>
 
           {hideableItems.length > 0 && (
-            <div className={styles.hideAllRow}>
-              <Toggle
-                checked={isHideAllChecked}
-                onChange={handleToggleHideAll}
-                label={t('layers.groupDetails.hideAllLayers')}
-                disabled={isLoading}
-              />
-            </div>
+            <button
+              type='button'
+              className={styles.hideAllButton}
+              onClick={handleToggleAllVisibility}
+              disabled={isLoading}
+              aria-label={
+                isHideAllChecked
+                  ? t('layers.groupDetails.showAllLayers')
+                  : t('layers.groupDetails.hideAllLayers')
+              }
+            >
+              {isHideAllChecked ? (
+                <IconEyeOff className={styles.hideAllIcon} />
+              ) : (
+                <IconEye className={styles.hideAllIcon} />
+              )}
+              <span>
+                {isHideAllChecked
+                  ? t('layers.groupDetails.showAllLayers')
+                  : t('layers.groupDetails.hideAllLayers')}
+              </span>
+            </button>
           )}
 
           {isLoading ? (
