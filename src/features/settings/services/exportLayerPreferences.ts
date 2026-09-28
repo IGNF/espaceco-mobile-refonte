@@ -12,7 +12,7 @@ import {
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
-import { writeExportFile } from '@/platform/device/exportFile';
+import { exportDateStamp, writeExportFile } from '@/platform/device/exportFile';
 
 const offlineZonesRepository = new OfflineZonesRepository();
 
@@ -38,9 +38,8 @@ interface LayerPreferencesExport {
 /**
  * Exports layer order, opacity and visibility, offline zones, and GNSS settings.
  */
-export async function exportLayerPreferences(userId: number): Promise<string> {
+export async function exportLayerPreferences(userId: number, dateStamp = exportDateStamp()): Promise<string> {
   const exportedAt = new Date();
-  const dateStamp = formatExportDate(exportedAt);
   const fileName = `${dateStamp}_pref_app.json`;
   const [storedConfigurations, offlineZones, source, trace, fastReportOffsets] = await Promise.all([
     listUserLayersConfigurations(userId),
@@ -112,10 +111,4 @@ export async function importLayerPreferences(
   await EspaceCo_SettingsStore.saveFastReportGpsSettings(payload.gnss.fastReportOffsets);
   await EspaceCo_GpsSource.setSource(payload.gnss.source);
   return payload.gnss.trace;
-}
-
-function formatExportDate(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${date.getFullYear()}${month}${day}`;
 }

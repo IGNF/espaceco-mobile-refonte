@@ -19,7 +19,9 @@ import typography from '@/shared/styles/typography.module.css';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { exportDateStamp } from '@/platform/device/exportFile';
 import { exportLayerPreferences, importLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
+import { exportDraftReports as exportDraftReportFile } from '@/features/settings/services/exportDraftReports';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
@@ -135,22 +137,20 @@ export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: Se
   };
 
   const handleExport = async () => {
-    if (!exportPreferences) {
-      await showToastSafe({
-        text: t('settings.dataExchange.draftReportsLater'),
-        duration: 'short',
-        position: 'bottom',
-      });
-      return;
-    }
-
     if (!user) return;
 
+    const dateStamp = exportDateStamp();
     setDataExchangeLabel(t('settings.dataExchange.exporting'));
     try {
-      const fileName = await exportLayerPreferences(user.id);
+      const fileNames = [];
+      if (exportPreferences) {
+        fileNames.push(await exportLayerPreferences(user.id, dateStamp));
+      }
+      if (exportDraftReports) {
+        fileNames.push(await exportDraftReportFile(dateStamp));
+      }
       await showToastSafe({
-        text: t('settings.dataExchange.exportSuccess', { fileName }),
+        text: t('settings.dataExchange.exportSuccess', { fileName: fileNames.join(', ') }),
         duration: 'short',
         position: 'bottom',
       });

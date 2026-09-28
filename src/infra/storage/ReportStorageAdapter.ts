@@ -292,6 +292,11 @@ export class ReportStorageAdapter implements IReportStorage {
     return path;
   }
 
+  async listStoredDrafts(): Promise<Array<Record<string, any>>> {
+    const allReports = await this.getAllReports();
+    return Object.values(allReports).filter((report) => report.status === 'draft');
+  }
+
   /**
    * Get all reports for a specific community
    */
