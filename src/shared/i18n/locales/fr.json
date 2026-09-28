@@ -447,6 +447,10 @@
       "importPreferences": "Importer les préférences",
       "exportSuccess": "Préférences exportées ({{fileName}}).",
       "exportError": "L'export des préférences a échoué.",
+      "exporting": "Export en cours...",
+      "importing": "Import en cours...",
+      "importSuccess": "Préférences importées.",
+      "importError": "Le fichier de préférences est invalide.",
       "draftReportsLater": "L'export des signalements n'est pas encore disponible."
     },
     "map": {

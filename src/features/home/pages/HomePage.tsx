@@ -111,7 +111,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { activeCommunity, setActiveCommunity } = useCommunity();
-  const { mode: offlineMode, activeCommunityCache, rasterMaps } = useOffline();
+  const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline } = useOffline();
   const { mapSettings, displayMode } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
@@ -156,6 +156,7 @@ export function HomePage() {
     loadRemoteWmsLayers,
     addUserWmsLayer,
     removeUserWmsLayer,
+    refetch: refetchLayers,
   } = useLayers(offlineMode, activeCommunityCache);
   useSignalementMapLayers(
     mapRef,
@@ -1220,6 +1221,9 @@ export function HomePage() {
         <SettingsPage
           isOpen
           onClose={handleCloseOverlay}
+          onLayerPreferencesImported={async () => {
+            await Promise.all([refetchLayers(), refreshOffline()]);
+          }}
         />
       )}
       {activeOverlay === '/logout-verification' && (

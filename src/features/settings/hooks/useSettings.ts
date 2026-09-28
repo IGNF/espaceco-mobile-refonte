@@ -29,6 +29,7 @@ export interface UseSettingsReturn {
   setTraceToleranceInput: (value: string) => void;
   applyGpsSource: () => Promise<boolean>;
   applyTraceSettings: () => Promise<boolean>;
+  reloadGpsSource: () => Promise<void>;
 }
 
 export function useSettings(): UseSettingsReturn {
@@ -128,6 +129,12 @@ export function useSettings(): UseSettingsReturn {
     }
   };
 
+  const reloadGpsSource = async (): Promise<void> => {
+    const preferredSource = await EspaceCo_GpsSource.getPreferredSource();
+    setActiveGpsSourceInfo(EspaceCo_GpsSource.getCurrentSource());
+    setPendingGpsSourceType(preferredSource);
+  };
+
   return {
     pendingGpsSourceType,
     activeGpsSourceInfo,
@@ -145,5 +152,6 @@ export function useSettings(): UseSettingsReturn {
     setTraceToleranceInput,
     applyGpsSource,
     applyTraceSettings,
+    reloadGpsSource,
   };
 }

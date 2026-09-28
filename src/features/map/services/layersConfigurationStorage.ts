@@ -349,6 +349,50 @@ export async function loadLayersConfiguration(
 }
 
 /**
+ * Replaces the exported layer preferences for each community.
+ * Styles, locks and user WMS layers already stored on the device are kept.
+ */
+export async function replaceExportedLayersConfigurations(
+  userId: number,
+  importedCommunities: Array<{
+    communityId: number;
+    layerOrder: unknown;
+    layersByKey: unknown;
+    groupVisibility: unknown;
+    geoportailLayerState: unknown;
+    signalementLayerState: unknown;
+  }>
+): Promise<void> {
+  for (const imported of importedCommunities) {
+    const existing = await loadLayersConfiguration(imported.communityId, userId);
+    const importedStates = toLayerStateMap(imported.layersByKey);
+    const layersByKey: Record<string, PersistedLayerState> = {};
+
+    for (const [layerKey, layerState] of Object.entries(importedStates)) {
+      layersByKey[layerKey] = {
+        ...existing?.layersByKey[layerKey],
+        ...layerState,
+      };
+    }
+
+    const payload: LayersConfiguration = {
+      layersByKey,
+      layerOrder: toLayerOrder(imported.layerOrder),
+      userWmsLayers: existing?.userWmsLayers ?? [],
+      groupVisibility: toLayerGroupVisibility(imported.groupVisibility),
+      geoportailLayerState: toGeoportailLayerState(imported.geoportailLayerState),
+      signalementLayerState: toSignalementLayerState(imported.signalementLayerState),
+    };
+
+    await Storage.set(
+      getLayersConfigurationStorageKey(imported.communityId, userId),
+      payload,
+      'object'
+    );
+  }
+}
+
+/**
  * Save current layer visibility/opacity preferences for one community.
  * @param params Community id and current layer/signalement states to persist.
  * @returns Promise resolved when write is done.

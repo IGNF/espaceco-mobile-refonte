@@ -19,7 +19,7 @@ import typography from '@/shared/styles/typography.module.css';
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { exportLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
+import { exportLayerPreferences, importLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
@@ -27,13 +27,15 @@ import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 import { Toggle } from '@/shared/ui/Toggle';
 import type { MapSettings } from '@/domain/map/models';
 import { Divider } from '@/shared/ui/Divider/Divider';
+import { Loading } from '@/shared/ui/Loading';
 
 export interface SettingsPageProps {
   isOpen: boolean;
   onClose: () => void;
+  onLayerPreferencesImported: () => Promise<void> | void;
 }
 
-export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
+export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: SettingsPageProps) {
   const { t } = useTranslation();
   const [isMapSectionExpanded, setIsMapSectionExpanded] = useState(false);
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
@@ -43,11 +45,12 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const [exportPreferences, setExportPreferences] = useState(false);
   const [exportDraftReports, setExportDraftReports] = useState(false);
   const [isMaintenanceAlertOpen, setIsMaintenanceAlertOpen] = useState(false);
+  const [dataExchangeLabel, setDataExchangeLabel] = useState<string | null>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
 
   const { activeCommunity } = useCommunity();
   const { user } = useAuth();
-  const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
+  const { mapSettings, setMapSettings, displayMode, setDisplayMode, setTraceRecordingSettings } = useAppSettings();
   const {
     stats: maintenanceStats,
     isLoading: isMaintenanceStatsLoading,
@@ -71,6 +74,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     setTraceToleranceInput,
     applyGpsSource,
     applyTraceSettings,
+    reloadGpsSource,
   } = useSettings();
 
   const currentSourceType = activeGpsSourceInfo.type === 'external' ? 'external' : 'internal';
@@ -142,6 +146,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
 
     if (!user) return;
 
+    setDataExchangeLabel(t('settings.dataExchange.exporting'));
     try {
       const fileName = await exportLayerPreferences(user.id);
       await showToastSafe({
@@ -156,6 +161,8 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
         duration: 'short',
         position: 'bottom',
       });
+    } finally {
+      setDataExchangeLabel(null);
     }
   };
 
@@ -163,9 +170,35 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     importFileInputRef.current?.click();
   };
 
-  const handleImportFileSelected = () => {
+  const handleImportFileSelected = async () => {
+    const file = importFileInputRef.current?.files?.[0];
     if (importFileInputRef.current) {
       importFileInputRef.current.value = '';
+    }
+    if (!file || !user) return;
+
+    setDataExchangeLabel(t('settings.dataExchange.importing'));
+    try {
+      const trace = await importLayerPreferences(user.id, await file.text());
+      await onLayerPreferencesImported();
+      if (trace) {
+        await setTraceRecordingSettings(trace);
+        await reloadGpsSource();
+      }
+      await showToastSafe({
+        text: t('settings.dataExchange.importSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('[Settings] Failed to import layer preferences', error);
+      await showToastSafe({
+        text: t('settings.dataExchange.importError'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } finally {
+      setDataExchangeLabel(null);
     }
   };
 
@@ -560,7 +593,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                   <Button
                     color='primary'
                     fullWidth
-                    disabled={!exportPreferences && !exportDraftReports}
+                    disabled={dataExchangeLabel !== null || (!exportPreferences && !exportDraftReports)}
                     onClick={handleExport}
                   >
                     {t('settings.dataExchange.export')}
@@ -570,6 +603,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
                     variant='outline'
                     fullWidth
                     onClick={handleImportPreferences}
+                    disabled={dataExchangeLabel !== null}
                   >
                     {t('settings.dataExchange.importPreferences')}
                   </Button>
@@ -638,6 +672,15 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
           </div>
         )}
       </Alert>
+      {dataExchangeLabel && (
+        <div className={styles.loadingOverlay} role='status' aria-live='polite'>
+          <Loading
+            size='large'
+            label={dataExchangeLabel}
+            className={styles.loadingOverlaySpinner}
+          />
+        </div>
+      )}
     </SlideUpPage>
   );
 }

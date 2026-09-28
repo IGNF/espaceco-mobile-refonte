@@ -1,13 +1,22 @@
 import type { LayerDisplayState, LayerGroupVisibility } from '@/features/map/types/layerGroups';
 import type { SignalementLayerState } from '@/features/map/constants/signalementLayers.constants';
+import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
+import type { TraceRecordingSettings } from '@/features/report/constants/reportTrace.constants';
+import type { OfflineZone } from '@/domain/offline/models';
+import type { GpsSourceType } from '@/platform/device/gpsSource';
 import {
   listUserLayersConfigurations,
+  replaceExportedLayersConfigurations,
   type LayersConfiguration,
 } from '@/features/map/services/layersConfigurationStorage';
+import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
+import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
+import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
 import { writeExportFile } from '@/platform/device/exportFile';
 
+const offlineZonesRepository = new OfflineZonesRepository();
+
 interface LayerPreferencesExport {
-  version: 1;
   exportedAt: string;
   userId: number;
   layers: Array<{
@@ -18,18 +27,29 @@ interface LayerPreferencesExport {
     geoportailLayerState: LayerDisplayState;
     signalementLayerState: SignalementLayerState;
   }>;
+  offlineZones: OfflineZone[];
+  gnss: {
+    source: GpsSourceType;
+    trace: TraceRecordingSettings;
+    fastReportOffsets: FastReportGpsSettings;
+  };
 }
 
 /**
- * Exports stored layer order, opacity and visibility for every community of the user.
+ * Exports layer order, opacity and visibility, offline zones, and GNSS settings.
  */
 export async function exportLayerPreferences(userId: number): Promise<string> {
-  const storedConfigurations = await listUserLayersConfigurations(userId);
   const exportedAt = new Date();
   const dateStamp = formatExportDate(exportedAt);
   const fileName = `${dateStamp}_pref_app.json`;
+  const [storedConfigurations, offlineZones, source, trace, fastReportOffsets] = await Promise.all([
+    listUserLayersConfigurations(userId),
+    offlineZonesRepository.listZones(),
+    EspaceCo_GpsSource.getPreferredSource(),
+    EspaceCo_SettingsStore.getTraceRecordingSettings(),
+    EspaceCo_SettingsStore.getFastReportGpsSettings(),
+  ]);
   const payload: LayerPreferencesExport = {
-    version: 1,
     exportedAt: exportedAt.toISOString(),
     userId,
     layers: storedConfigurations.map(({ communityId, configuration }) => ({
@@ -40,6 +60,12 @@ export async function exportLayerPreferences(userId: number): Promise<string> {
       geoportailLayerState: configuration.geoportailLayerState,
       signalementLayerState: configuration.signalementLayerState,
     })),
+    offlineZones,
+    gnss: {
+      source,
+      trace,
+      fastReportOffsets,
+    },
   };
 
   await writeExportFile(`${dateStamp}_exp_esco`, fileName, JSON.stringify(payload, null, 2));
@@ -59,6 +85,33 @@ function toExportedLayerStates(
   }
 
   return exported;
+}
+
+/**
+ * Replaces stored layer preferences, offline zones and GNSS settings from an export file.
+ */
+export async function importLayerPreferences(
+  userId: number,
+  fileText: string
+): Promise<TraceRecordingSettings | null> {
+  const payload = JSON.parse(fileText) as LayerPreferencesExport;
+  if (!Array.isArray(payload.layers)) {
+    throw new Error('Invalid layer preferences file');
+  }
+
+  await replaceExportedLayersConfigurations(userId, payload.layers);
+
+  if (Array.isArray(payload.offlineZones)) {
+    for (const zone of payload.offlineZones) {
+      await offlineZonesRepository.saveZone(zone.name, zone.extents);
+    }
+  }
+
+  if (!payload.gnss) return null;
+
+  await EspaceCo_SettingsStore.saveFastReportGpsSettings(payload.gnss.fastReportOffsets);
+  await EspaceCo_GpsSource.setSource(payload.gnss.source);
+  return payload.gnss.trace;
 }
 
 function formatExportDate(date: Date): string {
