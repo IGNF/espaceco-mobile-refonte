@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
@@ -17,7 +17,12 @@ import screen from '@/shared/styles/screen.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
+import { ReportStorageAdapter } from '@/infra/storage';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { exportDateStamp, writeExportFiles, type ExportFilePart } from '@/platform/device/exportFile';
+import { exportLayerPreferences, importLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
+import { exportDraftReports as exportDraftReportFile } from '@/features/settings/services/exportDraftReports';
 
 import styles from './SettingsPage.module.css';
 import type { DisplayMode } from '@/domain/user/models';
@@ -25,22 +30,47 @@ import { useAppSettings } from '@/features/settings/hooks/useAppSettings';
 import { Toggle } from '@/shared/ui/Toggle';
 import type { MapSettings } from '@/domain/map/models';
 import { Divider } from '@/shared/ui/Divider/Divider';
+import { Loading } from '@/shared/ui/Loading';
 
 export interface SettingsPageProps {
   isOpen: boolean;
   onClose: () => void;
+  onLayerPreferencesImported: () => Promise<void> | void;
 }
 
-export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
+export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: SettingsPageProps) {
   const { t } = useTranslation();
   const [isMapSectionExpanded, setIsMapSectionExpanded] = useState(false);
   const [isGpsSectionExpanded, setIsGpsSectionExpanded] = useState(false);
   const [isTraceSectionExpanded, setIsTraceSectionExpanded] = useState(false);
   const [isAdvancedSectionExpanded, setIsAdvancedSectionExpanded] = useState(false);
+  const [isDataExchangeSectionExpanded, setIsDataExchangeSectionExpanded] = useState(false);
+  const [exportPreferences, setExportPreferences] = useState(false);
+  const [exportDraftReports, setExportDraftReports] = useState(false);
+  const [draftReportCount, setDraftReportCount] = useState<number | null>(null);
   const [isMaintenanceAlertOpen, setIsMaintenanceAlertOpen] = useState(false);
+  const [dataExchangeLabel, setDataExchangeLabel] = useState<string | null>(null);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+  const hasDraftReports = draftReportCount !== null && draftReportCount > 0;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isActive = true;
+    void new ReportStorageAdapter().listStoredDrafts().then((drafts) => {
+      if (!isActive) return;
+      setDraftReportCount(drafts.length);
+      if (drafts.length === 0) setExportDraftReports(false);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOpen]);
 
   const { activeCommunity } = useCommunity();
-  const { mapSettings, setMapSettings, displayMode, setDisplayMode } = useAppSettings();
+  const { user } = useAuth();
+  const { mapSettings, setMapSettings, displayMode, setDisplayMode, setTraceRecordingSettings } = useAppSettings();
   const {
     stats: maintenanceStats,
     isLoading: isMaintenanceStatsLoading,
@@ -64,6 +94,7 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
     setTraceToleranceInput,
     applyGpsSource,
     applyTraceSettings,
+    reloadGpsSource,
   } = useSettings();
 
   const currentSourceType = activeGpsSourceInfo.type === 'external' ? 'external' : 'internal';
@@ -121,6 +152,76 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
   const handleOpenMaintenance = async () => {
     setIsMaintenanceAlertOpen(true);
     await loadMaintenanceStats();
+  };
+
+  const handleExport = async () => {
+    if (!user) return;
+
+    const dateStamp = exportDateStamp();
+    setDataExchangeLabel(t('settings.dataExchange.exporting'));
+    try {
+      const files: ExportFilePart[] = [];
+      if (exportPreferences) {
+        files.push(await exportLayerPreferences(user.id, dateStamp));
+      }
+      if (exportDraftReports) {
+        files.push(...await exportDraftReportFile(dateStamp));
+      }
+      await writeExportFiles(`${dateStamp}_exp_esco`, files);
+      const fileNames = files
+        .filter((file) => file.encoding === 'utf8')
+        .map((file) => file.path);
+      await showToastSafe({
+        text: t('settings.dataExchange.exportSuccess', { fileName: fileNames.join(', ') }),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('[Settings] Failed to export layer preferences', error);
+      await showToastSafe({
+        text: t('settings.dataExchange.exportError'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } finally {
+      setDataExchangeLabel(null);
+    }
+  };
+
+  const handleImportPreferences = () => {
+    importFileInputRef.current?.click();
+  };
+
+  const handleImportFileSelected = async () => {
+    const file = importFileInputRef.current?.files?.[0];
+    if (importFileInputRef.current) {
+      importFileInputRef.current.value = '';
+    }
+    if (!file || !user) return;
+
+    setDataExchangeLabel(t('settings.dataExchange.importing'));
+    try {
+      const trace = await importLayerPreferences(user.id, await file.text());
+      await onLayerPreferencesImported();
+      if (trace) {
+        await setTraceRecordingSettings(trace);
+        await reloadGpsSource();
+      }
+      await showToastSafe({
+        text: t('settings.dataExchange.importSuccess'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } catch (error) {
+      console.error('[Settings] Failed to import layer preferences', error);
+      await showToastSafe({
+        text: t('settings.dataExchange.importError'),
+        duration: 'short',
+        position: 'bottom',
+      });
+    } finally {
+      setDataExchangeLabel(null);
+    }
   };
 
   return (
@@ -458,6 +559,92 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
           )}
 
         </section>
+
+        {displayMode !== 'beginner' && (
+          <section className={styles.section}>
+            <button
+              type='button'
+              className={styles.sectionHeaderButton}
+              onClick={() => setIsDataExchangeSectionExpanded((value) => !value)}
+              aria-expanded={isDataExchangeSectionExpanded}
+            >
+              <h2 className={styles.sectionTitle}>{t('settings.dataExchange.title')}</h2>
+              <IconAngleDown
+                className={`${styles.chevron} ${isDataExchangeSectionExpanded ? styles.chevronExpanded : ''}`}
+                aria-hidden='true'
+              />
+            </button>
+
+            {isDataExchangeSectionExpanded && (
+              <>
+                <p className={`${typography.caption} ${styles.sectionDescription}`}>
+                  {t('settings.dataExchange.description')}
+                </p>
+
+                <div className={styles.checkboxList}>
+                  <label className={styles.checkboxOption}>
+                    <input
+                      type='checkbox'
+                      checked={exportPreferences}
+                      onChange={(event) => setExportPreferences(event.target.checked)}
+                    />
+                    <span>
+                      <span className={styles.checkboxLabel}>{t('settings.dataExchange.preferences')}</span>
+                      <span className={`${typography.caption} ${styles.checkboxHint}`}>
+                        {t('settings.dataExchange.preferencesHint')}
+                      </span>
+                    </span>
+                  </label>
+
+                  <label className={styles.checkboxOption}>
+                    <input
+                      type='checkbox'
+                      checked={exportDraftReports}
+                      disabled={!hasDraftReports}
+                      onChange={(event) => setExportDraftReports(event.target.checked)}
+                    />
+                    <span>
+                      <span className={styles.checkboxLabel}>{t('settings.dataExchange.draftReports')}</span>
+                      <span className={`${typography.caption} ${styles.checkboxHint}`}>
+                        {draftReportCount === 0
+                          ? t('settings.dataExchange.noDraftReports')
+                          : t('settings.dataExchange.draftReportsHint')}
+                      </span>
+                    </span>
+                  </label>
+                </div>
+
+                <div className={styles.exchangeActions}>
+                  <Button
+                    color='primary'
+                    fullWidth
+                    disabled={dataExchangeLabel !== null || (!exportPreferences && !exportDraftReports)}
+                    onClick={handleExport}
+                  >
+                    {t('settings.dataExchange.export')}
+                  </Button>
+                  <Button
+                    color='primary'
+                    variant='outline'
+                    fullWidth
+                    onClick={handleImportPreferences}
+                    disabled={dataExchangeLabel !== null}
+                  >
+                    {t('settings.dataExchange.importPreferences')}
+                  </Button>
+                </div>
+
+                <input
+                  ref={importFileInputRef}
+                  type='file'
+                  accept='.json,application/json'
+                  className={styles.fileInput}
+                  onChange={handleImportFileSelected}
+                />
+              </>
+            )}
+          </section>
+        )}
       </main>
 
       <Alert
@@ -510,6 +697,15 @@ export function SettingsPage({ isOpen, onClose }: SettingsPageProps) {
           </div>
         )}
       </Alert>
+      {dataExchangeLabel && (
+        <div className={styles.loadingOverlay} role='status' aria-live='polite'>
+          <Loading
+            size='large'
+            label={dataExchangeLabel}
+            className={styles.loadingOverlaySpinner}
+          />
+        </div>
+      )}
     </SlideUpPage>
   );
 }

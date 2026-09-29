@@ -16,6 +16,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.19] - 2026-09-xx
 
 ### Added
+- Sauvegarde (import/export) des préférences de l'utilisateur depuis les paramètres : ordre et opacité des couches, zones définies pour le hors ligne, paramètres GNSS (réglages trace GNSS et réglages déport GNSS) (ticket #67)
+- Export des signalements non envoyés depuis les paramètres (ticket #67)
 
 ### Changed
 - Le switch de masquage/affichage des couches complètes devient un icone œil, qui agit maintenant comme un toggle complet plutôt que de réafficher les préférences précédentes (ticket #150)
