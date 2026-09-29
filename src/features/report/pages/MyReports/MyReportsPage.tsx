@@ -32,6 +32,7 @@ export interface MyReportsPageProps {
   vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
   onMapPickerActiveChange?: (isActive: boolean) => void;
+  onTraceDirectionActiveChange?: (isActive: boolean) => void;
 }
 
 export function MyReportsPage({
@@ -41,6 +42,7 @@ export function MyReportsPage({
   vectorLayers,
   onSearchPanelVisibilityChange,
   onMapPickerActiveChange,
+  onTraceDirectionActiveChange,
 }: MyReportsPageProps) {
   const { t } = useTranslation();
   const { user, isLoading: isUserLoading } = useAuth();
@@ -274,6 +276,7 @@ export function MyReportsPage({
         vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
         onMapPickerActiveChange={onMapPickerActiveChange}
+        onTraceDirectionActiveChange={onTraceDirectionActiveChange}
         hasPreviousReport={hasPreviousReport}
         hasNextReport={hasNextReport}
         onPreviousReport={hasPreviousReport ? handlePreviousReport : undefined}

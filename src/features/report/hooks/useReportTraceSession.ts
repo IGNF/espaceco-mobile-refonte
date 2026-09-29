@@ -24,6 +24,7 @@ import {
   TRACE_SOUND_RECORDING_END_SRC,
   TRACE_SOUND_RECORDING_POINT_SRC,
   TRACE_STYLE,
+  traceRecordingOverlayStyle,
   type TraceRecordingSettings,
   type TraceTransportMode,
 } from '@/features/report/constants/reportTrace.constants';
@@ -413,7 +414,7 @@ export function useReportTraceSession({
       followTrack: 'auto',
       tolerance: getToleranceForMode(transportModeRef.current),
       minAccuracy: traceRecordingSettingsRef.current.minAccuracy,
-      style: TRACE_STYLE,
+      style: traceRecordingOverlayStyle,
     });
     (geolocationInteraction as GeolocationDrawInternals).getPosition = (location) => {
       return getPositionWithMetadata(location as unknown as GeolocationDrawLocation);

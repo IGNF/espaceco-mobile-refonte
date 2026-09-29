@@ -92,7 +92,6 @@ import { ActionSheet } from "@/shared/ui/ActionSheet";
 import { createPositionFromLonLat } from "@/shared/utils/position";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
-import { EspaceCo_DeviceOrientation } from "@/platform/device/orientation";
 
 // Routes that should open as slide-up overlays instead of navigating
 type OverlayRoute = typeof overlayRoutes[number];
@@ -117,6 +116,7 @@ export function HomePage() {
   const fastReportFlow = useFastReportFlow();
   const draftReportsLimit = useDraftReportsLimitGuard();
   const [skipGeolocationTracking, setSkipGeolocationTracking] = useState(false);
+  const [isTraceDirectionActive, setIsTraceDirectionActive] = useState(false);
   const {
     mapElementRef,
     mapRef,
@@ -218,7 +218,6 @@ export function HomePage() {
     activeCommunityCache
   );
   useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);
-  useUserLocationMarker({ map, isMapReady });
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -312,8 +311,6 @@ export function HomePage() {
    */
   const handleGeolocationButtonClick = (event: MouseEvent<HTMLButtonElement>) => {
     const now = event.timeStamp;
-
-    void EspaceCo_DeviceOrientation.ensurePermissions();
 
     if (geolocationTapTimeoutRef.current !== null && now - geolocationLastTapRef.current <= GEOLOCATION_DOUBLE_TAP_DELAY_MS) {
       window.clearTimeout(geolocationTapTimeoutRef.current);
@@ -703,6 +700,16 @@ export function HomePage() {
     },
   });
   getGpsSketchesAtPixelRef.current = getGpsSketchesAtPixel;
+  useUserLocationMarker({
+    map,
+    isMapReady,
+    showMovementDirection:
+      userFollowingMode === 'tracking' ||
+      isGpsSketchRecording ||
+      fastReportFlow.isGpsOpen ||
+      gnssReportTemplate !== null ||
+      isTraceDirectionActive,
+  });
 
   useEffect(() => {
     setIsGeolocationRecenterActive(
@@ -784,7 +791,6 @@ export function HomePage() {
   };
 
   const handleUserFollowingButtonClick = () => {
-    void EspaceCo_DeviceOrientation.ensurePermissions();
     setUserFollowingMode((mode) => {
       if (mode === 'tracking') {
         stopGpsSketchRecording();
@@ -1072,6 +1078,7 @@ export function HomePage() {
         vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={setIsSearchOpen}
         onMapPickerActiveChange={setIsReportMapPickerActive}
+        onTraceDirectionActiveChange={setIsTraceDirectionActive}
       />
 
       <FeatureChoiceAlert
@@ -1241,6 +1248,7 @@ export function HomePage() {
           vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}
           onMapPickerActiveChange={setIsReportMapPickerActive}
+          onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
       {activeOverlay === '/my-reports' && (
@@ -1251,6 +1259,7 @@ export function HomePage() {
           vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}
           onMapPickerActiveChange={setIsReportMapPickerActive}
+          onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
       {activeOverlay === '/new-report-choice' && (
@@ -1279,6 +1288,7 @@ export function HomePage() {
           vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={setIsSearchOpen}
           onMapPickerActiveChange={setIsReportMapPickerActive}
+          onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
       {activeOverlay === '/my-communities' && (

@@ -82,6 +82,7 @@ export interface CreateOrEditReportPageProps {
   vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
   onMapPickerActiveChange?: (isActive: boolean) => void;
+  onTraceDirectionActiveChange?: (isActive: boolean) => void;
 }
 
 interface PickedMapObjectCandidate {
@@ -173,6 +174,7 @@ export function CreateOrEditReportPage({
   vectorLayers = [],
   onSearchPanelVisibilityChange,
   onMapPickerActiveChange,
+  onTraceDirectionActiveChange,
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
@@ -221,6 +223,14 @@ export function CreateOrEditReportPage({
       onMapPickerActiveChange?.(false);
     };
   }, [isPickingOnMap, onMapPickerActiveChange]);
+
+  useEffect(() => {
+    onTraceDirectionActiveChange?.(isPickingTrace);
+
+    return () => {
+      onTraceDirectionActiveChange?.(false);
+    };
+  }, [isPickingTrace, onTraceDirectionActiveChange]);
 
   const form = useReportForm({
     mode,

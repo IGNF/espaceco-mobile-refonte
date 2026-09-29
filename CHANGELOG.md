@@ -13,6 +13,15 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.20] - 2026-10-XX
+
+### Added
+
+### Changed
+- La flèche de navigation affichée au centre de la carte devient un simple point. On affiche en revanche une flèche, orientée selon l'axe de déplacement du périphérique, en move levé ou trace (ticket #156)
+
+### Fixed
+
 ## [0.0.19] - 2026-09-29
 
 ### Added
