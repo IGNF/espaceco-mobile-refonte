@@ -1,7 +1,10 @@
+import { zipSync, strToU8 } from 'fflate';
 import { Capacitor } from '@capacitor/core';
+import { Share } from '@capacitor/share';
 import { FileSystem } from '@ign/mobile-device';
+import { blobToBase64 } from '@/shared/utils/blob';
 
-interface ExportFilePart {
+export interface ExportFilePart {
   path: string;
   data: string;
   encoding: 'utf8' | 'base64';
@@ -16,7 +19,7 @@ export function exportDateStamp(date = new Date()): string {
   const hours = String(date.getHours()).padStart(2, '0');
   const minutes = String(date.getMinutes()).padStart(2, '0');
   const seconds = String(date.getSeconds()).padStart(2, '0');
-  return `${date.getFullYear()}${month}${day}_${hours}-${minutes}-${seconds}`;
+  return `${date.getFullYear()}${month}${day}_${hours}h${minutes}m${seconds}s`;
 }
 
 /**
@@ -33,7 +36,8 @@ export async function writeExportFile(
 
 /**
  * Hands several export files to the user in one step.
- * Web downloads them. Android writes them under Download. iOS opens one share sheet.
+ * Web downloads them. Android writes them under Download.
+ * iOS shares one zip through the native share sheet when there are several files.
  */
 export async function writeExportFiles(folderName: string, files: ExportFilePart[]): Promise<void> {
   const platform = Capacitor.getPlatform();
@@ -46,6 +50,10 @@ export async function writeExportFiles(folderName: string, files: ExportFilePart
   }
 
   if (platform === 'ios') {
+    if (files.length > 1) {
+      await shareZipFile(folderName, files);
+      return;
+    }
     const shared = await shareFiles(files.map(toSharedFile));
     if (!shared) throw new Error('File sharing is not available');
     return;
@@ -98,6 +106,28 @@ async function shareFiles(files: File[]): Promise<boolean> {
  * Helpers for file operations.
  * If needed in the future, we can move these to a separate file (see shared/utils/blob.ts)
  */
+
+async function shareZipFile(folderName: string, files: ExportFilePart[]): Promise<void> {
+  const archive: Record<string, Uint8Array> = {};
+  for (const file of files) {
+    archive[file.path] = file.encoding === 'utf8' ? strToU8(file.data) : base64ToBytes(file.data);
+  }
+  const zipped = zipSync(archive, { level: 0 });
+  const uri = await FileSystem.writeFile({
+    path: `${folderName}.zip`,
+    data: await blobToBase64(new Blob([new Uint8Array(zipped)])),
+    directory: 'CACHE',
+    encoding: 'base64',
+  });
+
+  try {
+    await Share.share({ files: [uri] });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.toLowerCase().includes('cancel')) return;
+    throw error;
+  }
+}
 
 function toSharedFile(file: ExportFilePart): File {
   const fileName = fileNameOf(file.path);

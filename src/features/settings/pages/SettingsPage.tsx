@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
@@ -17,9 +17,10 @@ import screen from '@/shared/styles/screen.module.css';
 import inputs from '@/shared/styles/inputs.module.css';
 import typography from '@/shared/styles/typography.module.css';
 
+import { ReportStorageAdapter } from '@/infra/storage';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { exportDateStamp } from '@/platform/device/exportFile';
+import { exportDateStamp, writeExportFiles, type ExportFilePart } from '@/platform/device/exportFile';
 import { exportLayerPreferences, importLayerPreferences } from '@/features/settings/services/exportLayerPreferences';
 import { exportDraftReports as exportDraftReportFile } from '@/features/settings/services/exportDraftReports';
 
@@ -46,9 +47,26 @@ export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: Se
   const [isDataExchangeSectionExpanded, setIsDataExchangeSectionExpanded] = useState(false);
   const [exportPreferences, setExportPreferences] = useState(false);
   const [exportDraftReports, setExportDraftReports] = useState(false);
+  const [draftReportCount, setDraftReportCount] = useState<number | null>(null);
   const [isMaintenanceAlertOpen, setIsMaintenanceAlertOpen] = useState(false);
   const [dataExchangeLabel, setDataExchangeLabel] = useState<string | null>(null);
   const importFileInputRef = useRef<HTMLInputElement>(null);
+  const hasDraftReports = draftReportCount !== null && draftReportCount > 0;
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isActive = true;
+    void new ReportStorageAdapter().listStoredDrafts().then((drafts) => {
+      if (!isActive) return;
+      setDraftReportCount(drafts.length);
+      if (drafts.length === 0) setExportDraftReports(false);
+    });
+
+    return () => {
+      isActive = false;
+    };
+  }, [isOpen]);
 
   const { activeCommunity } = useCommunity();
   const { user } = useAuth();
@@ -142,13 +160,17 @@ export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: Se
     const dateStamp = exportDateStamp();
     setDataExchangeLabel(t('settings.dataExchange.exporting'));
     try {
-      const fileNames = [];
+      const files: ExportFilePart[] = [];
       if (exportPreferences) {
-        fileNames.push(await exportLayerPreferences(user.id, dateStamp));
+        files.push(await exportLayerPreferences(user.id, dateStamp));
       }
       if (exportDraftReports) {
-        fileNames.push(await exportDraftReportFile(dateStamp));
+        files.push(...await exportDraftReportFile(dateStamp));
       }
+      await writeExportFiles(`${dateStamp}_exp_esco`, files);
+      const fileNames = files
+        .filter((file) => file.encoding === 'utf8')
+        .map((file) => file.path);
       await showToastSafe({
         text: t('settings.dataExchange.exportSuccess', { fileName: fileNames.join(', ') }),
         duration: 'short',
@@ -578,12 +600,15 @@ export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: Se
                     <input
                       type='checkbox'
                       checked={exportDraftReports}
+                      disabled={!hasDraftReports}
                       onChange={(event) => setExportDraftReports(event.target.checked)}
                     />
                     <span>
                       <span className={styles.checkboxLabel}>{t('settings.dataExchange.draftReports')}</span>
                       <span className={`${typography.caption} ${styles.checkboxHint}`}>
-                        {t('settings.dataExchange.draftReportsHint')}
+                        {draftReportCount === 0
+                          ? t('settings.dataExchange.noDraftReports')
+                          : t('settings.dataExchange.draftReportsHint')}
                       </span>
                     </span>
                   </label>

@@ -12,7 +12,7 @@ import {
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
-import { exportDateStamp, writeExportFile } from '@/platform/device/exportFile';
+import { exportDateStamp, type ExportFilePart } from '@/platform/device/exportFile';
 
 const offlineZonesRepository = new OfflineZonesRepository();
 
@@ -38,7 +38,7 @@ interface LayerPreferencesExport {
 /**
  * Exports layer order, opacity and visibility, offline zones, and GNSS settings.
  */
-export async function exportLayerPreferences(userId: number, dateStamp = exportDateStamp()): Promise<string> {
+export async function exportLayerPreferences(userId: number, dateStamp = exportDateStamp()): Promise<ExportFilePart> {
   const exportedAt = new Date();
   const fileName = `${dateStamp}_pref_app.json`;
   const [storedConfigurations, offlineZones, source, trace, fastReportOffsets] = await Promise.all([
@@ -67,8 +67,11 @@ export async function exportLayerPreferences(userId: number, dateStamp = exportD
     },
   };
 
-  await writeExportFile(`${dateStamp}_exp_esco`, fileName, JSON.stringify(payload, null, 2));
-  return fileName;
+  return {
+    path: fileName,
+    data: JSON.stringify(payload, null, 2),
+    encoding: 'utf8',
+  };
 }
 
 function toExportedLayerStates(

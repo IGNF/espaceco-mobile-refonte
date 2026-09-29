@@ -443,6 +443,7 @@
       "preferencesHint": "Ordre, opacité et visibilité des couches, zones hors-ligne et paramètres GNSS.",
       "draftReports": "Signalements non envoyés",
       "draftReportsHint": "Brouillons enregistrés sur cet appareil.",
+      "noDraftReports": "Aucun signalement non envoyé",
       "export": "Exporter",
       "importPreferences": "Importer les préférences",
       "exportSuccess": "Export terminé ({{fileName}}).",

@@ -1,6 +1,6 @@
 import { ReportStorageAdapter } from '@/infra/storage';
 import { blobToBase64 } from '@/shared/utils/blob';
-import { exportDateStamp, writeExportFiles } from '@/platform/device/exportFile';
+import { exportDateStamp, type ExportFilePart } from '@/platform/device/exportFile';
 
 const reportStorage = new ReportStorageAdapter();
 
@@ -8,10 +8,10 @@ const reportStorage = new ReportStorageAdapter();
  * Exports local draft reports and their photos.
  * Each photo is named photos/{reportId}_{photoNumber}.jpg so it can be matched to its report.
  */
-export async function exportDraftReports(dateStamp = exportDateStamp()): Promise<string> {
+export async function exportDraftReports(dateStamp = exportDateStamp()): Promise<ExportFilePart[]> {
   const drafts = await reportStorage.listStoredDrafts();
   const fileName = `${dateStamp}_signalements.json`;
-  const files: Array<{ path: string; data: string; encoding: 'utf8' | 'base64' }> = [];
+  const files: ExportFilePart[] = [];
   const reports = [];
 
   for (const draft of drafts) {
@@ -48,6 +48,5 @@ export async function exportDraftReports(dateStamp = exportDateStamp()): Promise
     encoding: 'utf8',
   });
 
-  await writeExportFiles(`${dateStamp}_exp_esco`, files);
-  return fileName;
+  return files;
 }

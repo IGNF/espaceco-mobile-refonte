@@ -34,6 +34,8 @@ PODS:
     - Capacitor
   - CapacitorPreferences (8.0.1):
     - Capacitor
+  - CapacitorShare (8.0.2):
+    - Capacitor
   - CapacitorStatusBar (8.0.3):
     - Capacitor
   - CapacitorToast (8.0.1):
@@ -62,6 +64,7 @@ DEPENDENCIES:
   - "CapacitorInappbrowser (from `../../node_modules/@capacitor/inappbrowser`)"
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPreferences (from `../../node_modules/@capacitor/preferences`)"
+  - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapacitorToast (from `../../node_modules/@capacitor/toast`)"
   - CordovaPlugins (from `../capacitor-cordova-ios-plugins`)
@@ -106,6 +109,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/network"
   CapacitorPreferences:
     :path: "../../node_modules/@capacitor/preferences"
+  CapacitorShare:
+    :path: "../../node_modules/@capacitor/share"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
   CapacitorToast:
@@ -130,6 +135,7 @@ SPEC CHECKSUMS:
   CapacitorInappbrowser: 22d5e81825942c167f4841c3e1f57aed7497ab4e
   CapacitorNetwork: 7afc28ed4d9abe1d9801264fa485db32e4420546
   CapacitorPreferences: 0fa33b3affebf12d96358b491ed7c2b39bec3270
+  CapacitorShare: fdeee71ebc13dca43967805adf2dea57871c216a
   CapacitorStatusBar: 40bdc21352ecc617ec71c45ea06d669cdd2da8df
   CapacitorToast: 0432f40d66143ab56a322095e09740aa2c9a88a5
   CordovaPlugins: fbc74bdb71c735df05cab233e0c3f84b7b81346d
@@ -138,6 +144,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: 6a7b6f76063fb1b01cfb14fae7d0f526e3c9b271
   OSInAppBrowserLib: c21c8fa3d886654d2f553b9f1bded9d27a0530c7
 
-PODFILE CHECKSUM: 26cb58c737798f716662fb5655428ebc29934eea
+PODFILE CHECKSUM: 89d6196df3c35894ee58d6529dc10825c2c018b4
 
 COCOAPODS: 1.16.2
