@@ -16,6 +16,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.20] - 2026-10-XX
 
 ### Added
+- On peut maintenant visualiser les signalements en brouillon sur la carte, signalés par un cercle gris (ticket #163)
 
 ### Changed
 - La flèche de navigation affichée au centre de la carte devient un simple point. On affiche en revanche une flèche, orientée selon l'axe de déplacement du périphérique, en move levé ou trace (ticket #156)
