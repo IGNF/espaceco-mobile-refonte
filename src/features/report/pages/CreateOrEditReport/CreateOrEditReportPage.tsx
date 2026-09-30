@@ -18,6 +18,7 @@ import { Banner } from '@/shared/ui/Banner';
 import { FeatureChoiceAlert } from '@/features/map/components/FeatureChoiceAlert';
 import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
+import { addLocalReportToMap } from '@/features/map/utils/signalementReportFeatures';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { useUnsavedChangesGuard } from '@/shared/hooks/useUnsavedChangesGuard';
@@ -580,7 +581,10 @@ export function CreateOrEditReportPage({
   });
 
   const handleSaveDraft = async () => {
-    await form.saveDraft();
+    const draft = await form.saveDraft();
+    if (map) {
+      addLocalReportToMap(map, draft);
+    }
     closeMapPickers();
     onClose();
     await showToastSafe({
