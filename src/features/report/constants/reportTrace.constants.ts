@@ -1,3 +1,4 @@
+import type { FeatureLike } from 'ol/Feature';
 import { Circle as CircleStyle, Fill, Stroke, Style } from 'ol/style';
 import tracePointBeepSound from '@/shared/assets/sounds/bip.mp3';
 import traceEndBeepSound from '@/shared/assets/sounds/bip2.mp3';
@@ -33,6 +34,18 @@ export const DEFAULT_TRACE_RECORDING_SETTINGS: TraceRecordingSettings = {
 // Audio feedback sounds used while recording and validating a trace.
 export const TRACE_SOUND_RECORDING_POINT_SRC = tracePointBeepSound;
 export const TRACE_SOUND_RECORDING_END_SRC = traceEndBeepSound;
+
+/**
+ * Style of a trace while it is being recorded.
+ * The live GPS point is left undrawn: the user location marker already shows that position.
+ */
+export function traceRecordingOverlayStyle(feature: FeatureLike): Style[] | undefined {
+  if (feature.getGeometry()?.getType() === 'Point') {
+    return undefined;
+  }
+
+  return TRACE_STYLE;
+}
 
 export const TRACE_STYLE = [
   new Style({

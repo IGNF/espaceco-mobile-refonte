@@ -67,6 +67,7 @@ export interface ReportDetailsPageProps {
   vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
   onMapPickerActiveChange?: (isActive: boolean) => void;
+  onTraceDirectionActiveChange?: (isActive: boolean) => void;
   hasPreviousReport?: boolean;
   hasNextReport?: boolean;
   isReportNavigationLoading?: boolean;
@@ -84,6 +85,7 @@ export function ReportDetailsPage({
   vectorLayers,
   onSearchPanelVisibilityChange,
   onMapPickerActiveChange,
+  onTraceDirectionActiveChange,
   hasPreviousReport = false,
   hasNextReport = false,
   isReportNavigationLoading = false,
@@ -606,6 +608,7 @@ export function ReportDetailsPage({
           vectorLayers={vectorLayers}
           onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
           onMapPickerActiveChange={onMapPickerActiveChange}
+          onTraceDirectionActiveChange={onTraceDirectionActiveChange}
         />
 
         {showReportNavigation && (

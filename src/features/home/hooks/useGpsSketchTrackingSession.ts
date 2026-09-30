@@ -16,6 +16,7 @@ import {
   TRACE_LAYER_TITLE,
   TRACE_MIN_ZOOM,
   TRACE_STYLE,
+  traceRecordingOverlayStyle,
   type TraceRecordingSettings,
 } from '@/features/report/constants/reportTrace.constants';
 import {
@@ -291,7 +292,7 @@ export function useGpsSketchTrackingSession({
         const accuracy = location.getAccuracy();
         return accuracy !== undefined && accuracy < recordingSettingsRef.current.minAccuracy;
       },
-      style: TRACE_STYLE,
+      style: traceRecordingOverlayStyle,
     });
     geolocationInteraction.setActive(false);
 

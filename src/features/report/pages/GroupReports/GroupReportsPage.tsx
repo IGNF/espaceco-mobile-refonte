@@ -31,6 +31,7 @@ export interface GroupReportsPageProps {
   vectorLayers?: CommunityLayer[];
   onSearchPanelVisibilityChange?: (isVisible: boolean) => void;
   onMapPickerActiveChange?: (isActive: boolean) => void;
+  onTraceDirectionActiveChange?: (isActive: boolean) => void;
 }
 
 export function GroupReportsPage({
@@ -40,6 +41,7 @@ export function GroupReportsPage({
   vectorLayers,
   onSearchPanelVisibilityChange,
   onMapPickerActiveChange,
+  onTraceDirectionActiveChange,
 }: GroupReportsPageProps) {
   const { t } = useTranslation();
   const { activeCommunity, isLoading: isCommunityLoading } = useCommunity();
@@ -267,6 +269,7 @@ export function GroupReportsPage({
         vectorLayers={vectorLayers}
         onSearchPanelVisibilityChange={onSearchPanelVisibilityChange}
         onMapPickerActiveChange={onMapPickerActiveChange}
+        onTraceDirectionActiveChange={onTraceDirectionActiveChange}
         hasPreviousReport={hasPreviousReport}
         hasNextReport={hasNextReport}
         isReportNavigationLoading={isDetailsNavigationLoading}
