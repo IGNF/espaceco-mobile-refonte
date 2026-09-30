@@ -86,21 +86,6 @@ export function getRemoteReportsLayer(map: OlMap): VectorLayer<VectorSource<Feat
   return getSignalementVectorLayer(map, LAYER_NAME_SIGNALEMENTS);
 }
 
-function replaceSourceFeatures(
-  source: VectorSource<Feature<Geometry>>,
-  features: Feature[]
-): void {
-  for (const feature of features) {
-    const featureId = feature.getId();
-    const existingFeature = featureId ? source.getFeatureById(featureId) : null;
-    if (existingFeature) {
-      source.removeFeature(existingFeature);
-    }
-  }
-
-  source.addFeatures(features);
-}
-
 function removeReportFeatures(
   source: VectorSource<Feature<Geometry>>,
   reportId: number
@@ -124,11 +109,15 @@ export function addLocalReportToMap(map: OlMap, report: Report): void {
   const sketchFeatures = createLocalReportSketchFeatures(report);
 
   if (reportSource) {
-    replaceSourceFeatures(reportSource, [reportFeature]);
+    removeReportFeatures(reportSource, report.id);
+    reportSource.addFeature(reportFeature);
   }
 
-  if (sketchSource && sketchFeatures.length > 0) {
-    replaceSourceFeatures(sketchSource, sketchFeatures);
+  if (sketchSource) {
+    removeReportFeatures(sketchSource, report.id);
+    if (sketchFeatures.length > 0) {
+      sketchSource.addFeatures(sketchFeatures);
+    }
   }
 }
 

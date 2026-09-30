@@ -80,7 +80,7 @@ export interface UseReportFormReturn {
   removeSketch: (index: number) => void;
   validate: () => boolean;
   buildDraft: () => Report;
-  saveDraft: () => Promise<void>;
+  saveDraft: () => Promise<Report>;
   submit: () => Promise<boolean>;
 }
 
@@ -524,6 +524,7 @@ export function useReportForm({
       const draft = buildReportRef.current(ReportStatus.Draft);
       await reportStorage.saveReport(draft);
       setIsDirty(false);
+      return draft;
     } finally {
       setIsSaving(false);
     }
