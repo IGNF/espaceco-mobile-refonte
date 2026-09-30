@@ -27,7 +27,10 @@ import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/ut
 import { serializeDirectContributionDocumentAttributes } from '@/infra/map/directContribution/directContributionDocuments';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 
-import { getCommunityLayerGeometryType } from '@/shared/utils/communityLayer';
+import {
+  getCommunityLayerGeometryType,
+  getCommunityLayerTitle,
+} from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 export type DirectContributionFeatureFormMode = 'create' | 'edit';
@@ -535,8 +538,9 @@ export function useDirectContributionSession({
     }));
   }, [activeGeometryType, currentMode, selectedFeature, t]);
 
-  const toolbarStatusText = activeLayer
-    ? t('layers.directContribution.toolbarStatus', { layerTitle: activeLayer.title })
+  const layerTitle = activeLayer ? getCommunityLayerTitle(activeLayer) : '';
+  const toolbarStatusText = layerTitle
+    ? t('layers.directContribution.toolbarStatus', { layerTitle })
     : undefined;
 
   const isSessionActive = Boolean(
