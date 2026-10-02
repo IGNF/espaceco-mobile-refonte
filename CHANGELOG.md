@@ -13,13 +13,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.20] - 2026-10-XX
+## [0.0.20] - 2026-10-02
 
 ### Added
 - On peut maintenant visualiser les signalements en brouillon sur la carte, signalés par un cercle gris (ticket #163)
 
 ### Changed
 - La flèche de navigation affichée au centre de la carte devient un simple point. On affiche en revanche une flèche, orientée selon l'axe de déplacement du périphérique, en move levé ou trace (ticket #156)
+- Les signalements en brouillon sont maintenant exportés en .geojson (ticket #67)
 
 ### Fixed
 - L'outil d'édition affiche maintenant le nom de la couche en cours d'édition (ticket #162)
