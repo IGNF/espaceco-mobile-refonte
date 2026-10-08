@@ -16,6 +16,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.21] - 2026-10-xx
 
 ### Added
+- Un rate limit a été ajouté dans le package 'collaboratif-client-api', puis implémenté ici. Défaut à 25 requêtes/s + 3 retries pour une requête qui termine en 429
 
 ### Changed
 

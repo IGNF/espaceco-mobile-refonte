@@ -8,4 +8,9 @@ export const collabApiClient = new ApiClient(
 	config.api.baseUrl,
 	config.oAuth.baseUrl,
 	config.oAuth.clientId,
+	null,
+	{
+		requestsPerSecond: 25,
+		maxRetries: 3,
+	},
 );
