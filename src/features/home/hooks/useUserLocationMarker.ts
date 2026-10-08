@@ -10,6 +10,7 @@ import { Circle as CircleStyle, Fill, Icon, Stroke, Style } from 'ol/style';
 
 import { EspaceCo_Geolocation, type CallbackID, type Position, type WatchPositionCallback } from '@/platform/device/geolocation';
 import {
+  GEOLOCATION_WATCH_TIMEOUT_MS,
   USER_LOCATION_LAYER_NAME,
   USER_LOCATION_MARKER_Z_INDEX,
 } from '@/shared/constants/map';
@@ -158,7 +159,7 @@ export function useUserLocationMarker({
     void (async () => {
       watchId = await EspaceCo_Geolocation.watchUsersLocation(updateMarkerPosition, {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: GEOLOCATION_WATCH_TIMEOUT_MS,
         maximumAge: 1000,
         minimumUpdateInterval: 1000,
       });

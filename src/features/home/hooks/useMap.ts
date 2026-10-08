@@ -24,6 +24,7 @@ import {
   GEOLOCATION_LOCK_RECENTER_INTERVAL_MS,
   GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS,
   GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
+  GEOLOCATION_WATCH_TIMEOUT_MS,
 } from "@/shared/constants/map";
 import {
   initGeoportailCapabilities,
@@ -64,7 +65,7 @@ type UserLocationViewportStatus = 'inside' | 'border' | 'outside';
 const USER_LOCATION_BORDER_PADDING_PX = 48;
 const USER_LOCATION_OPTIONS: PositionOptions = {
   enableHighAccuracy: true,
-  timeout: 10000,
+  timeout: GEOLOCATION_WATCH_TIMEOUT_MS,
 };
 
 interface UseMapReturn {
