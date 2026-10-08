@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback, useState, type Dispatch, type SetStateAction } from "react";
+import { useTranslation } from "react-i18next";
 import Map from "ol/Map";
 import View from "ol/View";
 import { Attribution, defaults as defaultControls } from "ol/control";
@@ -12,6 +13,7 @@ import { containsCoordinate } from "ol/extent";
 import { unByKey } from "ol/Observable";
 import "ol/ol.css";
 import { EspaceCo_Geolocation, type CallbackID, type Position } from "@/platform/device/geolocation";
+import { showToastSafe } from "@/shared/utils/toast";
 import {
   DEFAULT_MAP_CENTER_LON_LAT,
   DEFAULT_MAP_FOCUS_ZOOM,
@@ -86,6 +88,7 @@ interface UseMapReturn {
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
+  const { t } = useTranslation();
   const {
     centerOnUserLocation: shouldCenterOnMount = true,
     skipGeoportailCapabilities = false,
@@ -102,6 +105,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const userViewportChangeTimeoutRef = useRef<number | null>(null);
   const latestPositionRef = useRef<Position | null>(null);
   const isAutoRecenterActiveRef = useRef(false);
+  const hasReportedWatchLocationFailureRef = useRef(false);
   const skipGeoportailCapabilitiesOnInitRef = useRef(skipGeoportailCapabilities);
   const isRotationEnabledRef = useRef(isRotationEnabled);
   isRotationEnabledRef.current = isRotationEnabled;
@@ -168,6 +172,14 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const lockUserLocationOnMap = useCallback(() => {
     setUserFollowingMode((mode) => mode === 'locked' ? 'none' : 'locked');
   }, []);
+
+  const notifyLocationUnavailable = useCallback(() => {
+    void showToastSafe({
+      text: t("home.geolocation.unavailable"),
+      duration: "short",
+      position: "top",
+    });
+  }, [t]);
 
   const animateToPosition = useCallback(async (
     map: Map,
@@ -249,9 +261,11 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     }
 
     const position = await EspaceCo_Geolocation.getUsersLocation(USER_LOCATION_OPTIONS);
+    if (position) {
+      latestPositionRef.current = position;
+    }
 
-    latestPositionRef.current = position;
-    return position;
+    return latestPositionRef.current;
   }, []);
 
   /**
@@ -272,10 +286,14 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       position = await getLatestPosition();
     } catch (error) {
       console.error("Error restoring map viewport after user movement:", error);
+      notifyLocationUnavailable();
       return;
     }
 
-    if (!position) return;
+    if (!position) {
+      notifyLocationUnavailable();
+      return;
+    }
 
     const viewportStatus = getPositionViewportStatus(map, position);
     if (viewportStatus === 'outside') {
@@ -287,7 +305,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     if (viewportStatus === 'border') {
       animateViewToPosition(map, position, false);
     }
-  }, [animateViewToPosition, getLatestPosition, getPositionViewportStatus]);
+  }, [animateViewToPosition, getLatestPosition, getPositionViewportStatus, notifyLocationUnavailable]);
 
   /**
    * Starts or refreshes the 10-second grace period after a manual pan/zoom.
@@ -321,22 +339,22 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     try {
       const position = await EspaceCo_Geolocation.getUsersLocation(USER_LOCATION_OPTIONS);
 
-      if (position) {
-        latestPositionRef.current = position;
-        await animateToPosition(map, position, animationDuration);
-      } else {
-        // Fallback to default center if geolocation fails
-        await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT, DEFAULT_MAP_FOCUS_ZOOM, animationDuration);
+      if (!position) {
+        // A failed fix must not move the view. The previous fallback recentered on Paris.
+        notifyLocationUnavailable();
+        return;
       }
+
+      latestPositionRef.current = position;
+      await animateToPosition(map, position, animationDuration);
     } catch (error) {
       console.error("Error centering on user location:", error);
-      // Fallback to default center
-      await animateTo(map, DEFAULT_MAP_CENTER_LON_LAT, DEFAULT_MAP_FOCUS_ZOOM, animationDuration);
+      notifyLocationUnavailable();
     } finally {
       isLocatingRef.current = false;
       setIsLocating(false);
     }
-  }, [animateTo, animateToPosition]);
+  }, [animateToPosition, notifyLocationUnavailable]);
 
   useEffect(() => {
     isAutoRecenterActiveRef.current = isAutoRecenterActive;
@@ -376,14 +394,25 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     }
 
     const map = mapRef.current!;
+    let cancelled = false;
     let watchId: CallbackID | null = null;
+    hasReportedWatchLocationFailureRef.current = false;
 
     void (async () => {
-      watchId = await EspaceCo_Geolocation.watchUsersLocation((position) => {
-        if (!position) {
+      const nextWatchId = await EspaceCo_Geolocation.watchUsersLocation((position) => {
+        if (cancelled) {
           return;
         }
 
+        if (!position) {
+          if (!hasReportedWatchLocationFailureRef.current) {
+            hasReportedWatchLocationFailureRef.current = true;
+            notifyLocationUnavailable();
+          }
+          return;
+        }
+
+        hasReportedWatchLocationFailureRef.current = false;
         latestPositionRef.current = position;
 
         if (isUserViewportChangePendingRef.current) {
@@ -397,14 +426,27 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
         minimumUpdateInterval: GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
         interval: GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
       });
+
+      if (cancelled) {
+        if (nextWatchId) {
+          void EspaceCo_Geolocation.clearWatch(nextWatchId);
+        }
+        return;
+      }
+
+      watchId = nextWatchId;
+      if (!watchId) {
+        notifyLocationUnavailable();
+      }
     })();
 
     return () => {
+      cancelled = true;
       if (watchId) {
         void EspaceCo_Geolocation.clearWatch(watchId);
       }
     };
-  }, [centerViewOnPosition, isAutoRecenterActive]);
+  }, [centerViewOnPosition, isAutoRecenterActive, notifyLocationUnavailable]);
 
   // Initialize map
   useEffect(() => {
