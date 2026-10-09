@@ -125,3 +125,8 @@ html, body {
 	--color-dark-tint: #222d3b;
 
 }
+
+/* Capacitor web toasts have no z-index and sit under full-screen overlays. */
+pwa-toast {
+  z-index: 3000;
+}

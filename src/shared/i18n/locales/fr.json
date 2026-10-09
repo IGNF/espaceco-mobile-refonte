@@ -87,6 +87,9 @@
       "message": "Chargement de l'application...",
       "timeoutError": "Une erreur est survenue lors du chargement de l'application."
     },
+    "geolocation": {
+      "unavailable": "Impossible d'obtenir votre position."
+    },
     "mapLongPressAction": {
       "title": "Action sur la carte",
       "createReport": "Créer un signalement",

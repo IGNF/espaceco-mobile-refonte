@@ -5,6 +5,7 @@ export const GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS = 1000;
 export const GEOLOCATION_LOCK_RECENTER_INTERVAL_MS = 30000;
 export const GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS = 1000;
 export const GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS = 10000;
+export const GEOLOCATION_WATCH_TIMEOUT_MS = 10000;
 
 export const DEFAULT_MAP_CENTER_LON_LAT: [number, number] = [2.3522, 48.8566];
 export const DEFAULT_MAP_ZOOM = 11;
@@ -22,6 +23,16 @@ export const REPORT_CLUSTER_ZOOM_STEP = 2;
 export const REPORT_CLUSTER_FIT_DURATION_MS = 500;
 
 export const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
+
+export const CENTER_LOCATION_ORIGIN = {
+  SIMPLE_TAP: 'simple-tap',
+  LOCKED_LOCATION: 'locked-location',
+  TRACE_MODE: 'trace-mode',
+  LEVE_MODE: 'leve-mode',
+  OFFLINE_MODE: 'offline-mode',
+} as const;
+
+export type CenterLocationOrigin = (typeof CENTER_LOCATION_ORIGIN)[keyof typeof CENTER_LOCATION_ORIGIN];
 
 /**
  * Geoportail API key for public services
