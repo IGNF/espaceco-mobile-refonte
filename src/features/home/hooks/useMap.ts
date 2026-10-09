@@ -154,13 +154,10 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     origin?: typeof CENTER_LOCATION_ORIGIN[keyof typeof CENTER_LOCATION_ORIGIN],
   ) => {
     const currentZoom = map.getView().getZoom();
-    console.log('currentZoom', currentZoom);
-    console.log('origin', origin);
     let targetZoom = currentZoom;
     if ((origin === CENTER_LOCATION_ORIGIN.SIMPLE_TAP) && (currentZoom && currentZoom <= 9)) {
       targetZoom = DEFAULT_MAP_FOCUS_ZOOM_ON_USER_LOCATION;
     }
-    console.log('targetZoom', targetZoom);
     await new Promise<void>((resolve) => {
       const endProgrammaticViewportChange = markProgrammaticViewportChange();
       map.getView().animate(
