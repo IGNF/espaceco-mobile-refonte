@@ -37,7 +37,7 @@ import { scrollToTop } from '@/shared/utils/scroll';
 import { showToastSafe } from '@/shared/utils/toast';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
-import { DEFAULT_GEOPORTAIL_LAYERS } from '@/shared/constants/map';
+import { DEFAULT_GEOPORTAIL_LAYERS, type CenterLocationOrigin } from '@/shared/constants/map';
 
 import screen from '@/shared/styles/screen.module.css';
 
@@ -89,7 +89,7 @@ interface OfflineManagementPageProps {
   vectorLayers: CommunityLayer[];
   pendingChangesCountByLayerKey: Record<string, number>;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
-  onCenterOnUserLocation?: () => Promise<void>;
+  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<void>;
   onZoneEditorOpenChange?: (isOpen: boolean) => void;
   isLocating?: boolean;
 }

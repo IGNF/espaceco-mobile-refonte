@@ -85,7 +85,7 @@ import {
 } from '@/features/report/utils/reportObjects';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
-import { GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
+import { CENTER_LOCATION_ORIGIN, GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
 import { Loading } from "@/shared/ui/Loading";
 import { Alert } from "@/shared/ui/Alert";
 import { ActionSheet } from "@/shared/ui/ActionSheet";
@@ -322,7 +322,7 @@ export function HomePage() {
     geolocationLastTapRef.current = now;
     geolocationTapTimeoutRef.current = window.setTimeout(() => {
       geolocationTapTimeoutRef.current = null;
-      void centerOnUserLocation();
+      void centerOnUserLocation(undefined, CENTER_LOCATION_ORIGIN.SIMPLE_TAP);
     }, GEOLOCATION_DOUBLE_TAP_DELAY_MS);
   };
 
@@ -1307,7 +1307,7 @@ export function HomePage() {
           vectorLayers={vectorLayers}
           pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
           onSetLayerVisibility={setLayerVisibility}
-          onCenterOnUserLocation={centerOnUserLocation}
+          onCenterOnUserLocation={() => centerOnUserLocation(undefined, CENTER_LOCATION_ORIGIN.OFFLINE_MODE)}
           onZoneEditorOpenChange={setIsOfflineZoneEditorOpen}
           isLocating={isLocating}
         />

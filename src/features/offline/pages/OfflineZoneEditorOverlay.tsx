@@ -26,12 +26,14 @@ import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import { Button } from '@/shared/ui/Button';
+import { Loading } from '@/shared/ui/Loading';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import styles from './OfflineZoneEditorOverlay.module.css';
 
 import type { OfflineZoneEditorMode } from '@/domain/offline/models';
+import { CENTER_LOCATION_ORIGIN, type CenterLocationOrigin } from '@/shared/constants/map';
 
 interface OfflineZoneEditorOverlayProps {
   isOpen: boolean;
@@ -39,7 +41,7 @@ interface OfflineZoneEditorOverlayProps {
   mode: OfflineZoneEditorMode;
   zoneName: string;
   layer: CommunityLayer | null;
-  onCenterOnUserLocation?: () => Promise<void>;
+  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<void>;
   isLocating?: boolean;
   isSaving?: boolean;
   onCancel: () => void;
@@ -314,35 +316,39 @@ export function OfflineZoneEditorOverlay({
       {mode === 'custom' && (
         <>
           <div ref={selectionFrameRef} className={styles.customFrame} aria-hidden='true' />
-          {onCenterOnUserLocation && (
+          <div className={styles.mapActions}>
+            {onCenterOnUserLocation && (
+              <button
+                type='button'
+                className={styles.centerButton}
+                onClick={() => void onCenterOnUserLocation(undefined, CENTER_LOCATION_ORIGIN.OFFLINE_MODE)}
+                disabled={isLocating}
+                aria-label={t('offline.editor.centerOnPosition')}
+              >
+                {!isLocating
+                  ? <IconGeolocation className={styles.centerIcon} />
+                  : <Loading size='small' className={styles.centerLoading} />}
+              </button>
+            )}
             <button
               type='button'
-              className={styles.centerButton}
-              onClick={() => void onCenterOnUserLocation()}
-              disabled={isLocating}
-              aria-label={t('offline.editor.centerOnPosition')}
+              className={styles.visibilityButton}
+              onClick={toggleMapLayers}
+              aria-label={
+                isGuichetGroupVisible
+                  ? t('offline.editor.hideLayers')
+                  : t('offline.editor.showLayers')
+              }
+              title={
+                isGuichetGroupVisible
+                  ? t('offline.editor.hideLayers')
+                  : t('offline.editor.showLayers')
+              }
             >
-              <IconGeolocation className={styles.centerIcon} />
+              <IconEye className={styles.visibilityIcon} />
+              {!isGuichetGroupVisible && <span className={styles.visibilitySlash} aria-hidden='true' />}
             </button>
-          )}
-          <button
-            type='button'
-            className={styles.visibilityButton}
-            onClick={toggleMapLayers}
-            aria-label={
-              isGuichetGroupVisible
-                ? t('offline.editor.hideLayers')
-                : t('offline.editor.showLayers')
-            }
-            title={
-              isGuichetGroupVisible
-                ? t('offline.editor.hideLayers')
-                : t('offline.editor.showLayers')
-            }
-          >
-            <IconEye className={styles.visibilityIcon} />
-            {!isGuichetGroupVisible && <span className={styles.visibilitySlash} aria-hidden='true' />}
-          </button>
+          </div>
         </>
       )}
 
