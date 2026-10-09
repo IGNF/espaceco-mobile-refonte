@@ -13,15 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.21] - 2026-10-xx
+## [0.0.21] - 2026-10-09
 
 ### Added
 - Un rate limit a été ajouté dans le package 'collaboratif-client-api', puis implémenté ici. Défaut à 25 requêtes/s + 3 retries pour une requête qui termine en 429 (tickets #137 et #161)
 
 ### Changed
-- Le niveau de zoom est maintenant conservé lors des recentrages, sauf si le niveau de zoom actuel est < 0 ET que l'utilisateur se recentre via un tap unique sur le bouton de recentrage (ticket #169)
+- Le niveau de zoom est maintenant conservé lors des recentrages, sauf si le niveau de zoom actuel est < 9 ET que l'utilisateur se recentre via un tap unique sur le bouton de recentrage (ticket #169)
 
 ### Fixed
+- À l'ouverture, le fond de carte, les signalements et les couches ne se chargent plus sur le centrage par défaut (Paris). Le chargement attend une position reçue, ou un déplacement volontaire si la géolocalisation échoue (ticket #171)
 
 ## [0.0.20] - 2026-10-02
 

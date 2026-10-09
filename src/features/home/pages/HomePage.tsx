@@ -127,6 +127,7 @@ export function HomePage() {
     isLocating,
     isMapReady,
     hasInitialCenterCompleted,
+    hasInitialLocationAttemptSettled,
     userFollowingMode,
     setUserFollowingMode,
     setIsGeolocationRecenterActive,
@@ -163,7 +164,8 @@ export function HomePage() {
     signalementLayerState,
     groupVisibility.signalements,
     isMapReady,
-    offlineMode
+    offlineMode,
+    hasInitialCenterCompleted,
   );
   const {
     pendingChangesCountByLayerKey,
@@ -200,6 +202,8 @@ export function HomePage() {
     vectorLayers,
   });
   const mountableVectorLayers = hasInitialCenterCompleted ? vectorLayers : [];
+  const mountableGeoportailLayers = hasInitialCenterCompleted ? geoportailLayers : [];
+  const mountableMesCartesLayers = hasInitialCenterCompleted ? mesCartesLayers : [];
   const mountedVectorLayers = useMountedCommunityVectorLayers({
     vectorLayers: mountableVectorLayers,
     pendingChangesCountByLayerKey,
@@ -207,17 +211,17 @@ export function HomePage() {
   });
   const { isVectorLayersLoading } = useCommunityMapLayers(
     mapRef,
-    geoportailLayers,
+    mountableGeoportailLayers,
     geoportailLayerState,
     groupVisibility,
-    mesCartesLayers,
+    mountableMesCartesLayers,
     mountedVectorLayers,
     isMapReady,
     offlineMode,
     mapSettings.isOnlineVectorCacheEnabled,
     activeCommunityCache
   );
-  useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode);
+  useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode, hasInitialCenterCompleted);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -595,6 +599,7 @@ export function HomePage() {
   const { showInitialLoadingOverlay } = useInitialAppLoading({
     isMapReady,
     hasInitialCenterCompleted,
+    hasInitialLocationAttemptSettled,
     isAppDataLoading,
   });
 

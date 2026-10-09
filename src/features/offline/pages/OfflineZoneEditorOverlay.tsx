@@ -41,7 +41,7 @@ interface OfflineZoneEditorOverlayProps {
   mode: OfflineZoneEditorMode;
   zoneName: string;
   layer: CommunityLayer | null;
-  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<void>;
+  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<boolean>;
   isLocating?: boolean;
   isSaving?: boolean;
   onCancel: () => void;

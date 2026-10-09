@@ -89,7 +89,7 @@ interface OfflineManagementPageProps {
   vectorLayers: CommunityLayer[];
   pendingChangesCountByLayerKey: Record<string, number>;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
-  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<void>;
+  onCenterOnUserLocation?: (animationDuration?: number, origin?: CenterLocationOrigin) => Promise<boolean>;
   onZoneEditorOpenChange?: (isOpen: boolean) => void;
   isLocating?: boolean;
 }

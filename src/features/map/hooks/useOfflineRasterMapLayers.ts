@@ -12,7 +12,8 @@ export function useOfflineRasterMapLayers(
   mapRef: RefObject<Map | null>,
   rasterMaps: OfflineRasterMap[],
   isMapReady: boolean,
-  mode: OfflineMode
+  mode: OfflineMode,
+  hasInitialCenterCompleted: boolean,
 ) {
   useEffect(() => {
     if (!isMapReady) {
@@ -40,7 +41,7 @@ export function useOfflineRasterMapLayers(
     cacheGroup.setVisible(mode === 'offline' && loadedRasterMaps.length > 0);
 
     if (geoportailGroup) {
-      geoportailGroup.setVisible(mode !== 'offline');
+      geoportailGroup.setVisible(mode !== 'offline' && hasInitialCenterCompleted);
     }
-  }, [isMapReady, mapRef, mode, rasterMaps]);
+  }, [hasInitialCenterCompleted, isMapReady, mapRef, mode, rasterMaps]);
 }
