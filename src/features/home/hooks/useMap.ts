@@ -71,7 +71,7 @@ interface UseMapReturn {
   mapElementRef: React.RefObject<HTMLDivElement | null>;
   mapRef: React.RefObject<Map | null>;
   map: Map | null;
-  centerOnUserLocation: (animationDuration?: number, origin?: typeof CENTER_LOCATION_ORIGIN[keyof typeof CENTER_LOCATION_ORIGIN]) => Promise<void>;
+  centerOnUserLocation: (animationDuration?: number, origin?: typeof CENTER_LOCATION_ORIGIN[keyof typeof CENTER_LOCATION_ORIGIN]) => Promise<boolean>;
   lockUserLocationOnMap: () => void;
   userFollowingMode: UserFollowingMode;
   setUserFollowingMode: Dispatch<SetStateAction<UserFollowingMode>>;
@@ -84,7 +84,17 @@ interface UseMapReturn {
   isLocating: boolean;
   isLockedUserLocation: boolean;
   isMapReady: boolean;
+  /**
+   * True only after the view has been moved to a received position, or after
+   * the user moves the map once geolocation has given up.
+   * Extent-based data must wait for this flag.
+   */
   hasInitialCenterCompleted: boolean;
+  /**
+   * True once the startup geolocation attempt has finished, including failure.
+   * The loading overlay can close, while map data still waits for a real center.
+   */
+  hasInitialLocationAttemptSettled: boolean;
 }
 
 export function useMap(options: UseMapOptions = {}): UseMapReturn {
@@ -114,9 +124,11 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const [isFeatureGeolocationRecenterActive, setIsGeolocationRecenterActive] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [hasInitialCenterCompleted, setHasInitialCenterCompleted] = useState(
-    () => !shouldCenterOnMount
-  );
+  const [hasAppliedInitialPosition, setHasAppliedInitialPosition] = useState(false);
+  const [hasInitialLocationAttemptFailed, setHasInitialLocationAttemptFailed] = useState(false);
+  const hasInitialCenterCompleted = !shouldCenterOnMount || hasAppliedInitialPosition;
+  const hasInitialLocationAttemptSettled =
+    !shouldCenterOnMount || hasAppliedInitialPosition || hasInitialLocationAttemptFailed;
   const isLockedUserLocation = userFollowingMode === 'locked';
   const isAutoRecenterActive =
     isFeatureGeolocationRecenterActive ||
@@ -334,10 +346,13 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     }, GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS);
   }, [restoreViewportAfterUserChange]);
 
-  const centerOnUserLocation = useCallback(async (animationDuration: number = 500, origin?: typeof CENTER_LOCATION_ORIGIN[keyof typeof CENTER_LOCATION_ORIGIN]) => {
+  const centerOnUserLocation = useCallback(async (
+    animationDuration: number = 500,
+    origin?: typeof CENTER_LOCATION_ORIGIN[keyof typeof CENTER_LOCATION_ORIGIN]
+  ): Promise<boolean> => {
     const map = mapRef.current;
     if (!map || isLocatingRef.current) {
-      return;
+      return false;
     }
 
     isLocatingRef.current = true;
@@ -348,14 +363,19 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       if (!position) {
         // A failed fix must not move the view. The previous fallback recentered on Paris.
         notifyLocationUnavailable();
-        return;
+        setHasInitialLocationAttemptFailed(true);
+        return false;
       }
 
       latestPositionRef.current = position;
       await animateToPosition(map, position, animationDuration, origin);
+      setHasAppliedInitialPosition(true);
+      return true;
     } catch (error) {
       console.error("Error centering on user location:", error);
       notifyLocationUnavailable();
+      setHasInitialLocationAttemptFailed(true);
+      return false;
     } finally {
       isLocatingRef.current = false;
       setIsLocating(false);
@@ -492,6 +512,8 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       });
 
       const geoportailLayer = createGeoportailLayerGroup();
+      // Stay hidden until a real position is applied, so Paris tiles are not requested at startup.
+      geoportailLayer.setVisible(false);
 
       const layers = [
         geoportailLayer,
@@ -605,28 +627,54 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     }
   }, [isRotationEnabled, map]);
 
-  // Center on user location on mount
+  // Center on user location on mount. A skipped call (one already in flight)
+  // must not count as success; the in-flight call records the outcome itself.
   useEffect(() => {
-    if (!shouldCenterOnMount || !isMapReady || hasInitialCenterCompleted) {
+    if (!shouldCenterOnMount || !isMapReady || hasInitialCenterCompleted || hasInitialLocationAttemptSettled) {
       return;
     }
 
-    let cancelled = false;
-
     void (async () => {
-      try {
-        await centerOnUserLocation();
-      } finally {
-        if (!cancelled) {
-          setHasInitialCenterCompleted(true);
-        }
-      }
+      await centerOnUserLocation();
     })();
+  }, [
+    centerOnUserLocation,
+    hasInitialCenterCompleted,
+    hasInitialLocationAttemptSettled,
+    isMapReady,
+    shouldCenterOnMount,
+  ]);
+
+  useEffect(() => {
+    if (!isMapReady || hasInitialCenterCompleted || !hasInitialLocationAttemptSettled) {
+      return;
+    }
+
+    const map = mapRef.current;
+    if (!map) {
+      return;
+    }
+
+    const view = map.getView();
+    const startCenter = view.getCenter()?.slice() as [number, number] | undefined;
+    const startZoom = view.getZoom();
+    const moveEndListener = map.on('moveend', () => {
+      const center = view.getCenter();
+      const zoom = view.getZoom();
+      const centerMoved = !startCenter || !center
+        || Math.abs(center[0] - startCenter[0]) > 1
+        || Math.abs(center[1] - startCenter[1]) > 1;
+      if (!centerMoved && zoom === startZoom) {
+        return;
+      }
+
+      setHasAppliedInitialPosition(true);
+    });
 
     return () => {
-      cancelled = true;
+      unByKey(moveEndListener);
     };
-  }, [centerOnUserLocation, hasInitialCenterCompleted, isMapReady, shouldCenterOnMount]);
+  }, [hasInitialCenterCompleted, hasInitialLocationAttemptSettled, isMapReady]);
 
   return {
     mapElementRef,
@@ -642,5 +690,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     isLockedUserLocation,
     isMapReady,
     hasInitialCenterCompleted,
+    hasInitialLocationAttemptSettled,
   };
 }

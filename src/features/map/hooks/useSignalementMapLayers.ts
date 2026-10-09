@@ -167,7 +167,8 @@ export function useSignalementMapLayers(
   signalementLayerState: SignalementLayerState,
   isSignalementGroupVisible: boolean,
   isMapReady: boolean,
-  mode: OfflineMode
+  mode: OfflineMode,
+  hasInitialCenterCompleted: boolean,
 ) {
   const { activeCommunity } = useCommunity();
   const isOfflineMode = mode === 'offline';
@@ -212,9 +213,9 @@ export function useSignalementMapLayers(
     });
     croquisLayer.setVisible(true);
 
-    const remoteReportsSource = isOfflineMode
-      ? new VectorSource()
-      : new VectorSource({
+    const shouldLoadRemoteReports = !isOfflineMode && hasInitialCenterCompleted;
+    const remoteReportsSource = shouldLoadRemoteReports
+      ? new VectorSource({
         strategy: bboxStrategy,
         loader: async (extent, _resolution, projection, success, failure) => {
           try {
@@ -271,7 +272,8 @@ export function useSignalementMapLayers(
             }
           }
         },
-      });
+      })
+      : new VectorSource();
 
     const clusteredReportsSource = new Cluster({
       source: remoteReportsSource,
@@ -324,7 +326,7 @@ export function useSignalementMapLayers(
     return () => {
       cancelled = true;
     };
-  }, [activeCommunity?.id, isMapReady, isOfflineMode, mapRef]);
+  }, [activeCommunity?.id, hasInitialCenterCompleted, isMapReady, isOfflineMode, mapRef]);
 
   useEffect(() => {
     if (!isMapReady) return;
