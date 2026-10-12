@@ -7,21 +7,48 @@ import { mapApiUserToAppUser, type ApiUserResponse } from '@/domain/user/mappers
 import type { AuthResult, AuthTokens, RefreshResult } from '@/domain/auth/models';
 
 import { collabApiClient } from '@/infra/api/collabApiClient';
+import {
+  OAUTH_CODE_VERIFIER_KEY,
+  resolveOAuthTokenBaseUrl,
+  ssoBaseUrl,
+  usesWebOAuthProxy,
+} from '@/infra/auth/oauthProxy';
 
 import { config } from '@/shared/config/env';
 import { AppError, toAppError } from '@/shared/errors/appError';
 import { storageKey } from '@/shared/constants/storage';
 import i18n from '@/shared/i18n';
-import { getRedirectUri } from '@/shared/utils/auth';
+import { generateCodeChallengeFromVerifier, generateCodeVerifier, getRedirectUri } from '@/shared/utils/auth';
 import { showToastSafe } from '@/shared/utils/toast';
 
 export type { AuthResult, RefreshResult } from '@/domain/auth/models';
 
 const authManager = new AuthManager({
   apiBaseUrl: config.api.baseUrl,
-  oAuthBaseUrl: config.oAuth.baseUrl,
+  oAuthBaseUrl: resolveOAuthTokenBaseUrl(),
   oAuthClientId: config.oAuth.clientId,
 });
+
+/**
+ * Browser navigation to the real Keycloak login page.
+ * AuthManager is pointed at the same-origin proxy, so it must not build this URL.
+ */
+async function redirectWebOAuthLogin(redirectUri: string): Promise<void> {
+  const codeVerifier = generateCodeVerifier();
+  const codeChallenge = await generateCodeChallengeFromVerifier(codeVerifier);
+  localStorage.setItem(OAUTH_CODE_VERIFIER_KEY, codeVerifier);
+
+  const params = new URLSearchParams({
+    client_id: config.oAuth.clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid profile email',
+    code_challenge: codeChallenge,
+    code_challenge_method: 'S256',
+  });
+
+  window.location.href = `${ssoBaseUrl()}/auth?${params.toString()}`;
+}
 
 async function storeTokens(tokens: CoreAuthTokens): Promise<void> {
   const now = Date.now();
@@ -133,6 +160,16 @@ export async function loginWithPassword(email: string, password: string): Promis
 export async function loginWithOAuth(): Promise<AuthResult> {
   try {
     const redirectUri = await getRedirectUri();
+
+    if (usesWebOAuthProxy()) {
+      await redirectWebOAuthLogin(redirectUri);
+      return {
+        success: false,
+        user: null,
+        error: new AppError({ kind: 'unknown', translationKey: 'errors.auth.oauthRedirect', retryable: false }),
+      };
+    }
+
     const result = await authManager.loginWithOAuth(redirectUri);
 
     if (!result.success) {
@@ -188,20 +225,39 @@ export async function loginWithOAuth(): Promise<AuthResult> {
       error: toAppError(error, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.auth.oauthCallbackFailed' }),
     };
   } finally {
-    try {
-      await Browser.close();
-    } catch {
-      // The browser can already be closed.
+    if (!usesWebOAuthProxy()) {
+      try {
+        await Browser.close();
+      } catch {
+        // The browser can already be closed.
+      }
     }
   }
 }
+
+/** One in-flight exchange per code. React StrictMode runs the callback effect twice in dev. */
+let inflightOAuthCallback: { code: string; promise: Promise<AuthResult> } | null = null;
 
 /**
  * This function is used to handle the OAuth callback, *only* on web platform, because unlike mobile platforms, the redirection is done in a new browser tab, so we need to handle the callback manually.
  * @param code - The authorization code received from the OAuth provider
  * @returns {AuthResult} - The result of the OAuth callback
  */
-export async function handleOAuthCallback(code: string): Promise<AuthResult> {
+export function handleOAuthCallback(code: string): Promise<AuthResult> {
+  if (inflightOAuthCallback?.code === code) {
+    return inflightOAuthCallback.promise;
+  }
+
+  const promise = completeOAuthCallback(code).finally(() => {
+    if (inflightOAuthCallback?.promise === promise) {
+      inflightOAuthCallback = null;
+    }
+  });
+  inflightOAuthCallback = { code, promise };
+  return promise;
+}
+
+async function completeOAuthCallback(code: string): Promise<AuthResult> {
   try {
     const redirectUri = await getRedirectUri();
     const result = await authManager.completeOAuthCallback(code, redirectUri);
