@@ -111,7 +111,7 @@ export function HomePage() {
   const { user, logout } = useAuth();
   const { activeCommunity, setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline } = useOffline();
-  const { mapSettings, displayMode } = useAppSettings();
+  const { mapSettings, displayMode, traceRecordingSettings } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
   const draftReportsLimit = useDraftReportsLimitGuard();
@@ -714,6 +714,7 @@ export function HomePage() {
       fastReportFlow.isGpsOpen ||
       gnssReportTemplate !== null ||
       isTraceDirectionActive,
+    minAccuracy: traceRecordingSettings.minAccuracy,
   });
 
   useEffect(() => {

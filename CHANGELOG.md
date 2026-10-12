@@ -13,6 +13,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.22] - 2026-10-xx
+
+### Added
+- Des cercles de couleur représentant la précision de la géolocalisation ont été ajoutés autour de la pastille de position en mode levé ou trace (ticket #156)
+
+### Changed
+- Le design de la pastille indiquant la position de l'utilisateur a été amélioré (ticket #156)
+
+### Fixed
+
 ## [0.0.21] - 2026-10-09
 
 ### Added
