@@ -162,6 +162,7 @@ export function FastReportGpsOverlay({
         isAudioEnabled={isAudioEnabled}
         statusText={statusText}
         gpsInfo={gpsInfo}
+        settings={gpsSettings}
         onStartRecording={startRecording}
         onTogglePause={togglePause}
         onToggleTransportMode={toggleTransportMode}
