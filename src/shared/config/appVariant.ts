@@ -8,10 +8,10 @@ export interface AppVariantConfig {
 }
 
 export const appVariant: AppVariantConfig = {
-  name: "Naviforest",
-  displayName: "Naviforest",
-  fixedCommunityId: 658,
-  canSwitchCommunity: false,
-  noAccessTitle: "Accès Naviforest",
-  noAccessMessage: "Votre compte ne permet pas d'accéder au guichet Naviforest.",
+  name: "EspaceCo",
+  displayName: "Espace collaboratif IGN",
+  fixedCommunityId: undefined,
+  canSwitchCommunity: true,
+  noAccessTitle: "Aucun groupe",
+  noAccessMessage: "Vous n'êtes membre d'aucun groupe. Rejoignez un groupe depuis l'Espace collaboratif pour commencer à contribuer.",
 };
