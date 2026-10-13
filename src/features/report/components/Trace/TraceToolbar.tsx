@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
 import type { FastReportGpsInfo } from '@/features/report/types/fastReportGps';
 import type { TraceTransportMode } from '@/features/report/constants/reportTrace.constants';
 
@@ -11,6 +12,8 @@ import IconMeasure from '@/shared/assets/icons/icon-mesure.svg?react';
 import IconNext from '@/shared/assets/icons/icon-next.svg?react';
 import IconSpeaker from '@/shared/assets/icons/icon-speaker.svg?react';
 import IconCar from '@/shared/assets/icons/Icon-car.svg?react';
+import IconDeportPlanimetrique from '@/shared/assets/icons/icon-deport-planimetrique.svg?react';
+import IconDeportAltimetrique from '@/shared/assets/icons/icon-deport-altimetrique.svg?react';
 import IconPedestrian from '@/shared/assets/icons/Icon-pedestrain.svg?react';
 import { joinCSSClassNames } from '@/shared/utils/join';
 
@@ -25,6 +28,7 @@ interface TraceToolbarProps {
   transportMode: TraceTransportMode;
   isAudioEnabled: boolean;
   statusText: string;
+  settings?: FastReportGpsSettings;
   onStartRecording: () => void;
   onTogglePause: () => void;
   onToggleTransportMode: () => void;
@@ -46,6 +50,7 @@ export function TraceToolbar({
   transportMode,
   isAudioEnabled,
   statusText,
+  settings,
   onStartRecording,
   onTogglePause,
   onToggleTransportMode,
@@ -85,6 +90,29 @@ export function TraceToolbar({
     </button>
   );
 
+  const modeOffsets = settings?.offsetByMode[transportMode];
+  const altimetricTooLow = !!modeOffsets && (
+    Math.abs(modeOffsets.altimetric.value) < 1 || !modeOffsets.altimetric.enabled
+  );
+
+  const measureBlock = (
+    isFastReport && modeOffsets ? (
+      <span className={styles.measureBlock}>
+        <span className={joinCSSClassNames(styles.measureReading, altimetricTooLow && styles.measureAltimetricTooLow)}>
+          <IconDeportAltimetrique className={joinCSSClassNames(styles.deportIcon, styles.deportIconAltimetric)} />
+          <span className={styles.measureValue}>{modeOffsets.altimetric.value}</span>
+        </span>
+        <IconMeasure className={styles.measureIcon} />
+        {transportMode === 'car' && (
+          <span className={styles.measureReading}>
+            <IconDeportPlanimetrique className={joinCSSClassNames(styles.deportIcon, styles.deportIconPlanimetric)} />
+            <span className={styles.measureValue}>{modeOffsets.planimetric.value}</span>
+          </span>
+        )}
+      </span>
+    ) : null
+  );
+
   return (
     <div className={styles.root}>
       <button
@@ -110,7 +138,7 @@ export function TraceToolbar({
         </div>
       )}
 
-      <div className={joinCSSClassNames(styles.bottomBar, isFastReport && styles.bottomBarFastReport)}>
+      <div className={styles.bottomBar}>
         {isFastReport ? (
           <button
             type="button"
@@ -221,12 +249,12 @@ export function TraceToolbar({
         {isFastReport && (
           <button
             type="button"
-            className={styles.actionButton}
+            className={joinCSSClassNames(styles.actionButton, styles.measureButton)}
             onClick={onOpenOffsetSettings}
             disabled={!onOpenOffsetSettings}
             aria-label={t('reports.createOrEdit.traceToolbar.offsetSettings')}
           >
-            <IconMeasure className={styles.actionIcon} />
+            {measureBlock}
           </button>
         )}
       </div>

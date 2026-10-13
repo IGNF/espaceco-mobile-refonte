@@ -52,14 +52,20 @@
   padding: 14px 16px calc(14px + var(--safe-bottom, 0px));
   background: rgba(247, 248, 250, 0.98);
   border-top: 1px solid rgba(23, 31, 38, 0.08);
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  display: flex;
+  align-items: center;
   gap: 8px;
   pointer-events: auto;
 }
 
-.bottomBarFastReport {
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+.bottomBar > .actionButton {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.measureButton {
+  height: auto;
+  min-height: 46px;
 }
 
 .actionButton {
@@ -178,4 +184,61 @@
 
 .gpsQuality-invalid {
   background: #cf1919;
+}
+
+.measureBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.measureReading {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--color-dark);
+}
+
+.measureValue {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.measureAltimetricTooLow,
+.measureAltimetricTooLow .deportIcon {
+  color: var(--color-danger);
+}
+
+.measureIcon {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+}
+
+.measureIcon path {
+  fill: currentColor;
+}
+
+.deportIcon {
+  display: block;
+  flex: 0 0 auto;
+  color: var(--color-primary);
+}
+
+.deportIcon path {
+  fill: currentColor;
+}
+
+.deportIconAltimetric {
+  width: 12px;
+  height: 12px;
+}
+
+.deportIconPlanimetric {
+  width: 14px;
+  height: 7px;
 }
