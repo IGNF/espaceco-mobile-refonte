@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
 import { useAuth } from "../../hooks/useAuth";
+import { useStoredAccountIds } from "../../hooks/useStoredAccountIds";
 
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useOffline } from '@/features/offline/hooks/useOffline';
@@ -30,6 +31,13 @@ export function LoginPage() {
     isLoading: isCommunityLoading,
   } = useCommunity();
   const { network, isLoading: isOfflineLoading } = useOffline();
+	const {
+		userId: storedUserId,
+		communityId: storedCommunityId,
+		isLoading: isStoredAccountLoading,
+	} = useStoredAccountIds();
+  console.log('storedUserId', storedUserId);
+  console.log('storedCommunityId', storedCommunityId);
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +78,7 @@ export function LoginPage() {
     user?.communities_member?.length
   ]);
 
-	if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || isAuthenticated) {
+	if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || isStoredAccountLoading || isAuthenticated) {
 		return (
 			<div className={styles.container + " " + screen.screenContainer}>
 				<div className={styles.content + " " + styles.loadingContent}>

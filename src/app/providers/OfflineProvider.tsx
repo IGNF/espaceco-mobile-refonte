@@ -65,7 +65,6 @@ const DEFAULT_NETWORK_STATUS: OfflineNetworkStatus = {
 };
 
 function isSameNetworkStatus(current: OfflineNetworkStatus, next: OfflineNetworkStatus): boolean {
-  console.log('comparing', current, next);
   return current.connected === next.connected;
 }
 
