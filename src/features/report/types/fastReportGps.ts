@@ -10,9 +10,17 @@ export interface FastReportOffsetSettings {
   altimetric: FastReportOffsetSetting;
 }
 
+export type RecordingIntervalUnit = 'meters' | 'seconds';
+
+export interface RecordingInterval {
+  value: number;
+  unit: RecordingIntervalUnit;
+}
+
 export interface FastReportGpsSettings {
   offsetByMode: Record<TraceTransportMode, FastReportOffsetSettings>;
   toleranceByMode: Record<TraceTransportMode, number>;
+  recordingIntervalByMode: Record<TraceTransportMode, RecordingInterval>;
 }
 
 export type FastReportGpsQuality = 'fix' | 'dgps-fix' | 'invalid';

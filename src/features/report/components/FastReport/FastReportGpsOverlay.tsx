@@ -62,6 +62,7 @@ export function FastReportGpsOverlay({
     map,
     enabled: isOpen,
     toleranceByMode: gpsSettings.toleranceByMode,
+    recordingIntervalByMode: gpsSettings.recordingIntervalByMode,
   });
   const { isSaving, saveFastReportTrace } = useSaveFastReportTrace();
 

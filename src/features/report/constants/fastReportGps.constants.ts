@@ -2,6 +2,7 @@ import { TRACE_TOLERANCE } from '@/features/report/constants/reportTrace.constan
 import type {
   FastReportGpsSettings,
   FastReportOffsetSettings,
+  RecordingInterval,
 } from '@/features/report/types/fastReportGps';
 
 const DEFAULT_OFFSET_SETTINGS: FastReportOffsetSettings = {
@@ -22,6 +23,15 @@ function createDefaultOffsetSettings(): FastReportOffsetSettings {
   };
 }
 
+export const DEFAULT_RECORDING_INTERVAL: RecordingInterval = {
+  value: 1,
+  unit: 'seconds',
+};
+
+function createDefaultRecordingInterval(): RecordingInterval {
+  return { ...DEFAULT_RECORDING_INTERVAL };
+}
+
 export const DEFAULT_FAST_REPORT_GPS_SETTINGS: FastReportGpsSettings = {
   offsetByMode: {
     pedestrian: createDefaultOffsetSettings(),
@@ -30,5 +40,9 @@ export const DEFAULT_FAST_REPORT_GPS_SETTINGS: FastReportGpsSettings = {
   toleranceByMode: {
     pedestrian: TRACE_TOLERANCE,
     car: TRACE_TOLERANCE,
+  },
+  recordingIntervalByMode: {
+    pedestrian: createDefaultRecordingInterval(),
+    car: createDefaultRecordingInterval(),
   },
 };

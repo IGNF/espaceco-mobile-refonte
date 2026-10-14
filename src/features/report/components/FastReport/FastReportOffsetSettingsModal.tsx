@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
+import type { FastReportGpsSettings, RecordingIntervalUnit } from '@/features/report/types/fastReportGps';
 import type { TraceTransportMode } from '@/features/report/constants/reportTrace.constants';
 import { Alert } from '@/shared/ui/Alert';
 import { Toggle } from '@/shared/ui/Toggle';
@@ -75,36 +75,57 @@ export function FastReportOffsetSettingsModal({
   onClose,
 }: FastReportOffsetSettingsModalProps) {
   const { t } = useTranslation();
+  const modeSettings = settings.offsetByMode[transportMode];
+  const recordingInterval = settings.recordingIntervalByMode[transportMode];
+  const isCarMode = transportMode === 'car';
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [isPlanimetricEnabled, setIsPlanimetricEnabled] = useState(false);
-  const [planimetricValue, setPlanimetricValue] = useState('0');
-  const [isAltimetricEnabled, setIsAltimetricEnabled] = useState(false);
-  const [altimetricValue, setAltimetricValue] = useState('0');
-  const [toleranceValue, setToleranceValue] = useState('0');
-  const modeSettings = settings.offsetByMode[transportMode];
-  const isCarMode = transportMode === 'car';
-
-  useEffect(() => {
-    if (!isOpen) return;
-
+  const [isPlanimetricEnabled, setIsPlanimetricEnabled] = useState(modeSettings.planimetric.enabled);
+  const [planimetricValue, setPlanimetricValue] = useState(String(modeSettings.planimetric.value));
+  const [isAltimetricEnabled, setIsAltimetricEnabled] = useState(modeSettings.altimetric.enabled);
+  const [altimetricValue, setAltimetricValue] = useState(String(modeSettings.altimetric.value));
+  const [toleranceValue, setToleranceValue] = useState(String(settings.toleranceByMode[transportMode]));
+  const [recordingIntervalValue, setRecordingIntervalValue] = useState(String(recordingInterval.value));
+  const [recordingIntervalUnit, setRecordingIntervalUnit] = useState<RecordingIntervalUnit>(recordingInterval.unit);
+  const settingsKey = [
+    transportMode,
+    modeSettings.planimetric.enabled,
+    modeSettings.planimetric.value,
+    modeSettings.altimetric.enabled,
+    modeSettings.altimetric.value,
+    settings.toleranceByMode[transportMode],
+    recordingInterval.value,
+    recordingInterval.unit,
+  ].join('|');
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  const [syncedSettingsKey, setSyncedSettingsKey] = useState(settingsKey);
+  if (!isOpen) {
+    if (wasOpen) setWasOpen(false);
+  } else if (!wasOpen || syncedSettingsKey !== settingsKey) {
+    setWasOpen(true);
+    setSyncedSettingsKey(settingsKey);
     setHasError(false);
     setIsPlanimetricEnabled(modeSettings.planimetric.enabled);
     setPlanimetricValue(String(modeSettings.planimetric.value));
     setIsAltimetricEnabled(modeSettings.altimetric.enabled);
     setAltimetricValue(String(modeSettings.altimetric.value));
     setToleranceValue(String(settings.toleranceByMode[transportMode]));
-  }, [isOpen, modeSettings, settings, transportMode]);
+    setRecordingIntervalValue(String(recordingInterval.value));
+    setRecordingIntervalUnit(recordingInterval.unit);
+  }
 
   const save = async () => {
     const parsedPlanimetricValue = parseDecimalInput(planimetricValue);
     const parsedAltimetricValue = parseDecimalInput(altimetricValue);
     const parsedToleranceValue = parseDecimalInput(toleranceValue);
+    const parsedRecordingIntervalValue = Number(recordingIntervalValue);
 
     if (
       !isFiniteNumber(parsedPlanimetricValue) ||
       !isFiniteNumber(parsedAltimetricValue) ||
-      !isNonNegativeFinite(parsedToleranceValue)
+      !isNonNegativeFinite(parsedToleranceValue) ||
+      !Number.isInteger(parsedRecordingIntervalValue) ||
+      parsedRecordingIntervalValue < 1
     ) {
       setHasError(true);
       return;
@@ -130,6 +151,13 @@ export function FastReportOffsetSettingsModal({
         toleranceByMode: {
           ...settings.toleranceByMode,
           [transportMode]: parsedToleranceValue,
+        },
+        recordingIntervalByMode: {
+          ...settings.recordingIntervalByMode,
+          [transportMode]: {
+            value: parsedRecordingIntervalValue,
+            unit: recordingIntervalUnit,
+          },
         },
       });
       onClose();
@@ -186,6 +214,28 @@ export function FastReportOffsetSettingsModal({
             value={toleranceValue}
             onChange={(event) => setToleranceValue(event.target.value)}
           />
+        </label>
+
+        <label className={styles.recordingIntervalRow}>
+          <span>{t('reports.fastReport.offset.recordingInterval')}</span>
+          <input
+            className={styles.numberInput}
+            type="number"
+            min="1"
+            step="1"
+            inputMode="numeric"
+            value={recordingIntervalValue}
+            onChange={(event) => setRecordingIntervalValue(event.target.value)}
+          />
+          <select
+            className={styles.unitSelect}
+            value={recordingIntervalUnit}
+            aria-label={t('reports.fastReport.offset.recordingIntervalUnit')}
+            onChange={(event) => setRecordingIntervalUnit(event.target.value as RecordingIntervalUnit)}
+          >
+            <option value="seconds">{t('reports.fastReport.offset.unit.seconds')}</option>
+            <option value="meters">{t('reports.fastReport.offset.unit.meters')}</option>
+          </select>
         </label>
 
         {hasError && (

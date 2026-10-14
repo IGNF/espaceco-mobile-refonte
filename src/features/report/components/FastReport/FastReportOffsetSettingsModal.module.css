@@ -23,6 +23,16 @@
   font-weight: 600;
 }
 
+.recordingIntervalRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px 118px;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-dark);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .numberInput {
   min-width: 0;
   height: 40px;
@@ -35,6 +45,17 @@
 
 .numberInput:disabled {
   opacity: 0.5;
+}
+
+.unitSelect {
+  min-width: 0;
+  height: 40px;
+  border: 1px solid rgba(23, 31, 38, 0.18);
+  border-radius: 8px;
+  padding: 0 8px;
+  background: #fff;
+  font: inherit;
+  color: var(--color-dark);
 }
 
 .resetIcon {
