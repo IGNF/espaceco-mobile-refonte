@@ -1,10 +1,17 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import type { PluginListenerHandle } from '@capacitor/core';
 import type { CommunityLayer } from '@ign/mobile-core';
+import { Network } from '@ign/mobile-device';
+
 import type { Extent } from 'ol/extent';
 import { boundingExtent } from 'ol/extent';
-import { Network } from '@ign/mobile-device';
+
+import { OfflineContext } from './OfflineContext';
+
 import { Network as CapacitorNetwork } from '@capacitor/network';
+
 import {
   type OfflineCacheDownloadResult,
   type OfflineCommunityCache,
@@ -19,21 +26,27 @@ import {
   type OfflineRasterMapDraftInput,
   type OfflineZone,
 } from '@/domain/offline/models';
+
 import type { OfflineNetworkStatus } from '@/app/providers/OfflineContext';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+
 import { OfflineCacheRepository } from '@/infra/offline/OfflineCacheRepository';
 import { OfflineModeRepository } from '@/infra/offline/OfflineModeRepository';
 import { OfflineRasterMapRepository } from '@/infra/offline/OfflineRasterMapRepository';
 import { OfflineRasterDownloadService } from '@/infra/offline/OfflineRasterDownloadService';
 import { OfflineVectorDownloadService } from '@/infra/offline/OfflineVectorDownloadService';
 import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
+
 import { EspaceCo_DeviceStorage } from '@/platform/device/storage';
+
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
-import { OfflineContext } from './OfflineContext';
+
 import { OFFLINE_DOWNLOAD_CANCELLED_CODE, OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
+import { showToastSafe } from '@/shared/utils/toast';
 
 interface OfflineProviderProps {
   children: ReactNode;
@@ -50,6 +63,11 @@ const DEFAULT_NETWORK_STATUS: OfflineNetworkStatus = {
   connected: true,
   connectionType: 'unknown',
 };
+
+function isSameNetworkStatus(current: OfflineNetworkStatus, next: OfflineNetworkStatus): boolean {
+  console.log('comparing', current, next);
+  return current.connected === next.connected && current.connectionType === next.connectionType;
+}
 
 /**
  * Reads the current network state.
@@ -86,6 +104,7 @@ function replaceOfflineRasterMap(currentMaps: OfflineRasterMap[], nextMap: Offli
 }
 
 export function OfflineProvider({ children }: OfflineProviderProps) {
+  const { t } = useTranslation();
   const { user, isLoading: isAuthLoading } = useAuth();
   const { activeCommunity } = useCommunity();
   const authUserId = user?.id ?? null;
@@ -98,6 +117,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [downloadError, setDownloadError] = useState<AppError | null>(null);
   const [requestedMode, setRequestedModeState] = useState<OfflineMode>('online');
   const [network, setNetwork] = useState<OfflineNetworkStatus>(DEFAULT_NETWORK_STATUS);
+  const networkRef = useRef(network);
   const [zones, setZones] = useState<OfflineZone[]>([]);
   const [caches, setCaches] = useState<OfflineCommunityCache[]>([]);
   const [rasterMaps, setRasterMaps] = useState<OfflineRasterMap[]>([]);
@@ -119,7 +139,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
       ]);
 
       setRequestedModeState(nextRequestedMode);
-      setNetwork(nextNetworkStatus);
+      if (!isSameNetworkStatus(networkRef.current, nextNetworkStatus)) {
+        networkRef.current = nextNetworkStatus;
+        setNetwork(nextNetworkStatus);
+      }
       setZones(nextZones);
       setCaches(nextCaches);
       setRasterMaps(nextRasterMaps);
@@ -136,26 +159,37 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     let isActive = true;
     let listener: PluginListenerHandle | null = null;
 
-    void getNetworkStatus().then((nextNetworkStatus) => {
-      if (isActive) {
-        setNetwork(nextNetworkStatus);
-      }
-    });
-
-    void CapacitorNetwork.addListener('networkStatusChange', (status) => {
+    void (async () => {
+      const initialStatus = await getNetworkStatus();
       if (!isActive) {
         return;
       }
 
-      setNetwork(status);
-    }).then((handle) => {
-      if (!isActive) {
-        void handle.remove();
-        return;
+      if (!isSameNetworkStatus(networkRef.current, initialStatus)) {
+        networkRef.current = initialStatus;
+        setNetwork(initialStatus);
       }
 
-      listener = handle;
-    });
+      listener = await CapacitorNetwork.addListener('networkStatusChange', (status) => {
+        if (!isActive || isSameNetworkStatus(networkRef.current, status)) {
+          return;
+        }
+
+        networkRef.current = status;
+        setNetwork(status);
+
+        if (status.connected) {
+          void showToastSafe({ text: t('network.connected', { type: status.connectionType ?? 'unknown' }), duration: 'short' });
+        } else {
+          void showToastSafe({ text: t('network.disconnected'), duration: 'short' });
+        }
+      });
+
+      if (!isActive) {
+        void listener.remove();
+        listener = null;
+      }
+    })();
 
     return () => {
       isActive = false;
@@ -164,7 +198,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         void listener.remove();
       }
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (isAuthLoading || authUserId !== null || requestedMode === 'online') {
