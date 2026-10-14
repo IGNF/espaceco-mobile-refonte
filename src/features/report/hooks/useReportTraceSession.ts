@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type Feature from 'ol/Feature';
+import type OlGeolocation from 'ol/Geolocation';
 import type Geometry from 'ol/geom/Geometry';
 import VectorLayer from 'ol/layer/Vector';
 import type OlMap from 'ol/Map';
 import { unByKey } from 'ol/Observable';
+import { transform } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
+import { getDistance } from 'ol/sphere';
 import type { EventsKey } from 'ol/events';
 import GeolocationDraw, { type GeolocationDrawEvent } from 'ol-ext/interaction/GeolocationDraw';
 
@@ -14,6 +17,7 @@ import { EspaceCo_KeepAwake } from '@/platform/device/keepAwake';
 import type {
   FastReportGpsInfo,
   FastReportGpsQuality,
+  RecordingInterval,
 } from '@/features/report/types/fastReportGps';
 import {
   DEFAULT_TRACE_RECORDING_SETTINGS,
@@ -34,6 +38,7 @@ import {
   findLineStringFeature,
   getLineStringGeometry,
 } from '@/features/report/utils/traceGeometry';
+import { shouldRecordTracePoint } from '@/features/report/utils/traceRecording';
 
 import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 
@@ -45,6 +50,7 @@ export interface UseReportTraceSessionOptions {
   /** Enables or disables the whole session lifecycle. */
   enabled: boolean;
   toleranceByMode?: Record<TraceTransportMode, number>;
+  recordingIntervalByMode?: Record<TraceTransportMode, RecordingInterval>;
 }
 
 /**
@@ -112,6 +118,7 @@ export function useReportTraceSession({
   map,
   enabled,
   toleranceByMode,
+  recordingIntervalByMode,
 }: UseReportTraceSessionOptions): UseReportTraceSessionReturn {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -135,10 +142,49 @@ export function useReportTraceSession({
   const audioEnabledRef = useRef(isAudioEnabled);
   const traceRecordingSettingsRef = useRef(traceRecordingSettings);
   const toleranceByModeRef = useRef(toleranceByMode);
+  const recordingIntervalByModeRef = useRef(recordingIntervalByMode);
+  const geometryPointCountRef = useRef(0);
+  const lastRecordedAtMsRef = useRef<number | null>(null);
 
   const getToleranceForMode = useCallback((mode: TraceTransportMode) => {
     return toleranceByModeRef.current?.[mode] ?? traceRecordingSettingsRef.current.tolerance;
   }, []);
+
+  const acceptTraceLocation = useCallback((interaction: GeolocationDraw, location: OlGeolocation) => {
+    const accuracy = location.getAccuracy();
+    const minAccuracy = traceRecordingSettingsRef.current.minAccuracy;
+    if (accuracy === undefined || accuracy >= minAccuracy) return false;
+
+    const position = location.getPosition();
+    if (!position) return false;
+
+    const path = (interaction as GeolocationDrawInternals).path_;
+    const lastCoordinate = path[path.length - 1];
+    if (!lastCoordinate) return true;
+
+    const projection = interaction.getMap()?.getView().getProjection();
+    if (!projection) return false;
+
+    const distanceMeters = getDistance(
+      transform([lastCoordinate[0], lastCoordinate[1]], projection, 'EPSG:4326'),
+      transform([position[0], position[1]], projection, 'EPSG:4326'),
+    );
+    const recordedAtMs = lastRecordedAtMsRef.current
+      ?? (typeof lastCoordinate[3] === 'number' ? lastCoordinate[3] * 1000 : null);
+    const elapsedSeconds = recordedAtMs === null
+      ? Number.POSITIVE_INFINITY
+      : (Date.now() - recordedAtMs) / 1000;
+
+    return shouldRecordTracePoint(
+      {
+        minDistanceMeters: getToleranceForMode(transportModeRef.current),
+        recordingInterval: recordingIntervalByModeRef.current?.[transportModeRef.current],
+      },
+      distanceMeters,
+      elapsedSeconds,
+      false,
+    );
+  }, [getToleranceForMode]);
 
   const resetTraceState = useCallback(() => {
     setHasTrace(false);
@@ -225,14 +271,21 @@ export function useReportTraceSession({
     ];
     const lastCoordinate = interaction.path_[interaction.path_.length - 1];
     if (nextCoordinate[0] === lastCoordinate?.[0] && nextCoordinate[1] === lastCoordinate?.[1]) return;
+    if (!acceptTraceLocation(interaction, interaction.geolocation as unknown as OlGeolocation)) return;
 
     interaction.path_.push(nextCoordinate);
+    lastRecordedAtMsRef.current = Date.now();
     const line = getLineStringGeometry(interaction.sketch_[1]);
     if (line) {
       line.appendCoordinate(nextCoordinate);
       cleanLineStringCoordinates(line);
+      const pointCount = line.getCoordinates().length;
+      if (pointCount > geometryPointCountRef.current) {
+        playTracePointSound();
+      }
+      geometryPointCountRef.current = pointCount;
     }
-  }, []);
+  }, [acceptTraceLocation, playTracePointSound]);
 
   const getPositionWithMetadata = useCallback((location: GeolocationDrawLocation) => {
     const position = location.getPosition();
@@ -268,13 +321,19 @@ export function useReportTraceSession({
       stopTracePointSound();
       source.clear(true);
       resetTraceState();
-      interaction.set('tolerance', getToleranceForMode(transportMode));
+      geometryPointCountRef.current = 0;
+      lastRecordedAtMsRef.current = null;
+      interaction.set('tolerance', 0);
       interaction.set('minAccuracy', traceRecordingSettingsRef.current.minAccuracy);
       interaction.setActive(true);
       interaction.setFollowTrack('auto');
       interaction.pause(false);
       if (seedCoordinate) {
         (interaction as GeolocationDrawInternals).path_.push(seedCoordinate);
+        const seedTimestamp = seedCoordinate[3];
+        lastRecordedAtMsRef.current = typeof seedTimestamp === 'number'
+          ? seedTimestamp * 1000
+          : Date.now();
       }
       setIsRecording(true);
       setIsPaused(false);
@@ -286,7 +345,7 @@ export function useReportTraceSession({
       interaction.setFollowTrack('auto');
       setIsPaused(false);
     }
-  }, [getToleranceForMode, resetTraceState, stopTracePointSound, transportMode]);
+  }, [resetTraceState, stopTracePointSound]);
 
   const startRecording = useCallback(() => {
     startRecordingFromCoordinate();
@@ -329,6 +388,8 @@ export function useReportTraceSession({
     deactivateInteraction(interaction);
     interaction?.reset();
     source?.clear(true);
+    geometryPointCountRef.current = 0;
+    lastRecordedAtMsRef.current = null;
 
     stopTracePointSound();
     clearRecordingFlags();
@@ -350,25 +411,23 @@ export function useReportTraceSession({
 
   useEffect(() => {
     transportModeRef.current = transportMode;
-    const interaction = interactionRef.current;
-    if (!interaction) return;
-    interaction.set('tolerance', getToleranceForMode(transportMode));
-  }, [getToleranceForMode, transportMode]);
+  }, [transportMode]);
 
   useEffect(() => {
     traceRecordingSettingsRef.current = traceRecordingSettings;
     const interaction = interactionRef.current;
     if (!interaction) return;
     interaction.set('minAccuracy', traceRecordingSettings.minAccuracy);
-    interaction.set('tolerance', getToleranceForMode(transportModeRef.current));
-  }, [getToleranceForMode, traceRecordingSettings]);
+    interaction.set('tolerance', 0);
+  }, [traceRecordingSettings]);
 
   useEffect(() => {
     toleranceByModeRef.current = toleranceByMode;
-    const interaction = interactionRef.current;
-    if (!interaction) return;
-    interaction.set('tolerance', getToleranceForMode(transportModeRef.current));
-  }, [getToleranceForMode, toleranceByMode]);
+  }, [toleranceByMode]);
+
+  useEffect(() => {
+    recordingIntervalByModeRef.current = recordingIntervalByMode;
+  }, [recordingIntervalByMode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -412,9 +471,12 @@ export function useReportTraceSession({
       type: 'LineString',
       minZoom: TRACE_MIN_ZOOM,
       followTrack: 'auto',
-      tolerance: getToleranceForMode(transportModeRef.current),
+      tolerance: 0,
       minAccuracy: traceRecordingSettingsRef.current.minAccuracy,
       style: traceRecordingOverlayStyle,
+      condition: function (this: GeolocationDraw, location: OlGeolocation) {
+        return acceptTraceLocation(this, location);
+      },
     });
     (geolocationInteraction as GeolocationDrawInternals).getPosition = (location) => {
       return getPositionWithMetadata(location as unknown as GeolocationDrawLocation);
@@ -428,11 +490,14 @@ export function useReportTraceSession({
     interactionRef.current = geolocationInteraction;
 
     const onDrawing = (event: GeolocationDrawEvent) => {
+      lastRecordedAtMsRef.current = Date.now();
       const line = getLineStringGeometry(event.feature as Feature<Geometry>);
       syncStatsFromLineString(line);
-      if (line) {
+      const pointCount = line?.getCoordinates().length ?? 0;
+      if (pointCount > geometryPointCountRef.current) {
         playTracePointSound();
       }
+      geometryPointCountRef.current = pointCount;
     };
 
     const onActiveChange = () => {
@@ -480,8 +545,8 @@ export function useReportTraceSession({
   }, [
     clearRecordingFlags,
     enabled,
+    acceptTraceLocation,
     getPositionWithMetadata,
-    getToleranceForMode,
     map,
     playTracePointSound,
     resetTraceState,

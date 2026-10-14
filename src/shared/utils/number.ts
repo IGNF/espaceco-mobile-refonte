@@ -7,6 +7,12 @@ export function clampNumber(value: number, min: number, max: number): number {
   return value
 }
 
+export function readPositiveInteger(value: unknown, fallback: number): number {
+  const parsed = toNumber(value)
+  if (parsed === undefined || !Number.isInteger(parsed) || parsed < 1) return fallback
+  return parsed
+}
+
 export function readNonNegativeNumber(value: unknown, fallback: number): number {
   const parsed = toNumber(value)
   if (parsed === undefined || parsed < 0) return fallback

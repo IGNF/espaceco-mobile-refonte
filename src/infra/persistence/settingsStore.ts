@@ -2,13 +2,14 @@ import { Storage } from '@ign/mobile-device';
 
 import {
   DEFAULT_FAST_REPORT_GPS_SETTINGS,
+  DEFAULT_RECORDING_INTERVAL,
 } from '@/features/report/constants/fastReportGps.constants';
-import type { FastReportGpsSettings } from '@/features/report/types/fastReportGps';
+import type { FastReportGpsSettings, RecordingInterval } from '@/features/report/types/fastReportGps';
 import { DEFAULT_TRACE_RECORDING_SETTINGS, type TraceRecordingSettings } from '@/features/report/constants/reportTrace.constants';
 
 import { storageKey } from '@/shared/constants/storage';
 import { toRawObject } from '@/shared/utils/coercion';
-import { readFiniteNumber, readNonNegativeNumber } from '@/shared/utils/number';
+import { readFiniteNumber, readNonNegativeNumber, readPositiveInteger } from '@/shared/utils/number';
 import type { MapSettings } from '@/domain/map/models';
 import type { DisplayMode } from '@/domain/user/models';
 
@@ -55,10 +56,26 @@ function normalizeFastReportOffsetSettings(
   };
 }
 
+function normalizeRecordingInterval(
+  rawSettings: unknown,
+  fallback: RecordingInterval = DEFAULT_RECORDING_INTERVAL
+): RecordingInterval {
+  const candidate = toRawObject(rawSettings);
+  const unit = candidate?.unit === 'meters' || candidate?.unit === 'seconds'
+    ? candidate.unit
+    : fallback.unit;
+
+  return {
+    value: readPositiveInteger(candidate?.value, fallback.value),
+    unit,
+  };
+}
+
 function normalizeFastReportGpsSettings(rawSettings: unknown): FastReportGpsSettings {
   const candidate = toRawObject(rawSettings);
   const candidateOffsetByMode = toRawObject(candidate?.offsetByMode);
   const candidateToleranceByMode = toRawObject(candidate?.toleranceByMode);
+  const candidateRecordingIntervalByMode = toRawObject(candidate?.recordingIntervalByMode);
 
   return {
     offsetByMode: {
@@ -79,6 +96,16 @@ function normalizeFastReportGpsSettings(rawSettings: unknown): FastReportGpsSett
       car: readNonNegativeNumber(
         candidateToleranceByMode?.car,
         DEFAULT_FAST_REPORT_GPS_SETTINGS.toleranceByMode.car
+      ),
+    },
+    recordingIntervalByMode: {
+      pedestrian: normalizeRecordingInterval(
+        candidateRecordingIntervalByMode?.pedestrian,
+        DEFAULT_FAST_REPORT_GPS_SETTINGS.recordingIntervalByMode.pedestrian
+      ),
+      car: normalizeRecordingInterval(
+        candidateRecordingIntervalByMode?.car,
+        DEFAULT_FAST_REPORT_GPS_SETTINGS.recordingIntervalByMode.car
       ),
     },
   };

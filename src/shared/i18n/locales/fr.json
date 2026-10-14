@@ -934,7 +934,13 @@
         },
         "planimetric": "Déport planimétrique",
         "altimetric": "Déport altimétrique",
-        "tolerance": "Intervalle entre points (m)",
+        "tolerance": "Intervalle minimum entre points (m)",
+        "recordingInterval": "Intervalle d'enregistrement",
+        "recordingIntervalUnit": "Unité de l'intervalle d'enregistrement",
+        "unit": {
+          "meters": "mètres",
+          "seconds": "secondes"
+        },
         "invalidNumber": "Veuillez saisir un nombre valide."
       }
     },
