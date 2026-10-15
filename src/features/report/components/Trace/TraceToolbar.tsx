@@ -91,9 +91,7 @@ export function TraceToolbar({
   );
 
   const modeOffsets = settings?.offsetByMode[transportMode];
-  const altimetricTooLow = !!modeOffsets && (
-    modeOffsets.altimetric.value <= 1 || !modeOffsets.altimetric.enabled
-  );
+  const altimetricTooLow = !!modeOffsets && modeOffsets.altimetric.value <= 1;
 
   const measureBlock = (
     isFastReport && modeOffsets ? (
