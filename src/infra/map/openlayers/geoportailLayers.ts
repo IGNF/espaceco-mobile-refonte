@@ -42,6 +42,8 @@ const GeoportailClass = ol_layer_Geoportail as typeof ol_layer_Geoportail & {
   capabilities: Record<string, GeoportailCapability>
 };
 
+let geoportailCapabilitiesReady = false;
+
 /**
  * Initialize Geoportail capabilities by loading them from the server.
  * This should be called once at app startup before creating layers.
@@ -50,6 +52,11 @@ export async function initGeoportailCapabilities(): Promise<void> {
   // Use getCapabilities which returns a real Promise
   const capabilities = await ol_layer_Geoportail.getCapabilities('gpf'); // 'gpf' key loads public Geoplateforme layers
   Object.assign(GeoportailClass.capabilities, capabilities);
+  geoportailCapabilitiesReady = true;
+}
+
+export function hasGeoportailCapabilities(): boolean {
+  return geoportailCapabilitiesReady;
 }
 
 function getGeoportailEndpointConfig(url: string): GeoportailEndpointConfig {

@@ -28,7 +28,9 @@ import {
 import {
   initGeoportailCapabilities,
   createGeoportailLayerGroup,
+  hasGeoportailCapabilities,
 } from "@/infra/map/openlayers/geoportailLayers";
+import { findLayerGroupByName } from "@/infra/map/openlayers/layerGroups";
 
 interface UseMapOptions {
   centerOnUserLocation?: boolean;
@@ -116,7 +118,7 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
   const latestPositionRef = useRef<Position | null>(null);
   const isAutoRecenterActiveRef = useRef(false);
   const hasReportedWatchLocationFailureRef = useRef(false);
-  const skipGeoportailCapabilitiesOnInitRef = useRef(skipGeoportailCapabilities);
+  const geoportailCapabilitiesMissingRef = useRef(!hasGeoportailCapabilities());
   const isRotationEnabledRef = useRef(isRotationEnabled);
   isRotationEnabledRef.current = isRotationEnabled;
   const [map, setMap] = useState<Map | null>(null);
@@ -486,16 +488,6 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     async function initMap() {
       if (!mapElementRef.current || !mounted) return;
 
-      if (!skipGeoportailCapabilitiesOnInitRef.current) {
-        try {
-          await initGeoportailCapabilities();
-        } catch (error) {
-          console.error("Failed to load Geoportail capabilities:", error);
-        }
-      }
-
-      if (!mounted || !mapElementRef.current) return;
-
       const layerCache = new LayerGroup({
         properties: {
           title: 'Cartes hors-ligne',
@@ -675,6 +667,44 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       unByKey(moveEndListener);
     };
   }, [hasInitialCenterCompleted, hasInitialLocationAttemptSettled, isMapReady]);
+
+  useEffect(() => {
+    const currentMap = mapRef.current;
+    if (!currentMap || skipGeoportailCapabilities || !geoportailCapabilitiesMissingRef.current) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        if (!hasGeoportailCapabilities()) {
+          await initGeoportailCapabilities();
+        }
+      } catch (error) {
+        console.error("Failed to load Geoportail capabilities:", error);
+        return;
+      }
+
+      if (cancelled) return;
+
+      const group = findLayerGroupByName(currentMap, 'geoportailGroup');
+      if (!group) return;
+
+      const isVisible = group.getVisible();
+      const nextLayers = createGeoportailLayerGroup().getLayers().getArray().slice();
+      group.getLayers().clear();
+      for (const layer of nextLayers) {
+        group.getLayers().push(layer);
+      }
+      group.setVisible(isVisible);
+      geoportailCapabilitiesMissingRef.current = false;
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [map, skipGeoportailCapabilities]);
 
   return {
     mapElementRef,

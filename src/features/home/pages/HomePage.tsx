@@ -110,7 +110,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { activeCommunity, setActiveCommunity } = useCommunity();
-  const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline } = useOffline();
+  const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline, network, isNetworkAlertOpen } = useOffline();
   const { mapSettings, displayMode, traceRecordingSettings } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
@@ -601,12 +601,13 @@ export function HomePage() {
     hasInitialCenterCompleted,
     hasInitialLocationAttemptSettled,
     isAppDataLoading,
+    isEnabled: network.connected,
   });
 
   const isHomeLoadingOverlayVisible =
-    showInitialLoadingOverlay || isCommunitySwitchLoading;
+    network.connected && (showInitialLoadingOverlay || isCommunitySwitchLoading);
 
-  const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible;
+  const shouldShowOnboarding = showOnboarding && !isHomeLoadingOverlayVisible && !isNetworkAlertOpen;
 
   const {
     selectedReport: selectedLocalReport,

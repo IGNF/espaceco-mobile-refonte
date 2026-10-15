@@ -42,11 +42,11 @@ import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { EspaceCo_DeviceStorage } from '@/platform/device/storage';
 
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
+import { Alert } from '@/shared/ui/Alert';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 
 import { OFFLINE_DOWNLOAD_CANCELLED_CODE, OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
-import { showToastSafe } from '@/shared/utils/toast';
 
 interface OfflineProviderProps {
   children: ReactNode;
@@ -63,6 +63,10 @@ const DEFAULT_NETWORK_STATUS: OfflineNetworkStatus = {
   connected: true,
   connectionType: 'unknown',
 };
+
+const NETWORK_LOST_ALERT_DELAY_MS = 3000;
+
+type NetworkAlert = 'offline' | 'online';
 
 function isSameNetworkStatus(current: OfflineNetworkStatus, next: OfflineNetworkStatus): boolean {
   return current.connected === next.connected;
@@ -116,7 +120,12 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [downloadError, setDownloadError] = useState<AppError | null>(null);
   const [requestedMode, setRequestedModeState] = useState<OfflineMode>('online');
   const [network, setNetwork] = useState<OfflineNetworkStatus>(DEFAULT_NETWORK_STATUS);
+  const [networkAlert, setNetworkAlert] = useState<NetworkAlert | null>(null);
+  const [isUpdatingOfflineMode, setIsUpdatingOfflineMode] = useState(false);
+  const [startupOfflineAlertDismissed, setStartupOfflineAlertDismissed] = useState(false);
+  const [lastNetworkAlert, setLastNetworkAlert] = useState<NetworkAlert>('offline');
   const networkRef = useRef(network);
+  const authUserIdRef = useRef(authUserId);
   const [zones, setZones] = useState<OfflineZone[]>([]);
   const [caches, setCaches] = useState<OfflineCommunityCache[]>([]);
   const [rasterMaps, setRasterMaps] = useState<OfflineRasterMap[]>([]);
@@ -157,6 +166,13 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   useEffect(() => {
     let isActive = true;
     let listener: PluginListenerHandle | null = null;
+    let disconnectAlertTimer: number | null = null;
+
+    const clearDisconnectAlertTimer = () => {
+      if (disconnectAlertTimer === null) return;
+      window.clearTimeout(disconnectAlertTimer);
+      disconnectAlertTimer = null;
+    };
 
     void (async () => {
       const initialStatus = await getNetworkStatus();
@@ -174,13 +190,28 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
           return;
         }
 
+        const wasConnected = networkRef.current.connected;
         networkRef.current = status;
         setNetwork(status);
+        clearDisconnectAlertTimer();
 
-        if (status.connected) {
-          void showToastSafe({ text: t('network.connected', { type: status.connectionType ?? 'unknown' }), duration: 'short' });
-        } else {
-          void showToastSafe({ text: t('network.disconnected'), duration: 'short' });
+        if (!status.connected) {
+          if (authUserIdRef.current === null) {
+            return;
+          }
+
+          disconnectAlertTimer = window.setTimeout(() => {
+            disconnectAlertTimer = null;
+            if (!isActive || networkRef.current.connected || authUserIdRef.current === null) {
+              return;
+            }
+            setNetworkAlert('offline');
+          }, NETWORK_LOST_ALERT_DELAY_MS);
+          return;
+        }
+
+        if (!wasConnected && authUserIdRef.current !== null) {
+          setNetworkAlert('online');
         }
       });
 
@@ -192,12 +223,25 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
 
     return () => {
       isActive = false;
+      clearDisconnectAlertTimer();
 
       if (listener) {
         void listener.remove();
       }
     };
-  }, [t]);
+  }, []);
+
+  useEffect(() => {
+    authUserIdRef.current = authUserId;
+  }, [authUserId]);
+
+  const showStartupOfflineAlert =
+    !startupOfflineAlertDismissed &&
+    !isAuthLoading &&
+    !isLoading &&
+    authUserId !== null &&
+    !network.connected;
+  const visibleNetworkAlert = networkAlert ?? (showStartupOfflineAlert ? 'offline' : null);
 
   useEffect(() => {
     if (isAuthLoading || authUserId !== null || requestedMode === 'online') {
@@ -1023,6 +1067,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     rasterMaps,
     zones,
     isLoading,
+    isNetworkAlertOpen: visibleNetworkAlert !== null,
     isDownloading,
     isCancellingDownload,
     downloadProgress,
@@ -1050,5 +1095,65 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
     deleteOfflineRasterMap,
   };
 
-  return <OfflineContext.Provider value={value}>{children}</OfflineContext.Provider>;
+  const dismissNetworkAlert = useCallback(() => {
+    setNetworkAlert(null);
+    setStartupOfflineAlertDismissed(true);
+  }, []);
+
+  const confirmNetworkAlert = useCallback(async () => {
+    if (visibleNetworkAlert === null) return;
+
+    setIsUpdatingOfflineMode(true);
+    try {
+      await setOfflineMode(visibleNetworkAlert === 'offline' ? 'offline' : 'online');
+      dismissNetworkAlert();
+    } catch (error) {
+      console.error('Failed to update offline mode:', error);
+    } finally {
+      setIsUpdatingOfflineMode(false);
+    }
+  }, [dismissNetworkAlert, setOfflineMode, visibleNetworkAlert]);
+
+  if (visibleNetworkAlert !== null && visibleNetworkAlert !== lastNetworkAlert) {
+    setLastNetworkAlert(visibleNetworkAlert);
+  }
+
+  const alertKind = visibleNetworkAlert ?? lastNetworkAlert;
+  const networkAlertCopy = alertKind === 'online'
+    ? {
+        title: t('network.onlineAlert.title'),
+        subtitle: t('network.onlineAlert.subtitle'),
+        actionLabel: t('network.onlineAlert.disableOffline'),
+      }
+    : {
+        title: t('network.offlineAlert.title'),
+        subtitle: t('network.offlineAlert.subtitle'),
+        actionLabel: t('network.offlineAlert.enableOffline'),
+      };
+
+  return (
+    <OfflineContext.Provider value={value}>
+      {children}
+      <Alert
+        isOpen={visibleNetworkAlert !== null}
+        onClose={dismissNetworkAlert}
+        title={networkAlertCopy.title}
+        subtitle={networkAlertCopy.subtitle}
+        buttons={[
+          {
+            label: networkAlertCopy.actionLabel,
+            onClick: () => void confirmNetworkAlert(),
+            loading: isUpdatingOfflineMode,
+            disabled: isUpdatingOfflineMode,
+          },
+          {
+            label: t('common.close'),
+            onClick: dismissNetworkAlert,
+            variant: 'outline',
+            disabled: isUpdatingOfflineMode,
+          },
+        ]}
+      />
+    </OfflineContext.Provider>
+  );
 }

@@ -12,8 +12,16 @@
     "cta": "Continuer"
   },
   "network": {
-    "connected": "Réseau connecté ({{type}})",
-    "disconnected": "Réseau déconnecté"
+    "offlineAlert": {
+      "title": "Aucune connexion réseau",
+      "subtitle": "L'application ne peut pas joindre le serveur. Activez le mode hors ligne pour continuer avec les données enregistrées sur l'appareil.",
+      "enableOffline": "Activer le mode hors ligne"
+    },
+    "onlineAlert": {
+      "title": "Connexion réseau rétablie",
+      "subtitle": "Le réseau est de nouveau disponible. Désactivez le mode hors ligne pour retrouver le fonctionnement connecté de l'application.",
+      "disableOffline": "Désactiver le mode hors ligne"
+    }
   },
   "login": {
     "title": "Connectez-vous",
