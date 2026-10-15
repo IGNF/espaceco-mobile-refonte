@@ -92,18 +92,22 @@ export function TraceToolbar({
 
   const modeOffsets = settings?.offsetByMode[transportMode];
   const altimetricTooLow = !!modeOffsets && (
-    Math.abs(modeOffsets.altimetric.value) <= 1 || !modeOffsets.altimetric.enabled
+    modeOffsets.altimetric.value <= 1 || !modeOffsets.altimetric.enabled
   );
 
   const measureBlock = (
     isFastReport && modeOffsets ? (
       <span className={styles.measureBlock}>
-        <span className={joinCSSClassNames(styles.measureReading, altimetricTooLow && styles.measureAltimetricTooLow)}>
-          <IconDeportAltimetrique className={joinCSSClassNames(styles.deportIcon, styles.deportIconAltimetric)} />
-          <span className={styles.measureValue}>{modeOffsets.altimetric.value}</span>
-        </span>
+        {
+          modeOffsets.altimetric.enabled && (
+            <span className={joinCSSClassNames(styles.measureReading, altimetricTooLow && styles.measureAltimetricTooLow)}>
+              <IconDeportAltimetrique className={joinCSSClassNames(styles.deportIcon, styles.deportIconAltimetric)} />
+              <span className={styles.measureValue}>{modeOffsets.altimetric.value}</span>
+            </span>
+          )
+        }
         <IconMeasure className={styles.measureIcon} />
-        {transportMode === 'car' && (
+        {transportMode === 'car' && modeOffsets.planimetric.enabled && (
           <span className={styles.measureReading}>
             <IconDeportPlanimetrique className={joinCSSClassNames(styles.deportIcon, styles.deportIconPlanimetric)} />
             <span className={styles.measureValue}>{modeOffsets.planimetric.value}</span>

@@ -19,6 +19,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Ajout d'un mode "non connecté" qui permet à un utilisateur d'utiliser l'application sans connection réseau (ticket #170)
 
 ### Changed
+- Les valeurs de déport sont maintenant affichées dans la barre d'outils uniquement si le déport est activé (ticket #14)
+- Si la valeur de déport altimétrique est négative, elle est indiquée en rouge (ticket 14)
 
 ### Fixed
 
@@ -26,7 +28,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Des cercles de couleur représentant la précision de la géolocalisation ont été ajoutés autour de la pastille de position en mode levé ou trace (ticket #156)
-- Les valeurs de déport sont affichés dans la barre d'outils (ticket #14)
+- Les valeurs de déport sont affichées dans la barre d'outils (ticket #14)
 - Ajout d'un intervalle d'enregistrement dans la modale de déport GNSS, avec option secondes/mètres (ticket #12)
 
 ### Changed
