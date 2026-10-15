@@ -26,6 +26,7 @@
     "forgotPassword": "Mot de passe oublié ?",
     "submit": "Se connecter",
     "continueWithoutAccount": "Continuer sans compte",
+    "continueWithoutConnection": "Continuer sans connexion",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
     "restoringSession": "Restauration de votre session..."
   },

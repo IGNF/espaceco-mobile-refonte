@@ -20,9 +20,11 @@ const USER_PARAMS_KEY = 'USER_PARAMS';
 const COMMUNITIES_KEY = 'COMMUNITIES';
 const ACTIVE_COMMUNITY_KEY = 'ACTIVE_COMMUNITY';
 const CREDENTIALS_KEY = 'CREDENTIALS';
-// Kept after logout so the login page can still resolve the last account offline.
+// Kept after logout so the login page can reopen the last account offline.
 const USER_ID_KEY = 'USER_ID';
 const COMMUNITY_ID_KEY = 'COMMUNITY_ID';
+const STORED_USER_KEY = 'STORED_USER';
+const STORED_COMMUNITIES_KEY = 'STORED_COMMUNITIES';
 
 export class UserStorageAdapter implements IUserStorage {
   // User operations
@@ -192,12 +194,47 @@ export class UserStorageAdapter implements IUserStorage {
     ]);
   }
 
+  /**
+   * Writes the last account back into the session keys so the app can open offline.
+   * Falls back to the stored ids when the full snapshot is missing.
+   */
+  async restoreStoredAccount(): Promise<User | null> {
+    const userId = await this.getUserId();
+    const communityId = await this.getCommunityId();
+    if (userId === null || communityId === null) {
+      return null;
+    }
+
+    const storedUser = await Storage.get(storageKey(STORED_USER_KEY), 'object') as User | null;
+    const user = storedUser?.id === userId
+      ? storedUser
+      : { id: userId, username: '', communities: [] } satisfies User;
+
+    const storedCommunities = await Storage.get(storageKey(STORED_COMMUNITIES_KEY), 'object') as AppCommunity[] | null;
+    const communities = storedCommunities?.some((community) => community.id === communityId)
+      ? storedCommunities
+      : [
+          ...(storedCommunities ?? []),
+          { id: communityId, name: '', allMembersCanValid: false, appData: {} } satisfies AppCommunity,
+        ];
+
+    await Storage.set(storageKey(USER_KEY), user, 'object');
+    await this.saveCommunities(communities);
+    await Storage.set(storageKey(ACTIVE_COMMUNITY_KEY), communityId, 'number');
+    return user;
+  }
+
   private async keepAccountIds(): Promise<void> {
     const userData = await Storage.get(storageKey(USER_KEY), 'object') as User | null;
+    const communities = await this.getCommunities();
     const activeCommunityId = await this.getActiveCommunity();
 
     if (userData) {
       await this.saveUserId(userData.id);
+      await Storage.set(storageKey(STORED_USER_KEY), userData, 'object');
+    }
+    if (communities.length > 0) {
+      await Storage.set(storageKey(STORED_COMMUNITIES_KEY), communities, 'object');
     }
     if (activeCommunityId !== null) {
       await this.saveCommunityId(activeCommunityId);

@@ -11,6 +11,7 @@ export interface AuthContextType {
   setUserFromOAuthCallback: (user: AppUser) => Promise<void>;
   refreshCurrentUser: () => Promise<AppUser | null>;
   continueWithoutAccount: () => Promise<{ success: boolean; user: AppUser | null; error?: Error | null }>;
+  continueOffline: () => Promise<boolean>;
   logout: () => Promise<void>;
 }
 

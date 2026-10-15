@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -24,20 +24,26 @@ import styles from "./LoginPage.module.css";
 export function LoginPage() {
 	const { t } = useTranslation();
 	const navigate = useNavigate();
-	const { user, loginWithOAuth, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+	const { user, loginWithOAuth, isAuthenticated, isLoading: isAuthLoading, continueOffline } = useAuth();
   const {
     activeCommunity,
     fixedCommunityId,
     isLoading: isCommunityLoading,
   } = useCommunity();
-  const { network, isLoading: isOfflineLoading } = useOffline();
+  const { network, isLoading: isOfflineLoading, canEnableOffline, setOfflineMode } = useOffline();
 	const {
 		userId: storedUserId,
 		communityId: storedCommunityId,
+		displayMode: storedDisplayMode,
 		isLoading: isStoredAccountLoading,
 	} = useStoredAccountIds();
-  console.log('storedUserId', storedUserId);
-  console.log('storedCommunityId', storedCommunityId);
+	const continueOfflineRequested = useRef(false);
+	const showContinueOffline =
+		!isOfflineLoading
+		&& !network.connected
+		&& storedDisplayMode === 'expert'
+		&& storedUserId !== null
+		&& storedCommunityId !== null;
 	// const [email, setEmail] = useState("");
 	// const [password, setPassword] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +60,9 @@ export function LoginPage() {
 
 	useEffect(() => {
 		console.log("isAuthenticated", isAuthenticated);
+		if (continueOfflineRequested.current) {
+			return;
+		}
 		if (hasInitialAuthCheckCompleted && hasStartupContextCompleted && isAuthenticated) {
       if (fixedCommunityId !== null) {
         navigate(activeCommunity ? '/home' : '/community-selection', { replace: true });
@@ -78,6 +87,33 @@ export function LoginPage() {
     user?.communities_member?.length
   ]);
 
+	useEffect(() => {
+		if (!continueOfflineRequested.current) return;
+		if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || !isAuthenticated || !activeCommunity) return;
+
+		continueOfflineRequested.current = false;
+
+		void (async () => {
+			if (!network.connected && canEnableOffline) {
+				try {
+					await setOfflineMode('offline');
+				} catch (error) {
+					console.error('Failed to enable offline mode:', error);
+				}
+			}
+			navigate('/home', { replace: true });
+		})();
+	}, [
+		activeCommunity,
+		canEnableOffline,
+		hasInitialAuthCheckCompleted,
+		hasStartupContextCompleted,
+		isAuthenticated,
+		navigate,
+		network.connected,
+		setOfflineMode,
+	]);
+
 	if (!hasInitialAuthCheckCompleted || !hasStartupContextCompleted || isStoredAccountLoading || isAuthenticated) {
 		return (
 			<div className={styles.container + " " + screen.screenContainer}>
@@ -87,6 +123,15 @@ export function LoginPage() {
 			</div>
 		);
 	}
+
+	const handleContinueOffline = async () => {
+		continueOfflineRequested.current = true;
+		const restored = await continueOffline();
+		if (!restored) {
+			continueOfflineRequested.current = false;
+			setError(t('errors.global.unknown'));
+		}
+	};
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -177,6 +222,15 @@ export function LoginPage() {
 					>
 						{t("login.submit")}
 					</Button>
+					{showContinueOffline && (
+						<button
+							type="button"
+							className={styles.continueWithoutConnection}
+							onClick={() => void handleContinueOffline()}
+						>
+							{t("login.continueWithoutConnection")}
+						</button>
+					)}
 				</form>
 			</div>
 		</div>

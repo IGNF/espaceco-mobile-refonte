@@ -37,6 +37,18 @@
 	margin: auto;
 }
 
+.continueWithoutConnection {
+	align-self: center;
+	margin-top: 0.25rem;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--color-medium);
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
 .register {
 	margin-top: 2rem;
 	margin-bottom: 2rem;

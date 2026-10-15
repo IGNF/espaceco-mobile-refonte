@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 
+import type { DisplayMode } from '@/domain/user/models';
+import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
 import { UserStorageAdapter } from '@/infra/storage';
 
 const userStorage = new UserStorageAdapter();
@@ -7,6 +9,7 @@ const userStorage = new UserStorageAdapter();
 export function useStoredAccountIds() {
   const [userId, setUserId] = useState<number | null>(null);
   const [communityId, setCommunityId] = useState<number | null>(null);
+  const [displayMode, setDisplayMode] = useState<DisplayMode | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -18,9 +21,13 @@ export function useStoredAccountIds() {
           userStorage.getUserId(),
           userStorage.getCommunityId(),
         ]);
+        const storedDisplayMode = storedUserId === null
+          ? null
+          : await EspaceCo_SettingsStore.getDisplayMode(storedUserId);
         if (!isMounted) return;
         setUserId(storedUserId);
         setCommunityId(storedCommunityId);
+        setDisplayMode(storedDisplayMode);
       } catch (error) {
         console.error('Failed to read stored account ids:', error);
       } finally {
@@ -35,5 +42,5 @@ export function useStoredAccountIds() {
     };
   }, []);
 
-  return { userId, communityId, isLoading };
+  return { userId, communityId, displayMode, isLoading };
 }

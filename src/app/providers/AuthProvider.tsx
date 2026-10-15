@@ -142,6 +142,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
+  const continueOffline = useCallback(async () => {
+    const storedUser = await userStorage.restoreStoredAccount() as AppUser | null;
+    if (!storedUser) {
+      return false;
+    }
+
+    setUser(storedUser);
+    return true;
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -166,6 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         refreshCurrentUser,
         logout,
         continueWithoutAccount,
+        continueOffline,
       }}
     >
       {children}
