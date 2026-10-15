@@ -35,6 +35,7 @@ export interface OfflineModeState {
 
 export interface OfflineContextType extends OfflineModeState {
   isLoading: boolean;
+  isNetworkAlertOpen: boolean;
   isDownloading: boolean;
   isCancellingDownload: boolean;
   downloadProgress: OfflineDownloadProgress | null;

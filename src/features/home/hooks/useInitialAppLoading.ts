@@ -8,6 +8,7 @@ interface UseInitialAppLoadingOptions {
   hasInitialCenterCompleted: boolean;
   hasInitialLocationAttemptSettled: boolean;
   isAppDataLoading: boolean;
+  isEnabled?: boolean;
   timeoutMs?: number;
   settleMs?: number;
 }
@@ -23,15 +24,21 @@ export function useInitialAppLoading({
   hasInitialCenterCompleted,
   hasInitialLocationAttemptSettled,
   isAppDataLoading,
+  isEnabled = true,
   timeoutMs = APP_LOADING_TIMEOUT_MS,
   settleMs = DEFAULT_SETTLE_MS,
 }: UseInitialAppLoadingOptions): UseInitialAppLoadingResult {
   const { t } = useTranslation();
   const [isInitialLoadingComplete, setIsInitialLoadingComplete] = useState(false);
   const [hasInitialLoadingTimedOut, setHasInitialLoadingTimedOut] = useState(false);
+  const [isSkipped, setIsSkipped] = useState(false);
+
+  if (!isEnabled && !isSkipped) {
+    setIsSkipped(true);
+  }
 
   useEffect(() => {
-    if (isInitialLoadingComplete || hasInitialLoadingTimedOut) return;
+    if (isSkipped || isInitialLoadingComplete || hasInitialLoadingTimedOut) return;
 
     const hasFinishedLoading =
       isMapReady &&
@@ -53,11 +60,12 @@ export function useInitialAppLoading({
     isInitialLoadingComplete,
     isAppDataLoading,
     isMapReady,
+    isSkipped,
     settleMs,
   ]);
 
   useEffect(() => {
-    if (isInitialLoadingComplete || hasInitialLoadingTimedOut) return;
+    if (isSkipped || isInitialLoadingComplete || hasInitialLoadingTimedOut) return;
 
     const timeoutId = window.setTimeout(() => {
       setHasInitialLoadingTimedOut(true);
@@ -71,9 +79,9 @@ export function useInitialAppLoading({
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [hasInitialLoadingTimedOut, isInitialLoadingComplete, t, timeoutMs]);
+  }, [hasInitialLoadingTimedOut, isInitialLoadingComplete, isSkipped, t, timeoutMs]);
 
   return {
-    showInitialLoadingOverlay: !isInitialLoadingComplete && !hasInitialLoadingTimedOut,
+    showInitialLoadingOverlay: !isSkipped && !isInitialLoadingComplete && !hasInitialLoadingTimedOut,
   };
 }
