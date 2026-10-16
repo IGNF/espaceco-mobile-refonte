@@ -14,15 +14,16 @@ import IconAngleDown from "@/shared/assets/icons/icon-angle-down.svg?react";
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 
 import type { AppUser } from "@/domain/user/models";
+import { Badge } from "@/shared/ui/Badge";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { useOffline } from "@/features/offline/hooks/useOffline";
-import { DraftReportsLimitAlerts } from "@/features/report/components/DraftReportsLimitAlerts";
-import { useDraftReportsLimitGuard } from "@/features/report/hooks/useDraftReportsLimitGuard";
 
 export interface LeftMenuProps {
   isOpen: boolean;
   onClose: () => void;
   user?: AppUser;
+  draftReportsCount: number;
+  requestCreate: (onProceed: () => void) => void;
   onNavigate?: (route: string) => void;
 }
 
@@ -88,13 +89,11 @@ const standaloneItems: StandaloneItem[] = [
   { id: "aPropos", labelKey: "leftMenu.aPropos", icon: IconInfo, route: "/about" },
 ];
 
-export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
+export function LeftMenu({ isOpen, onClose, user, draftReportsCount, requestCreate, onNavigate }: LeftMenuProps) {
   const { t } = useTranslation();
   const { activeCommunity, canSwitchCommunity } = useCommunity();
   const { mode } = useOffline();
   useBackHandler(isOpen, onClose, 1000);
-
-  const draftReportsLimit = useDraftReportsLimitGuard();
 
   const [expandedGroups, setExpandedGroups] = useState<Set<MenuGroupId>>(
     new Set([])
@@ -128,7 +127,7 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
     };
 
     if (item.id === "nouveauSignalement") {
-      draftReportsLimit.requestCreate(navigate);
+      requestCreate(navigate);
       return;
     }
 
@@ -206,6 +205,9 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
                       ) : null
                       }
                       {t(item.labelKey)}
+                      {item.id === "mesSignalements" && draftReportsCount > 0 ? (
+                        <Badge>{draftReportsCount}</Badge>
+                      ) : null}
                     </button>
                   ))}
                 </div>
@@ -232,7 +234,6 @@ export function LeftMenu({ isOpen, onClose, user, onNavigate }: LeftMenuProps) {
 
         </div>
       </nav>
-      <DraftReportsLimitAlerts {...draftReportsLimit} />
     </>
   );
 }

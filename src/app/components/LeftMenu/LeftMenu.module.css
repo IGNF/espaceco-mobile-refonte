@@ -164,6 +164,7 @@
 	text-align: left;
 	font-size: 0.9375rem;
 	color: var(--color-medium-shade);
+	overflow: visible;
 }
 
 .menuItemOffline {

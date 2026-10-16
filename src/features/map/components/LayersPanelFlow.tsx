@@ -31,6 +31,7 @@ export interface LayersPanelFlowProps {
   lockedByLayerKey?: Record<string, boolean>;
   submittingByLayerKey?: Record<string, boolean>;
   isLoading: boolean;
+  draftReportsCount: number;
   onSetLayerVisibility?: (layerKey: string, visible: boolean) => void;
   onSetLayerOpacity?: (layerKey: string, opacity: number) => void;
   onSetLayerStyle?: (layerKey: string, styleId: string) => void;
@@ -61,6 +62,7 @@ export function LayersPanelFlow({
   lockedByLayerKey,
   submittingByLayerKey,
   isLoading,
+  draftReportsCount,
   onSetLayerVisibility,
   onSetLayerOpacity,
   onSetLayerStyle,
@@ -186,6 +188,7 @@ export function LayersPanelFlow({
         onClose={handleClosePanel}
         groups={layerGroupSummaries}
         isLoading={isLoading}
+        draftReportsCount={draftReportsCount}
         onOpenGroup={handleOpenLayerGroup}
         onToggleGroupVisibility={handleToggleGroupVisibility}
         onShowMesCartesInfo={() => setIsMesCartesInfoOpen(true)}

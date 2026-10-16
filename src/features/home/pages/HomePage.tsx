@@ -115,6 +115,7 @@ export function HomePage() {
   const fastReportThemes = useFastReportThemes();
   const fastReportFlow = useFastReportFlow();
   const draftReportsLimit = useDraftReportsLimitGuard();
+  const draftReportsCount = draftReportsLimit.draftCount;
   const [skipGeolocationTracking, setSkipGeolocationTracking] = useState(false);
   const [isTraceDirectionActive, setIsTraceDirectionActive] = useState(false);
   const {
@@ -851,6 +852,8 @@ export function HomePage() {
         isOpen={isMenuOpen}
         onClose={handleMenuClose}
         user={user ?? undefined}
+        draftReportsCount={draftReportsCount}
+        requestCreate={draftReportsLimit.requestCreate}
         onNavigate={handleMenuNavigate}
       />
       <header className={styles.header}>
@@ -1004,6 +1007,7 @@ export function HomePage() {
         highlightedTab={getHighlightedTab()}
         activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
         disabled={isOfflineZoneEditorOpen}
+        requestCreate={draftReportsLimit.requestCreate}
       />
 
       <LayersPanelFlow
@@ -1021,6 +1025,7 @@ export function HomePage() {
         pendingChangesCountByLayerKey={pendingChangesCountByLayerKey}
         submittingByLayerKey={submittingByLayerKey}
         isLoading={isLayersLoading}
+        draftReportsCount={draftReportsCount}
         onSetLayerVisibility={setLayerVisibility}
         onSetLayerOpacity={setLayerOpacity}
         onSetLayerStyle={setLayerStyle}
