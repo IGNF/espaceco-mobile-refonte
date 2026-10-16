@@ -122,6 +122,7 @@
 	border-radius: 10px;
 	background: white;
 	padding: 1rem 1rem;
+	overflow: visible;
 	text-align: left;
 	cursor: pointer;
 }
@@ -229,21 +230,4 @@
 	padding: 2rem;
 	color: var(--color-medium);
 	font-style: italic;
-}
-
-.draftReportsCountBadge {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	flex-shrink: 0;
-	box-sizing: border-box;
-	min-width: 1.5rem;
-	height: 1.5rem;
-	padding: 0 0.35rem;
-	background-color: var(--color-primary-tint);
-	color: var(--color-dark-contrast);
-	border-radius: 999px;
-	font-size: 0.875rem;
-	font-weight: 600;
-	line-height: 1;
 }

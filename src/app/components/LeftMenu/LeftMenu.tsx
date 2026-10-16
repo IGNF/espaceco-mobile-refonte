@@ -14,6 +14,7 @@ import IconAngleDown from "@/shared/assets/icons/icon-angle-down.svg?react";
 import IconCheck from '@/shared/assets/icons/icon-check.svg?react';
 
 import type { AppUser } from "@/domain/user/models";
+import { Badge } from "@/shared/ui/Badge";
 import { useCommunity } from "@/features/community/hooks/useCommunity";
 import { useOffline } from "@/features/offline/hooks/useOffline";
 
@@ -204,11 +205,9 @@ export function LeftMenu({ isOpen, onClose, user, draftReportsCount, requestCrea
                       ) : null
                       }
                       {t(item.labelKey)}
-                      {
-                        item.id === "mesSignalements" && draftReportsCount > 0 ? (
-                          <span className={styles.draftReportsCountBadge}>{draftReportsCount}</span>
-                        ) : null
-                      }
+                      {item.id === "mesSignalements" && draftReportsCount > 0 ? (
+                        <Badge>{draftReportsCount}</Badge>
+                      ) : null}
                     </button>
                   ))}
                 </div>

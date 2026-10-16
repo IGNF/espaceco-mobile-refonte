@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
+import { Badge } from '@/shared/ui/Badge';
 import { Loading } from '@/shared/ui/Loading/Loading';
 import styles from './LayersPanel.module.css';
 
@@ -131,7 +132,7 @@ export function LayersPanel({
                       <span className={styles.groupTitle}>
                         <span className={styles.groupTitleText}>{group.title}</span>
                         {group.id === 'signalements' && draftReportsCount > 0 && (
-                          <span className={styles.draftReportsCountBadge}>{draftReportsCount}</span>
+                          <Badge>{draftReportsCount}</Badge>
                         )}
                       </span>
                       <span className={styles.groupMeta}>
