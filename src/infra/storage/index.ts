@@ -18,5 +18,5 @@
  */
 
 export { CacheStorageAdapter } from './CacheStorageAdapter';
-export { ReportStorageAdapter } from './ReportStorageAdapter';
+export { ReportStorageAdapter, subscribeReportStorageChanges } from './ReportStorageAdapter';
 export { UserStorageAdapter } from './UserStorageAdapter';

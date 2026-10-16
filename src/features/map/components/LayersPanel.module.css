@@ -132,12 +132,21 @@
 }
 
 .groupTitle {
+	display: flex;
+	align-items: center;
+	gap: 0.35rem;
+	flex: 1;
+	min-width: 0;
 	font-size: 1rem;
 	font-weight: 500;
 	color: var(--color-dark);
+}
+
+.groupTitleText {
 	min-width: 0;
-  text-overflow: ellipsis;
-  overflow: hidden;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .groupMeta {
@@ -220,4 +229,21 @@
 	padding: 2rem;
 	color: var(--color-medium);
 	font-style: italic;
+}
+
+.draftReportsCountBadge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	box-sizing: border-box;
+	min-width: 1.5rem;
+	height: 1.5rem;
+	padding: 0 0.35rem;
+	background-color: var(--color-primary-tint);
+	color: var(--color-dark-contrast);
+	border-radius: 999px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1;
 }

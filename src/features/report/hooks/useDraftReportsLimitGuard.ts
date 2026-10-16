@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ReportStatus } from '@ign/mobile-core';
 
-import { ReportStorageAdapter } from '@/infra/storage';
+import { ReportStorageAdapter, subscribeReportStorageChanges } from '@/infra/storage';
 import { MAX_DRAFT_REPORTS_BLOCK, MAX_DRAFT_REPORTS_WARNING } from '@/shared/constants/report';
 
 const reportStorage = new ReportStorageAdapter();
@@ -26,6 +26,28 @@ export function useDraftReportsLimitGuard(): UseDraftReportsLimitGuardReturn {
   const [draftCount, setDraftCount] = useState(0);
   const pendingProceedRef = useRef<(() => void) | null>(null);
   const isCheckingRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+
+    const refreshDraftCount = () => {
+      void countDraftReports()
+        .then((count) => {
+          if (active) setDraftCount(count);
+        })
+        .catch((error) => {
+          console.error('[report] failed to count draft reports', error);
+        });
+    };
+
+    refreshDraftCount();
+    const unsubscribe = subscribeReportStorageChanges(refreshDraftCount);
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   const requestCreate = (onProceed: () => void) => {
     if (isCheckingRef.current) return;

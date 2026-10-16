@@ -23,6 +23,22 @@ import {
 const REPORTS_KEY = 'REPORTS';
 const REPORT_PARAMS_KEY = 'REPORT_PARAMS';
 const PHOTOS_DIR = 'report_photos';
+
+type ReportStorageListener = () => void;
+
+const reportStorageListeners = new Set<ReportStorageListener>();
+
+export function subscribeReportStorageChanges(listener: ReportStorageListener): () => void {
+  reportStorageListeners.add(listener);
+  return () => {
+    reportStorageListeners.delete(listener);
+  };
+}
+
+function emitReportStorageChange(): void {
+  reportStorageListeners.forEach((listener) => listener());
+}
+
 const reportFeatureFormat = new GeoJSON();
 const REPORT_FEATURE_SERIALIZATION_OPTIONS = {
   featureProjection: WEB_MERCATOR_PROJECTION,
@@ -145,6 +161,7 @@ export class ReportStorageAdapter implements IReportStorage {
     };
     allReports[report.id] = serializable;
     await Storage.set(storageKey(REPORTS_KEY), allReports, 'object');
+    emitReportStorageChange();
   }
 
   async getReport(reportId: number): Promise<Report | null> {
@@ -169,6 +186,7 @@ export class ReportStorageAdapter implements IReportStorage {
 
     delete allReports[reportId];
     await Storage.set(storageKey(REPORTS_KEY), allReports, 'object');
+    emitReportStorageChange();
   }
 
   async listReports(): Promise<Report[]> {
