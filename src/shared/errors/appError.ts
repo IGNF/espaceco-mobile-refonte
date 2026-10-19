@@ -63,6 +63,87 @@ const STATUS_TO_KIND: Record<number, AppErrorKind> = {
   409: 'conflict',
 }
 
+/**
+ * Codes raised by collaboratif-client-api (`ErrorCode`).
+ * A recognized code selects both the kind and the user-facing translation.
+ * The library message stays on `cause` for logs.
+ */
+const API_ERROR_CODE_MAP: Record<string, {
+  kind: AppErrorKind;
+  translationKey: string;
+  retryable?: boolean;
+}> = {
+  BASE_URL_MISSING: {
+    kind: 'unknown',
+    translationKey: 'errors.api.baseUrlMissing',
+    retryable: false,
+  },
+  CLIENT_ID_MISSING: {
+    kind: 'unknown',
+    translationKey: 'errors.api.clientIdMissing',
+    retryable: false,
+  },
+  CLIENT_SECRET_MISSING: {
+    kind: 'unknown',
+    translationKey: 'errors.api.clientSecretMissing',
+    retryable: false,
+  },
+  CLIENT_CONFIGURATION_ERROR: {
+    kind: 'unknown',
+    translationKey: 'errors.api.clientConfiguration',
+    retryable: false,
+  },
+  ACCESS_TOKEN_MISSING: {
+    kind: 'unauthorized',
+    translationKey: 'errors.api.accessTokenMissing',
+  },
+  TOKEN_EXPIRED: {
+    kind: 'unauthorized',
+    translationKey: 'errors.global.unauthorized',
+  },
+  REFRESH_TOKEN_EXPIRED: {
+    kind: 'unauthorized',
+    translationKey: 'errors.auth.refreshTokenExpired',
+  },
+  ERROR_REFRESHING_ACCESS_TOKEN: {
+    kind: 'unauthorized',
+    translationKey: 'errors.auth.tokenRefreshFailed',
+  },
+  REFRESH_TOKEN_MISSING: {
+    kind: 'unauthorized',
+    translationKey: 'errors.auth.refreshTokenMissing',
+  },
+  INVALID_CREDENTIALS: {
+    kind: 'unauthorized',
+    translationKey: 'errors.auth.invalidCredentials',
+  },
+  CONN_ERROR: {
+    kind: 'network',
+    translationKey: 'errors.global.network',
+  },
+  UNAUTHORIZED: {
+    kind: 'unauthorized',
+    translationKey: 'errors.global.unauthorized',
+  },
+  VALIDATION_ERROR: {
+    kind: 'validation',
+    translationKey: 'errors.global.validation',
+  },
+  USER_ID_INVALID: {
+    kind: 'validation',
+    translationKey: 'errors.api.userIdInvalid',
+  },
+}
+
+export function getApiErrorCodeMapping(code: unknown): {
+  kind: AppErrorKind;
+  translationKey: string;
+  retryable?: boolean;
+} | undefined {
+  if (typeof code !== 'string') return undefined;
+  return API_ERROR_CODE_MAP[code];
+}
+
 interface ErrorLike {
   code?: unknown;
   message?: unknown;
@@ -95,15 +176,18 @@ function parseError(error: unknown): ParsedError {
     ? errorLike.response.data as { code?: unknown; message?: unknown }
     : undefined;
 
-  let code: number | string | undefined;
-  if (typeof errorLike.code === 'number' || typeof errorLike.code === 'string') {
-    code = errorLike.code;
-  } else if (responseData) {
-    const dataCode = responseData.code;
-    if (typeof dataCode === 'number' || typeof dataCode === 'string') {
-      code = dataCode;
-    }
-  }
+  const directCode = typeof errorLike.code === 'number' || typeof errorLike.code === 'string'
+    ? errorLike.code
+    : undefined;
+  const dataCode = responseData && (typeof responseData.code === 'number' || typeof responseData.code === 'string')
+    ? responseData.code
+    : undefined;
+  // A known API code wins over a transport code such as ERR_BAD_REQUEST.
+  const code = getApiErrorCodeMapping(directCode)
+    ? directCode
+    : getApiErrorCodeMapping(dataCode)
+      ? dataCode
+      : directCode ?? dataCode;
 
   let message: string | undefined;
   if (responseData) {
@@ -210,17 +294,21 @@ export function toAppError(error: unknown, options: ToAppErrorOptions = {}): App
   }
 
   const parsedError = parseError(error);
+  const apiError = getApiErrorCodeMapping(parsedError.code);
   const fallbackKind = options.fallbackKind ?? 'unknown';
   const inferredKind = inferAppErrorKind(parsedError);
-  const resolvedKind = inferredKind === 'unknown' ? fallbackKind : inferredKind;
-  const translationKey = options.fallbackTranslationKey ?? DEFAULT_TRANSLATION_KEYS[resolvedKind];
+  const resolvedKind = apiError?.kind ?? (inferredKind === 'unknown' ? fallbackKind : inferredKind);
+  const translationKey = apiError?.translationKey
+    ?? options.fallbackTranslationKey
+    ?? DEFAULT_TRANSLATION_KEYS[resolvedKind];
 
   const appError: AppError = new AppError({
     kind: resolvedKind,
     translationKey,
-    message: parsedError.message,
+    // Known API codes carry an English library message. Keep it on `cause` only.
+    message: apiError ? undefined : parsedError.message,
     code: parsedError.code,
-    retryable: options.retryable,
+    retryable: options.retryable ?? apiError?.retryable,
     cause: error,
   });
 
