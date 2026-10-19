@@ -186,6 +186,7 @@ export function useReportForm({
     () => extractAvailableReportThemes(user?.communities_member, activeCommunity?.id, user?.shared_themes),
     [user?.communities_member, activeCommunity?.id, user?.shared_themes]
   );
+  console.log('themes', themes);
   const resolvedReportType: ReportType = reportType ?? 'standard';
   const initialTheme = mode === 'create' && preselectFirstTheme
     ? themes[0]?.theme ?? ''

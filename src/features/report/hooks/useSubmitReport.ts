@@ -23,6 +23,7 @@ import {
   normalizeSketchForApi,
   sanitizeFeaturesForSketchPayload,
 } from '@/features/report/utils/sketchPayload';
+import { useCommunity } from '@/features/community/hooks/useCommunity';
 
 const reportStorage = new ReportStorageAdapter();
 const reportManager = new ReportManager(collabApiClient, reportStorage);
@@ -151,6 +152,8 @@ async function recordSubmittedReport(report: AppReport): Promise<AppReport> {
 
 export function useSubmitReport(): UseSubmitReportReturn {
   const { t } = useTranslation();
+  const { activeCommunity } = useCommunity();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<ReportSubmitError | null>(null);
 
@@ -217,6 +220,9 @@ export function useSubmitReport(): UseSubmitReportReturn {
         }
       }
 
+      console.log('reportPayload', reportPayload);
+      console.log('report payload communityId', reportPayload.communityId);
+      console.log('activeCommunity communityId', activeCommunity?.id);
       const body = mapAppReportToApiBody(reportPayload);
       const response = await collabApiClient.report.add(body);
       const createdReportId = (response.data as ApiReportResponse).id;

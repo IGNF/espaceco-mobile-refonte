@@ -199,7 +199,7 @@ export function extractThemeConfigs(
 
         seen.add(key);
         configs.push({
-          communityId: communityMember.community_id,
+          communityId: communityMember.community_id, // could be rawTheme.community_id or similar. Maybe add 'isShared' value as well
           theme: rawTheme.theme,
           attributes: Array.isArray(rawTheme.attributes)
             ? rawTheme.attributes as CommunityThemeAttribute[]
@@ -250,6 +250,7 @@ export function extractAvailableReportThemes(
   activeCommunityId: number | undefined,
   sharedThemes: SharedThemeCommunity[] | undefined
 ): CommunityThemeConfig[] {
+  console.log('extractAvailableReportThemes', communitiesMembers, activeCommunityId, sharedThemes);
   if (activeCommunityId) {
     return extractThemeConfigs(communitiesMembers, activeCommunityId);
   }

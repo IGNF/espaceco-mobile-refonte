@@ -51,6 +51,7 @@ export function ReportForm({
   isPickingTrace = false,
 }: ReportFormProps) {
   const { t } = useTranslation();
+  console.log('form', form);
 
   const renderPositionCard = () => {
     let content: string;
