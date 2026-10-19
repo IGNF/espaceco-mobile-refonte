@@ -53,6 +53,7 @@
       "notFound": "La ressource demandée est introuvable.",
       "conflict": "Un conflit est survenu. Rechargez les données puis réessayez.",
       "server": "Le service est momentanément indisponible. Réessayez plus tard.",
+      "failedToFetchReports": "Une erreur est survenue lors de la récupération des signalements.",
       "unknown": "Une erreur inattendue est survenue."
     },
     "auth": {

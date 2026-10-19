@@ -23,6 +23,7 @@ import IconFilter from '@/shared/assets/icons/icon-filter.svg?react';
 import styles from '../reportsListPage.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
+import { getUserFacingErrorMessage } from '@/shared/errors/appError';
 
 export interface GroupReportsPageProps {
   isOpen: boolean;
@@ -183,7 +184,7 @@ export function GroupReportsPage({
     }
 
     if (error && reports.length === 0) {
-      return <div className={styles.error}>{t('reports.general.error')}: {error.message}</div>;
+      return <div className={styles.error}>{getUserFacingErrorMessage(error, t)}</div>;
     }
 
     return (
