@@ -27,6 +27,7 @@ export interface AlertProps {
 	children?: ReactNode;
 	buttons?: AlertButton[];
 	size?: 'default' | 'wide';
+	zIndex?: number;
 }
 
 export function Alert({
@@ -37,11 +38,12 @@ export function Alert({
 	children,
 	buttons = [],
 	size = 'default',
+	zIndex = 200,
 }: AlertProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 
-	useBackHandler(isOpen, onClose, 200);
+	useBackHandler(isOpen, onClose, zIndex);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -72,6 +74,7 @@ export function Alert({
 				styles.overlay,
 				isVisible && styles.overlayVisible
 			)}
+			style={{ zIndex }}
 			onClick={onClose}
 		>
 			<div

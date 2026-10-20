@@ -7,6 +7,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import type { AppReport, ReportFilters } from '@/domain/report/models';
 import { mapApiReportsToAppReports, type ApiReportResponse } from '@/domain/report/mappers';
+import { toAppError } from '@/shared/errors/appError';
 
 interface UseGroupReportsOptions {
   limit?: number;
@@ -102,7 +103,7 @@ export function useGroupReports(options: UseGroupReportsOptions = {}): UseGroupR
 
     } catch (err) {
       console.error('fetchReports => error', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch reports'));
+      setError(toAppError(err, { fallbackKind: 'unknown', fallbackTranslationKey: 'errors.global.failedToFetchReports' }));
       if (!append) {
         setReports([]);
       }

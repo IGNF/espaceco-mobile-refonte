@@ -1,5 +1,5 @@
 import type { AppErrorKind } from '@/shared/errors/appError';
-import { AppError, toAppError } from '@/shared/errors/appError';
+import { AppError, getApiErrorCodeMapping, toAppError } from '@/shared/errors/appError';
 
 /**
  * Report-specific submit error categories.
@@ -116,12 +116,13 @@ export function toReportSubmitError(
     fallbackTranslationKey: DEFAULT_TRANSLATION_KEYS[fallbackKind],
   });
   const kind = toReportSubmitKind(appError.kind);
+  const apiError = getApiErrorCodeMapping(appError.code);
 
   return new ReportSubmitError({
     kind,
     code: appError.code,
-    message: appError.message,
-    translationKey: DEFAULT_TRANSLATION_KEYS[kind],
+    message: appError.message !== appError.translationKey ? appError.message : undefined,
+    translationKey: apiError?.translationKey ?? DEFAULT_TRANSLATION_KEYS[kind],
     cause: error,
     retryable: appError.retryable,
   });

@@ -36,6 +36,8 @@
     "continueWithoutAccount": "Continuer sans compte",
     "continueWithoutConnection": "Continuer sans connexion",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "sessionExpiredTitle": "Session expirée",
+    "reconnect": "Se reconnecter",
     "restoringSession": "Restauration de votre session..."
   },
   "authCallback": {
@@ -53,6 +55,7 @@
       "notFound": "La ressource demandée est introuvable.",
       "conflict": "Un conflit est survenu. Rechargez les données puis réessayez.",
       "server": "Le service est momentanément indisponible. Réessayez plus tard.",
+      "failedToFetchReports": "Une erreur est survenue lors de la récupération des signalements.",
       "unknown": "Une erreur inattendue est survenue."
     },
     "auth": {
@@ -71,6 +74,14 @@
       "notAuthenticated": "Vous n'êtes pas authentifié.",
       "currentUserFailed": "Impossible de récupérer l'utilisateur courant.",
       "continueWithoutAccountFailed": "Impossible de continuer sans compte pour le moment."
+    },
+    "api": {
+      "baseUrlMissing": "L'adresse du service est manquante.",
+      "clientIdMissing": "L'identifiant de l'application est manquant.",
+      "clientSecretMissing": "Le secret de l'application est manquant.",
+      "clientConfiguration": "La configuration du service est incorrecte.",
+      "accessTokenMissing": "Le jeton d'accès est manquant. Merci de vous reconnecter.",
+      "userIdInvalid": "L'identifiant utilisateur est invalide."
     }
   },
   "communitySelection": {
