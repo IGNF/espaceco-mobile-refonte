@@ -5,6 +5,7 @@ import { AuthProvider } from './providers/AuthProvider';
 import { CommunityProvider } from './providers/CommunityProvider';
 import { OfflineProvider } from './providers/OfflineProvider';
 import { router } from './router/routes';
+import { SessionExpiredAlert } from './components/SessionExpiredAlert/SessionExpiredAlert';
 import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
 import { AppSettingsProvider } from './providers/AppSettingsProvider';
 
@@ -23,6 +24,7 @@ export function App() {
             </OfflineProvider>
           </CommunityProvider>
         </AppSettingsProvider>
+        <SessionExpiredAlert />
       </AuthProvider>
     </I18nProvider>
   );

@@ -36,6 +36,8 @@
     "continueWithoutAccount": "Continuer sans compte",
     "continueWithoutConnection": "Continuer sans connexion",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "sessionExpiredTitle": "Session expirée",
+    "reconnect": "Se reconnecter",
     "restoringSession": "Restauration de votre session..."
   },
   "authCallback": {

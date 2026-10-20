@@ -1,3 +1,5 @@
+import { reportSessionExpired } from '@/shared/errors/sessionExpiredSignal';
+
 /**
  * Global error categories used across the application.
  */
@@ -63,16 +65,19 @@ const STATUS_TO_KIND: Record<number, AppErrorKind> = {
   409: 'conflict',
 }
 
+interface ApiErrorCodeMapping {
+  kind: AppErrorKind;
+  translationKey: string;
+  retryable?: boolean;
+  sessionExpired?: boolean;
+}
+
 /**
  * Codes raised by collaboratif-client-api (`ErrorCode`).
  * A recognized code selects both the kind and the user-facing translation.
  * The library message stays on `cause` for logs.
  */
-const API_ERROR_CODE_MAP: Record<string, {
-  kind: AppErrorKind;
-  translationKey: string;
-  retryable?: boolean;
-}> = {
+const API_ERROR_CODE_MAP: Record<string, ApiErrorCodeMapping> = {
   BASE_URL_MISSING: {
     kind: 'unknown',
     translationKey: 'errors.api.baseUrlMissing',
@@ -96,14 +101,17 @@ const API_ERROR_CODE_MAP: Record<string, {
   ACCESS_TOKEN_MISSING: {
     kind: 'unauthorized',
     translationKey: 'errors.api.accessTokenMissing',
+    sessionExpired: true,
   },
   TOKEN_EXPIRED: {
     kind: 'unauthorized',
     translationKey: 'errors.global.unauthorized',
+    sessionExpired: true,
   },
   REFRESH_TOKEN_EXPIRED: {
     kind: 'unauthorized',
     translationKey: 'errors.auth.refreshTokenExpired',
+    sessionExpired: true,
   },
   ERROR_REFRESHING_ACCESS_TOKEN: {
     kind: 'unauthorized',
@@ -112,6 +120,7 @@ const API_ERROR_CODE_MAP: Record<string, {
   REFRESH_TOKEN_MISSING: {
     kind: 'unauthorized',
     translationKey: 'errors.auth.refreshTokenMissing',
+    sessionExpired: true,
   },
   INVALID_CREDENTIALS: {
     kind: 'unauthorized',
@@ -135,11 +144,7 @@ const API_ERROR_CODE_MAP: Record<string, {
   },
 }
 
-export function getApiErrorCodeMapping(code: unknown): {
-  kind: AppErrorKind;
-  translationKey: string;
-  retryable?: boolean;
-} | undefined {
+export function getApiErrorCodeMapping(code: unknown): ApiErrorCodeMapping | undefined {
   if (typeof code !== 'string') return undefined;
   return API_ERROR_CODE_MAP[code];
 }
@@ -311,6 +316,10 @@ export function toAppError(error: unknown, options: ToAppErrorOptions = {}): App
     retryable: options.retryable ?? apiError?.retryable,
     cause: error,
   });
+
+  if (apiError?.sessionExpired) {
+    reportSessionExpired();
+  }
 
   console.error("In-app error detected", appError);
 
