@@ -187,6 +187,7 @@ export function extractThemeConfigs(
         continue;
       }
 
+
       for (const rawTheme of profile.themes) {
         if (!isRecord(rawTheme) || typeof rawTheme.theme !== 'string' || rawTheme.theme.length === 0) {
           continue;
@@ -199,8 +200,9 @@ export function extractThemeConfigs(
 
         seen.add(key);
         configs.push({
-          communityId: communityMember.community_id, // could be rawTheme.community_id or similar. Maybe add 'isShared' value as well
+          communityId: (profile.community_id as number) ?? communityMember.community_id,
           theme: rawTheme.theme,
+          global: profile.community_id != communityMember.community_id,
           attributes: Array.isArray(rawTheme.attributes)
             ? rawTheme.attributes as CommunityThemeAttribute[]
             : [],
@@ -250,7 +252,6 @@ export function extractAvailableReportThemes(
   activeCommunityId: number | undefined,
   sharedThemes: SharedThemeCommunity[] | undefined
 ): CommunityThemeConfig[] {
-  console.log('extractAvailableReportThemes', communitiesMembers, activeCommunityId, sharedThemes);
   if (activeCommunityId) {
     return extractThemeConfigs(communitiesMembers, activeCommunityId);
   }

@@ -220,10 +220,7 @@ export function useSubmitReport(): UseSubmitReportReturn {
         }
       }
 
-      console.log('reportPayload', reportPayload);
-      console.log('report payload communityId', reportPayload.communityId);
-      console.log('activeCommunity communityId', activeCommunity?.id);
-      const body = mapAppReportToApiBody(reportPayload);
+      const body = mapAppReportToApiBody(reportPayload, activeCommunity?.id ?? reportPayload.communityId);
       const response = await collabApiClient.report.add(body);
       const createdReportId = (response.data as ApiReportResponse).id;
       console.info('[report] report created', { localReportId: report.id, createdReportId });

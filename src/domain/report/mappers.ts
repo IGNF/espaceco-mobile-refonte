@@ -125,10 +125,10 @@ export function mapApiReportsToAppReports(apiReports: ApiReportResponse[]): AppR
 /**
  * Convert a local Report to the API request body format.
  */
-export function mapAppReportToApiBody(report: Report): Record<string, any> {
+export function mapAppReportToApiBody(report: Report, communityId: number): Record<string, any> {
   const body: Record<string, any> = {
     geometry: report.geometry,
-    community: report.communityId,
+    community: communityId,
     comment: report.comment,
     status: report.status,
     sketch: report.sketch,

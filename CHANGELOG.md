@@ -26,6 +26,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Si la valeur de déport altimétrique est négative, elle est indiquée en rouge (ticket 14)
 
 ### Fixed
+- On peut maintenant envoyer un signalement lié à un thème partagé (non lié au groupe actif de l'utilisateur connecté) (ticket #173)
 
 ## [0.0.22] - 2026-10-14
 
