@@ -42,9 +42,11 @@ import { OfflineZonesRepository } from '@/infra/offline/OfflineZonesRepository';
 import { EspaceCo_DeviceStorage } from '@/platform/device/storage';
 
 import { AppError, isAppError, toAppError } from '@/shared/errors/appError';
+import i18n from '@/shared/i18n';
 import { Alert } from '@/shared/ui/Alert';
 import { getCommunityLayerTitle } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { showToastSafe } from '@/shared/utils/toast';
 
 import { OFFLINE_DOWNLOAD_CANCELLED_CODE, OFFLINE_RASTER_DOWNLOAD_CANCELLED_CODE } from '@/shared/constants/offline';
 
@@ -126,6 +128,7 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const [lastNetworkAlert, setLastNetworkAlert] = useState<NetworkAlert>('offline');
   const networkRef = useRef(network);
   const authUserIdRef = useRef(authUserId);
+  const modeRef = useRef<OfflineMode>('online');
   const [zones, setZones] = useState<OfflineZone[]>([]);
   const [caches, setCaches] = useState<OfflineCommunityCache[]>([]);
   const [rasterMaps, setRasterMaps] = useState<OfflineRasterMap[]>([]);
@@ -211,7 +214,17 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
         }
 
         if (!wasConnected && authUserIdRef.current !== null) {
-          setNetworkAlert('online');
+          if (modeRef.current === 'offline') {
+            setNetworkAlert('online');
+            return;
+          }
+
+          setNetworkAlert(null);
+          void showToastSafe({
+            text: i18n.t('network.onlineAlert.title'),
+            duration: 'short',
+            position: 'top',
+          });
         }
       });
 
@@ -270,6 +283,10 @@ export function OfflineProvider({ children }: OfflineProviderProps) {
   const hasOfflineData = activeCommunityCache?.loaded === true || rasterMaps.some((rasterMap) => rasterMap.loaded);
   const canEnableOffline = isOfflineAllowed && hasOfflineData;
   const mode: OfflineMode = requestedMode === 'offline' && canEnableOffline ? 'offline' : 'online';
+
+  useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
 
   const setOfflineMode = useCallback(
     async (nextMode: OfflineMode) => {
