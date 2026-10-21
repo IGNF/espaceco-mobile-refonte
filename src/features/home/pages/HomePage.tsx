@@ -7,6 +7,7 @@ import { getUid } from "ol/util";
 import type { Report } from '@ign/mobile-core';
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
+import { ServerOutageBanner } from "@/features/home/components/ServerOutageBanner/ServerOutageBanner";
 
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useMap } from "@/features/home/hooks/useMap";
@@ -882,6 +883,7 @@ export function HomePage() {
           </button>
         )}
       </header>
+      <ServerOutageBanner />
 
       <main className={styles.main}>
         <div className={styles.map} ref={mapElementRef} />

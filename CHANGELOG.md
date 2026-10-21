@@ -20,6 +20,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Ajout de badges dans le menu de gauche et dans le panel contenant les groupes de couches pour afficher le nombre de signalements en brouillon (ticket #174)
 - Ajout de messages d'erreurs en français, en se basant sur les codes erreur retournés par l'API espace co (ticket #167)
 - Ajout d'une alerte proposant la reconnexion lorsqu'on fait une requête vers l'espace co et que le token est expiré (ticket #167)
+- Ajout d'une bannière d'alerte en haut de l'écran d'accueil en cas d'erreur 500 venant des API de l'Espace Co (serveur HS) (ticket #165)
 
 ### Changed
 - Les valeurs de déport sont maintenant affichées dans la barre d'outils uniquement si le déport est activé (ticket #14)
