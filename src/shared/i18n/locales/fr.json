@@ -99,6 +99,7 @@
     "title": "Espace collaboratif",
     "offlineModeActive": "Mode hors ligne activé",
     "serverOutage": "L'espace Collaboratif est indisponible pour le moment. Merci d'attendre la disparition de ce message avant d'envoyer vos modifications. Erreur {{code}}",
+    "serverOutageNetwork": "L'espace Collaboratif est indisponible pour le moment. Merci d'attendre la disparition de ce message avant d'envoyer vos modifications. Erreur réseau",
     "subtitle": "Groupe actif",
     "welcome": "Bienvenue sur l'application",
     "logout": "Déconnexion",

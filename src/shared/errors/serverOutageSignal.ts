@@ -1,14 +1,17 @@
-type ServerOutageListener = (status: number | null) => void;
+/** HTTP status, or `network` when the browser received no readable response (CORS, server down). */
+export type ServerOutageCode = number | 'network';
 
-let currentStatus: number | null = null;
+type ServerOutageListener = (status: ServerOutageCode | null) => void;
+
+let currentStatus: ServerOutageCode | null = null;
 const listeners = new Set<ServerOutageListener>();
 
 function notify(): void {
   listeners.forEach((listener) => listener(currentStatus));
 }
 
-/** The collaborative API answered with a server error. */
-export function reportServerOutage(status: number): void {
+/** The collaborative API answered with a server error, or the call never received a response. */
+export function reportServerOutage(status: ServerOutageCode): void {
   if (currentStatus === status) return;
   currentStatus = status;
   notify();

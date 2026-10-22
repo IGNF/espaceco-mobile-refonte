@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { getServerOutageMessage, subscribeServerOutage } from '@/shared/errors/serverOutageSignal';
+import { getServerOutageMessage, subscribeServerOutage, type ServerOutageCode } from '@/shared/errors/serverOutageSignal';
 import { joinCSSClassNames } from '@/shared/utils/join';
 
 import styles from './ServerOutageBanner.module.css';
 
 export function ServerOutageBanner() {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<number | null>(null);
-  const [remoteMessage, setRemoteMessage] = useState<{ status: number; text: string } | null>(null);
+  const [status, setStatus] = useState<ServerOutageCode | null>(null);
+  const [remoteMessage, setRemoteMessage] = useState<{ status: ServerOutageCode; text: string } | null>(null);
 
   useEffect(() => subscribeServerOutage(setStatus), []);
 
@@ -31,7 +31,11 @@ export function ServerOutageBanner() {
   if (status === null) return null;
 
   const notice = remoteMessage?.status === status ? remoteMessage.text : null;
-  const message = notice ?? t('home.serverOutage', { code: status });
+  const message = notice ?? (
+    status === 'network'
+      ? t('home.serverOutageNetwork')
+      : t('home.serverOutage', { code: status })
+  );
 
   return (
     <div className={joinCSSClassNames(styles.banner, notice && styles.bannerNotice)} role="status">

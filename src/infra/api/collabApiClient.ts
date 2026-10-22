@@ -21,6 +21,20 @@ function readStatus(error: unknown): number | undefined {
 }
 
 /**
+ * A shut down server often reaches the browser as a CORS failure.
+ * Axios then reports a network error and no HTTP status.
+ */
+function isUnreachableApiError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+
+  const candidate = error as { code?: unknown; message?: unknown; response?: unknown };
+  if (candidate.response || candidate.code === 'ERR_CANCELED') return false;
+  if (candidate.code === 'ERR_NETWORK') return true;
+
+  return candidate.message === 'Network Error';
+}
+
+/**
  * Pre-configured API client for the collaboratif API.
  * On local web dev, token refresh goes through the same-origin SSO proxy.
  */
@@ -48,6 +62,8 @@ collaborativeHttp.interceptors.response.use(
     const status = readStatus(error);
     if (status !== undefined && status >= 500) {
       reportServerOutage(status);
+    } else if (status === undefined && isUnreachableApiError(error)) {
+      reportServerOutage('network');
     }
     return Promise.reject(error);
   },
