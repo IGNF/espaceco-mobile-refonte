@@ -239,9 +239,17 @@ export function LayerGroupDetailsPage({
   };
 
   const handleToggleAllVisibility = () => {
+    if (!group) return;
+
     const nextVisible = isHideAllChecked;
     setGroupVisibleDraft(nextVisible);
     setLayerDraftsVisibility(() => nextVisible);
+    onSetGroupVisibility?.(group.id, nextVisible);
+
+    for (const item of hideableItems) {
+      if (!item.layerKey) continue;
+      onSetLayerVisibility?.(item.layerKey, nextVisible);
+    }
   };
 
   const handleToggleVisibility = (item: LayerGroupItem) => {
@@ -250,6 +258,12 @@ export function LayerGroupDetailsPage({
     if (isHideAllChecked) {
       setGroupVisibleDraft(true);
       setLayerDraftsVisibility((groupItem) => groupItem.layerKey === item.layerKey);
+      onSetGroupVisibility?.(group.id, true);
+
+      for (const groupItem of group.items) {
+        if (!groupItem.layerKey) continue;
+        onSetLayerVisibility?.(groupItem.layerKey, groupItem.layerKey === item.layerKey);
+      }
       return;
     }
 
@@ -258,6 +272,7 @@ export function LayerGroupDetailsPage({
       ...previousState,
       visible: nextVisible,
     }));
+    onSetLayerVisibility?.(item.layerKey, nextVisible);
 
     if (!nextVisible) {
       const remainingVisible = hideableItems.some((groupItem) => {
@@ -270,6 +285,7 @@ export function LayerGroupDetailsPage({
 
       if (!remainingVisible) {
         setGroupVisibleDraft(false);
+        onSetGroupVisibility?.(group.id, false);
       }
     }
   };
@@ -280,6 +296,10 @@ export function LayerGroupDetailsPage({
       ...previousState,
       opacity: nextOpacity,
     }));
+
+    if (item.layerKey) {
+      onSetLayerOpacity?.(item.layerKey, nextOpacity);
+    }
   };
 
   const handleSetLayerStyle = (item: LayerGroupItem, styleId: string) => {
@@ -347,7 +367,13 @@ export function LayerGroupDetailsPage({
 
   return (
     <>
-      <SlideUpPage isOpen={isOpen} onClose={handleClose} level={2}>
+      <SlideUpPage
+        isOpen={isOpen}
+        onClose={handleClose}
+        level={2}
+        presentation="sheet"
+        sheetSize="tall"
+      >
         <PageHeader
           title={title}
           showBackButton

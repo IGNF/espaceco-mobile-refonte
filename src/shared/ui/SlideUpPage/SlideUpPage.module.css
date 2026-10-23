@@ -5,10 +5,50 @@
 	transition: transform 0.3s ease-out;
 	z-index: 100;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 }
 
 .slideUpPageVisible {
 	transform: translateY(0);
+}
+
+.slideUpPageSheet,
+.slideUpPageDocked {
+	background-color: white;
+	--sheet-title-size: 1.25rem;
+	--sheet-row-padding: 0.7rem;
+}
+
+.slideUpPageSheet {
+	inset: auto;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	border-radius: 16px 16px 0 0;
+	box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.slideUpPageSheetHalf {
+	height: var(--map-panel-height-half);
+}
+
+.slideUpPageSheetTall {
+	height: var(--map-panel-height-tall);
+}
+
+.slideUpPageDocked {
+	inset: auto;
+	top: var(--safe-top, 0px);
+	right: 0;
+	bottom: 0;
+	left: auto;
+	width: var(--map-panel-width);
+	box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
+	transform: translateX(100%);
+}
+
+.slideUpPageDocked.slideUpPageVisible {
+	transform: translateX(0);
 }
 
 .slideUpPageInner {
@@ -22,4 +62,10 @@
 	padding-bottom: var(--safe-bottom, 0px);
 	padding-left: var(--safe-left, 0px);
 	padding-right: var(--safe-right, 0px);
+}
+
+.slideUpPageSheet .slideUpPageInnerFullPage,
+.slideUpPageDocked .slideUpPageInnerFullPage {
+	--page-header-safe-top: 0px;
+	padding-top: 0;
 }

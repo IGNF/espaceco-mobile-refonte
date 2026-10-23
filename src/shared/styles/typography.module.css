@@ -5,7 +5,7 @@
 
 /* Titles */
 .title {
-  font-size: 1.8rem; /* was 2.8rem */
+  font-size: var(--sheet-title-size, 1.8rem); /* was 2.8rem */
   font-weight: 600;
   color: var(--color-primary);
   text-align: center;

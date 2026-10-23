@@ -158,7 +158,13 @@ export function DirectContributionFeatureDetailsPage({
   const detailFields = getDetailFields(candidate.table, candidate, t);
 
   return (
-    <SlideUpPage isOpen={isOpen} onClose={onClose} level={2}>
+    <SlideUpPage
+      isOpen={isOpen}
+      onClose={onClose}
+      level={2}
+      presentation="sheet"
+      sheetSize="tall"
+    >
       <PageHeader
         title={t('layers.directContribution.details.headerTitle')}
         subtitle={activeCommunity?.name}

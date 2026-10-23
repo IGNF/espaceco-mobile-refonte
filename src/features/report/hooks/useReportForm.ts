@@ -447,6 +447,10 @@ export function useReportForm({
     const newErrors: Record<string, string | undefined> = {};
     let valid = true;
 
+    if (!position) {
+      valid = false;
+    }
+
     // Theme is required
     if (!selectedTheme) {
       newErrors.theme = t('reports.createOrEdit.form.validation.themeRequired');
@@ -475,11 +479,15 @@ export function useReportForm({
 
     setErrors(newErrors);
     return valid;
-  }, [selectedTheme, currentAttributes, attributeValues, t]);
+  }, [attributeValues, currentAttributes, position, selectedTheme, t]);
 
   const buildReport = useCallback((status: ReportStatus): Report => {
-    const lon = position?.coords.longitude ?? 0;
-    const lat = position?.coords.latitude ?? 0;
+    if (!position) {
+      throw new Error('Missing report position');
+    }
+
+    const lon = position.coords.longitude;
+    const lat = position.coords.latitude;
 
     return {
       id: reportId,

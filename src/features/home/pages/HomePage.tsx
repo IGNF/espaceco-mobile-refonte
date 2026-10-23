@@ -91,6 +91,7 @@ import { Loading } from "@/shared/ui/Loading";
 import { Alert } from "@/shared/ui/Alert";
 import { ActionSheet } from "@/shared/ui/ActionSheet";
 import { createPositionFromLonLat } from "@/shared/utils/position";
+import { useMapPanel } from "@/shared/layout/useMapPanel";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
 
@@ -245,6 +246,8 @@ export function HomePage() {
   const [pendingMapWorkChoice, setPendingMapWorkChoice] = useState<PendingMapWorkChoice | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
+  const { hasMapPanel, insetRight, insetBottom } = useMapPanel();
+  const tabbarRef = useRef<HTMLDivElement>(null);
   const geolocationTapTimeoutRef = useRef<number | null>(null);
   const geolocationLastTapRef = useRef(0);
   const getGpsSketchesAtPixelRef = useRef<(pixel: number[]) => Feature<Geometry>[]>(() => []);
@@ -271,7 +274,8 @@ export function HomePage() {
       isFastReportFlowActive ||
       pendingMapWorkChoice !== null ||
       activeConflict !== null ||
-      activeOverlay === '/offline',
+      activeOverlay === '/offline' ||
+      hasMapPanel,
     onCandidatesAtPixel: (pixel, featureCandidates) => {
       const sketches = getGpsSketchesAtPixelRef.current(pixel);
       if (sketches.length === 0) {
@@ -629,6 +633,7 @@ export function HomePage() {
       pendingMapWorkChoice !== null ||
       activeOverlay !== null ||
       isLayersPanelOpen ||
+      hasMapPanel ||
       directContributionFeatureFormState !== null ||
       consultedFeatureCandidate !== null ||
       isDirectContributionFeatureChoiceOpen ||
@@ -737,6 +742,7 @@ export function HomePage() {
     // Keep the map where the user is editing, instead of snapping back to the GPS fix.
     setSkipGeolocationTracking(
       isReportMapPickerActive ||
+      hasMapPanel ||
       isDirectContributionSessionActive ||
       isOfflineZoneEditorOpen ||
       isGpsSketchRecording ||
@@ -746,11 +752,56 @@ export function HomePage() {
   }, [
     fastReportFlow.isGpsOpen,
     gnssReportTemplate,
+    hasMapPanel,
     isDirectContributionSessionActive,
     isGpsSketchRecording,
     isOfflineZoneEditorOpen,
     isReportMapPickerActive,
   ]);
+
+  useEffect(() => {
+    const element = tabbarRef.current;
+    if (!element) return;
+
+    const publishTabbarHeight = () => {
+      document.documentElement.style.setProperty('--app-tabbar-height', `${element.offsetHeight}px`);
+      window.requestAnimationFrame(() => mapRef.current?.updateSize());
+    };
+
+    publishTabbarHeight();
+    const observer = new ResizeObserver(publishTabbarHeight);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mapRef]);
+
+  useEffect(() => {
+    if (!map) return;
+    const frame = window.requestAnimationFrame(() => map.updateSize());
+    return () => window.cancelAnimationFrame(frame);
+  }, [map, insetRight, insetBottom]);
+
+  const framedFeature =
+    directContributionFeatureFormState?.feature ??
+    consultedFeatureCandidate?.feature ??
+    null;
+
+  useEffect(() => {
+    if (!map || !framedFeature) return;
+    const extent = framedFeature.getGeometry()?.getExtent();
+    if (!extent || extent.some((value) => !Number.isFinite(value))) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      map.updateSize();
+      const zoom = map.getView().getZoom();
+      map.getView().fit(extent, {
+        padding: [48, 48, 48, 48],
+        maxZoom: zoom ?? 18,
+        duration: 250,
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [framedFeature, insetBottom, insetRight, map]);
 
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
     setReportType('standard');
@@ -826,6 +877,7 @@ export function HomePage() {
     isMapReady &&
     activeOverlay === null &&
     pendingMapWorkChoice === null &&
+    !hasMapPanel &&
     !isLayersPanelOpen &&
     !isDirectContributionSessionActive &&
     !isFastReportFlowActive &&
@@ -1004,13 +1056,15 @@ export function HomePage() {
         }
       </button>
 
-      <BottomTabbar
-        onTabClick={handleTabClick}
-        highlightedTab={getHighlightedTab()}
-        activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
-        disabled={isOfflineZoneEditorOpen}
-        requestCreate={draftReportsLimit.requestCreate}
-      />
+      <div ref={tabbarRef}>
+        <BottomTabbar
+          onTabClick={handleTabClick}
+          highlightedTab={getHighlightedTab()}
+          activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
+          disabled={isOfflineZoneEditorOpen}
+          requestCreate={draftReportsLimit.requestCreate}
+        />
+      </div>
 
       <LayersPanelFlow
         isOpen={isLayersPanelOpen}

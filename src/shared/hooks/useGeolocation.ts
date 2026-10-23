@@ -19,7 +19,7 @@ export function useGeolocation(options: UseGeolocationOptions = {}): UseGeolocat
 	const { fetchOnMount = true, positionOptions } = options;
 
 	const [position, setPosition] = useState<Position | null>(null);
-	const [isLocating, setIsLocating] = useState(false);
+	const [isLocating, setIsLocating] = useState(fetchOnMount);
 	const [error, setError] = useState<string | null>(null);
 
 	const fetchPosition = useCallback(async () => {

@@ -1,7 +1,5 @@
-import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { createPortal } from 'react-dom';
-import { useBackHandler } from '@/shared/hooks/useBackHandler';
+import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
 import { Badge } from '@/shared/ui/Badge';
 import { Loading } from '@/shared/ui/Loading/Loading';
@@ -14,8 +12,6 @@ import IconArrowRight from '@/shared/assets/icons/icon-angle-right.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconInfo from '@/shared/assets/icons/icon-info.svg?react';
 import IconDownload from '@/shared/assets/icons/icon-download.svg?react';
-
-const ANIMATION_DURATION = 300;
 
 export interface LayersPanelProps {
   isOpen: boolean;
@@ -43,49 +39,17 @@ export function LayersPanel({
   onSendGroupDirectContributions,
 }: LayersPanelProps) {
   const { t } = useTranslation();
-  const [isVisible, setIsVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
   const sendDirectContributionsLabel = t('layers.groups.sendDirectContributions');
   const mesCartesInfoLabel = t('layers.groups.mesCartesInfo');
   const mesCartesDownloadLabel = t('layers.groups.mesCartesDownload');
 
-  useBackHandler(isOpen, onClose, 100);
-
-  if (isOpen && !shouldRender) {
-    setShouldRender(true);
-  }
-  if (!isOpen && isVisible) {
-    setIsVisible(false);
-  }
-
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        setIsVisible(true);
-      }, 20);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => {
-        setShouldRender(false);
-      }, ANIMATION_DURATION);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
-  if (!shouldRender) return null;
-
-  const overlayClasses = [styles.overlay, isVisible ? styles.overlayVisible : '']
-    .filter(Boolean)
-    .join(' ');
-
-  const panelClasses = [styles.panel, isVisible ? styles.panelVisible : '']
-    .filter(Boolean)
-    .join(' ');
-
-  const content = (
-    <>
-      <div className={overlayClasses} onClick={onClose} />
-      <div className={panelClasses}>
+  return (
+    <SlideUpPage
+      isOpen={isOpen}
+      onClose={onClose}
+      presentation="sheet"
+      sheetSize="tall"
+    >
         <div className={styles.header}>
           <h2 className={styles.title}>{t('layers.title')}</h2>
           <button className={styles.closeButton} onClick={onClose} aria-label='Close'>
@@ -192,9 +156,6 @@ export function LayersPanel({
             </ul>
           )}
         </div>
-      </div>
-    </>
+    </SlideUpPage>
   );
-
-  return createPortal(content, document.body);
 }

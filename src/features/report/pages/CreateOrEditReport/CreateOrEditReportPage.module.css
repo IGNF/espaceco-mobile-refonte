@@ -62,6 +62,18 @@
   justify-content: center;
 }
 
+.mapPositionTarget {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
 .locationTargetIcon {
   width: 36px;
   height: 36px;

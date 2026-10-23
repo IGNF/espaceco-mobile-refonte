@@ -8,6 +8,7 @@
 	display: flex;
 	flex-direction: column;
 	background-color: var(--color-light-light);
+	padding-right: var(--map-inset-right, 0px);
 }
 
 /* Header */
@@ -82,6 +83,7 @@
 	position: relative;
 	display: flex;
 	min-height: 0;
+	padding-bottom: var(--map-inset-bottom, 0px);
 }
 
 /* Map area */
@@ -136,18 +138,19 @@
 /* Geolocation floating button */
 .geolocationButton {
 	position: absolute;
-	bottom: var(--map-action-button-bottom);
-	right: var(--map-action-button-right);
+	bottom: calc(var(--map-action-button-bottom) + var(--map-inset-bottom, 0px));
+	right: calc(var(--map-action-button-right) + var(--map-inset-right, 0px));
 }
 
 /* User following button */
 .userFollowingButton {
 	position: absolute;
-	bottom: var(--map-action-button-bottom);
+	bottom: calc(var(--map-action-button-bottom) + var(--map-inset-bottom, 0px));
 	right: calc(
 		var(--map-action-button-right) +
 		var(--map-action-button-size) +
-		var(--map-action-button-gap)
+		var(--map-action-button-gap) +
+		var(--map-inset-right, 0px)
 	);
 }
 
@@ -168,9 +171,10 @@
 	bottom: calc(
 		var(--map-action-button-bottom) +
 		var(--map-action-button-size) +
-		var(--map-action-button-gap)
+		var(--map-action-button-gap) +
+		var(--map-inset-bottom, 0px)
 	);
-	right: var(--map-action-button-right);
+	right: calc(var(--map-action-button-right) + var(--map-inset-right, 0px));
 	z-index: 100;
 	display: flex;
 	gap: var(--map-action-button-gap);
@@ -205,7 +209,7 @@
 .zoomButtonGroup {
 	position: absolute;
 	top: 180px;
-	right: 1rem;
+	right: calc(1rem + var(--map-inset-right, 0px));
 	z-index: 100;
 	display: flex;
 	flex-direction: column;

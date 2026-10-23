@@ -153,7 +153,16 @@ export function ReportDetailsPage({
   }, []);
 
   useEffect(() => {
-    if (!isViewingOnMap || !map || !positionCoordinate || typeof document === 'undefined') {
+    if (!isOpen || isEditOpen || !map || !positionCoordinate) return;
+
+    map.getView().animate({
+      center: positionCoordinate,
+      duration: 250,
+    });
+  }, [isEditOpen, isOpen, map, positionCoordinate, report?.id]);
+
+  useEffect(() => {
+    if (!isOpen || isEditOpen || !map || !positionCoordinate || typeof document === 'undefined') {
       return;
     }
 
@@ -173,7 +182,7 @@ export function ReportDetailsPage({
     return () => {
       map.removeOverlay(markerOverlay);
     };
-  }, [isViewingOnMap, map, positionCoordinate]);
+  }, [isEditOpen, isOpen, map, positionCoordinate]);
 
   useEffect(() => {
     if (!isViewingOnMap || !map || !report) {
@@ -353,6 +362,8 @@ export function ReportDetailsPage({
         isOpen={isOpen}
         onClose={handlePageClose}
         level={2}
+        presentation={isEditOpen || isViewingOnMap ? 'fullscreen' : 'sheet'}
+        sheetSize="tall"
         className={pageClassName}
       >
         <PageHeader

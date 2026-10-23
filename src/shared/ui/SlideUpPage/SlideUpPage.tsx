@@ -1,11 +1,17 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
+import {
+  useMapPanel,
+  type MapPanelSheetSize,
+} from '@/shared/layout/useMapPanel';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
 const BASE_Z_INDEX = 100;
+
+export type SlideUpPresentation = 'fullscreen' | 'sheet';
 
 export interface SlideUpPageProps {
 	children: ReactNode;
@@ -23,14 +29,41 @@ export interface SlideUpPageProps {
 	 * Default is true.
 	 */
 	fullPage?: boolean;
+	/**
+	 * fullscreen covers the map. sheet keeps the map visible: a bottom sheet on a
+	 * phone, a side column when the viewport is at least 1024px wide.
+	 */
+	presentation?: SlideUpPresentation;
+	/**
+	 * Bottom sheet height used when the viewport is not wide.
+	 * half is 50vh, tall is 60vh.
+	 */
+	sheetSize?: MapPanelSheetSize;
 }
 
-export function SlideUpPage({ children, isOpen, onClose, className, level = 1, fullPage = true }: SlideUpPageProps) {
+export function SlideUpPage({
+	children,
+	isOpen,
+	onClose,
+	className,
+	level = 1,
+	fullPage = true,
+	presentation = 'fullscreen',
+	sheetSize = 'half',
+}: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
+	const { isWideLayout, registerSheet } = useMapPanel();
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
+	const isSheet = presentation === 'sheet';
+	const isDocked = isSheet && isWideLayout;
 
 	useBackHandler(isOpen, onClose, zIndex);
+
+	useEffect(() => {
+		if (!isSheet || !isOpen) return;
+		return registerSheet(sheetSize);
+	}, [isOpen, isSheet, registerSheet, sheetSize]);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -58,6 +91,10 @@ export function SlideUpPage({ children, isOpen, onClose, className, level = 1, f
 	const classNames = joinCSSClassNames(
 		styles.slideUpPage,
 		isVisible ? styles.slideUpPageVisible : '',
+		isDocked ? styles.slideUpPageDocked : '',
+		isSheet && !isDocked ? styles.slideUpPageSheet : '',
+		isSheet && !isDocked && sheetSize === 'tall' ? styles.slideUpPageSheetTall : '',
+		isSheet && !isDocked && sheetSize === 'half' ? styles.slideUpPageSheetHalf : '',
 		className
 	);
 

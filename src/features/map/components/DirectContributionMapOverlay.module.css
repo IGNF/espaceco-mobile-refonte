@@ -8,7 +8,7 @@
   position: absolute;
   top: calc(var(--safe-top, 0px) + 76px);
   left: 16px;
-  right: 16px;
+  right: calc(16px + var(--map-inset-right, 0px));
   display: flex;
   justify-content: center;
   pointer-events: auto;
