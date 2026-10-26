@@ -39,6 +39,11 @@ export interface SlideUpPageProps {
 	 * half is 50vh, tall is 60vh.
 	 */
 	sheetSize?: MapPanelSheetSize;
+	/**
+	 * When false, a sheet stays on screen but no longer shrinks the map.
+	 * Used when the side column slides away so the map can be edited underneath.
+	 */
+	reserveMapSpace?: boolean;
 }
 
 export function SlideUpPage({
@@ -50,6 +55,7 @@ export function SlideUpPage({
 	fullPage = true,
 	presentation = 'fullscreen',
 	sheetSize = 'half',
+	reserveMapSpace = true,
 }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
@@ -61,9 +67,9 @@ export function SlideUpPage({
 	useBackHandler(isOpen, onClose, zIndex);
 
 	useEffect(() => {
-		if (!isSheet || !isOpen) return;
+		if (!isSheet || !isOpen || !reserveMapSpace) return;
 		return registerSheet(sheetSize);
-	}, [isOpen, isSheet, registerSheet, sheetSize]);
+	}, [isOpen, isSheet, registerSheet, reserveMapSpace, sheetSize]);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);

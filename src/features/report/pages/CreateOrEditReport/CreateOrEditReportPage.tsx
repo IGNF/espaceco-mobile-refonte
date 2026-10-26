@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReportStatus, type CommunityLayer, type Report } from '@ign/mobile-core';
 import { createPortal } from 'react-dom';
@@ -10,6 +10,7 @@ import type OlMap from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
+import { useMapPanel } from '@/shared/layout/useMapPanel';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
@@ -61,15 +62,6 @@ import buttonStyles from '@/shared/ui/Button/Button.module.css';
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
 import { NON_SELECTABLE_LAYER_NAMES, MAX_DRAFT_REPORTS_WARNING, MAX_DRAFT_REPORTS_BLOCK } from "@/shared/constants/report";
-
-function MapCenterPositionTarget({ map }: { map: OlMap }) {
-  return createPortal(
-    <div className={styles.mapPositionTarget} aria-hidden="true">
-      <IconAdd className={styles.locationTargetIcon} />
-    </div>,
-    map.getViewport()
-  );
-}
 
 export type ReportPageMode = 'create' | 'edit';
 
@@ -187,6 +179,7 @@ export function CreateOrEditReportPage({
   onTraceDirectionActiveChange,
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
+  const { isWideLayout } = useMapPanel();
   const { activeCommunity } = useCommunity();
   const { draftReports } = useMyReports();
   const isEditMode = mode === 'edit';
@@ -225,112 +218,20 @@ export function CreateOrEditReportPage({
   const isPickingSketch = mapPickerMode === 'sketch';
   const isPickingTrace = mapPickerMode === 'trace';
   const isPickingOnMap = mapPickerMode !== 'none';
-  const isUsingFullMapTool = isPickingObject || isPickingSketch || isPickingTrace;
+  const isUsingFullMapTool = isPickingPosition || isPickingObject || isPickingSketch || isPickingTrace;
   const keepsMapVisible =
     Boolean(map) &&
     !isGnssDraftSetup &&
     !isTraceReport &&
     !isUsingFullMapTool;
-  const positionFollowsMap = keepsMapVisible && (!isEditMode || isPickingPosition);
-  const didAnchorPositionRef = useRef(false);
-  const positionRef = useRef(position);
 
   useEffect(() => {
-    positionRef.current = position;
-  }, [position]);
-
-  useEffect(() => {
-    onMapPickerActiveChange?.(isPickingOnMap || positionFollowsMap);
+    onMapPickerActiveChange?.(isPickingOnMap);
 
     return () => {
       onMapPickerActiveChange?.(false);
     };
-  }, [isPickingOnMap, onMapPickerActiveChange, positionFollowsMap]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      didAnchorPositionRef.current = false;
-      return;
-    }
-
-    if (!positionFollowsMap || !map) return;
-
-    if (!didAnchorPositionRef.current && !isEditMode && !initialPosition && isLocating) {
-      return;
-    }
-
-    const target = didAnchorPositionRef.current
-      ? positionRef.current
-      : initialPosition ?? (isEditMode ? editPosition : geoPosition);
-
-    didAnchorPositionRef.current = true;
-
-    let cancelled = false;
-    let syncing = false;
-
-    const syncPositionWithMapCenter = () => {
-      if (cancelled) return;
-      const center = map.getView().getCenter();
-      if (!center) return;
-
-      const [longitude, latitude] = toLonLat(center);
-      const isSamePosition = (candidate: Position | null) =>
-        candidate !== null &&
-        Math.abs(candidate.coords.longitude - longitude) < 1e-7 &&
-        Math.abs(candidate.coords.latitude - latitude) < 1e-7;
-
-      setSelectedPosition((current) => {
-        if (isSamePosition(current)) return current;
-        // Keep the stored report position until the map actually moves.
-        if (!current && isEditMode && isSamePosition(editPosition)) return current;
-
-        return createPositionFromLonLat(longitude, latitude, {
-          fallback: current ?? positionRef.current,
-        });
-      });
-    };
-
-    const startSync = () => {
-      if (cancelled || syncing) return;
-      syncing = true;
-      map.on('moveend', syncPositionWithMapCenter);
-      syncPositionWithMapCenter();
-    };
-
-    let waitForMapMove: (() => void) | null = null;
-    if (target) {
-      map.getView().animate({
-        center: fromLonLat([target.coords.longitude, target.coords.latitude]),
-        duration: 250,
-      }, startSync);
-    } else {
-      waitForMapMove = () => {
-        map.un('moveend', waitForMapMove!);
-        startSync();
-      };
-      map.on('moveend', waitForMapMove);
-    }
-
-    return () => {
-      cancelled = true;
-      map.un('moveend', syncPositionWithMapCenter);
-      if (waitForMapMove) {
-        map.un('moveend', waitForMapMove);
-      }
-      if (!syncing) {
-        didAnchorPositionRef.current = false;
-      }
-    };
-  }, [
-    editPosition,
-    geoPosition,
-    initialPosition,
-    isEditMode,
-    isLocating,
-    isOpen,
-    map,
-    positionFollowsMap,
-  ]);
+  }, [isPickingOnMap, onMapPickerActiveChange]);
 
   useEffect(() => {
     onTraceDirectionActiveChange?.(isPickingTrace);
@@ -481,7 +382,7 @@ export function CreateOrEditReportPage({
   const startMapPicker = useCallback((mode: Exclude<MapPickerMode, 'none'>) => {
     if (!map) return;
 
-    if (position && mode !== 'position') {
+    if (position) {
       map.getView().animate({
         center: fromLonLat([position.coords.longitude, position.coords.latitude]),
         duration: 250,
@@ -491,34 +392,12 @@ export function CreateOrEditReportPage({
     setObjectCandidates([]);
     setIsObjectChoiceOpen(false);
     setMapPickerMode(mode);
-    if (mode !== 'position') {
-      onSearchPanelVisibilityChange?.(false);
-    }
+    onSearchPanelVisibilityChange?.(mode === 'position');
   }, [map, onSearchPanelVisibilityChange, position]);
 
-  const recenterReportOnUser = useCallback(() => {
-    if (!map) return;
-
-    const target = geoPosition ?? positionRef.current;
-    if (!target) {
-      void fetchPosition();
-      return;
-    }
-
-    map.getView().animate({
-      center: fromLonLat([target.coords.longitude, target.coords.latitude]),
-      duration: 250,
-    });
-  }, [fetchPosition, geoPosition, map]);
-
   const handleStartPositionPicker = useCallback(() => {
-    if (!isEditMode || isPickingPosition) {
-      recenterReportOnUser();
-      return;
-    }
-
     startMapPicker('position');
-  }, [isEditMode, isPickingPosition, recenterReportOnUser, startMapPicker]);
+  }, [startMapPicker]);
 
   const handleStartObjectPicker = useCallback(() => {
     startMapPicker('object');
@@ -531,6 +410,17 @@ export function CreateOrEditReportPage({
   const handleStartTracePicker = useCallback(() => {
     startMapPicker('trace');
   }, [startMapPicker]);
+
+  const handleValidatePosition = useCallback(() => {
+    if (!map) return;
+    const center = map.getView().getCenter();
+    if (!center) return;
+
+    const [longitude, latitude] = toLonLat(center);
+    const nextPosition = createPositionFromLonLat(longitude, latitude, { fallback: position });
+    setSelectedPosition(nextPosition);
+    closeMapPickers();
+  }, [closeMapPickers, map, position]);
 
   const handleCloseObjectChoice = useCallback(() => {
     setObjectCandidates([]);
@@ -762,7 +652,7 @@ export function CreateOrEditReportPage({
   }, [onClose, resetMapPickers]);
 
   const renderGeolocationStatus = () => {
-    if (isEditMode && !positionFollowsMap) return null;
+    if (isEditMode) return null;
 
     if (!position && isLocating) {
       return (
@@ -784,7 +674,7 @@ export function CreateOrEditReportPage({
       );
     }
 
-    if (position && positionFollowsMap) {
+    if (position) {
       return (
         <div className={styles.geolocationStatus}>
           {t('reports.createOrEdit.geolocation.located')}
@@ -810,6 +700,25 @@ export function CreateOrEditReportPage({
 
   const mapPickerOverlay = useMemo(() => {
     if (!isOpen) return null;
+
+    if (isPickingPosition) {
+      return (
+        <div className={styles.locationPickerOverlay}>
+          <div className={styles.locationTarget} aria-hidden="true">
+            <IconAdd className={styles.locationTargetIcon} />
+          </div>
+          <div className={styles.validateButtonContainer}>
+            <Button
+              color="primary"
+              onClick={handleValidatePosition}
+              className={styles.validateButton}
+            >
+              {t('reports.createOrEdit.actions.validatePosition')}
+            </Button>
+          </div>
+        </div>
+      );
+    }
 
     if (isPickingObject) {
       return (
@@ -880,11 +789,13 @@ export function CreateOrEditReportPage({
     canValidateSketch,
     closeMapPickers,
     handleSketchToolClick,
+    handleValidatePosition,
     handleValidateSketch,
     handleValidateTrace,
     hasTraceInSession,
     isOpen,
     isPickingObject,
+    isPickingPosition,
     isPickingSketch,
     isPickingTrace,
     isTraceAudioEnabled,
@@ -902,17 +813,24 @@ export function CreateOrEditReportPage({
   ]);
 
   const canPersistReport = position !== null;
+  const hideDockedPanel = isWideLayout && isUsingFullMapTool;
 
   return (
     <>
-      {positionFollowsMap && map ? <MapCenterPositionTarget map={map} /> : null}
       <SlideUpPage
         isOpen={isOpen}
         onClose={handlePageClose}
         level={level}
-        presentation={keepsMapVisible ? 'sheet' : 'fullscreen'}
+        presentation={keepsMapVisible || hideDockedPanel ? 'sheet' : 'fullscreen'}
+        reserveMapSpace={!hideDockedPanel}
         sheetSize="half"
-        className={isUsingFullMapTool ? styles.locationPickerSheet : undefined}
+        className={
+          !isUsingFullMapTool
+            ? undefined
+            : hideDockedPanel
+              ? styles.locationPickerSheetDocked
+              : styles.locationPickerSheet
+        }
       >
         <PageHeader
           title={headerTitle}
