@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage, useSheetDragHandle } from '@/shared/ui/SlideUpPage';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
 import { Badge } from '@/shared/ui/Badge';
 import { Loading } from '@/shared/ui/Loading/Loading';
@@ -26,6 +26,23 @@ export interface LayersPanelProps {
   onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
 }
 
+function LayersPanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  const dragHandle = useSheetDragHandle();
+
+  return (
+    <div
+      className={styles.header}
+      style={dragHandle?.style}
+      onPointerDown={dragHandle?.onPointerDown}
+    >
+      <h2 className={styles.title}>{title}</h2>
+      <button className={styles.closeButton} onClick={onClose} aria-label='Close'>
+        <IconClose className={styles.closeIcon} />
+      </button>
+    </div>
+  );
+}
+
 export function LayersPanel({
   isOpen,
   onClose,
@@ -50,12 +67,7 @@ export function LayersPanel({
       presentation="sheet"
       sheetSize="tall"
     >
-        <div className={styles.header}>
-          <h2 className={styles.title}>{t('layers.title')}</h2>
-          <button className={styles.closeButton} onClick={onClose} aria-label='Close'>
-            <IconClose className={styles.closeIcon} />
-          </button>
-        </div>
+        <LayersPanelHeader title={t('layers.title')} onClose={onClose} />
         <div className={styles.content}>
           {isLoading ? (
             <p className={styles.loading}>{t('layers.loading')}</p>

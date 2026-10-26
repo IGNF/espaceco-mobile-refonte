@@ -86,6 +86,24 @@
 	padding-bottom: var(--map-inset-bottom, 0px);
 }
 
+/* Only the map area still visible above a bottom sheet. */
+.mapControls {
+	--map-control-gap: max(1rem, calc(var(--map-action-button-bottom) - var(--app-tabbar-height, 0px)));
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: var(--map-inset-bottom, 0px);
+	left: 0;
+	z-index: 100;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.mapControls .mapActionButton,
+.mapControls .gpsSketchControls {
+	pointer-events: auto;
+}
+
 /* Map area */
 .map {
 	flex: 1;
@@ -138,19 +156,18 @@
 /* Geolocation floating button */
 .geolocationButton {
 	position: absolute;
-	bottom: calc(var(--map-action-button-bottom) + var(--map-inset-bottom, 0px));
-	right: calc(var(--map-action-button-right) + var(--map-inset-right, 0px));
+	bottom: var(--map-control-gap);
+	right: var(--map-action-button-right);
 }
 
 /* User following button */
 .userFollowingButton {
 	position: absolute;
-	bottom: calc(var(--map-action-button-bottom) + var(--map-inset-bottom, 0px));
+	bottom: var(--map-control-gap);
 	right: calc(
 		var(--map-action-button-right) +
 		var(--map-action-button-size) +
-		var(--map-action-button-gap) +
-		var(--map-inset-right, 0px)
+		var(--map-action-button-gap)
 	);
 }
 
@@ -169,12 +186,11 @@
 .gpsSketchControls {
 	position: absolute;
 	bottom: calc(
-		var(--map-action-button-bottom) +
+		var(--map-control-gap) +
 		var(--map-action-button-size) +
-		var(--map-action-button-gap) +
-		var(--map-inset-bottom, 0px)
+		var(--map-action-button-gap)
 	);
-	right: calc(var(--map-action-button-right) + var(--map-inset-right, 0px));
+	right: var(--map-action-button-right);
 	z-index: 100;
 	display: flex;
 	gap: var(--map-action-button-gap);

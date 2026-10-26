@@ -1,17 +1,40 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import {
+	createContext,
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+	type CSSProperties,
+	type PointerEvent as ReactPointerEvent,
+	type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import {
-  useMapPanel,
-  type MapPanelSheetSize,
+	useMapPanel,
+	type MapPanelRegistrationHandle,
+	type MapPanelSheetSize,
 } from '@/shared/layout/useMapPanel';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
 const BASE_Z_INDEX = 100;
+const DEFAULT_SNAP_POINTS = [20, 50, 95];
+const DEFAULT_SNAP = 50;
 
 export type SlideUpPresentation = 'fullscreen' | 'sheet';
+
+interface SheetDragHandle {
+	onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
+	style: CSSProperties;
+}
+
+const SheetDragContext = createContext<SheetDragHandle | null>(null);
+
+export function useSheetDragHandle(): SheetDragHandle | null {
+	return useContext(SheetDragContext);
+}
 
 export interface SlideUpPageProps {
 	children: ReactNode;
@@ -35,8 +58,7 @@ export interface SlideUpPageProps {
 	 */
 	presentation?: SlideUpPresentation;
 	/**
-	 * Bottom sheet height used when the viewport is not wide.
-	 * half is 50vh, tall is 60vh.
+	 * Kept for existing call sites. Bottom sheet height is controlled by snapPoints.
 	 */
 	sheetSize?: MapPanelSheetSize;
 	/**
@@ -44,6 +66,25 @@ export interface SlideUpPageProps {
 	 * Used when the side column slides away so the map can be edited underneath.
 	 */
 	reserveMapSpace?: boolean;
+	/**
+	 * Heights, in percent of the viewport, the bottom sheet can snap to.
+	 * Dragging the header moves between them. Ignored when the sheet is docked.
+	 */
+	snapPoints?: number[];
+	/**
+	 * Initial snap height. Defaults to 60, or the closest snap point.
+	 */
+	defaultSnap?: number;
+}
+
+function nearestSnap(value: number, snapPoints: number[]): number {
+	return snapPoints.reduce((closest, point) => (
+		Math.abs(point - value) < Math.abs(closest - value) ? point : closest
+	));
+}
+
+function clamp(value: number, min: number, max: number): number {
+	return Math.min(max, Math.max(min, value));
 }
 
 export function SlideUpPage({
@@ -54,22 +95,52 @@ export function SlideUpPage({
 	level = 1,
 	fullPage = true,
 	presentation = 'fullscreen',
-	sheetSize = 'half',
 	reserveMapSpace = true,
+	snapPoints = DEFAULT_SNAP_POINTS,
+	defaultSnap = DEFAULT_SNAP,
 }: SlideUpPageProps) {
 	const [isVisible, setIsVisible] = useState(isOpen);
 	const [shouldRender, setShouldRender] = useState(isOpen);
+	const [isDragging, setIsDragging] = useState(false);
+	const resolvedSnapPoints = snapPoints.length > 0 ? snapPoints : DEFAULT_SNAP_POINTS;
+	const resolvedDefaultSnap = nearestSnap(defaultSnap, resolvedSnapPoints);
+	const [heightPercent, setHeightPercent] = useState(resolvedDefaultSnap);
+	const [wasOpen, setWasOpen] = useState(isOpen);
 	const { isWideLayout, registerSheet } = useMapPanel();
+	const heightPercentRef = useRef(heightPercent);
+	const updateSheetHeightRef = useRef<(nextHeightPercent: number) => void>(() => {});
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
 	const isSheet = presentation === 'sheet';
 	const isDocked = isSheet && isWideLayout;
+	const canResize = isSheet && !isDocked;
+
+	if (isOpen !== wasOpen) {
+		setWasOpen(isOpen);
+		if (isOpen) {
+			setHeightPercent(resolvedDefaultSnap);
+		}
+	}
 
 	useBackHandler(isOpen, onClose, zIndex);
 
 	useEffect(() => {
+		heightPercentRef.current = heightPercent;
+	}, [heightPercent]);
+
+	useEffect(() => {
 		if (!isSheet || !isOpen || !reserveMapSpace) return;
-		return registerSheet(sheetSize);
-	}, [isOpen, isSheet, registerSheet, reserveMapSpace, sheetSize]);
+		const registration: MapPanelRegistrationHandle = registerSheet(heightPercentRef.current);
+		updateSheetHeightRef.current = registration.update;
+		registration.update(heightPercentRef.current);
+		return () => {
+			registration.unregister();
+			updateSheetHeightRef.current = () => {};
+		};
+	}, [isOpen, isSheet, registerSheet, reserveMapSpace]);
+
+	useEffect(() => {
+		updateSheetHeightRef.current(heightPercent);
+	}, [heightPercent]);
 
 	if (isOpen && !shouldRender) {
 		setShouldRender(true);
@@ -92,6 +163,43 @@ export function SlideUpPage({
 		}
 	}, [isOpen]);
 
+	const onDragHandlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+		if (!canResize || event.button !== 0) return;
+		const target = event.target;
+		if (target instanceof Element && target.closest('button, a, input, textarea, select, label')) {
+			return;
+		}
+
+		const startY = event.clientY;
+		const startPercent = heightPercentRef.current;
+		const minSnap = Math.min(...resolvedSnapPoints);
+		const maxSnap = Math.max(...resolvedSnapPoints);
+		let dragging = false;
+		event.currentTarget.setPointerCapture(event.pointerId);
+
+		const handleMove = (moveEvent: PointerEvent) => {
+			const deltaPercent = ((startY - moveEvent.clientY) / window.innerHeight) * 100;
+			if (!dragging) {
+				dragging = true;
+				setIsDragging(true);
+			}
+			setHeightPercent(clamp(startPercent + deltaPercent, minSnap, maxSnap));
+		};
+
+		const handleEnd = (endEvent: PointerEvent) => {
+			const deltaPercent = ((startY - endEvent.clientY) / window.innerHeight) * 100;
+			setHeightPercent(nearestSnap(startPercent + deltaPercent, resolvedSnapPoints));
+			setIsDragging(false);
+			window.removeEventListener('pointermove', handleMove);
+			window.removeEventListener('pointerup', handleEnd);
+			window.removeEventListener('pointercancel', handleEnd);
+		};
+
+		window.addEventListener('pointermove', handleMove);
+		window.addEventListener('pointerup', handleEnd);
+		window.addEventListener('pointercancel', handleEnd);
+	};
+
 	if (!shouldRender) return null;
 
 	const classNames = joinCSSClassNames(
@@ -99,8 +207,7 @@ export function SlideUpPage({
 		isVisible ? styles.slideUpPageVisible : '',
 		isDocked ? styles.slideUpPageDocked : '',
 		isSheet && !isDocked ? styles.slideUpPageSheet : '',
-		isSheet && !isDocked && sheetSize === 'tall' ? styles.slideUpPageSheetTall : '',
-		isSheet && !isDocked && sheetSize === 'half' ? styles.slideUpPageSheetHalf : '',
+		isDragging ? styles.slideUpPageDragging : '',
 		className
 	);
 
@@ -109,12 +216,32 @@ export function SlideUpPage({
 		fullPage ? styles.slideUpPageInnerFullPage : ''
 	);
 
+	const dragHandle: SheetDragHandle | null = canResize
+		? {
+			onPointerDown: onDragHandlePointerDown,
+			style: {
+				cursor: 'ns-resize',
+				touchAction: 'none',
+				userSelect: 'none',
+			},
+		}
+		: null;
+
 	const content = (
-		<div className={classNames} style={{ zIndex }} data-scroll-root='true'>
-			<div className={innerClassNames}>
-				{children}
+		<SheetDragContext.Provider value={dragHandle}>
+			<div
+				className={classNames}
+				style={{
+					zIndex,
+					height: canResize ? `${heightPercent}vh` : undefined,
+				}}
+				data-scroll-root='true'
+			>
+				<div className={innerClassNames}>
+					{children}
+				</div>
 			</div>
-		</div>
+		</SheetDragContext.Provider>
 	);
 
 	// Use portal to render at document body level for proper stacking

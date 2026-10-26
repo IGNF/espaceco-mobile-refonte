@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useSheetDragHandle } from '@/shared/ui/SlideUpPage';
 import styles from './PageHeader.module.css';
 
 import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
@@ -22,6 +23,7 @@ export function PageHeader({
 	onClose,
 }: PageHeaderProps) {
 	const navigate = useNavigate();
+	const dragHandle = useSheetDragHandle();
 
 	const handleBack = () => {
 		if (onBack) {
@@ -40,7 +42,11 @@ export function PageHeader({
 	};
 
 	return (
-		<header className={styles.header}>
+		<header
+			className={styles.header}
+			style={dragHandle?.style}
+			onPointerDown={dragHandle?.onPointerDown}
+		>
 			{showBackButton ? (
 				<button
 					className={styles.headerButton}

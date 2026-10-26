@@ -2,12 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   MapPanelContext,
   useIsWideLayout,
-  type MapPanelSheetSize,
+  type MapPanelRegistrationHandle,
 } from '@/shared/layout/useMapPanel';
 
 interface MapPanelRegistration {
   id: number;
-  size: MapPanelSheetSize;
+  heightPercent: number;
 }
 
 export function MapPanelProvider({ children }: { children: ReactNode }) {
@@ -15,24 +15,31 @@ export function MapPanelProvider({ children }: { children: ReactNode }) {
   const [panels, setPanels] = useState<MapPanelRegistration[]>([]);
   const nextIdRef = useRef(1);
 
-  const registerSheet = useCallback((size: MapPanelSheetSize) => {
+  const registerSheet = useCallback((heightPercent: number): MapPanelRegistrationHandle => {
     const id = nextIdRef.current;
     nextIdRef.current += 1;
-    setPanels((current) => [...current, { id, size }]);
-    return () => {
-      setPanels((current) => current.filter((panel) => panel.id !== id));
+    setPanels((current) => [...current, { id, heightPercent }]);
+    return {
+      update(nextHeightPercent: number) {
+        setPanels((current) => current.map((panel) => (
+          panel.id === id ? { ...panel, heightPercent: nextHeightPercent } : panel
+        )));
+      },
+      unregister() {
+        setPanels((current) => current.filter((panel) => panel.id !== id));
+      },
     };
   }, []);
 
-  const sheetSize = panels.some((panel) => panel.size === 'tall')
-    ? 'tall'
-    : panels.length > 0
-      ? 'half'
-      : null;
+  const hasSheet = panels.length > 0;
+  const sheetHeightPercent = panels.reduce(
+    (tallest, panel) => Math.max(tallest, panel.heightPercent),
+    0,
+  );
 
-  const insetRight = isWideLayout && sheetSize ? 'var(--map-panel-width)' : '0px';
-  const insetBottom = !isWideLayout && sheetSize
-    ? `max(0px, calc(var(--map-panel-height-${sheetSize}) - var(--app-tabbar-height, 0px)))`
+  const insetRight = isWideLayout && hasSheet ? 'var(--map-panel-width)' : '0px';
+  const insetBottom = !isWideLayout && hasSheet
+    ? `max(0px, calc(${sheetHeightPercent}vh - var(--app-tabbar-height, 0px)))`
     : '0px';
 
   useEffect(() => {
@@ -43,11 +50,11 @@ export function MapPanelProvider({ children }: { children: ReactNode }) {
 
   const value = useMemo(() => ({
     isWideLayout,
-    hasMapPanel: sheetSize !== null,
+    hasMapPanel: hasSheet,
     insetRight,
     insetBottom,
     registerSheet,
-  }), [insetBottom, insetRight, isWideLayout, registerSheet, sheetSize]);
+  }), [hasSheet, insetBottom, insetRight, isWideLayout, registerSheet]);
 
   return (
     <MapPanelContext.Provider value={value}>

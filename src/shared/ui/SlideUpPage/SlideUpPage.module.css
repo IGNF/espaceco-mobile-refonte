@@ -2,10 +2,14 @@
 	position: fixed;
 	inset: 0;
 	transform: translateY(100%);
-	transition: transform 0.3s ease-out;
+	transition: transform 0.3s ease-out, height 0.2s ease-out;
 	z-index: 100;
 	overflow-y: auto;
 	overscroll-behavior: contain;
+}
+
+.slideUpPageDragging {
+	transition: transform 0.3s ease-out, height 0s linear;
 }
 
 .slideUpPageVisible {
@@ -26,14 +30,6 @@
 	bottom: 0;
 	border-radius: 16px 16px 0 0;
 	box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.slideUpPageSheetHalf {
-	height: var(--map-panel-height-half);
-}
-
-.slideUpPageSheetTall {
-	height: var(--map-panel-height-tall);
 }
 
 .slideUpPageDocked {

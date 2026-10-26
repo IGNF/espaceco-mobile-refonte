@@ -949,6 +949,78 @@ export function HomePage() {
           onClose={() => setIsSearchOpen(false)}
           map={map}
         />
+        <div className={styles.mapControls}>
+          {displayMode !== 'beginner' && (
+            <button
+              className={`${styles.mapActionButton} ${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
+              onClick={handleUserFollowingButtonClick}
+              disabled={isLocating && userFollowingMode === 'none'}
+              aria-label="Follow my position"
+              data-onboarding-target="userFollowing"
+            >
+              <IconCompass
+                className={styles.userFollowingIcon}
+              />
+            </button>
+          )}
+
+          {displayMode !== 'beginner' && userFollowingMode === 'tracking' && (
+            <div className={styles.gpsSketchControls}>
+              <button
+                type="button"
+                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
+                onClick={isGpsSketchRecording ? stopGpsSketchRecording : startGpsSketchRecording}
+                aria-label={isGpsSketchRecording
+                  ? t('home.gpsSketch.stop')
+                  : t('home.gpsSketch.record')}
+              >
+                <span className={isGpsSketchRecording ? styles.gpsSketchStopSquare : styles.gpsSketchRecordDot} />
+              </button>
+
+              {isGpsSketchRecording && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.mapActionButton} ${styles.gpsSketchActionButton}`}
+                    onClick={cancelGpsSketchRecording}
+                    aria-label={t('home.gpsSketch.cancel')}
+                  >
+                    <IconClose className={styles.gpsSketchActionIcon} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
+                    onClick={toggleGpsSketchPause}
+                    aria-label={isGpsSketchPaused
+                      ? t('home.gpsSketch.resume')
+                      : t('home.gpsSketch.pause')}
+                  >
+                    {isGpsSketchPaused ? (
+                      <IconPlay className={styles.gpsSketchActionIcon} />
+                    ) : (
+                      <IconPause className={styles.gpsSketchActionIcon} />
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          <button
+            className={`${styles.mapActionButton} ${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
+            onClick={handleGeolocationButtonClick}
+            disabled={isLocating && userFollowingMode === 'none'}
+            aria-label="Center on my position"
+            data-onboarding-target="geolocation"
+          >
+            {
+              !isLocating
+                ? <IconGeolocation className={styles.geolocationIcon} />
+                : <Loading size="small" className={styles.geolocationLoading} />
+            }
+          </button>
+        </div>
       </main>
 
       {/* <p className={styles.copyright}>
@@ -978,83 +1050,6 @@ export function HomePage() {
           </button>
         </div>
       )}
-
-      {/* Following user location button */}
-
-      {
-        displayMode !== 'beginner' && (
-          <button
-            className={`${styles.mapActionButton} ${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
-            onClick={handleUserFollowingButtonClick}
-            disabled={isLocating && userFollowingMode === 'none'}
-            aria-label="Follow my position"
-            data-onboarding-target="userFollowing"
-          >
-            <IconCompass
-              className={styles.userFollowingIcon}
-            />
-          </button>
-        )
-      }
-
-      {displayMode !== 'beginner' && userFollowingMode === 'tracking' && (
-        <div className={styles.gpsSketchControls}>
-          <button
-            type="button"
-            className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
-            onClick={isGpsSketchRecording ? stopGpsSketchRecording : startGpsSketchRecording}
-            aria-label={isGpsSketchRecording
-              ? t('home.gpsSketch.stop')
-              : t('home.gpsSketch.record')}
-          >
-            <span className={isGpsSketchRecording ? styles.gpsSketchStopSquare : styles.gpsSketchRecordDot} />
-          </button>
-
-          {isGpsSketchRecording && (
-            <>
-              <button
-                type="button"
-                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton}`}
-                onClick={cancelGpsSketchRecording}
-                aria-label={t('home.gpsSketch.cancel')}
-              >
-                <IconClose className={styles.gpsSketchActionIcon} />
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
-                onClick={toggleGpsSketchPause}
-                aria-label={isGpsSketchPaused
-                  ? t('home.gpsSketch.resume')
-                  : t('home.gpsSketch.pause')}
-              >
-                {isGpsSketchPaused ? (
-                  <IconPlay className={styles.gpsSketchActionIcon} />
-                ) : (
-                  <IconPause className={styles.gpsSketchActionIcon} />
-                )}
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Geolocation center button */}
-
-      <button
-        className={`${styles.mapActionButton} ${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
-        onClick={handleGeolocationButtonClick}
-        disabled={isLocating && userFollowingMode === 'none'}
-        aria-label="Center on my position"
-        data-onboarding-target="geolocation"
-      >
-        {
-          !isLocating
-            ? <IconGeolocation className={styles.geolocationIcon} />
-            : <Loading size="small" className={styles.geolocationLoading} />
-        }
-      </button>
 
       <div ref={tabbarRef}>
         <BottomTabbar

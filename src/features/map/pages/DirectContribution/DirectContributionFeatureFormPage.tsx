@@ -27,7 +27,7 @@ import {
   validateAndNormalizeDirectContributionFieldValue,
 } from '@/domain/community/directContributionForm';
 
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage, useSheetDragHandle } from '@/shared/ui/SlideUpPage';
 import { Button } from '@/shared/ui/Button';
 import { toStringArrayFieldValue, toStringFieldValue } from '@/shared/utils/coercion';
 import { joinCSSClassNames } from '@/shared/utils/join';
@@ -57,6 +57,54 @@ interface DirectContributionFeatureFormPageProps {
   feature: Feature<Geometry> | null;
   onSave: (attributes: Record<string, unknown>) => void | Promise<void>;
   onCancel: () => void;
+}
+
+function DirectContributionFormHeader({
+  title,
+  subtitle,
+  onClose,
+}: {
+  title: string;
+  subtitle: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const dragHandle = useSheetDragHandle();
+
+  return (
+    <header
+      className={styles.header}
+      style={dragHandle?.style}
+      onPointerDown={dragHandle?.onPointerDown}
+    >
+      <Button
+        type="button"
+        color="medium"
+        variant="ghost"
+        className={styles.headerButton}
+        onClick={onClose}
+        aria-label={t('layers.directContribution.form.back')}
+      >
+        <IconArrowLeft className={styles.headerIcon} />
+      </Button>
+
+      <div className={styles.headerTitles}>
+        <h1 className={styles.headerTitle}>{title}</h1>
+        <p className={styles.headerSubtitle}>{subtitle}</p>
+      </div>
+
+      <Button
+        type="button"
+        color="medium"
+        variant="ghost"
+        className={styles.headerButton}
+        onClick={onClose}
+        aria-label={t('layers.directContribution.form.close')}
+      >
+        <IconClose className={styles.headerIcon} />
+      </Button>
+    </header>
+  );
 }
 
 /** Maps legacy collaborative field kinds to the closest HTML input type. */
@@ -367,34 +415,11 @@ function DirectContributionFeatureFormContent({
       sheetSize="tall"
     >
       <div className={styles.page}>
-        <header className={styles.header}>
-          <Button
-            type="button"
-            color="medium"
-            variant="ghost"
-            className={styles.headerButton}
-            onClick={onCancel}
-            aria-label={t('layers.directContribution.form.back')}
-          >
-            <IconArrowLeft className={styles.headerIcon} />
-          </Button>
-
-          <div className={styles.headerTitles}>
-            <h1 className={styles.headerTitle}>{headerTitle}</h1>
-            <p className={styles.headerSubtitle}>{activeCommunity?.name ?? t('layers.directContribution.form.headerSubtitle')}</p>
-          </div>
-
-          <Button
-            type="button"
-            color="medium"
-            variant="ghost"
-            className={styles.headerButton}
-            onClick={onCancel}
-            aria-label={t('layers.directContribution.form.close')}
-          >
-            <IconClose className={styles.headerIcon} />
-          </Button>
-        </header>
+        <DirectContributionFormHeader
+          title={headerTitle}
+          subtitle={activeCommunity?.name ?? t('layers.directContribution.form.headerSubtitle')}
+          onClose={onCancel}
+        />
 
         <main
           className={joinCSSClassNames(

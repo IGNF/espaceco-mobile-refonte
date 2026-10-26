@@ -4,22 +4,30 @@ const WIDE_LAYOUT_MEDIA_QUERY = '(min-width: 1024px)';
 
 export type MapPanelSheetSize = 'half' | 'tall';
 
+export interface MapPanelRegistrationHandle {
+  update: (heightPercent: number) => void;
+  unregister: () => void;
+}
+
 export interface MapPanelContextValue {
   isWideLayout: boolean;
   hasMapPanel: boolean;
   insetRight: string;
   insetBottom: string;
-  registerSheet: (size: MapPanelSheetSize) => () => void;
+  registerSheet: (heightPercent: number) => MapPanelRegistrationHandle;
 }
 
-function unregisterNothing() {}
+const emptyRegistration: MapPanelRegistrationHandle = {
+  update() {},
+  unregister() {},
+};
 
 export const MapPanelContext = createContext<MapPanelContextValue>({
   isWideLayout: false,
   hasMapPanel: false,
   insetRight: '0px',
   insetBottom: '0px',
-  registerSheet: () => unregisterNothing,
+  registerSheet: () => emptyRegistration,
 });
 
 export function useIsWideLayout(): boolean {
