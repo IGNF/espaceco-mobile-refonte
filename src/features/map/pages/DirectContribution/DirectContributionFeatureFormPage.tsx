@@ -412,7 +412,6 @@ function DirectContributionFeatureFormContent({
       onClose={onCancel}
       level={2}
       presentation="sheet"
-      sheetSize="tall"
     >
       <div className={styles.page}>
         <DirectContributionFormHeader

@@ -163,7 +163,6 @@ export function DirectContributionFeatureDetailsPage({
       onClose={onClose}
       level={2}
       presentation="sheet"
-      sheetSize="tall"
     >
       <PageHeader
         title={t('layers.directContribution.details.headerTitle')}

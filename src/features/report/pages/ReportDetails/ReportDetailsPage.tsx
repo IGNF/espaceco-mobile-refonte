@@ -363,7 +363,6 @@ export function ReportDetailsPage({
         onClose={handlePageClose}
         level={2}
         presentation={isEditOpen || isViewingOnMap ? 'fullscreen' : 'sheet'}
-        sheetSize="tall"
         className={pageClassName}
       >
         <PageHeader

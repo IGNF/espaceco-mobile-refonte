@@ -13,15 +13,14 @@ import { useBackHandler } from '@/shared/hooks/useBackHandler';
 import {
 	useMapPanel,
 	type MapPanelRegistrationHandle,
-	type MapPanelSheetSize,
 } from '@/shared/layout/useMapPanel';
 import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
 const BASE_Z_INDEX = 100;
-const DEFAULT_SNAP_POINTS = [20, 50, 95];
-const DEFAULT_SNAP = 50;
+const DEFAULT_SNAP_POINTS = [20, 55, 95];
+const DEFAULT_SNAP = 55;
 
 export type SlideUpPresentation = 'fullscreen' | 'sheet';
 
@@ -58,10 +57,6 @@ export interface SlideUpPageProps {
 	 */
 	presentation?: SlideUpPresentation;
 	/**
-	 * Kept for existing call sites. Bottom sheet height is controlled by snapPoints.
-	 */
-	sheetSize?: MapPanelSheetSize;
-	/**
 	 * When false, a sheet stays on screen but no longer shrinks the map.
 	 * Used when the side column slides away so the map can be edited underneath.
 	 */
@@ -72,7 +67,7 @@ export interface SlideUpPageProps {
 	 */
 	snapPoints?: number[];
 	/**
-	 * Initial snap height. Defaults to 60, or the closest snap point.
+	 * Initial snap height. Defaults to 55, or the closest snap point.
 	 */
 	defaultSnap?: number;
 }
@@ -131,7 +126,6 @@ export function SlideUpPage({
 		if (!isSheet || !isOpen || !reserveMapSpace) return;
 		const registration: MapPanelRegistrationHandle = registerSheet(heightPercentRef.current);
 		updateSheetHeightRef.current = registration.update;
-		registration.update(heightPercentRef.current);
 		return () => {
 			registration.unregister();
 			updateSheetHeightRef.current = () => {};

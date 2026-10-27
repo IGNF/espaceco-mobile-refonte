@@ -65,7 +65,6 @@ export function LayersPanel({
       isOpen={isOpen}
       onClose={onClose}
       presentation="sheet"
-      sheetSize="tall"
     >
         <LayersPanelHeader title={t('layers.title')} onClose={onClose} />
         <div className={styles.content}>

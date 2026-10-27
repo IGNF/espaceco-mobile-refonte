@@ -2,8 +2,6 @@ import { createContext, useContext, useEffect, useState } from 'react';
 
 const WIDE_LAYOUT_MEDIA_QUERY = '(min-width: 1024px)';
 
-export type MapPanelSheetSize = 'half' | 'tall';
-
 export interface MapPanelRegistrationHandle {
   update: (heightPercent: number) => void;
   unregister: () => void;

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { createPortal } from "react-dom";
+import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
+import { toLonLat } from "ol/proj";
+import type OlMap from "ol/Map";
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import { getUid } from "ol/util";
@@ -100,6 +104,13 @@ type OverlayRoute = typeof overlayRoutes[number];
 
 function isOverlayRoute(route: string): route is OverlayRoute {
   return overlayRoutes.includes(route as OverlayRoute);
+}
+
+function ReportPlacementPointer({ map }: { map: OlMap }) {
+  return createPortal(
+    <MapLocationPointer />,
+    map.getViewport(),
+  );
 }
 
 interface PendingMapWorkChoice {
@@ -382,8 +393,14 @@ export function HomePage() {
   };
 
   const handleNewReportStandard = () => {
+    const center = map?.getView().getCenter();
+    const [longitude, latitude] = center ? toLonLat(center) : [undefined, undefined];
     setReportType('standard');
-    setNewReportInitialPosition(null);
+    setNewReportInitialPosition(
+      longitude !== undefined && latitude !== undefined
+        ? createPositionFromLonLat(longitude, latitude)
+        : null,
+    );
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
@@ -944,6 +961,9 @@ export function HomePage() {
           isMapReady={isMapReady}
           isRotationEnabled={mapSettings.isRotationEnabled ?? false}
         />
+        {activeOverlay === '/new-report-choice' && map && (
+          <ReportPlacementPointer map={map} />
+        )}
         <SearchPanel
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}

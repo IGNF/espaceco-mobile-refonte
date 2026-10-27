@@ -372,7 +372,6 @@ export function LayerGroupDetailsPage({
         onClose={handleClose}
         level={2}
         presentation="sheet"
-        sheetSize="tall"
       >
         <PageHeader
           title={title}

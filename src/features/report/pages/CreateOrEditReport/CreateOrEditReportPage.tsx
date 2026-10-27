@@ -54,7 +54,7 @@ import type { Position } from '@/platform/device/geolocation';
 import IconSave from '@/shared/assets/icons/icon-save.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
-import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
+import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
 import IconPlay from '@/shared/assets/icons/icon-play.svg?react';
 
 import styles from './CreateOrEditReportPage.module.css';
@@ -704,9 +704,7 @@ export function CreateOrEditReportPage({
     if (isPickingPosition) {
       return (
         <div className={styles.locationPickerOverlay}>
-          <div className={styles.locationTarget} aria-hidden="true">
-            <IconAdd className={styles.locationTargetIcon} />
-          </div>
+          <MapLocationPointer />
           <div className={styles.validateButtonContainer}>
             <Button
               color="primary"
@@ -823,7 +821,6 @@ export function CreateOrEditReportPage({
         level={level}
         presentation={keepsMapVisible || hideDockedPanel ? 'sheet' : 'fullscreen'}
         reserveMapSpace={!hideDockedPanel}
-        sheetSize="half"
         className={
           !isUsingFullMapTool
             ? undefined
