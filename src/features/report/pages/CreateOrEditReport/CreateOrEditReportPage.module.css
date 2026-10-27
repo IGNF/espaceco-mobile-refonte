@@ -46,32 +46,15 @@
   transform: translateY(92%) !important;
 }
 
+.locationPickerSheetDocked {
+  transform: translateX(100%) !important;
+}
+
 .locationPickerOverlay {
   position: fixed;
   inset: 0;
   z-index: 130;
   pointer-events: none;
-}
-
-.locationTarget {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.locationTargetIcon {
-  width: 36px;
-  height: 36px;
-  color: var(--color-primary);
-  background: rgba(var(--color-light-rgb), 0.75);
-  border-radius: 999px;
-}
-
-.locationTargetIcon path {
-  fill: currentColor;
 }
 
 .validateButtonContainer {

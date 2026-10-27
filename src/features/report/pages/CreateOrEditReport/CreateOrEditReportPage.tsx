@@ -10,6 +10,7 @@ import type OlMap from 'ol/Map';
 import type MapBrowserEvent from 'ol/MapBrowserEvent';
 import { fromLonLat, toLonLat } from 'ol/proj';
 import VectorSource from 'ol/source/Vector';
+import { useMapPanel } from '@/shared/layout/useMapPanel';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
@@ -53,7 +54,7 @@ import type { Position } from '@/platform/device/geolocation';
 import IconSave from '@/shared/assets/icons/icon-save.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
-import IconAdd from '@/shared/assets/icons/icon-add.svg?react';
+import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
 import IconPlay from '@/shared/assets/icons/icon-play.svg?react';
 
 import styles from './CreateOrEditReportPage.module.css';
@@ -178,6 +179,7 @@ export function CreateOrEditReportPage({
   onTraceDirectionActiveChange,
 }: CreateOrEditReportPageProps) {
   const { t } = useTranslation();
+  const { isWideLayout } = useMapPanel();
   const { activeCommunity } = useCommunity();
   const { draftReports } = useMyReports();
   const isEditMode = mode === 'edit';
@@ -216,6 +218,12 @@ export function CreateOrEditReportPage({
   const isPickingSketch = mapPickerMode === 'sketch';
   const isPickingTrace = mapPickerMode === 'trace';
   const isPickingOnMap = mapPickerMode !== 'none';
+  const isUsingFullMapTool = isPickingPosition || isPickingObject || isPickingSketch || isPickingTrace;
+  const keepsMapVisible =
+    Boolean(map) &&
+    !isGnssDraftSetup &&
+    !isTraceReport &&
+    !isUsingFullMapTool;
 
   useEffect(() => {
     onMapPickerActiveChange?.(isPickingOnMap);
@@ -340,7 +348,7 @@ export function CreateOrEditReportPage({
   }, [form.sketches, isOpen, isTraceReport, map]);
 
   const hasUnsavedChanges = form.isDirty ||
-    selectedPosition !== null ||
+    (isEditMode && selectedPosition !== null) ||
     (isTraceReport && (isPickingTrace || hasTraceInSession));
 
   const closeMapPickers = useCallback(() => {
@@ -412,7 +420,7 @@ export function CreateOrEditReportPage({
     const nextPosition = createPositionFromLonLat(longitude, latitude, { fallback: position });
     setSelectedPosition(nextPosition);
     closeMapPickers();
-  }, [map, position, closeMapPickers]);
+  }, [closeMapPickers, map, position]);
 
   const handleCloseObjectChoice = useCallback(() => {
     setObjectCandidates([]);
@@ -581,6 +589,7 @@ export function CreateOrEditReportPage({
   });
 
   const handleSaveDraft = async () => {
+    if (!position) return;
     const draft = await form.saveDraft();
     if (map) {
       addLocalReportToMap(map, draft);
@@ -595,12 +604,12 @@ export function CreateOrEditReportPage({
   };
 
   const handleSend = async () => {
-    if (!form.validate()) return;
+    if (!position || !form.validate()) return;
     setIsSendConfirmOpen(true);
   };
 
   const handleStartGnssRecording = () => {
-    if (!form.validate()) return;
+    if (!position || !form.validate()) return;
     closeMapPickers();
     onStartGnssRecording?.(form.buildDraft());
   };
@@ -645,7 +654,7 @@ export function CreateOrEditReportPage({
   const renderGeolocationStatus = () => {
     if (isEditMode) return null;
 
-    if (isLocating) {
+    if (!position && isLocating) {
       return (
         <div className={styles.geolocationStatus}>
           {t('reports.createOrEdit.geolocation.locating')}
@@ -653,7 +662,7 @@ export function CreateOrEditReportPage({
       );
     }
 
-    if (error) {
+    if (!position && error) {
       const errorKey = error === 'permissionDenied' ? 'permissionDenied' : 'error';
       return (
         <div className={`${styles.geolocationStatus} ${styles.error}`}>
@@ -673,6 +682,14 @@ export function CreateOrEditReportPage({
       );
     }
 
+    if (!position) {
+      return (
+        <div className={styles.geolocationStatus}>
+          {t('reports.createOrEdit.geolocation.positionRequired')}
+        </div>
+      );
+    }
+
     return null;
   };
 
@@ -687,9 +704,7 @@ export function CreateOrEditReportPage({
     if (isPickingPosition) {
       return (
         <div className={styles.locationPickerOverlay}>
-          <div className={styles.locationTarget} aria-hidden="true">
-            <IconAdd className={styles.locationTargetIcon} />
-          </div>
+          <MapLocationPointer />
           <div className={styles.validateButtonContainer}>
             <Button
               color="primary"
@@ -795,13 +810,24 @@ export function CreateOrEditReportPage({
     traceTransportMode,
   ]);
 
+  const canPersistReport = position !== null;
+  const hideDockedPanel = isWideLayout && isUsingFullMapTool;
+
   return (
     <>
       <SlideUpPage
         isOpen={isOpen}
         onClose={handlePageClose}
         level={level}
-        className={isPickingOnMap ? styles.locationPickerSheet : undefined}
+        presentation={keepsMapVisible || hideDockedPanel ? 'sheet' : 'fullscreen'}
+        reserveMapSpace={!hideDockedPanel}
+        className={
+          !isUsingFullMapTool
+            ? undefined
+            : hideDockedPanel
+              ? styles.locationPickerSheetDocked
+              : styles.locationPickerSheet
+        }
       >
         <PageHeader
           title={headerTitle}
@@ -848,6 +874,7 @@ export function CreateOrEditReportPage({
                 color="primary"
                 fullWidth
                 loading={form.isSaving}
+                disabled={!canPersistReport}
                 onClick={handleStartGnssRecording}
               >
                 <IconPlay className={buttonStyles.icon} />
@@ -869,6 +896,7 @@ export function CreateOrEditReportPage({
                 color="tertiary"
                 fullWidth
                 loading={form.isSaving}
+                disabled={!canPersistReport}
                 onClick={handleSend}
               >
                 <IconSend className={buttonStyles.icon} />
@@ -878,6 +906,7 @@ export function CreateOrEditReportPage({
                 color="primary"
                 fullWidth
                 loading={form.isSaving}
+                disabled={!canPersistReport}
                 onClick={handleSaveDraft}
               >
                 <IconSave className={buttonStyles.icon} />

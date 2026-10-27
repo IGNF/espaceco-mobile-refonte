@@ -223,3 +223,30 @@
     transform: translateX(-50%);
   }
 }
+
+@media (min-width: 1024px) {
+  .customFrame {
+    top: 24px;
+    left: 24px;
+    right: calc(var(--map-panel-width) + 24px);
+    bottom: 24px;
+  }
+
+  .mapActions {
+    top: 40px;
+    right: calc(var(--map-panel-width) + 24px);
+  }
+
+  .headerCard,
+  .choicesCard,
+  .footerCard {
+    left: auto;
+    right: 16px;
+    width: calc(var(--map-panel-width) - 32px);
+    transform: none;
+  }
+
+  .choicesCard {
+    max-height: calc(100vh - 360px);
+  }
+}

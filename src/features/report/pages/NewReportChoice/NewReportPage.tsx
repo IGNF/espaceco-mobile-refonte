@@ -35,7 +35,7 @@ export function NewReportPage({
   const communityName = activeCommunity?.name ?? '';
 
   return (
-    <SlideUpPage isOpen={isOpen} onClose={onClose}>
+    <SlideUpPage isOpen={isOpen} onClose={onClose} presentation="sheet">
       <PageHeader
         title={t('reports.newReportChoice.headerTitle')}
         subtitle={communityName}

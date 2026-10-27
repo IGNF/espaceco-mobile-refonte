@@ -4,12 +4,17 @@ import TileWMS from 'ol/source/TileWMS';
 
 import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 
+export function isCommunityWmsLayer(layer: CommunityLayer): boolean {
+  const geoservice = layer.geoservice;
+  return Boolean(geoservice && geoservice.type === 'WMS' && geoservice.layers && geoservice.url);
+}
+
 export function createCommunityWmsLayers(layers: CommunityLayer[]): TileLayer<TileWMS>[] {
   const wmsLayers: TileLayer<TileWMS>[] = [];
 
   for (const layer of layers) {
     const geoservice = layer.geoservice;
-    if (!geoservice || geoservice.type !== 'WMS' || !geoservice.layers || !geoservice.url) {
+    if (!isCommunityWmsLayer(layer) || !geoservice) {
       continue;
     }
     const geoserviceOptions = geoservice as typeof geoservice & {

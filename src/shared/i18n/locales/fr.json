@@ -811,6 +811,7 @@
       "geolocation": {
         "locating": "Localisation en cours...",
         "located": "Position obtenue",
+        "positionRequired": "Indiquez l'emplacement sur la carte avant d'enregistrer.",
         "error": "Impossible d'obtenir la position",
         "permissionDenied": "Permission de localisation refusée",
         "retry": "Réessayer"

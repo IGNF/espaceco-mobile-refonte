@@ -419,6 +419,19 @@ export function useDirectContributionSession({
     };
   }, [activeCollabLayer, activeCollabSource, activeLayer, closeFeatureForm, map, t]);
 
+  useEffect(() => {
+    const sketchManager = sketchManagerRef.current;
+    if (!sketchManager || !featureFormState) return;
+
+    sketchManager.setActive(false);
+
+    return () => {
+      if (sketchManagerRef.current !== sketchManager) return;
+      sketchManager.setActive(true);
+      sketchManager.setMode(currentModeRef.current);
+    };
+  }, [featureFormState]);
+
   const startSession = useCallback(
     (layerKey: string) => {
       pendingFeatureEditionRef.current = null;

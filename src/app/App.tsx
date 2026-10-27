@@ -8,6 +8,7 @@ import { router } from './router/routes';
 import { SessionExpiredAlert } from './components/SessionExpiredAlert/SessionExpiredAlert';
 import { EspaceCo_GpsSource } from '@/platform/device/gpsSource';
 import { AppSettingsProvider } from './providers/AppSettingsProvider';
+import { MapPanelProvider } from '@/shared/layout/MapPanelProvider';
 
 export function App() {
   useEffect(() => {
@@ -20,7 +21,9 @@ export function App() {
         <AppSettingsProvider>
           <CommunityProvider>
             <OfflineProvider>
-              <RouterProvider router={router} />
+              <MapPanelProvider>
+                <RouterProvider router={router} />
+              </MapPanelProvider>
             </OfflineProvider>
           </CommunityProvider>
         </AppSettingsProvider>

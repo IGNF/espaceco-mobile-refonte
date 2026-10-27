@@ -25,6 +25,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 - Les valeurs de déport sont maintenant affichées dans la barre d'outils uniquement si le déport est activé (ticket #14)
 - Si la valeur de déport altimétrique est négative, elle est indiquée en rouge (ticket 14)
+- Certaines pages (notamment le formulaire de signalement et la page couches) sont maintenant des modales qui ne prennent que la moitié basse de l'écran, pour laisser un visuel sur la carte. Sur tablette, elle s'ouvre dans un panel sur le côté droit de l'appareil (tickets #148 et #149)
 
 ### Fixed
 - On peut maintenant envoyer un signalement lié à un thème partagé (non lié au groupe actif de l'utilisateur connecté) (ticket #173)

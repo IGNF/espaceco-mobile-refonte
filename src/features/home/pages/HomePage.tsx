@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { createPortal } from "react-dom";
+import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
+import { toLonLat } from "ol/proj";
+import type OlMap from "ol/Map";
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
 import { getUid } from "ol/util";
@@ -91,6 +95,7 @@ import { Loading } from "@/shared/ui/Loading";
 import { Alert } from "@/shared/ui/Alert";
 import { ActionSheet } from "@/shared/ui/ActionSheet";
 import { createPositionFromLonLat } from "@/shared/utils/position";
+import { useMapPanel } from "@/shared/layout/useMapPanel";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
 
@@ -99,6 +104,13 @@ type OverlayRoute = typeof overlayRoutes[number];
 
 function isOverlayRoute(route: string): route is OverlayRoute {
   return overlayRoutes.includes(route as OverlayRoute);
+}
+
+function ReportPlacementPointer({ map }: { map: OlMap }) {
+  return createPortal(
+    <MapLocationPointer />,
+    map.getViewport(),
+  );
 }
 
 interface PendingMapWorkChoice {
@@ -245,6 +257,8 @@ export function HomePage() {
   const [pendingMapWorkChoice, setPendingMapWorkChoice] = useState<PendingMapWorkChoice | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
   const [hasObservedCommunitySwitchLoading, setHasObservedCommunitySwitchLoading] = useState(false);
+  const { hasMapPanel, insetRight, insetBottom } = useMapPanel();
+  const tabbarRef = useRef<HTMLDivElement>(null);
   const geolocationTapTimeoutRef = useRef<number | null>(null);
   const geolocationLastTapRef = useRef(0);
   const getGpsSketchesAtPixelRef = useRef<(pixel: number[]) => Feature<Geometry>[]>(() => []);
@@ -271,7 +285,8 @@ export function HomePage() {
       isFastReportFlowActive ||
       pendingMapWorkChoice !== null ||
       activeConflict !== null ||
-      activeOverlay === '/offline',
+      activeOverlay === '/offline' ||
+      hasMapPanel,
     onCandidatesAtPixel: (pixel, featureCandidates) => {
       const sketches = getGpsSketchesAtPixelRef.current(pixel);
       if (sketches.length === 0) {
@@ -378,8 +393,14 @@ export function HomePage() {
   };
 
   const handleNewReportStandard = () => {
+    const center = map?.getView().getCenter();
+    const [longitude, latitude] = center ? toLonLat(center) : [undefined, undefined];
     setReportType('standard');
-    setNewReportInitialPosition(null);
+    setNewReportInitialPosition(
+      longitude !== undefined && latitude !== undefined
+        ? createPositionFromLonLat(longitude, latitude)
+        : null,
+    );
     setNewReportInitialObjects([]);
     setNewReportInitialSketches([]);
     setIsNewReportThemePreselected(false);
@@ -629,6 +650,7 @@ export function HomePage() {
       pendingMapWorkChoice !== null ||
       activeOverlay !== null ||
       isLayersPanelOpen ||
+      hasMapPanel ||
       directContributionFeatureFormState !== null ||
       consultedFeatureCandidate !== null ||
       isDirectContributionFeatureChoiceOpen ||
@@ -737,6 +759,7 @@ export function HomePage() {
     // Keep the map where the user is editing, instead of snapping back to the GPS fix.
     setSkipGeolocationTracking(
       isReportMapPickerActive ||
+      hasMapPanel ||
       isDirectContributionSessionActive ||
       isOfflineZoneEditorOpen ||
       isGpsSketchRecording ||
@@ -746,11 +769,56 @@ export function HomePage() {
   }, [
     fastReportFlow.isGpsOpen,
     gnssReportTemplate,
+    hasMapPanel,
     isDirectContributionSessionActive,
     isGpsSketchRecording,
     isOfflineZoneEditorOpen,
     isReportMapPickerActive,
   ]);
+
+  useEffect(() => {
+    const element = tabbarRef.current;
+    if (!element) return;
+
+    const publishTabbarHeight = () => {
+      document.documentElement.style.setProperty('--app-tabbar-height', `${element.offsetHeight}px`);
+      window.requestAnimationFrame(() => mapRef.current?.updateSize());
+    };
+
+    publishTabbarHeight();
+    const observer = new ResizeObserver(publishTabbarHeight);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mapRef]);
+
+  useEffect(() => {
+    if (!map) return;
+    const frame = window.requestAnimationFrame(() => map.updateSize());
+    return () => window.cancelAnimationFrame(frame);
+  }, [map, insetRight, insetBottom]);
+
+  const framedFeature =
+    directContributionFeatureFormState?.feature ??
+    consultedFeatureCandidate?.feature ??
+    null;
+
+  useEffect(() => {
+    if (!map || !framedFeature) return;
+    const extent = framedFeature.getGeometry()?.getExtent();
+    if (!extent || extent.some((value) => !Number.isFinite(value))) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      map.updateSize();
+      const zoom = map.getView().getZoom();
+      map.getView().fit(extent, {
+        padding: [48, 48, 48, 48],
+        maxZoom: zoom ?? 18,
+        duration: 250,
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [framedFeature, insetBottom, insetRight, map]);
 
   const openReportFromGpsSketch = useCallback((draft: GpsSketchReportDraft) => {
     setReportType('standard');
@@ -826,6 +894,7 @@ export function HomePage() {
     isMapReady &&
     activeOverlay === null &&
     pendingMapWorkChoice === null &&
+    !hasMapPanel &&
     !isLayersPanelOpen &&
     !isDirectContributionSessionActive &&
     !isFastReportFlowActive &&
@@ -892,11 +961,86 @@ export function HomePage() {
           isMapReady={isMapReady}
           isRotationEnabled={mapSettings.isRotationEnabled ?? false}
         />
+        {activeOverlay === '/new-report-choice' && map && (
+          <ReportPlacementPointer map={map} />
+        )}
         <SearchPanel
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
           map={map}
         />
+        <div className={styles.mapControls}>
+          {displayMode !== 'beginner' && (
+            <button
+              className={`${styles.mapActionButton} ${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
+              onClick={handleUserFollowingButtonClick}
+              disabled={isLocating && userFollowingMode === 'none'}
+              aria-label="Follow my position"
+              data-onboarding-target="userFollowing"
+            >
+              <IconCompass
+                className={styles.userFollowingIcon}
+              />
+            </button>
+          )}
+
+          {displayMode !== 'beginner' && userFollowingMode === 'tracking' && (
+            <div className={styles.gpsSketchControls}>
+              <button
+                type="button"
+                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
+                onClick={isGpsSketchRecording ? stopGpsSketchRecording : startGpsSketchRecording}
+                aria-label={isGpsSketchRecording
+                  ? t('home.gpsSketch.stop')
+                  : t('home.gpsSketch.record')}
+              >
+                <span className={isGpsSketchRecording ? styles.gpsSketchStopSquare : styles.gpsSketchRecordDot} />
+              </button>
+
+              {isGpsSketchRecording && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.mapActionButton} ${styles.gpsSketchActionButton}`}
+                    onClick={cancelGpsSketchRecording}
+                    aria-label={t('home.gpsSketch.cancel')}
+                  >
+                    <IconClose className={styles.gpsSketchActionIcon} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
+                    onClick={toggleGpsSketchPause}
+                    aria-label={isGpsSketchPaused
+                      ? t('home.gpsSketch.resume')
+                      : t('home.gpsSketch.pause')}
+                  >
+                    {isGpsSketchPaused ? (
+                      <IconPlay className={styles.gpsSketchActionIcon} />
+                    ) : (
+                      <IconPause className={styles.gpsSketchActionIcon} />
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          <button
+            className={`${styles.mapActionButton} ${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
+            onClick={handleGeolocationButtonClick}
+            disabled={isLocating && userFollowingMode === 'none'}
+            aria-label="Center on my position"
+            data-onboarding-target="geolocation"
+          >
+            {
+              !isLocating
+                ? <IconGeolocation className={styles.geolocationIcon} />
+                : <Loading size="small" className={styles.geolocationLoading} />
+            }
+          </button>
+        </div>
       </main>
 
       {/* <p className={styles.copyright}>
@@ -927,90 +1071,15 @@ export function HomePage() {
         </div>
       )}
 
-      {/* Following user location button */}
-
-      {
-        displayMode !== 'beginner' && (
-          <button
-            className={`${styles.mapActionButton} ${styles.userFollowingButton} ${userFollowingMode === 'tracking' ? styles.locked : ""}`}
-            onClick={handleUserFollowingButtonClick}
-            disabled={isLocating && userFollowingMode === 'none'}
-            aria-label="Follow my position"
-            data-onboarding-target="userFollowing"
-          >
-            <IconCompass
-              className={styles.userFollowingIcon}
-            />
-          </button>
-        )
-      }
-
-      {displayMode !== 'beginner' && userFollowingMode === 'tracking' && (
-        <div className={styles.gpsSketchControls}>
-          <button
-            type="button"
-            className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchRecording && !isGpsSketchPaused ? styles.recording : ''}`}
-            onClick={isGpsSketchRecording ? stopGpsSketchRecording : startGpsSketchRecording}
-            aria-label={isGpsSketchRecording
-              ? t('home.gpsSketch.stop')
-              : t('home.gpsSketch.record')}
-          >
-            <span className={isGpsSketchRecording ? styles.gpsSketchStopSquare : styles.gpsSketchRecordDot} />
-          </button>
-
-          {isGpsSketchRecording && (
-            <>
-              <button
-                type="button"
-                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton}`}
-                onClick={cancelGpsSketchRecording}
-                aria-label={t('home.gpsSketch.cancel')}
-              >
-                <IconClose className={styles.gpsSketchActionIcon} />
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.mapActionButton} ${styles.gpsSketchActionButton} ${isGpsSketchPaused ? styles.recording : ''}`}
-                onClick={toggleGpsSketchPause}
-                aria-label={isGpsSketchPaused
-                  ? t('home.gpsSketch.resume')
-                  : t('home.gpsSketch.pause')}
-              >
-                {isGpsSketchPaused ? (
-                  <IconPlay className={styles.gpsSketchActionIcon} />
-                ) : (
-                  <IconPause className={styles.gpsSketchActionIcon} />
-                )}
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Geolocation center button */}
-
-      <button
-        className={`${styles.mapActionButton} ${styles.geolocationButton} ${isHighlighted("geolocation") ? styles.highlighted : ""} ${isLockedUserLocation ? styles.locked : ""}`}
-        onClick={handleGeolocationButtonClick}
-        disabled={isLocating && userFollowingMode === 'none'}
-        aria-label="Center on my position"
-        data-onboarding-target="geolocation"
-      >
-        {
-          !isLocating
-            ? <IconGeolocation className={styles.geolocationIcon} />
-            : <Loading size="small" className={styles.geolocationLoading} />
-        }
-      </button>
-
-      <BottomTabbar
-        onTabClick={handleTabClick}
-        highlightedTab={getHighlightedTab()}
-        activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
-        disabled={isOfflineZoneEditorOpen}
-        requestCreate={draftReportsLimit.requestCreate}
-      />
+      <div ref={tabbarRef}>
+        <BottomTabbar
+          onTabClick={handleTabClick}
+          highlightedTab={getHighlightedTab()}
+          activeTab={isFastReportFlowActive ? "signalementRapide" : isLayersPanelOpen ? "couches" : null}
+          disabled={isOfflineZoneEditorOpen}
+          requestCreate={draftReportsLimit.requestCreate}
+        />
+      </div>
 
       <LayersPanelFlow
         isOpen={isLayersPanelOpen}

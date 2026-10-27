@@ -17,8 +17,8 @@ import { collabApiClient } from '@/infra/api/collabApiClient';
 import { findLayerGroupByName } from '@/infra/map/openlayers/layerGroups';
 import { getCommunityLayerKeyFromOlLayer } from '@/infra/map/openlayers/layerMetadata';
 import { createCommunityVectorLayer } from '@/infra/map/openlayers/vectorLayers';
-import { createCommunityGeoportailLayers } from '@/infra/map/openlayers/geoportailLayers';
-import { createCommunityWmsLayers } from '@/infra/map/openlayers/wmsLayers';
+import { createCommunityGeoportailLayers, isCommunityGeoportailLayer } from '@/infra/map/openlayers/geoportailLayers';
+import { createCommunityWmsLayers, isCommunityWmsLayer } from '@/infra/map/openlayers/wmsLayers';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { clampNumber } from '@/shared/utils/number';
@@ -83,6 +83,29 @@ function replaceLayerGroupContent(
   for (const layer of orderedLayers) {
     layerGroup.getLayers().push(layer);
   }
+}
+
+function syncLayerGroupDisplayInPlace(
+  layerGroup: LayerGroup,
+  orderedLayers: CommunityLayer[]
+): boolean {
+  const currentLayers = layerGroup.getLayers().getArray();
+  if (currentLayers.length !== orderedLayers.length) {
+    return false;
+  }
+
+  const canUpdateInPlace = currentLayers.every((layer, index) =>
+    getCommunityLayerKeyFromOlLayer(layer) === getCommunityLayerKey(orderedLayers[index])
+  );
+  if (!canUpdateInPlace) {
+    return false;
+  }
+
+  currentLayers.forEach((layer, index) => {
+    syncLayerDisplayState(layer, orderedLayers[index]);
+  });
+
+  return true;
 }
 
 function syncDefaultGeoportailLayerGroup(
@@ -216,6 +239,14 @@ export function useCommunityMapLayers(
       ...layer,
       visible: groupVisibility.mesCartes && (layer.visible ?? true),
     }));
+    const orderedLayers = [
+      ...visibleGeoportailLayers.filter(isCommunityGeoportailLayer),
+      ...visibleMesCartesLayers.filter(isCommunityWmsLayer),
+    ];
+
+    if (syncLayerGroupDisplayInPlace(groupe, orderedLayers)) {
+      return;
+    }
 
     replaceLayerGroupContent(
       groupe,

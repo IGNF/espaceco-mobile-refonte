@@ -4,6 +4,10 @@
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
   --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
   --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --map-panel-width: 400px;
+  --map-inset-right: 0px;
+  --map-inset-bottom: 0px;
+  --app-tabbar-height: 0px;
 }
 
 html, body {

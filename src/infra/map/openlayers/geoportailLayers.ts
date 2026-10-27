@@ -7,6 +7,7 @@ import {
   OFFLINE_GEOPORTAIL_LAYERS,
 } from '@/shared/constants/map';
 import type { CommunityLayer } from '@ign/mobile-core';
+import { applyCommunityLayerMetadata } from '@/infra/map/openlayers/layerMetadata';
 
 export interface GeoportailLayerConfig {
   name: string
@@ -141,6 +142,10 @@ export function getOfflineGeoportailLayerOptions(): Array<{
 /**
  * Create Geoportail layers from enriched community layer data using the WMTS endpoint configured by the API.
  */
+export function isCommunityGeoportailLayer(layer: CommunityLayer): boolean {
+  return Boolean(layer.geoservice?.layers);
+}
+
 export function createCommunityGeoportailLayers(
   layers: CommunityLayer[]
 ): ol_layer_Geoportail[] {
@@ -148,12 +153,12 @@ export function createCommunityGeoportailLayers(
 
   for (const layer of layers) {
     const geoservice = layer.geoservice;
-    if (!geoservice?.layers) {
+    if (!isCommunityGeoportailLayer(layer) || !geoservice) {
       continue;
     }
 
     const endpointConfig = getGeoportailEndpointConfig(geoservice.url);
-    geoportailLayers.push(createGeoportailLayer({
+    const geoportailLayer = createGeoportailLayer({
       name: geoservice.layers,
       visible: layer.visible ?? false,
       opacity: layer.opacity ?? 1,
@@ -163,7 +168,9 @@ export function createCommunityGeoportailLayers(
       minZoom: geoservice.minZoom,
       maxZoom: geoservice.maxZoom,
       title: geoservice.title ?? layer.title,
-    }));
+    });
+    applyCommunityLayerMetadata(geoportailLayer, layer);
+    geoportailLayers.push(geoportailLayer);
   }
 
   return geoportailLayers;
