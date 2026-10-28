@@ -140,6 +140,15 @@
       "exportSuccess": "La trace GPX est prête à être envoyée.",
       "exportError": "Impossible de préparer la trace GPX."
     },
+    "measure": {
+      "open": "Mesurer",
+      "length": "Longueur",
+      "area": "Surface",
+      "undo": "Annuler le dernier point",
+      "validate": "Valider la mesure",
+      "hint": "Touchez la carte pour ajouter un point",
+      "validatedHint": "Touchez la carte pour commencer une nouvelle mesure."
+    },
     "copyright": "Géoportail © IGN-France IGN",
     "resetMapNorth": "Réinitialiser l’orientation : nord en haut"
   },
@@ -496,6 +505,10 @@
       "search": {
         "title": "Bouton de recherche",
         "description": "Afficher le bouton de recherche pour rechercher une adresse sur la carte."
+      },
+      "measure": {
+        "title": "Outils de mesure",
+        "description": "Afficher le bouton de mesure à côté de la recherche."
       }
     }
   },

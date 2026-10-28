@@ -308,6 +308,22 @@ export function SettingsPage({ isOpen, onClose, onLayerPreferencesImported }: Se
                     <span className={typography.caption}>{t('settings.map.search.description')}</span>
                   </div>
 
+                  <div className={styles.toggleFieldsGrid}>
+                    <div className={styles.toggleField}>
+                      <label className={inputs.field}>
+                        <span className={inputs.label}>{t('settings.map.measure.title')}</span>
+                      </label>
+                      <Toggle
+                        checked={mapSettings.isMeasureEnabled}
+                        onChange={() => handleSetMapSettings({
+                          ...mapSettings,
+                          isMeasureEnabled: !mapSettings.isMeasureEnabled,
+                        })}
+                      />
+                    </div>
+                    <span className={typography.caption}>{t('settings.map.measure.description')}</span>
+                  </div>
+
                 </>
               )}
             </section>
