@@ -13,7 +13,15 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.23] - 2026-10-xx
+## [0.0.24] - 2026-10-xx
+
+### Added
+
+### Changed
+
+### Fixed
+
+## [0.0.23] - 2026-10-30
 
 ### Added
 - Ajout d'un mode "non connecté" qui permet à un utilisateur d'utiliser l'application sans connection réseau (ticket #170)
