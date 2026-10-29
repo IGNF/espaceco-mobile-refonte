@@ -65,6 +65,8 @@ import { useLocalReportFeatureConsultation } from "@/features/map/hooks/useLocal
 import { useMapLongPress, type MapLongPressCoordinate } from "@/features/map/hooks/useMapLongPress";
 import { useUserLocationMarker } from "@/features/home/hooks/useUserLocationMarker";
 import { DirectContributionMapOverlay } from "@/features/map/components/DirectContributionMapOverlay";
+import { MapMeasureBar } from "@/features/map/components/MapMeasureBar";
+import { useMapMeasureSession } from "@/features/map/hooks/useMapMeasureSession";
 import { FeatureChoiceAlert } from "@/features/map/components/FeatureChoiceAlert";
 import { DirectContributionConflictAlert } from "@/features/map/components/DirectContributionConflictAlert";
 import type { DirectContributionFeatureCandidate } from "@/features/map/types/directContributionFeatureCandidate";
@@ -81,6 +83,7 @@ import IconCompass from "@/shared/assets/icons/icon-compass.svg?react";
 import IconPause from "@/shared/assets/icons/icon-pause.svg?react";
 import IconPlay from "@/shared/assets/icons/icon-play.svg?react";
 import IconClose from "@/shared/assets/icons/icon-close.svg?react";
+import IconMeasure from "@/shared/assets/icons/icon-mesure.svg?react";
 
 import { HomeLoadingOverlay } from '@/features/home/components/HomeLoadingOverlay';
 import { MapNorthCompass } from '@/features/home/components/MapNorthCompass';
@@ -152,6 +155,19 @@ export function HomePage() {
     isRotationEnabled: mapSettings.isRotationEnabled ?? false,
     skipGeolocationTracking,
   });
+  const {
+    isActive: isMeasureActive,
+    mode: measureMode,
+    isValidated: isMeasureValidated,
+    summary: measureSummary,
+    canUndo: canUndoMeasure,
+    canValidate: canValidateMeasure,
+    open: openMeasure,
+    close: closeMeasure,
+    undo: undoMeasure,
+    validate: validateMeasure,
+    setMode: setMeasureMode,
+  } = useMapMeasureSession(map);
   const {
     layers,
     geoportailLayers,
@@ -280,6 +296,7 @@ export function HomePage() {
     map,
     vectorLayers,
     disabled:
+      isMeasureActive ||
       isDirectContributionSessionActive ||
       isReportMapPickerActive ||
       isFastReportFlowActive ||
@@ -442,6 +459,18 @@ export function HomePage() {
 
   const handleSearchClick = () => {
     setIsSearchOpen((prev) => !prev);
+  };
+
+  const handleMeasureClick = () => {
+    if (isMeasureActive) {
+      closeMeasure();
+      return;
+    }
+
+    setIsSearchOpen(false);
+    setIsLayersPanelOpen(false);
+    setIsMenuOpen(false);
+    openMeasure();
   };
 
   const handleTabClick = (tab: TabId) => {
@@ -643,6 +672,7 @@ export function HomePage() {
   } = useLocalReportFeatureConsultation({
     map,
     disabled:
+      isMeasureActive ||
       isDirectContributionSessionActive ||
       isReportMapPickerActive ||
       isFastReportFlowActive ||
@@ -683,6 +713,7 @@ export function HomePage() {
 
   const isGpsSketchSelectionEnabled =
     isMapReady &&
+    !isMeasureActive &&
     userFollowingMode === 'none' &&
     pendingMapWorkChoice === null &&
     activeOverlay === null &&
@@ -890,25 +921,59 @@ export function HomePage() {
     clearGpsSketchSelection();
   }, [clearGpsSketchSelection]);
 
+  const isMapBusy =
+    activeOverlay !== null ||
+    hasMapPanel ||
+    isDirectContributionSessionActive ||
+    isFastReportFlowActive ||
+    isGpsSketchRecording ||
+    selectedGpsSketch !== null ||
+    pendingMapWorkChoice !== null ||
+    activeConflict !== null ||
+    directContributionFeatureFormState !== null ||
+    consultedFeatureCandidate !== null ||
+    selectedLocalReport !== null ||
+    isDirectContributionFeatureChoiceOpen ||
+    isConsultationFeatureChoiceOpen ||
+    isLocalReportChoiceOpen ||
+    isHomeLoadingOverlayVisible ||
+    shouldShowOnboarding;
+
+  const isMeasureInterrupted =
+    isMapBusy ||
+    longPressMapAction !== null ||
+    isReportMapPickerActive;
+
+  useEffect(() => {
+    if (!isMeasureActive) {
+      return;
+    }
+    if (
+      isMenuOpen ||
+      isSearchOpen ||
+      isLayersPanelOpen ||
+      isMeasureInterrupted ||
+      !mapSettings.isMeasureEnabled ||
+      displayMode === 'beginner'
+    ) {
+      closeMeasure();
+    }
+  }, [
+    closeMeasure,
+    displayMode,
+    isLayersPanelOpen,
+    isMeasureActive,
+    isMeasureInterrupted,
+    isMenuOpen,
+    isSearchOpen,
+    mapSettings.isMeasureEnabled,
+  ]);
+
   const isMapLongPressEnabled =
     isMapReady &&
-    activeOverlay === null &&
-    pendingMapWorkChoice === null &&
-    !hasMapPanel &&
+    !isMeasureActive &&
     !isLayersPanelOpen &&
-    !isDirectContributionSessionActive &&
-    !isFastReportFlowActive &&
-    !isGpsSketchRecording &&
-    selectedGpsSketch === null &&
-    activeConflict === null &&
-    directContributionFeatureFormState === null &&
-    consultedFeatureCandidate === null &&
-    selectedLocalReport === null &&
-    !isDirectContributionFeatureChoiceOpen &&
-    !isConsultationFeatureChoiceOpen &&
-    !isLocalReportChoiceOpen &&
-    !isHomeLoadingOverlayVisible &&
-    !shouldShowOnboarding;
+    !isMapBusy;
 
   useMapLongPress({
     map,
@@ -941,6 +1006,18 @@ export function HomePage() {
             <p className={styles.offlineModeLabel}>{t('home.offlineModeActive')}</p>
           )}
         </div>
+        {mapSettings.isMeasureEnabled && displayMode !== 'beginner' && (
+          <button
+            type="button"
+            className={`${styles.measureButton} ${isMeasureActive ? styles.measureButtonActive : ""}`}
+            onClick={handleMeasureClick}
+            disabled={!isMeasureActive && isMeasureInterrupted}
+            aria-label={t("home.measure.open")}
+            aria-pressed={isMeasureActive}
+          >
+            <IconMeasure className={styles.measureIcon} />
+          </button>
+        )}
         {mapSettings.isSearchEnabled && (
           <button
             className={`${styles.searchButton} ${isHighlighted("search") ? styles.highlighted : ""}`}
@@ -1069,6 +1146,20 @@ export function HomePage() {
             <IconZoomOut className={styles.zoomOutIcon} />
           </button>
         </div>
+      )}
+
+      {isMeasureActive && (
+        <MapMeasureBar
+          mode={measureMode}
+          isValidated={isMeasureValidated}
+          summary={measureSummary}
+          canUndo={canUndoMeasure}
+          canValidate={canValidateMeasure}
+          onModeChange={setMeasureMode}
+          onUndo={undoMeasure}
+          onValidate={validateMeasure}
+          onClose={closeMeasure}
+        />
       )}
 
       <div ref={tabbarRef}>

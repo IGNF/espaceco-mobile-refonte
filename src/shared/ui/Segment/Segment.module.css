@@ -1,0 +1,46 @@
+.segment {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--color-light);
+}
+
+.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.option {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-dark);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.optionSelected {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.option path {
+  fill: currentColor;
+}

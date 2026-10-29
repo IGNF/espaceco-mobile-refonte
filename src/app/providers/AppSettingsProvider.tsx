@@ -16,6 +16,7 @@ const DEFAULT_MAP_SETTINGS: MapSettings = {
   isZoomEnabled: true,
   isRotationEnabled: true,
   isSearchEnabled: true,
+  isMeasureEnabled: false,
   isOnlineVectorCacheEnabled: false,
 };
 
