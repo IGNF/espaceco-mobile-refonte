@@ -173,7 +173,22 @@
   justify-content: center;
 }
 
-.backToReportButton {
-  width: min(320px, 100%) !important;
-  margin: 0 !important;
+.reportActionButtonContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.reportActionReplyButtonContainer {
+  flex: 1;
+  /* display: flex;
+  flex-direction: column;
+  gap: 12px; */
+}
+
+.reportActionCloneButtonContainer {
+  flex: 1;
+  /* display: flex;
+  flex-direction: column;
+  gap: 12px; */
 }

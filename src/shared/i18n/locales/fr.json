@@ -1002,7 +1002,8 @@
       "comment": "Commentaire",
       "responses": "Réponses",
       "noResponses": "Aucune réponse",
-      "respondButton": "Répondre à ce signalement",
+      "respondButton": "Répondre",
+      "respondToReportButton": "Répondre à ce signalement",
       "viewOnMapButton": "Visualiser sur la carte",
       "backToReportButton": "Retour au signalement",
       "previousReportButton": "Signalement précédent",
@@ -1010,6 +1011,7 @@
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
+      "cloneButton": "Cloner",
       "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
       "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
       "sendSuccess": {

@@ -44,6 +44,7 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
+import IconCopy from '@/shared/assets/icons/icon-reset.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-arrow-right.svg?react';
@@ -309,6 +310,10 @@ export function ReportDetailsPage({
     setIsDeleteOpen(false);
   };
 
+  const handleCloneReport = () => {
+    console.log('handleCloneReport');
+  };
+
   const handleDeleteConfirm = async () => {
     if (!report) return;
     setIsDeleting(true);
@@ -495,13 +500,27 @@ export function ReportDetailsPage({
                     <IconDelete className={buttonStyles.icon} />
                     {t('reports.details.deleteButton')}
                   </Button>
+                  <Button color="light" onClick={handleCloneReport}>
+                    <IconCopy className={buttonStyles.icon} />
+                    {t('reports.details.cloneButton')}
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button color="primary" onClick={handleRespond} disabled={!canReply}>
-                    <IconPencil className={buttonStyles.icon} />
-                    {t('reports.details.respondButton')}
-                  </Button>
+                  <div className={styles.reportActionButtonContainer}>
+                    <div className={styles.reportActionReplyButtonContainer}>
+                      <Button color="primary" onClick={handleRespond} disabled={!canReply} fullWidth>
+                        <IconPencil className={buttonStyles.icon} />
+                        {t('reports.details.respondButton')}
+                      </Button>
+                    </div>
+                    <div className={styles.reportActionCloneButtonContainer}>
+                      <Button color="light" onClick={handleCloneReport} fullWidth>
+                        <IconCopy className={buttonStyles.icon} />
+                        {t('reports.details.cloneButton')}
+                      </Button>
+                    </div>
+                  </div>
                   {!canReply && (
                     <p className={styles.permissionMessage}>
                       {t('reports.details.reply.permissionDenied')}
@@ -626,7 +645,7 @@ export function ReportDetailsPage({
             {showPreviousReportButton && (
               <Button
                 type="button"
-                color="light"
+                color="dark"
                 iconOnly
                 className={joinCSSClassNames(
                   styles.reportNavigationButton,
@@ -650,7 +669,7 @@ export function ReportDetailsPage({
             {showNextReportButton && (
               <Button
                 type="button"
-                color="light"
+                color="dark"
                 iconOnly
                 className={joinCSSClassNames(
                   styles.reportNavigationButton,
