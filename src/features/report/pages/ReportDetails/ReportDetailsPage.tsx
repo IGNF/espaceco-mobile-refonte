@@ -12,12 +12,14 @@ import type { AppReport } from '@/domain/report/models';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { DraftReportsLimitAlerts } from '@/features/report/components/DraftReportsLimitAlerts';
+import { useDraftReportsLimitGuard } from '@/features/report/hooks/useDraftReportsLimitGuard';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
 import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
-import { removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
+import { addLocalReportToMap, removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
 import {
   applyReportDetailsMapFocus,
   suspendReportDetailsMapReportLoading,
@@ -95,6 +97,7 @@ export function ReportDetailsPage({
 }: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const draftReportsLimit = useDraftReportsLimitGuard();
   const { activeCommunity } = useCommunity();
   const { submitReply, isSubmitting, error: replyError } = useReportReply();
   const { submitReport, isSubmitting: isSending, error: sendError } = useSubmitReport();
@@ -102,6 +105,8 @@ export function ReportDetailsPage({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCloning, setIsCloning] = useState(false);
+  const isCloningRef = useRef(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
   const [isViewingOnMap, setIsViewingOnMap] = useState(false);
@@ -310,8 +315,48 @@ export function ReportDetailsPage({
     setIsDeleteOpen(false);
   };
 
+  const cloneCurrentReport = async () => {
+    if (!report || !user || isCloningRef.current) return;
+
+    isCloningRef.current = true;
+    setIsCloning(true);
+    try {
+      const cloned = await reportStorage.cloneReport(report, user);
+      if (map && cloned.geometry && parsePointGeometry(cloned.geometry)) {
+        addLocalReportToMap(map, cloned);
+      }
+      showToastSafe({
+        text: t('reports.details.cloneSuccessMessage'),
+        duration: 'short',
+        position: 'top',
+      });
+    } catch {
+      showToastSafe({
+        text: t('reports.details.cloneErrorMessage'),
+        duration: 'short',
+        position: 'top',
+      });
+    } finally {
+      isCloningRef.current = false;
+      setIsCloning(false);
+    }
+  };
+
   const handleCloneReport = () => {
-    console.log('handleCloneReport');
+    if (!report || !user || isCloningRef.current) {
+      if (!isCloningRef.current) {
+        showToastSafe({
+          text: t('reports.details.cloneErrorMessage'),
+          duration: 'short',
+          position: 'top',
+        });
+      }
+      return;
+    }
+
+    draftReportsLimit.requestCreate(() => {
+      void cloneCurrentReport();
+    });
   };
 
   const handleDeleteConfirm = async () => {
@@ -500,7 +545,7 @@ export function ReportDetailsPage({
                     <IconDelete className={buttonStyles.icon} />
                     {t('reports.details.deleteButton')}
                   </Button>
-                  <Button color="light" onClick={handleCloneReport}>
+                  <Button color="light" onClick={handleCloneReport} loading={isCloning} disabled={isCloning}>
                     <IconCopy className={buttonStyles.icon} />
                     {t('reports.details.cloneButton')}
                   </Button>
@@ -515,7 +560,7 @@ export function ReportDetailsPage({
                       </Button>
                     </div>
                     <div className={styles.reportActionCloneButtonContainer}>
-                      <Button color="light" onClick={handleCloneReport} fullWidth>
+                      <Button color="light" onClick={handleCloneReport} loading={isCloning} disabled={isCloning} fullWidth>
                         <IconCopy className={buttonStyles.icon} />
                         {t('reports.details.cloneButton')}
                       </Button>
@@ -702,6 +747,8 @@ export function ReportDetailsPage({
           document.body
         )
         : null}
+
+      <DraftReportsLimitAlerts {...draftReportsLimit} />
     </>
   );
 }

@@ -1012,6 +1012,8 @@
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
       "cloneButton": "Cloner",
+      "cloneSuccessMessage": "Le signalement a été cloné avec succès.",
+      "cloneErrorMessage": "Impossible de cloner le signalement.",
       "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
       "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
       "sendSuccess": {
