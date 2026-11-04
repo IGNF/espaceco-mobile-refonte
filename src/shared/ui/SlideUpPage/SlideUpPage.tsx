@@ -10,6 +10,10 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
+
+
+import { EspaceCo_SettingsStore } from '@/infra/persistence/settingsStore';
+
 import {
 	useMapPanel,
 	type MapPanelRegistrationHandle,
@@ -17,7 +21,7 @@ import {
 import { joinCSSClassNames } from '@/shared/utils/join';
 import styles from './SlideUpPage.module.css';
 
-const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
+export const SLIDE_UP_ANIMATION_MS = 300; // matches the CSS transform duration
 const BASE_Z_INDEX = 100;
 const DEFAULT_SNAP_POINTS = [20, 35, 45, 55, 95];
 const DEFAULT_SNAP = 55;
@@ -67,7 +71,8 @@ export interface SlideUpPageProps {
 	 */
 	snapPoints?: number[];
 	/**
-	 * Initial snap height. Defaults to 55, or the closest snap point.
+	 * Snap height used until the user has chosen one.
+	 * Afterwards the last saved snap is reused, on the closest snap point.
 	 */
 	defaultSnap?: number;
 }
@@ -82,6 +87,19 @@ function clamp(value: number, min: number, max: number): number {
 	return Math.min(max, Math.max(min, value));
 }
 
+// Last snap chosen by the user. The read starts immediately and is reused as the
+// next opening height; a drag replaces it before storage answers.
+let savedModalHeight: number | null = null;
+let modalHeightReady = false;
+
+const modalHeightReadyPromise = EspaceCo_SettingsStore.getModalHeight()
+	.catch(() => null)
+	.then((height) => {
+		if (!modalHeightReady) savedModalHeight = height;
+		modalHeightReady = true;
+		return savedModalHeight;
+	});
+
 export function SlideUpPage({
 	children,
 	isOpen,
@@ -94,26 +112,33 @@ export function SlideUpPage({
 	snapPoints = DEFAULT_SNAP_POINTS,
 	defaultSnap = DEFAULT_SNAP,
 }: SlideUpPageProps) {
-	const [isVisible, setIsVisible] = useState(isOpen);
+	const resolvedSnapPoints = snapPoints.length > 0 ? snapPoints : DEFAULT_SNAP_POINTS;
+	const isSheet = presentation === 'sheet';
+	const openingSnap = nearestSnap(savedModalHeight ?? defaultSnap, resolvedSnapPoints);
+	const { isWideLayout, registerSheet } = useMapPanel();
+	const isDocked = isSheet && isWideLayout;
+	const canResize = isSheet && !isDocked;
+	const [isVisible, setIsVisible] = useState(isOpen && !canResize);
 	const [shouldRender, setShouldRender] = useState(isOpen);
 	const [isDragging, setIsDragging] = useState(false);
-	const resolvedSnapPoints = snapPoints.length > 0 ? snapPoints : DEFAULT_SNAP_POINTS;
-	const resolvedDefaultSnap = nearestSnap(defaultSnap, resolvedSnapPoints);
-	const [heightPercent, setHeightPercent] = useState(resolvedDefaultSnap);
+	const [heightPercent, setHeightPercent] = useState(openingSnap);
 	const [wasOpen, setWasOpen] = useState(isOpen);
-	const { isWideLayout, registerSheet } = useMapPanel();
 	const heightPercentRef = useRef(heightPercent);
 	const updateSheetHeightRef = useRef<(nextHeightPercent: number) => void>(() => {});
 	const zIndex = BASE_Z_INDEX + (level - 1) * 10;
-	const isSheet = presentation === 'sheet';
-	const isDocked = isSheet && isWideLayout;
-	const canResize = isSheet && !isDocked;
 
 	if (isOpen !== wasOpen) {
 		setWasOpen(isOpen);
 		if (isOpen) {
-			setHeightPercent(resolvedDefaultSnap);
+			setHeightPercent(openingSnap);
+			if (!canResize) setIsVisible(true);
 		}
+	}
+
+	if (isOpen && !shouldRender) setShouldRender(true);
+	if (!isOpen && isVisible) {
+		setIsVisible(false);
+		if (!canResize) setShouldRender(false);
 	}
 
 	useBackHandler(isOpen, onClose, zIndex);
@@ -127,7 +152,7 @@ export function SlideUpPage({
 		const registration: MapPanelRegistrationHandle = registerSheet(heightPercentRef.current);
 		updateSheetHeightRef.current = registration.update;
 		return () => {
-      registration.unregister();
+			registration.unregister();
 			updateSheetHeightRef.current = () => {};
 		};
 	}, [isOpen, isSheet, registerSheet, reserveMapSpace]);
@@ -136,26 +161,37 @@ export function SlideUpPage({
 		updateSheetHeightRef.current(heightPercent);
 	}, [heightPercent]);
 
-	if (isOpen && !shouldRender) {
-		setShouldRender(true);
-	}
-	if (!isOpen && isVisible) {
-		setIsVisible(false);
-	}
-
 	useEffect(() => {
-		if (isOpen) {
-			const timer = setTimeout(() => {
-				setIsVisible(true);
-			}, 20);
-			return () => clearTimeout(timer);
-		} else {
-			const timer = setTimeout(() => {
-				setShouldRender(false);
-			}, ANIMATION_DURATION);
-			return () => clearTimeout(timer);
+		if (!canResize) return;
+
+		if (!isOpen) {
+			const timer = window.setTimeout(() => setShouldRender(false), SLIDE_UP_ANIMATION_MS);
+			return () => window.clearTimeout(timer);
 		}
-	}, [isOpen]);
+
+		let cancelled = false;
+		let showTimer = 0;
+		const show = () => {
+			showTimer = window.setTimeout(() => {
+				if (!cancelled) setIsVisible(true);
+			}, 20);
+		};
+
+		if (modalHeightReady) {
+			show();
+		} else {
+			void modalHeightReadyPromise.then((height) => {
+				if (cancelled) return;
+				if (height != null) setHeightPercent(nearestSnap(height, resolvedSnapPoints));
+				show();
+			});
+		}
+
+		return () => {
+			cancelled = true;
+			window.clearTimeout(showTimer);
+		};
+	}, [canResize, isOpen, resolvedSnapPoints]);
 
 	const onDragHandlePointerDown = (event: ReactPointerEvent<HTMLElement>) => {
 		if (!canResize || event.button !== 0) return;
@@ -179,16 +215,18 @@ export function SlideUpPage({
 			}
 			setHeightPercent(clamp(startPercent + deltaPercent, minSnap, maxSnap));
 		};
-    
+
 		const handleEnd = (endEvent: PointerEvent) => {
-      const deltaPercent = ((startY - endEvent.clientY) / window.innerHeight) * 100;
-      const newHeightPercent = nearestSnap(startPercent + deltaPercent, resolvedSnapPoints);
-      console.log("coucou", newHeightPercent);
+			const deltaPercent = ((startY - endEvent.clientY) / window.innerHeight) * 100;
+			const newHeightPercent = nearestSnap(startPercent + deltaPercent, resolvedSnapPoints);
+			savedModalHeight = newHeightPercent;
+			modalHeightReady = true;
 			setHeightPercent(newHeightPercent);
 			setIsDragging(false);
 			window.removeEventListener('pointermove', handleMove);
 			window.removeEventListener('pointerup', handleEnd);
 			window.removeEventListener('pointercancel', handleEnd);
+			void EspaceCo_SettingsStore.saveModalHeight(newHeightPercent).catch(() => undefined);
 		};
 
 		window.addEventListener('pointermove', handleMove);

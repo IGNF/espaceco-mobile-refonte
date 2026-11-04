@@ -193,11 +193,12 @@ export class EspaceCo_SettingsStore {
    * Modal Height Settings
    */
 
-  static async getModalHeight(userId: number): Promise<number> {
-    return await Storage.get(storageKey(`${MODAL_HEIGHT_KEY}_${userId}`), 'number');
+  static async getModalHeight(): Promise<number | null> {
+    const height = await Storage.get(MODAL_HEIGHT_KEY, 'number');
+    return typeof height === 'number' && Number.isFinite(height) ? height : null;
   }
 
-  static async saveModalHeight(userId: number, height: number): Promise<void> {
-    await Storage.set(storageKey(`${MODAL_HEIGHT_KEY}_${userId}`), height, 'number');
+  static async saveModalHeight(height: number): Promise<void> {
+    await Storage.set(MODAL_HEIGHT_KEY, height, 'number');
   }
 }

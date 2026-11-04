@@ -18,6 +18,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Ajout de deux nouvelles tailles définies pour les modales (en %, 20, **35, 45,** 55, 95 - défaut à 55) (ticket #175)
+- Mémorisation de la dernière taille utilisée pour les modales pour l'utiliser en tant que taille par défaut (ticket #175)
 
 ### Fixed
 
