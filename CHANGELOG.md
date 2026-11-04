@@ -18,6 +18,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
+- Mise à jour des dépendances vers mobile-core et collaboratif-client-api, pour résoudre le problème de chargement de tuiles (ticket #161)
 
 ### Fixed
 
