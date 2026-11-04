@@ -19,7 +19,7 @@ import styles from './SlideUpPage.module.css';
 
 const ANIMATION_DURATION = 300; //ms, matches CSS transition duration
 const BASE_Z_INDEX = 100;
-const DEFAULT_SNAP_POINTS = [20, 55, 95];
+const DEFAULT_SNAP_POINTS = [20, 35, 45, 55, 95];
 const DEFAULT_SNAP = 55;
 
 export type SlideUpPresentation = 'fullscreen' | 'sheet';
@@ -127,7 +127,7 @@ export function SlideUpPage({
 		const registration: MapPanelRegistrationHandle = registerSheet(heightPercentRef.current);
 		updateSheetHeightRef.current = registration.update;
 		return () => {
-			registration.unregister();
+      registration.unregister();
 			updateSheetHeightRef.current = () => {};
 		};
 	}, [isOpen, isSheet, registerSheet, reserveMapSpace]);
@@ -179,10 +179,12 @@ export function SlideUpPage({
 			}
 			setHeightPercent(clamp(startPercent + deltaPercent, minSnap, maxSnap));
 		};
-
+    
 		const handleEnd = (endEvent: PointerEvent) => {
-			const deltaPercent = ((startY - endEvent.clientY) / window.innerHeight) * 100;
-			setHeightPercent(nearestSnap(startPercent + deltaPercent, resolvedSnapPoints));
+      const deltaPercent = ((startY - endEvent.clientY) / window.innerHeight) * 100;
+      const newHeightPercent = nearestSnap(startPercent + deltaPercent, resolvedSnapPoints);
+      console.log("coucou", newHeightPercent);
+			setHeightPercent(newHeightPercent);
 			setIsDragging(false);
 			window.removeEventListener('pointermove', handleMove);
 			window.removeEventListener('pointerup', handleEnd);

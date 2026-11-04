@@ -13,6 +13,7 @@ import { readFiniteNumber, readNonNegativeNumber, readPositiveInteger } from '@/
 import type { MapSettings } from '@/domain/map/models';
 import type { DisplayMode } from '@/domain/user/models';
 
+const MODAL_HEIGHT_KEY = storageKey('MODAL_HEIGHT');
 const TRACE_RECORDING_SETTINGS_KEY = storageKey('TRACE_RECORDING_SETTINGS');
 const FAST_REPORT_GPS_SETTINGS_KEY = storageKey('FAST_REPORT_GPS_SETTINGS');
 const MAP_SETTINGS_KEY = 'MAP_SETTINGS';
@@ -186,5 +187,17 @@ export class EspaceCo_SettingsStore {
 
   static async saveDisplayMode(userId: number, mode: DisplayMode): Promise<void> {
     await Storage.set(storageKey(`${DISPLAY_MODE_KEY}_${userId}`), mode, 'string');
+  }
+
+  /**
+   * Modal Height Settings
+   */
+
+  static async getModalHeight(userId: number): Promise<number> {
+    return await Storage.get(storageKey(`${MODAL_HEIGHT_KEY}_${userId}`), 'number');
+  }
+
+  static async saveModalHeight(userId: number, height: number): Promise<void> {
+    await Storage.set(storageKey(`${MODAL_HEIGHT_KEY}_${userId}`), height, 'number');
   }
 }
