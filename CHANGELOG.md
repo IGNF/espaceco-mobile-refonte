@@ -19,6 +19,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - Mise à jour des dépendances vers mobile-core et collaboratif-client-api, pour résoudre le problème de chargement de tuiles (ticket #161)
+- L'icone "undo" dans la barre d'outils d'édition (ajout de croquis, modification/ajout d'objets) annule maintenant le dernier point ajouté, peu importe l'outil sélectionné
 
 ### Fixed
 
