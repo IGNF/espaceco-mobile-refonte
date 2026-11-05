@@ -1,12 +1,12 @@
 const config = {
-  appId: 'fr.ign.navi-forest',
-  appName: 'Naviforest',
+  appId: 'fr.ign.collaboratif',
+  appName: 'Espace collaboratif IGN',
   webDir: 'dist',
   ios: {
-    appId: 'fr.ign.navi-forest',
+    appId: 'fr.ign.collaboratif',
   },
   android: {
-    appId: 'fr.ign.naviforest',
+    appId: 'fr.ign.guichet',
   },
   cordova: {
     preferences: {

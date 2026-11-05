@@ -14,17 +14,15 @@ export interface MapToolbarProps {
   items: MapToolbarItem[];
   onItemClick: (id: string) => void;
   statusText?: string;
-  className?: string;
 }
 
 export function MapToolbar({
   items,
   onItemClick,
   statusText,
-  className,
 }: MapToolbarProps) {
   return (
-    <div className={joinCSSClassNames(styles.root, className)}>
+    <div className={styles.root}>
       <div className={styles.toolbar}>
         {items.map(({ id, Icon, label, active, disabled }) => (
           <button
