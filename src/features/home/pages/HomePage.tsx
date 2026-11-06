@@ -7,7 +7,6 @@ import { toLonLat } from "ol/proj";
 import type OlMap from "ol/Map";
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import { getUid } from "ol/util";
 import type { Report } from '@ign/mobile-core';
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
@@ -1224,11 +1223,6 @@ export function HomePage() {
       />
 
       <DirectContributionFeatureFormPage
-        key={
-          directContributionFeatureFormState
-            ? `${directContributionFeatureFormState.mode}-${getUid(directContributionFeatureFormState.feature)}`
-            : 'direct-contribution-form'
-        }
         isOpen={directContributionFeatureFormState !== null}
         mode={directContributionFeatureFormState?.mode ?? 'edit'}
         table={directContributionFeatureFormState?.table ?? null}

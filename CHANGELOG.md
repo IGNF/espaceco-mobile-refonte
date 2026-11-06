@@ -20,6 +20,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
 - Ajout de deux nouvelles tailles définies pour les modales (en %, 20, **35, 45,** 55, 95 - défaut à 55) (ticket #175)
 - Mémorisation de la dernière taille utilisée pour les modales pour l'utiliser en tant que taille par défaut (ticket #175)
+- Lors de l'utilisation des outils de mesure, en cas de mesure de surface, on n'affiche plus la longueur des segments (ticket #168)
+- Ajout d'un bouton de fermeture sur les modales qui n'en ont pas, uniformisation des modales et animations (ticket #176)
 
 ### Fixed
 

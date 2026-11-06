@@ -35,7 +35,7 @@ import { getAppErrorTranslationKey } from '@/shared/errors/appError';
 import { Button } from '@/shared/ui/Button';
 import { useBackHandler } from '@/shared/hooks/useBackHandler';
 
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage, useSlideUpContent } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Alert } from '@/shared/ui/Alert';
 import { Loading } from '@/shared/ui/Loading';
@@ -75,7 +75,7 @@ export interface ReportDetailsPageProps {
   onNextReport?: () => void;
 }
 
-export function ReportDetailsPage({
+function ReportDetailsPageContent({
   isOpen,
   report,
   onClose,
@@ -685,4 +685,11 @@ export function ReportDetailsPage({
         : null}
     </>
   );
+}
+
+export function ReportDetailsPage(props: ReportDetailsPageProps) {
+  const displayedReport = useSlideUpContent(props.report, props.isOpen);
+  if (!displayedReport) return null;
+
+  return <ReportDetailsPageContent {...props} report={displayedReport} />;
 }
