@@ -23,7 +23,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.24] - 2026-10-xx
+## [0.0.24] - 2026-10-06
 
 ### Added
 
