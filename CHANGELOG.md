@@ -22,6 +22,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Mémorisation de la dernière taille utilisée pour les modales pour l'utiliser en tant que taille par défaut (ticket #175)
 - Lors de l'utilisation des outils de mesure, en cas de mesure de surface, on n'affiche plus la longueur des segments (ticket #168)
 - Ajout d'un bouton de fermeture sur les modales qui n'en ont pas, uniformisation des modales et animations (ticket #176)
+- Remplacement de deux textes ('Géoportail' et 'Géoservices') par 'Fonds de carte' (ticket #181)
 
 ### Fixed
 
