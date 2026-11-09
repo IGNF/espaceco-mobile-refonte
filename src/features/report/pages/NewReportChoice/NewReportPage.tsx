@@ -39,7 +39,6 @@ export function NewReportPage({
       <PageHeader
         title={t('reports.newReportChoice.headerTitle')}
         subtitle={communityName}
-        showBackButton
         onBack={onClose}
         onClose={onClose}
       />

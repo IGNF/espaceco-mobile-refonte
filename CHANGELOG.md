@@ -13,7 +13,21 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.24] - 2026-10-xx
+## [0.0.25] - 2026-10-xx
+
+### Added
+- Ajout d'un repère visuel constant du signalement en cours sur la carte (ticket #178)
+
+### Changed
+- Ajout de deux nouvelles tailles définies pour les modales (en %, 20, **35, 45,** 55, 95 - défaut à 55) (ticket #175)
+- Mémorisation de la dernière taille utilisée pour les modales pour l'utiliser en tant que taille par défaut (ticket #175)
+- Lors de l'utilisation des outils de mesure, en cas de mesure de surface, on n'affiche plus la longueur des segments (ticket #168)
+- Ajout d'un bouton de fermeture sur les modales qui n'en ont pas, uniformisation des modales et animations (ticket #176)
+- Remplacement de deux textes ('Géoportail' et 'Géoservices') par 'Fonds de carte' (ticket #181)
+
+### Fixed
+
+## [0.0.24] - 2026-10-06
 
 ### Added
 

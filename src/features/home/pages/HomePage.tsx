@@ -7,7 +7,6 @@ import { toLonLat } from "ol/proj";
 import type OlMap from "ol/Map";
 import type Feature from 'ol/Feature';
 import type Geometry from 'ol/geom/Geometry';
-import { getUid } from "ol/util";
 import type { Report } from '@ign/mobile-core';
 import { BottomTabbar, type TabId } from "@/app/components/BottomTabbar";
 import { LeftMenu } from "@/app/components/LeftMenu/LeftMenu";
@@ -99,6 +98,7 @@ import { Alert } from "@/shared/ui/Alert";
 import { ActionSheet } from "@/shared/ui/ActionSheet";
 import { createPositionFromLonLat } from "@/shared/utils/position";
 import { useMapPanel } from "@/shared/layout/useMapPanel";
+import { SLIDE_UP_ANIMATION_MS } from "@/shared/ui/SlideUpPage";
 import { openInMapApp } from "@/platform/device/appLauncher";
 import type { Position } from "@/platform/device/geolocation";
 
@@ -260,6 +260,17 @@ export function HomePage() {
   const [initialLayerGroupId, setInitialLayerGroupId] = useState<LayerGroupId | null>(null);
   const [initialLayerGroupRequestKey, setInitialLayerGroupRequestKey] = useState(0);
   const [activeOverlay, setActiveOverlay] = useState<OverlayRoute | null>(null);
+  const [displayedOverlay, setDisplayedOverlay] = useState<OverlayRoute | null>(null);
+  if (activeOverlay !== null && displayedOverlay !== activeOverlay) {
+    setDisplayedOverlay(activeOverlay);
+  }
+
+  useEffect(() => {
+    if (activeOverlay !== null || displayedOverlay === null) return;
+    const timer = window.setTimeout(() => setDisplayedOverlay(null), SLIDE_UP_ANIMATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [activeOverlay, displayedOverlay]);
+
   const [offlineOverlayKey, setOfflineOverlayKey] = useState(0);
   const [isOfflineZoneEditorOpen, setIsOfflineZoneEditorOpen] = useState(false);
   const [newReportType, setReportType] = useState<ReportType>('standard');
@@ -426,7 +437,7 @@ export function HomePage() {
     setIsSearchOpen(false);
     setTimeout(() => {
       setActiveOverlay('/create-or-edit-report');
-    }, 300);
+    }, SLIDE_UP_ANIMATION_MS);
   };
 
   const handleNewReportTrace = () => {
@@ -440,7 +451,7 @@ export function HomePage() {
     setIsSearchOpen(false);
     setTimeout(() => {
       setActiveOverlay('/create-or-edit-report');
-    }, 300);
+    }, SLIDE_UP_ANIMATION_MS);
   };
 
   const handleFastReportTabClick = () => {
@@ -1038,7 +1049,8 @@ export function HomePage() {
           isMapReady={isMapReady}
           isRotationEnabled={mapSettings.isRotationEnabled ?? false}
         />
-        {activeOverlay === '/new-report-choice' && map && (
+        {/* Stays visible while the choice sheet is closing. */}
+        {(activeOverlay === '/new-report-choice' || displayedOverlay === '/new-report-choice') && map && (
           <ReportPlacementPointer map={map} />
         )}
         <SearchPanel
@@ -1212,11 +1224,6 @@ export function HomePage() {
       />
 
       <DirectContributionFeatureFormPage
-        key={
-          directContributionFeatureFormState
-            ? `${directContributionFeatureFormState.mode}-${getUid(directContributionFeatureFormState.feature)}`
-            : 'direct-contribution-form'
-        }
         isOpen={directContributionFeatureFormState !== null}
         mode={directContributionFeatureFormState?.mode ?? 'edit'}
         table={directContributionFeatureFormState?.table ?? null}
@@ -1391,32 +1398,32 @@ export function HomePage() {
         />
       )}
 
-      {/* Overlay pages */}
-      {activeOverlay === '/my-informations' && (
+      {/* Overlay pages stay mounted through the close animation. */}
+      {displayedOverlay === '/my-informations' && (
         <MyInformationsPage
-          isOpen
+          isOpen={activeOverlay === '/my-informations'}
           onClose={handleCloseOverlay}
         />
       )}
-      {activeOverlay === '/settings' && (
+      {displayedOverlay === '/settings' && (
         <SettingsPage
-          isOpen
+          isOpen={activeOverlay === '/settings'}
           onClose={handleCloseOverlay}
           onLayerPreferencesImported={async () => {
             await Promise.all([refetchLayers(), refreshOffline()]);
           }}
         />
       )}
-      {activeOverlay === '/logout-verification' && (
+      {displayedOverlay === '/logout-verification' && (
         <LogoutPage
-          isOpen
+          isOpen={activeOverlay === '/logout-verification'}
           onClose={handleCloseOverlay}
           handleLogout={handleLogout}
         />
       )}
-      {activeOverlay === '/group-reports' && (
+      {displayedOverlay === '/group-reports' && (
         <GroupReportsPage
-          isOpen
+          isOpen={activeOverlay === '/group-reports'}
           onClose={handleCloseOverlay}
           map={map}
           vectorLayers={vectorLayers}
@@ -1425,9 +1432,9 @@ export function HomePage() {
           onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
-      {activeOverlay === '/my-reports' && (
+      {displayedOverlay === '/my-reports' && (
         <MyReportsPage
-          isOpen
+          isOpen={activeOverlay === '/my-reports'}
           onClose={handleCloseOverlay}
           map={map}
           vectorLayers={vectorLayers}
@@ -1436,17 +1443,17 @@ export function HomePage() {
           onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
-      {activeOverlay === '/new-report-choice' && (
+      {displayedOverlay === '/new-report-choice' && (
         <NewReportPage
-          isOpen
+          isOpen={activeOverlay === '/new-report-choice'}
           onClose={handleCloseOverlay}
           onSelectStandard={handleNewReportStandard}
           onSelectTrace={handleNewReportTrace}
         />
       )}
-      {activeOverlay === '/create-or-edit-report' && (
+      {displayedOverlay === '/create-or-edit-report' && (
         <CreateOrEditReportPage
-          isOpen
+          isOpen={activeOverlay === '/create-or-edit-report'}
           onClose={handleCloseOverlay}
           mode="create"
           reportType={newReportType}
@@ -1465,17 +1472,17 @@ export function HomePage() {
           onTraceDirectionActiveChange={setIsTraceDirectionActive}
         />
       )}
-      {activeOverlay === '/my-communities' && (
+      {displayedOverlay === '/my-communities' && (
         <MyCommunitiesSelectionPage
-          isOpen
+          isOpen={activeOverlay === '/my-communities'}
           onClose={handleCloseOverlay}
           onConfirmCommunityChange={handleConfirmCommunityChange}
         />
       )}
-      {activeOverlay === '/offline' && (
+      {displayedOverlay === '/offline' && (
         <OfflineManagementPage
           key={offlineOverlayKey}
-          isOpen
+          isOpen={activeOverlay === '/offline'}
           onClose={handleCloseOverlay}
           map={map}
           vectorLayers={vectorLayers}
@@ -1486,28 +1493,28 @@ export function HomePage() {
           isLocating={isLocating}
         />
       )}
-      {activeOverlay === '/about-community' && (
+      {displayedOverlay === '/about-community' && (
         <AboutCommunityPage
-          isOpen
+          isOpen={activeOverlay === '/about-community'}
           onClose={handleCloseOverlay}
           layers={vectorLayers}
         />
       )}
-      {activeOverlay === '/about' && (
+      {displayedOverlay === '/about' && (
         <AboutPage
-          isOpen
+          isOpen={activeOverlay === '/about'}
           onClose={handleCloseOverlay}
         />
       )}
-      {activeOverlay === '/help' && (
+      {displayedOverlay === '/help' && (
         <HelpPage
-          isOpen
+          isOpen={activeOverlay === '/help'}
           onClose={handleCloseOverlay}
         />
       )}
-      {activeOverlay === '/about-reports' && (
+      {displayedOverlay === '/about-reports' && (
         <AboutReportsPage
-          isOpen
+          isOpen={activeOverlay === '/about-reports'}
           onClose={handleCloseOverlay}
         />
       )}

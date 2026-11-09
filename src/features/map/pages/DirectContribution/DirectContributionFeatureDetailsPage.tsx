@@ -10,7 +10,7 @@ import {
   toDirectContributionLikeValue,
 } from '@/domain/community/directContributionForm';
 
-import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage, useSlideUpContent } from '@/shared/ui/SlideUpPage';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { Button } from '@/shared/ui/Button';
 import { joinCSSClassNames } from '@/shared/utils/join';
@@ -141,7 +141,7 @@ function getDetailFields(
 
 export function DirectContributionFeatureDetailsPage({
   isOpen,
-  candidate,
+  candidate: candidateProp,
   canEdit,
   onEdit,
   onReport,
@@ -150,6 +150,9 @@ export function DirectContributionFeatureDetailsPage({
 }: DirectContributionFeatureDetailsPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
+  const candidate = useSlideUpContent(candidateProp, isOpen);
+  const displayedCanEdit = useSlideUpContent(canEdit, isOpen) === true;
+  const displayedOnBack = useSlideUpContent(onBack ?? null, isOpen);
 
   if (!candidate) {
     return null;
@@ -167,8 +170,8 @@ export function DirectContributionFeatureDetailsPage({
       <PageHeader
         title={t('layers.directContribution.details.headerTitle')}
         subtitle={activeCommunity?.name}
-        showBackButton={Boolean(onBack)}
-        onBack={onBack}
+        showBackButton={displayedOnBack !== null}
+        onBack={displayedOnBack ?? undefined}
         onClose={onClose}
       />
 
@@ -176,7 +179,7 @@ export function DirectContributionFeatureDetailsPage({
         className={joinCSSClassNames(
           screen.screenContainer,
           styles.content,
-          canEdit && stickyActions.contentWithStickyActions
+          displayedCanEdit && stickyActions.contentWithStickyActions
         )}
       >
         <section className={styles.summaryCard}>
@@ -223,7 +226,7 @@ export function DirectContributionFeatureDetailsPage({
 
       </main>
 
-      {canEdit ? (
+      {displayedCanEdit ? (
         <footer className={joinCSSClassNames(stickyActions.bar, styles.actionsBar)}>
           <Button type='button' fullWidth onClick={onEdit}>
             {t('layers.directContribution.details.editButton')}

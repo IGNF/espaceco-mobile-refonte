@@ -1,19 +1,23 @@
 .slideUpPage {
 	position: fixed;
 	inset: 0;
-	transform: translateY(100%);
-	transition: transform 0.3s ease-out, height 0.2s ease-out;
 	z-index: 100;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
 
-.slideUpPageDragging {
-	transition: transform 0.3s ease-out, height 0s linear;
+.slideUpPageSheet:not(.slideUpPageDocked) {
+	transform: translateY(100%);
+	transition: transform 0.3s ease-out;
 }
 
-.slideUpPageVisible {
+.slideUpPageSheet:not(.slideUpPageDocked).slideUpPageVisible {
 	transform: translateY(0);
+	transition: transform 0.3s ease-out, height 0.2s ease-out;
+}
+
+.slideUpPageSheet:not(.slideUpPageDocked).slideUpPageDragging {
+	transition: none;
 }
 
 .slideUpPageSheet,
@@ -40,11 +44,6 @@
 	left: auto;
 	width: var(--map-panel-width);
 	box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
-	transform: translateX(100%);
-}
-
-.slideUpPageDocked.slideUpPageVisible {
-	transform: translateX(0);
 }
 
 .slideUpPageInner {

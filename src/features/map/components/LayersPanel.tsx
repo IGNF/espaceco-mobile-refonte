@@ -1,17 +1,17 @@
 import { useTranslation } from 'react-i18next';
-import { SlideUpPage, useSheetDragHandle } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import type { LayerGroupId, LayerGroupSummary } from '@/features/map/types/layerGroups';
 import { Badge } from '@/shared/ui/Badge';
 import { Loading } from '@/shared/ui/Loading/Loading';
 import styles from './LayersPanel.module.css';
 
-import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconEyeOff from '@/shared/assets/icons/icon-access.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-angle-right.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconInfo from '@/shared/assets/icons/icon-info.svg?react';
 import IconDownload from '@/shared/assets/icons/icon-download.svg?react';
+import { PageHeader } from '@/shared/ui/PageHeader';
 
 export interface LayersPanelProps {
   isOpen: boolean;
@@ -24,23 +24,6 @@ export interface LayersPanelProps {
   onShowMesCartesInfo?: () => void;
   onOpenMesCartesWmsDialog?: () => void;
   onSendGroupDirectContributions?: (groupId: LayerGroupId) => void;
-}
-
-function LayersPanelHeader({ title, onClose }: { title: string; onClose: () => void }) {
-  const dragHandle = useSheetDragHandle();
-
-  return (
-    <div
-      className={styles.header}
-      style={dragHandle?.style}
-      onPointerDown={dragHandle?.onPointerDown}
-    >
-      <h2 className={styles.title}>{title}</h2>
-      <button className={styles.closeButton} onClick={onClose} aria-label='Close'>
-        <IconClose className={styles.closeIcon} />
-      </button>
-    </div>
-  );
 }
 
 export function LayersPanel({
@@ -66,7 +49,7 @@ export function LayersPanel({
       onClose={onClose}
       presentation="sheet"
     >
-        <LayersPanelHeader title={t('layers.title')} onClose={onClose} />
+        <PageHeader title={t('layers.title')} onClose={onClose} />
         <div className={styles.content}>
           {isLoading ? (
             <p className={styles.loading}>{t('layers.loading')}</p>
