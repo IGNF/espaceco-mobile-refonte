@@ -9,6 +9,13 @@
   pointer-events: none;
 }
 
+.locationMarker {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  pointer-events: none;
+}
+
 .locationTargetIcon {
   width: 36px;
   height: 36px;

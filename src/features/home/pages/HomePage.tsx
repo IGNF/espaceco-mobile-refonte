@@ -1049,7 +1049,8 @@ export function HomePage() {
           isMapReady={isMapReady}
           isRotationEnabled={mapSettings.isRotationEnabled ?? false}
         />
-        {activeOverlay === '/new-report-choice' && map && (
+        {/* Stays visible while the choice sheet is closing. */}
+        {(activeOverlay === '/new-report-choice' || displayedOverlay === '/new-report-choice') && map && (
           <ReportPlacementPointer map={map} />
         )}
         <SearchPanel

@@ -56,6 +56,7 @@ import IconSave from '@/shared/assets/icons/icon-save.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
+import { ReportLocationMarker } from '@/features/map/components/ReportLocationMarker';
 import IconPlay from '@/shared/assets/icons/icon-play.svg?react';
 
 import styles from './CreateOrEditReportPage.module.css';
@@ -693,7 +694,6 @@ export function CreateOrEditReportPage({
     if (isPickingPosition) {
       return (
         <div className={styles.locationPickerOverlay}>
-          <MapLocationPointer />
           <div className={styles.validateButtonContainer}>
             <Button
               color="primary"
@@ -801,6 +801,12 @@ export function CreateOrEditReportPage({
 
   const canPersistReport = position !== null;
   const hideDockedPanel = isWideLayout && isPickingOnMap;
+  const showReportLocationMarker =
+    isOpen &&
+    !isEditMode &&
+    !isTraceReport &&
+    !isPickingPosition &&
+    position !== null;
 
   return (
     <>
@@ -924,6 +930,14 @@ export function CreateOrEditReportPage({
       {mapPickerOverlay && typeof document !== 'undefined'
         ? createPortal(mapPickerOverlay, document.body)
         : null}
+
+      {isOpen && isPickingPosition && map
+        ? createPortal(<MapLocationPointer />, map.getViewport())
+        : null}
+
+      {showReportLocationMarker && map && position && (
+        <ReportLocationMarker map={map} position={position} />
+      )}
 
       <FeatureChoiceAlert
         isOpen={isObjectChoiceOpen}
