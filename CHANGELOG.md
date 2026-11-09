@@ -16,6 +16,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.25] - 2026-10-xx
 
 ### Added
+- Ajout d'un repère visuel constant du signalement en cours sur la carte (ticket #178)
 
 ### Changed
 - Ajout de deux nouvelles tailles définies pour les modales (en %, 20, **35, 45,** 55, 95 - défaut à 55) (ticket #175)
