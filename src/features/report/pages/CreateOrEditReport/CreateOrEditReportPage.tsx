@@ -27,6 +27,7 @@ import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
+import { LAYER_OBJECT_HIT_TOLERANCE } from '@/shared/constants/map';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportForm } from '@/features/report/hooks/useReportForm';
@@ -455,7 +456,7 @@ export function CreateOrEditReportPage({
           );
           return undefined;
         },
-        { hitTolerance: 10 }
+        { hitTolerance: LAYER_OBJECT_HIT_TOLERANCE }
       );
 
       for (const communityLayer of vectorLayers) {
@@ -481,7 +482,7 @@ export function CreateOrEditReportPage({
           source: collabSource,
           communityLayer,
           table: communityLayer.table,
-          hitTolerance: 10,
+          hitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
           fallbackLabel: defaultObjectLabel,
         });
 
