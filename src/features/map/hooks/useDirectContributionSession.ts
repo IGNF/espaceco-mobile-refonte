@@ -31,6 +31,7 @@ import { getSketchDraw, undoDrawingStep } from '@/features/map/utils/sketchUndo'
 import { serializeDirectContributionDocumentAttributes } from '@/infra/map/directContribution/directContributionDocuments';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
 
+import { LAYER_OBJECT_HIT_TOLERANCE } from '@/shared/constants/map';
 import {
   getCommunityLayerGeometryType,
   getCommunityLayerTitle,
@@ -74,10 +75,6 @@ interface PendingFeatureEdition {
   layerKey: string;
   feature: Feature<Geometry>;
 }
-
-const DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE = 0;
-// Keep the actual selection strict, but widen the object choice search a bit so overlapping nearby features are easier to disambiguate on touch screens.
-const DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE = 16;
 
 // Draw actions should only be enabled for the geometry type supported by the edited layer. Non-draw tools stay enabled.
 function isCompatibleDrawAction(
@@ -215,7 +212,7 @@ export function useDirectContributionSession({
       autoBindUI: false,
       layerFilter: (layer) => layer === activeCollabLayer,
       modifyInteractionScope: 'selection',
-      selectionHitTolerance: DIRECT_CONTRIBUTION_SELECTION_HIT_TOLERANCE,
+      selectionHitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
       useSourceSelectionFallback: true,
       callbacks: {
         onModeChange: (nextMode) => {
@@ -318,7 +315,7 @@ export function useDirectContributionSession({
         source: activeCollabSource,
         communityLayer,
         table: communityLayer.table,
-        hitTolerance: DIRECT_CONTRIBUTION_FEATURE_CHOICE_HIT_TOLERANCE,
+        hitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
         fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
       });
 

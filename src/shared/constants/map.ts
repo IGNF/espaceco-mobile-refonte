@@ -24,6 +24,9 @@ export const REPORT_CLUSTER_FIT_DURATION_MS = 500;
 
 export const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
 
+// Finger-sized radius for picking a community layer object on a touch screen.
+export const LAYER_OBJECT_HIT_TOLERANCE = 32;
+
 export const CENTER_LOCATION_ORIGIN = {
   SIMPLE_TAP: 'simple-tap',
   LOCKED_LOCATION: 'locked-location',

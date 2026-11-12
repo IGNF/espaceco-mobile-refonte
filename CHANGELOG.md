@@ -24,6 +24,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Lors de l'utilisation des outils de mesure, en cas de mesure de surface, on n'affiche plus la longueur des segments (ticket #168)
 - Ajout d'un bouton de fermeture sur les modales qui n'en ont pas, uniformisation des modales et animations (ticket #176)
 - Remplacement de deux textes ('Géoportail' et 'Géoservices') par 'Fonds de carte' (ticket #181)
+- Augmentation de la zone de tolérance lors d'un tap sur la carte, pour la sélection d'un objet (ticket #177)
 
 ### Fixed
 
