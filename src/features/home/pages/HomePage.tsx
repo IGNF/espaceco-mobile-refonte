@@ -39,7 +39,8 @@ import { FastReportThemePicker } from "@/features/report/components/FastReport/F
 import { DraftReportsLimitAlerts } from "@/features/report/components/DraftReportsLimitAlerts";
 import { useDraftReportsLimitGuard } from "@/features/report/hooks/useDraftReportsLimitGuard";
 import { useFastReportFlow } from "@/features/report/hooks/useFastReportFlow";
-import { useFastReportThemes } from "@/features/report/hooks/useFastReportThemes";
+import { useFastReportThemes, useNonFastReportThemes } from "@/features/report/hooks/useFastReportThemes";
+import { applyThemeToReportTemplate } from "@/features/report/utils/reportTemplate";
 import { AboutPage } from "@/features/about/pages/AboutPage";
 import { HelpPage } from "@/features/help/pages/HelpPage";
 import { MyCommunitiesSelectionPage } from "@/features/community/pages/MyCommunitiesSelection/MyCommunitiesSelectionPage";
@@ -92,6 +93,7 @@ import {
 } from '@/features/report/utils/reportObjects';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import type { ReportType } from "@/domain/report/models";
+import type { CommunityThemeConfig } from "@/domain/community/models";
 import { CENTER_LOCATION_ORIGIN, GEOLOCATION_DOUBLE_TAP_DELAY_MS } from "@/shared/constants/map";
 import { Loading } from "@/shared/ui/Loading";
 import { Alert } from "@/shared/ui/Alert";
@@ -129,6 +131,12 @@ export function HomePage() {
   const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline, network, isNetworkAlertOpen } = useOffline();
   const { mapSettings, displayMode, traceRecordingSettings } = useAppSettings();
   const fastReportThemes = useFastReportThemes();
+  const nonFastReportThemes = useNonFastReportThemes();
+  // A GNSS report started from the report form favours regular themes, unlike the fast report.
+  const gnssReportThemes = useMemo(
+    () => [...nonFastReportThemes, ...fastReportThemes],
+    [fastReportThemes, nonFastReportThemes]
+  );
   const fastReportFlow = useFastReportFlow();
   const draftReportsLimit = useDraftReportsLimitGuard();
   const draftReportsCount = draftReportsLimit.draftCount;
@@ -280,6 +288,7 @@ export function HomePage() {
   const [isNewReportThemePreselected, setIsNewReportThemePreselected] = useState(false);
   const [isNewReportGnssDraftSetup, setIsNewReportGnssDraftSetup] = useState(false);
   const [gnssReportTemplate, setGnssReportTemplate] = useState<Report | null>(null);
+  const [isGnssThemePickerOpen, setIsGnssThemePickerOpen] = useState(false);
   const [longPressMapAction, setLongPressMapAction] = useState<MapLongPressCoordinate | null>(null);
   const [pendingMapWorkChoice, setPendingMapWorkChoice] = useState<PendingMapWorkChoice | null>(null);
   const [isCommunitySwitchLoading, setIsCommunitySwitchLoading] = useState(false);
@@ -460,12 +469,6 @@ export function HomePage() {
     setIsSearchOpen(false);
     clearGpsSketchSelection();
     fastReportFlow.openFromTab();
-  };
-
-  const handleFastReportOther = () => {
-    fastReportFlow.closeThemePicker();
-    fastReportFlow.closeGps();
-    handleNewReportStandard();
   };
 
   const handleSearchClick = () => {
@@ -932,6 +935,17 @@ export function HomePage() {
     clearGpsSketchSelection();
   }, [clearGpsSketchSelection]);
 
+  const handleCloseGnssReport = useCallback(() => {
+    setIsGnssThemePickerOpen(false);
+    setGnssReportTemplate(null);
+  }, []);
+
+  const handleSelectGnssReportTheme = useCallback((theme: CommunityThemeConfig) => {
+    setIsGnssThemePickerOpen(false);
+    // The trace in progress is kept: the next validated trace uses the new theme.
+    setGnssReportTemplate((template) => template && applyThemeToReportTemplate(template, theme));
+  }, []);
+
   const isMapBusy =
     activeOverlay !== null ||
     hasMapPanel ||
@@ -1375,7 +1389,7 @@ export function HomePage() {
         isOpen={fastReportFlow.isThemePickerOpen}
         themes={fastReportThemes}
         onSelectTheme={fastReportFlow.openGps}
-        onSelectOther={handleFastReportOther}
+        otherThemes={nonFastReportThemes}
         onClose={fastReportFlow.closeThemePicker}
       />
 
@@ -1394,9 +1408,19 @@ export function HomePage() {
           isOpen
           map={map}
           reportTemplate={gnssReportTemplate}
-          onClose={() => setGnssReportTemplate(null)}
+          onClose={handleCloseGnssReport}
+          onChooseTheme={() => setIsGnssThemePickerOpen(true)}
         />
       )}
+
+      <FastReportThemePicker
+        isOpen={isGnssThemePickerOpen}
+        title={t('reports.fastReport.themePicker.gnssTitle')}
+        subtitle={t('reports.fastReport.themePicker.gnssSubtitle')}
+        themes={gnssReportThemes}
+        onSelectTheme={handleSelectGnssReportTheme}
+        onClose={() => setIsGnssThemePickerOpen(false)}
+      />
 
       {/* Overlay pages stay mounted through the close animation. */}
       {displayedOverlay === '/my-informations' && (

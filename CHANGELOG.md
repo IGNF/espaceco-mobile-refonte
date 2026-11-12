@@ -27,8 +27,10 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Augmentation de la zone de tolérance lors d'un tap sur la carte, pour la sélection d'un objet (ticket #177)
 
 ### Fixed
+- Le bouton de changement de thèmes s'affiche maintenant lors d'un signalement GNSS (ticket #180)
+- Le tap sur 'Autres' lors du choix de thème d'un signalement rapide permet de choisir un thème parmi tous les thèmes disponibles (ticket #180)
 
-## [0.0.24] - 2026-10-06
+## [0.0.24] - 2026-11-06
 
 ### Added
 
