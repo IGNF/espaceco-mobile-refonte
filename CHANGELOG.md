@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.25] - 2026-10-xx
+## [0.0.25] - 2026-11-13
 
 ### Added
 - Ajout d'un repère visuel constant du signalement en cours sur la carte (ticket #178)
