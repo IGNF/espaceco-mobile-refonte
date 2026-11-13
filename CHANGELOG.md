@@ -13,6 +13,14 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.26] - 2026-11-xx
+
+### Added
+
+### Changed
+ 
+### Fixed
+
 ## [0.0.25] - 2026-11-13
 
 ### Added
