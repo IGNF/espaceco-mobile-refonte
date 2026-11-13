@@ -101,6 +101,11 @@
   pointer-events: none;
 }
 
+/* In the docked panel this fixed bar is placed against the screen, not the panel, so it clears the system bar itself. */
+:global([data-docked='true']) .reportNavigationControls {
+  bottom: calc(var(--safe-bottom-screen, 0px) + 36px);
+}
+
 .reportNavigationButton {
   pointer-events: auto;
 }

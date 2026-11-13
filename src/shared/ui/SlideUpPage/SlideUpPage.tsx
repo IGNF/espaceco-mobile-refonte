@@ -270,6 +270,7 @@ export function SlideUpPage({
 					height: canResize ? `${heightPercent}vh` : undefined,
 				}}
 				data-scroll-root='true'
+				data-docked={isDocked ? 'true' : undefined}
 			>
 				<div className={innerClassNames}>
 					{children}
