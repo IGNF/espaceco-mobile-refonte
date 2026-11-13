@@ -263,6 +263,10 @@ export function extractFastReportThemes(themes: CommunityThemeConfig[]): Communi
   return themes.filter((theme) => FAST_REPORT_THEME_PATTERN.test(theme.theme));
 }
 
+export function extractNonFastReportThemes(themes: CommunityThemeConfig[]): CommunityThemeConfig[] {
+  return themes.filter((theme) => !FAST_REPORT_THEME_PATTERN.test(theme.theme));
+}
+
 export function buildDefaultReportAttributeValues(
   attributes: CommunityThemeAttribute[]
 ): Record<string, string> {

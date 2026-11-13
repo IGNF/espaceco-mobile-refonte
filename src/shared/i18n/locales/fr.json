@@ -953,6 +953,8 @@
       "themePicker": {
         "title": "Signalement rapide",
         "subtitle": "Choisissez un thème GNSS.",
+        "gnssTitle": "Signalement via GNSS",
+        "gnssSubtitle": "Choisissez un autre thème.",
         "other": "Autres"
       },
       "gps": {
