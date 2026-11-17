@@ -12,12 +12,14 @@ import type { AppReport } from '@/domain/report/models';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
+import { DraftReportsLimitAlerts } from '@/features/report/components/DraftReportsLimitAlerts';
+import { useDraftReportsLimitGuard } from '@/features/report/hooks/useDraftReportsLimitGuard';
 import { useReportReply } from '@/features/report/hooks/useReportReply';
 import { useSubmitReport } from '@/features/report/hooks/useSubmitReport';
 import { getReportSubmitErrorTranslationKey } from '@/features/report/errors/reportSubmitError';
 import { formatReportAttributes } from '@/features/report/utils/reportAttributes';
 import { CreateOrEditReportPage } from '@/features/report/pages/CreateOrEditReport/CreateOrEditReportPage';
-import { removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
+import { addLocalReportToMap, removeLocalReportFromMap } from '@/features/map/utils/signalementReportFeatures';
 import {
   applyReportDetailsMapFocus,
   suspendReportDetailsMapReportLoading,
@@ -44,6 +46,7 @@ import { joinCSSClassNames } from '@/shared/utils/join';
 import IconPencil from '@/shared/assets/icons/icon-pencil.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
+import IconCopy from '@/shared/assets/icons/icon-reset.svg?react';
 import IconEye from '@/shared/assets/icons/icon-eye.svg?react';
 import IconArrowLeft from '@/shared/assets/icons/icon-arrow-left.svg?react';
 import IconArrowRight from '@/shared/assets/icons/icon-arrow-right.svg?react';
@@ -94,6 +97,7 @@ function ReportDetailsPageContent({
 }: ReportDetailsPageProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const draftReportsLimit = useDraftReportsLimitGuard();
   const { activeCommunity } = useCommunity();
   const { submitReply, isSubmitting, error: replyError } = useReportReply();
   const { submitReport, isSubmitting: isSending, error: sendError } = useSubmitReport();
@@ -101,6 +105,8 @@ function ReportDetailsPageContent({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isCloning, setIsCloning] = useState(false);
+  const isCloningRef = useRef(false);
   const [isReplyOpen, setIsReplyOpen] = useState(false);
   const [isSendSuccessOpen, setIsSendSuccessOpen] = useState(false);
   const [isViewingOnMap, setIsViewingOnMap] = useState(false);
@@ -309,6 +315,50 @@ function ReportDetailsPageContent({
     setIsDeleteOpen(false);
   };
 
+  const cloneCurrentReport = async () => {
+    if (!report || !user || isCloningRef.current) return;
+
+    isCloningRef.current = true;
+    setIsCloning(true);
+    try {
+      const cloned = await reportStorage.cloneReport(report, user);
+      if (map && cloned.geometry && parsePointGeometry(cloned.geometry)) {
+        addLocalReportToMap(map, cloned);
+      }
+      showToastSafe({
+        text: t('reports.details.cloneSuccessMessage'),
+        duration: 'short',
+        position: 'top',
+      });
+    } catch {
+      showToastSafe({
+        text: t('reports.details.cloneErrorMessage'),
+        duration: 'short',
+        position: 'top',
+      });
+    } finally {
+      isCloningRef.current = false;
+      setIsCloning(false);
+    }
+  };
+
+  const handleCloneReport = () => {
+    if (!report || !user || isCloningRef.current) {
+      if (!isCloningRef.current) {
+        showToastSafe({
+          text: t('reports.details.cloneErrorMessage'),
+          duration: 'short',
+          position: 'top',
+        });
+      }
+      return;
+    }
+
+    draftReportsLimit.requestCreate(() => {
+      void cloneCurrentReport();
+    });
+  };
+
   const handleDeleteConfirm = async () => {
     if (!report) return;
     setIsDeleting(true);
@@ -364,6 +414,7 @@ function ReportDetailsPageContent({
         level={2}
         presentation={isEditOpen || isViewingOnMap ? 'fullscreen' : 'sheet'}
         className={pageClassName}
+        contentClassName={styles.pageContent}
       >
         <PageHeader
           title={t('reports.details.headerTitle')}
@@ -373,7 +424,7 @@ function ReportDetailsPageContent({
           onClose={handlePageClose}
         />
 
-        <main className={screen.screenContainer + " " + styles.content}>
+        <main className={joinCSSClassNames(screen.screenContainer, styles.content)}>
           <div className={styles.titleSection}>
             <div className={styles.titleHeadingRow}>
               <h1 className={typography.title}>{t('reports.details.title')}</h1>
@@ -495,13 +546,27 @@ function ReportDetailsPageContent({
                     <IconDelete className={buttonStyles.icon} />
                     {t('reports.details.deleteButton')}
                   </Button>
+                  <Button color="light" onClick={handleCloneReport} loading={isCloning} disabled={isCloning}>
+                    <IconCopy className={buttonStyles.icon} />
+                    {t('reports.details.cloneButton')}
+                  </Button>
                 </>
               ) : (
                 <>
-                  <Button color="primary" onClick={handleRespond} disabled={!canReply}>
-                    <IconPencil className={buttonStyles.icon} />
-                    {t('reports.details.respondButton')}
-                  </Button>
+                  <div className={styles.reportActionButtonContainer}>
+                    <div className={styles.reportActionReplyButtonContainer}>
+                      <Button color="primary" onClick={handleRespond} disabled={!canReply} fullWidth>
+                        <IconPencil className={buttonStyles.icon} />
+                        {t('reports.details.respondButton')}
+                      </Button>
+                    </div>
+                    <div className={styles.reportActionCloneButtonContainer}>
+                      <Button color="light" onClick={handleCloneReport} loading={isCloning} disabled={isCloning} fullWidth>
+                        <IconCopy className={buttonStyles.icon} />
+                        {t('reports.details.cloneButton')}
+                      </Button>
+                    </div>
+                  </div>
                   {!canReply && (
                     <p className={styles.permissionMessage}>
                       {t('reports.details.reply.permissionDenied')}
@@ -626,7 +691,7 @@ function ReportDetailsPageContent({
             {showPreviousReportButton && (
               <Button
                 type="button"
-                color="light"
+                color="dark"
                 iconOnly
                 className={joinCSSClassNames(
                   styles.reportNavigationButton,
@@ -650,7 +715,7 @@ function ReportDetailsPageContent({
             {showNextReportButton && (
               <Button
                 type="button"
-                color="light"
+                color="dark"
                 iconOnly
                 className={joinCSSClassNames(
                   styles.reportNavigationButton,
@@ -683,6 +748,8 @@ function ReportDetailsPageContent({
           document.body
         )
         : null}
+
+      <DraftReportsLimitAlerts {...draftReportsLimit} />
     </>
   );
 }

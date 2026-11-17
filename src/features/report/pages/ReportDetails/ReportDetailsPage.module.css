@@ -1,5 +1,11 @@
+/* The content fills the page, so the navigation arrows sit at the bottom even on a short report. */
+.pageContent {
+  display: flex;
+  flex-direction: column;
+}
+
 .content {
-  padding-bottom: calc(96px + var(--safe-bottom, 0px));
+  flex: 1;
 }
 
 .titleSection {
@@ -89,21 +95,21 @@
   pointer-events: none;
 }
 
+/*
+  Placed after the report content: it stays at the bottom of the page while the
+  report scrolls, and does not cover the action buttons at the end.
+  The bottom margin equals the bottom offset so it never moves.
+*/
 .reportNavigationControls {
-  position: fixed;
-  left: 18px;
-  right: 18px;
+  position: sticky;
   bottom: calc(var(--safe-bottom, 0px) + 36px);
   z-index: 1;
   display: grid;
   grid-template-columns: 48px 1fr 48px;
   align-items: center;
+  padding: 0 18px;
+  margin-bottom: 36px;
   pointer-events: none;
-}
-
-/* In the docked panel this fixed bar is placed against the screen, not the panel, so it clears the system bar itself. */
-:global([data-docked='true']) .reportNavigationControls {
-  bottom: calc(var(--safe-bottom-screen, 0px) + 36px);
 }
 
 .reportNavigationButton {
@@ -181,4 +187,18 @@
 .backToReportButton {
   width: min(320px, 100%) !important;
   margin: 0 !important;
+}
+
+.reportActionButtonContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.reportActionReplyButtonContainer {
+  flex: 1;
+}
+
+.reportActionCloneButtonContainer {
+  flex: 1;
 }

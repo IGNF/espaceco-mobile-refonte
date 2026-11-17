@@ -17,6 +17,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Added
 - Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket #41)
+- On peut maintenant cloner un signalement (ticket [#46](https://github.com/IGNF/espaceco-mobile-refonte/issues/46))
 
 ### Changed
  
