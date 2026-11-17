@@ -21,6 +21,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Changed
  
 ### Fixed
+- Correctif au niveau de la gestion du token expiré : en cas d'ouverture de l'app sans réseau avec un token expiré, puis après une reconnexion au réseau, on affiche maintenant une alerte proposant la reconnexion (ticket [#38](https://github.com/IGNF/espaceco-mobile-refonte/issues/38))
 
 ## [0.0.25] - 2026-11-13
 

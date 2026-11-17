@@ -1,10 +1,11 @@
-import { useState, useCallback, useEffect, type ReactNode } from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Network } from '@ign/mobile-device';
 import { AuthContext } from "./AuthContext";
 import * as authService from "@/infra/auth";
 import type { AppUser } from "@/domain/user/models";
 import { UserStorageAdapter } from "@/infra/storage/UserStorageAdapter";
 import { isAppError, toAppError } from '@/shared/errors/appError';
+import { reportSessionExpired } from '@/shared/errors/sessionExpiredSignal';
 import { clearSessionSentReports } from '@/features/report/state/sessionSentReportsStore';
 
 const userStorage = new UserStorageAdapter();
@@ -19,6 +20,8 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // True when the app opened offline with the stored user, so the session could not be checked yet.
+  const isSessionRestorePendingRef = useRef(false);
 
   // Try to restore session on app start
   useEffect(() => {
@@ -39,6 +42,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setUser(result.user);
             } else if (isAppError(result.error) && result.error.kind === 'network') {
               // When the app starts fully offline, keep the cached identity so offline mode remains usable.
+              isSessionRestorePendingRef.current = true;
               setUser(storedUser);
             } else {
               await userStorage.clearUser();
@@ -48,6 +52,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             if (networkStatus.connected) {
               await userStorage.clearUser();
             } else {
+              isSessionRestorePendingRef.current = true;
               setUser(storedUser);
             }
           }
@@ -113,6 +118,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return null;
   }, [user]);
 
+  /**
+   * Restores the session that could not be checked while the app was offline.
+   * Shows the session expired alert when the tokens are no longer valid.
+   * Returns true when the session is restored, so the caller can reload its data.
+   */
+  const restorePendingSession = useCallback(async () => {
+    if (!isSessionRestorePendingRef.current) {
+      return false;
+    }
+
+    const sessionRestored = await authService.restoreSession();
+    if (!sessionRestored) {
+      // Without network, the tokens could not be refreshed: the next reconnection will try again.
+      const networkStatus = await Network.getStatus().catch(() => ({ connected: true }));
+      if (networkStatus.connected) {
+        reportSessionExpired();
+      }
+      return false;
+    }
+
+    const result = await authService.getCurrentUser();
+    if (!result.success || !result.user) {
+      return false;
+    }
+
+    isSessionRestorePendingRef.current = false;
+    await userStorage.saveUser(result.user);
+    setUser(result.user);
+    return true;
+  }, []);
+
   const continueWithoutAccount = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -148,6 +184,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return false;
     }
 
+    isSessionRestorePendingRef.current = true;
     setUser(storedUser);
     return true;
   }, []);
@@ -155,6 +192,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
+      isSessionRestorePendingRef.current = false;
       await authService.logout();
     } finally {
       await userStorage.clearAll();
@@ -174,6 +212,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         loginWithOAuth,
         setUserFromOAuthCallback,
         refreshCurrentUser,
+        restorePendingSession,
         logout,
         continueWithoutAccount,
         continueOffline,

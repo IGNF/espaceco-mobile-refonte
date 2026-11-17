@@ -126,7 +126,7 @@ interface PendingMapWorkChoice {
 export function HomePage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, logout, restorePendingSession } = useAuth();
   const { activeCommunity, setActiveCommunity } = useCommunity();
   const { mode: offlineMode, activeCommunityCache, rasterMaps, refresh: refreshOffline, network, isNetworkAlertOpen } = useOffline();
   const { mapSettings, displayMode, traceRecordingSettings } = useAppSettings();
@@ -260,6 +260,19 @@ export function HomePage() {
     activeCommunityCache
   );
   useOfflineRasterMapLayers(mapRef, rasterMaps, isMapReady, offlineMode, hasInitialCenterCompleted);
+
+  // When the app opened offline, the session is restored once the network is back, then the layers are reloaded.
+  useEffect(() => {
+    if (!network.connected || offlineMode === 'offline') {
+      return;
+    }
+
+    void restorePendingSession().then((sessionRestored) => {
+      if (sessionRestored) {
+        void refetchLayers();
+      }
+    });
+  }, [network.connected, offlineMode, refetchLayers, restorePendingSession]);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
