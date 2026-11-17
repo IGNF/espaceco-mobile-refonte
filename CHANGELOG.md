@@ -16,6 +16,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.26] - 2026-11-xx
 
 ### Added
+- Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket #41)
 
 ### Changed
  
