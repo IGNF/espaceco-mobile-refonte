@@ -164,6 +164,11 @@ export class ReportStorageAdapter implements IReportStorage {
     emitReportStorageChange();
   }
 
+  /**
+   * Creates a local draft from an existing report.
+   * Copies the theme, attributes, comment and location only:
+   * photos, sketch, objects and files are left out.
+   */
   async cloneReport(report: Report, user: User): Promise<Report> {
     const allReports = await this.getAllReports();
     let id = Date.now();
@@ -171,48 +176,25 @@ export class ReportStorageAdapter implements IReportStorage {
       id += 1;
     }
 
-    const photos: ReportPhoto[] = [];
-    try {
-      for (const [index, photo] of (report.photos ?? []).entries()) {
-        if (!photo.localPath) continue;
-        const localPath = await this.savePhotoBlob(id, index, await this.getBlob(photo));
-        photos.push({
-          localPath,
-          thumbnail: photo.thumbnail,
-          uploaded: false,
-        });
-      }
-
-      await this.saveReport({
-        id,
-        communityId: report.communityId,
-        themeId: report.themeId,
-        geometry: report.geometry,
-        comment: report.comment,
-        attributes: cloneReportAttributes(report.attributes),
-        photos,
-        features: report.features,
-        sketch: report.sketch,
-        status: ReportStatus.Draft,
-        createdAt: new Date(),
-        modifiedAt: new Date(),
-        userId: user.id,
-        author: {
-          id: user.id,
-          username: user.username,
-        },
-        commune: report.commune,
-        departement: report.departement,
-        territory: report.territory,
-      });
-    } catch (error) {
-      for (const photo of photos) {
-        if (photo.localPath) {
-          await this.deletePhotoFile(photo.localPath);
-        }
-      }
-      throw error;
-    }
+    await this.saveReport({
+      id,
+      communityId: report.communityId,
+      themeId: report.themeId,
+      geometry: report.geometry,
+      comment: report.comment,
+      attributes: cloneReportAttributes(report.attributes),
+      status: ReportStatus.Draft,
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+      userId: user.id,
+      author: {
+        id: user.id,
+        username: user.username,
+      },
+      commune: report.commune,
+      departement: report.departement,
+      territory: report.territory,
+    });
 
     const stored = await this.getReport(id);
     if (!stored) {

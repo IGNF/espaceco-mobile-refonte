@@ -414,6 +414,7 @@ function ReportDetailsPageContent({
         level={2}
         presentation={isEditOpen || isViewingOnMap ? 'fullscreen' : 'sheet'}
         className={pageClassName}
+        contentClassName={styles.pageContent}
       >
         <PageHeader
           title={t('reports.details.headerTitle')}
@@ -423,7 +424,7 @@ function ReportDetailsPageContent({
           onClose={handlePageClose}
         />
 
-        <main className={screen.screenContainer + " " + styles.content}>
+        <main className={joinCSSClassNames(screen.screenContainer, styles.content)}>
           <div className={styles.titleSection}>
             <div className={styles.titleHeadingRow}>
               <h1 className={typography.title}>{t('reports.details.title')}</h1>
