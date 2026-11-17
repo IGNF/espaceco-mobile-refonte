@@ -16,10 +16,11 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.26] - 2026-11-xx
 
 ### Added
-- Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket #41)
+- Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket [#41](https://github.com/IGNF/espaceco-mobile-refonte/issues/41))
 - On peut maintenant cloner un signalement (ticket [#46](https://github.com/IGNF/espaceco-mobile-refonte/issues/46))
 
 ### Changed
+- La couleur du bouton de centrage est maintenant en vert plus foncé lors du verrouillage de localisation (ticket [#86](https://github.com/IGNF/espaceco-mobile-refonte/issues/86))
  
 ### Fixed
 - Correctif au niveau de la gestion du token expiré : en cas d'ouverture de l'app sans réseau avec un token expiré, puis après une reconnexion au réseau, on affiche maintenant une alerte proposant la reconnexion (ticket [#38](https://github.com/IGNF/espaceco-mobile-refonte/issues/38))

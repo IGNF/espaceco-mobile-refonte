@@ -289,7 +289,7 @@
 }
 
 .locked {
-  background-color: var(--color-primary-light);
+  background-color: rgba(var(--color-primary-rgb), 0.4);
 }
 
 .geolocationLoading {
