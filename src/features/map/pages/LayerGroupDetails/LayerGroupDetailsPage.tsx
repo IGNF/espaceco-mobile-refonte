@@ -375,9 +375,10 @@ export function LayerGroupDetailsPage({
       >
         <PageHeader
           title={title}
-          showBackButton
-          showCloseButton={false}
-          onBack={handleClose}
+          // showBackButton
+          showCloseButton={true}
+          // onBack={handleClose}
+          onClose={handleClose}
         />
 
         <main className={`${screen.screenExtendedContainer} ${styles.content}`}>

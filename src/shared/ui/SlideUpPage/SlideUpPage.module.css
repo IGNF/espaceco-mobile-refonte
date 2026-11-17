@@ -1,19 +1,23 @@
 .slideUpPage {
 	position: fixed;
 	inset: 0;
-	transform: translateY(100%);
-	transition: transform 0.3s ease-out, height 0.2s ease-out;
 	z-index: 100;
 	overflow-y: auto;
 	overscroll-behavior: contain;
 }
 
-.slideUpPageDragging {
-	transition: transform 0.3s ease-out, height 0s linear;
+.slideUpPageSheet:not(.slideUpPageDocked) {
+	transform: translateY(100%);
+	transition: transform 0.3s ease-out;
 }
 
-.slideUpPageVisible {
+.slideUpPageSheet:not(.slideUpPageDocked).slideUpPageVisible {
 	transform: translateY(0);
+	transition: transform 0.3s ease-out, height 0.2s ease-out;
+}
+
+.slideUpPageSheet:not(.slideUpPageDocked).slideUpPageDragging {
+	transition: none;
 }
 
 .slideUpPageSheet,
@@ -40,11 +44,20 @@
 	left: auto;
 	width: var(--map-panel-width);
 	box-shadow: -4px 0 20px rgba(0, 0, 0, 0.12);
-	transform: translateX(100%);
 }
 
-.slideUpPageDocked.slideUpPageVisible {
-	transform: translateX(0);
+/*
+	On Android the WebView is drawn under the navigation bar / taskbar, which is
+	transparent on some devices (Samsung) and catches taps. Sheets end their
+	scrolling area above it: content is never painted in the border, and the
+	border paints the band under the bar. Children see --safe-bottom as 0px so
+	they do not add that space twice. iOS keeps its layout.
+*/
+:global(html[data-platform='android']) .slideUpPageSheet,
+:global(html[data-platform='android']) .slideUpPageDocked {
+	box-sizing: border-box;
+	border-bottom: var(--safe-bottom-screen, 0px) solid white;
+	--safe-bottom: 0px;
 }
 
 .slideUpPageInner {

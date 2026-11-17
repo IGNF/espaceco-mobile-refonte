@@ -170,8 +170,14 @@ function isFeatureNearPixel(
   const coordinate = map.getCoordinateFromPixel(pixel);
   const geometry = feature.getGeometry();
 
-  if (!coordinate || !geometry || typeof geometry.getClosestPoint !== 'function') {
+  if (!coordinate || !geometry) {
     return false;
+  }
+
+  // Outline-only polygons are painted on their contour, so a tap on the surface
+  // never hits a rendered pixel. The whole surface, except holes, is a hit.
+  if (geometry.intersectsCoordinate(coordinate)) {
+    return true;
   }
 
   const closestPoint = geometry.getClosestPoint(coordinate);

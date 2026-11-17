@@ -170,7 +170,7 @@ export function FastReportGpsOverlay({
         onToggleAudio={toggleAudio}
         onValidate={handleValidate}
         onValidateAndContinue={handleValidateAndContinue}
-        onChooseTheme={usesReportTemplate ? undefined : handleChooseTheme}
+        onChooseTheme={handleChooseTheme}
         onOpenOffsetSettings={() => setIsOffsetSettingsOpen(true)}
         onCancel={handleCancel}
       />

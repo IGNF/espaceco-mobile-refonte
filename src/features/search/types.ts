@@ -1,1 +1,1 @@
-export type SearchMode = "address" | "parcelle";
+export type SearchMode = "address" | "parcelle" | "coordinates";

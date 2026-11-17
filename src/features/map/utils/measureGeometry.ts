@@ -89,8 +89,8 @@ export function measureStyle(feature: FeatureLike): Style[] {
 }
 
 /**
- * Labels each segment. A single segment is the whole measurement, so it is shown once as the total.
- * A polygon also labels the edge that closes back to the first vertex, and puts the area at the center.
+ * A length labels each segment, and a single segment is shown once as the total.
+ * An area shows only the surface at the center of the polygon, with no segment lengths.
  */
 function buildMeasureLabels(
   mode: MeasureMode,
@@ -98,19 +98,21 @@ function buildMeasureLabels(
   geometry: LineString | Polygon | Point,
   projection: ProjectionLike,
 ): MeasureLabel[] {
-  const segments: MeasureLabel[] = [];
-  for (let index = 1; index < coordinates.length; index += 1) {
-    pushSegmentLabel(segments, coordinates[index - 1], coordinates[index], projection);
-  }
+  if (mode === 'area') {
+    if (!(geometry instanceof Polygon)) {
+      return [];
+    }
 
-  if (mode === 'area' && geometry instanceof Polygon) {
-    pushSegmentLabel(segments, coordinates[coordinates.length - 1], coordinates[0], projection);
-    segments.push({
+    return [{
       coordinate: geometry.getInteriorPoint().getCoordinates(),
       text: formatArea(Math.abs(getArea(geometry, { projection }))),
       kind: 'total',
-    });
-    return segments;
+    }];
+  }
+
+  const segments: MeasureLabel[] = [];
+  for (let index = 1; index < coordinates.length; index += 1) {
+    pushSegmentLabel(segments, coordinates[index - 1], coordinates[index], projection);
   }
 
   if (segments.length === 1) {

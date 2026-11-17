@@ -21,6 +21,7 @@ interface UseSearchGeoportailOptions {
 
 export interface UseSearchGeoportailReturn {
   clearMarker: () => void;
+  showMarkerAtCoordinate: (coordinate: number[]) => void;
 }
 
 interface SearchControlLike {
@@ -327,5 +328,5 @@ export function useSearchGeoportail({
     };
   }, [map, isOpen, addressContainerRef, parcelleContainerRef, showMarkerAtCoordinate, clearMarker, t]);
 
-  return { clearMarker };
+  return { clearMarker, showMarkerAtCoordinate };
 }

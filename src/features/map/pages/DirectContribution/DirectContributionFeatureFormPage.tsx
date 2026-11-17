@@ -27,7 +27,7 @@ import {
   validateAndNormalizeDirectContributionFieldValue,
 } from '@/domain/community/directContributionForm';
 
-import { SlideUpPage, useSheetDragHandle } from '@/shared/ui/SlideUpPage';
+import { SlideUpPage, useSheetDragHandle, useSlideUpContent } from '@/shared/ui/SlideUpPage';
 import { Button } from '@/shared/ui/Button';
 import { toStringArrayFieldValue, toStringFieldValue } from '@/shared/utils/coercion';
 import { joinCSSClassNames } from '@/shared/utils/join';
@@ -511,21 +511,25 @@ export function DirectContributionFeatureFormPage({
   onSave,
   onCancel,
 }: DirectContributionFeatureFormPageProps) {
-  if (!table || !feature) {
+  const displayedMode = useSlideUpContent(isOpen ? mode : null, isOpen);
+  const displayedTable = useSlideUpContent(table, isOpen);
+  const displayedFeature = useSlideUpContent(feature, isOpen);
+
+  if (!displayedMode || !displayedTable || !displayedFeature) {
     return null;
   }
 
-  const featureKey = feature.getId() ?? getUid(feature);
+  const featureKey = displayedFeature.getId() ?? getUid(displayedFeature);
 
   return (
     // Remount the inner form when the edited feature changes so local form
     // state is rebuilt from the new feature attributes.
     <DirectContributionFeatureFormContent
-      key={`${mode}-${String(featureKey)}`}
+      key={`${displayedMode}-${String(featureKey)}`}
       isOpen={isOpen}
-      mode={mode}
-      table={table}
-      feature={feature}
+      mode={displayedMode}
+      table={displayedTable}
+      feature={displayedFeature}
       onSave={onSave}
       onCancel={onCancel}
     />

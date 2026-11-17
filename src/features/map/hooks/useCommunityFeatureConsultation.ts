@@ -11,7 +11,7 @@ import type { DirectContributionFeatureCandidate } from '@/features/map/types/di
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
-import { COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE } from '@/shared/constants/map';
+import { LAYER_OBJECT_HIT_TOLERANCE } from '@/shared/constants/map';
 
 export interface UseCommunityFeatureConsultationOptions {
   map: OlMap | null;
@@ -128,7 +128,7 @@ export function useCommunityFeatureConsultation({
         source: collabSource,
         communityLayer,
         table: communityLayer.table,
-        hitTolerance: COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE,
+        hitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
         fallbackLabel: t('layers.directContribution.objectChoice.defaultObjectName'),
       });
 

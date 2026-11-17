@@ -33,7 +33,7 @@ import typography from '@/shared/styles/typography.module.css';
 import styles from './OfflineZoneEditorOverlay.module.css';
 
 import type { OfflineZoneEditorMode } from '@/domain/offline/models';
-import { CENTER_LOCATION_ORIGIN, type CenterLocationOrigin } from '@/shared/constants/map';
+import { CENTER_LOCATION_ORIGIN, LAYER_OBJECT_HIT_TOLERANCE, type CenterLocationOrigin } from '@/shared/constants/map';
 
 interface OfflineZoneEditorOverlayProps {
   isOpen: boolean;
@@ -188,7 +188,7 @@ export function OfflineZoneEditorOverlay({
         source: collabSource,
         communityLayer: selectedLayer,
         table: selectedLayer.table!,
-        hitTolerance: 16,
+        hitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
         fallbackLabel: t('offline.editor.defaultObject'),
       });
 

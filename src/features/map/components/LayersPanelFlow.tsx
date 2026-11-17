@@ -99,8 +99,8 @@ export function LayersPanelFlow({
   ] = useState<number | null>(null);
   const activeInitialLayerGroup =
     isOpen &&
-    initialLayerGroupId !== null &&
-    dismissedInitialLayerGroupRequestKey !== initialLayerGroupRequestKey
+      initialLayerGroupId !== null &&
+      dismissedInitialLayerGroupRequestKey !== initialLayerGroupRequestKey
       ? initialLayerGroupId
       : null;
   const activeLayerGroup = activeInitialLayerGroup ?? activeLayerGroupState;
@@ -133,9 +133,9 @@ export function LayersPanelFlow({
     setDismissedInitialLayerGroupRequestKey(initialLayerGroupRequestKey);
     setActiveLayerGroupState(null);
 
-    if (activeInitialLayerGroup !== null) {
-      onClose();
-    }
+    // if (activeInitialLayerGroup !== null) {
+    onClose();
+    // }
   };
 
   const handleSendGroupDirectContributions = (groupId: LayerGroupId) => {

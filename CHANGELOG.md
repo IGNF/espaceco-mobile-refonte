@@ -13,11 +13,40 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.24] - 2026-10-xx
+## [0.0.26] - 2026-11-xx
+
+### Added
+- Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket #41)
+
+### Changed
+ 
+### Fixed
+- Correctif au niveau de la gestion du token expiré : en cas d'ouverture de l'app sans réseau avec un token expiré, puis après une reconnexion au réseau, on affiche maintenant une alerte proposant la reconnexion (ticket [#38](https://github.com/IGNF/espaceco-mobile-refonte/issues/38))
+
+## [0.0.25] - 2026-11-13
+
+### Added
+- Ajout d'un repère visuel constant du signalement en cours sur la carte (ticket #178)
+
+### Changed
+- Ajout de deux nouvelles tailles définies pour les modales (en %, 20, **35, 45,** 55, 95 - défaut à 55) (ticket #175)
+- Mémorisation de la dernière taille utilisée pour les modales pour l'utiliser en tant que taille par défaut (ticket #175)
+- Lors de l'utilisation des outils de mesure, en cas de mesure de surface, on n'affiche plus la longueur des segments (ticket #168)
+- Ajout d'un bouton de fermeture sur les modales qui n'en ont pas, uniformisation des modales et animations (ticket #176)
+- Remplacement de deux textes ('Géoportail' et 'Géoservices') par 'Fonds de carte' (ticket #181)
+- Augmentation de la zone de tolérance lors d'un tap sur la carte, pour la sélection d'un objet (ticket #177)
+
+### Fixed
+- Le bouton de changement de thèmes s'affiche maintenant lors d'un signalement GNSS (ticket #180)
+- Le tap sur 'Autres' lors du choix de thème d'un signalement rapide permet de choisir un thème parmi tous les thèmes disponibles (ticket #180)
+
+## [0.0.24] - 2026-11-06
 
 ### Added
 
 ### Changed
+- Mise à jour des dépendances vers mobile-core et collaboratif-client-api, pour résoudre le problème de chargement de tuiles (ticket #161)
+- L'icone "undo" dans la barre d'outils d'édition (ajout de croquis, modification/ajout d'objets) annule maintenant le dernier point ajouté, peu importe l'outil sélectionné
 
 ### Fixed
 

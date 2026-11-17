@@ -17,7 +17,7 @@ import { Button } from '@/shared/ui/Button';
 import { Alert } from '@/shared/ui/Alert';
 import { Banner } from '@/shared/ui/Banner';
 import { FeatureChoiceAlert } from '@/features/map/components/FeatureChoiceAlert';
-import { MapToolbar, type MapToolbarItem } from '@/features/map/components/MapToolbar';
+import { MapToolbar } from '@/features/map/components/MapToolbar';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { addLocalReportToMap } from '@/features/map/utils/signalementReportFeatures';
 import { useGeolocation } from '@/shared/hooks/useGeolocation';
@@ -27,6 +27,7 @@ import { useMyReports } from '@/features/report/hooks/useMyReports';
 import { parsePointGeometry } from '@/shared/utils/geometry';
 import { createPositionFromLonLat } from '@/shared/utils/position';
 import { showToastSafe } from '@/shared/utils/toast';
+import { LAYER_OBJECT_HIT_TOLERANCE } from '@/shared/constants/map';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
 import { useCommunity } from '@/features/community/hooks/useCommunity';
 import { useReportForm } from '@/features/report/hooks/useReportForm';
@@ -42,9 +43,10 @@ import {
   getReportObjectLabel,
 } from '@/features/report/utils/reportObjects';
 import {
-  getSketchToolActionById,
-  SKETCH_TOOL_DEFINITIONS,
-} from '@/features/report/constants/reportSketch.constants';
+  getSketchToolAction,
+  getSketchToolbarItems,
+} from '@/features/map/constants/sketchTools.constants';
+import { SKETCH_TOOL_LABEL_KEYS } from '@/features/report/constants/reportSketch.constants';
 import { TRACE_STYLE } from '@/features/report/constants/reportTrace.constants';
 import { formatTraceToolbarStatus } from '@/features/report/utils/traceStatus';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
@@ -55,6 +57,7 @@ import IconSave from '@/shared/assets/icons/icon-save.svg?react';
 import IconSend from '@/shared/assets/icons/icon-send.svg?react';
 import IconClose from '@/shared/assets/icons/icon-close.svg?react';
 import { MapLocationPointer } from '@/features/map/components/MapLocationPointer';
+import { ReportLocationMarker } from '@/features/map/components/ReportLocationMarker';
 import IconPlay from '@/shared/assets/icons/icon-play.svg?react';
 
 import styles from './CreateOrEditReportPage.module.css';
@@ -210,20 +213,18 @@ export function CreateOrEditReportPage({
   const basePosition = isEditMode ? editPosition : geoPosition;
   const position = selectedPosition ?? basePosition;
   const canEditPosition = Boolean(map);
-  const canPickObjects = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
-  const canPickSketches = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
+  const canPickObjectsOrSketches = !isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const canPickTrace = isTraceReport && Boolean(map) && (!isEditMode || isDraftReport);
   const isPickingPosition = mapPickerMode === 'position';
   const isPickingObject = mapPickerMode === 'object';
   const isPickingSketch = mapPickerMode === 'sketch';
   const isPickingTrace = mapPickerMode === 'trace';
   const isPickingOnMap = mapPickerMode !== 'none';
-  const isUsingFullMapTool = isPickingPosition || isPickingObject || isPickingSketch || isPickingTrace;
   const keepsMapVisible =
     Boolean(map) &&
     !isGnssDraftSetup &&
     !isTraceReport &&
-    !isUsingFullMapTool;
+    !isPickingOnMap;
 
   useEffect(() => {
     onMapPickerActiveChange?.(isPickingOnMap);
@@ -274,7 +275,6 @@ export function CreateOrEditReportPage({
     triggerSketchAction,
     finalizeCurrentDrawing,
     getSketchFeatures,
-    clearSession: clearSketchSession,
   } = useReportSketchSession({
     map,
     enabled: isOpen && isPickingSketch,
@@ -286,16 +286,10 @@ export function CreateOrEditReportPage({
     currentSketchMode === 'draw-linestring'
   );
 
-  const sketchToolItems = useMemo<MapToolbarItem[]>(() => {
-    return SKETCH_TOOL_DEFINITIONS.map((definition) => {
-      return {
-        id: definition.id,
-        Icon: definition.icon,
-        label: t(definition.labelKey),
-        active: definition.activeMode === currentSketchMode,
-      };
-    });
-  }, [currentSketchMode, t]);
+  const sketchToolItems = useMemo(
+    () => getSketchToolbarItems(SKETCH_TOOL_LABEL_KEYS, currentSketchMode, t),
+    [currentSketchMode, t]
+  );
 
   const {
     isRecording: isTraceRecording,
@@ -355,10 +349,9 @@ export function CreateOrEditReportPage({
     setMapPickerMode('none');
     setObjectCandidates([]);
     setIsObjectChoiceOpen(false);
-    clearSketchSession();
     clearTraceSession();
     onSearchPanelVisibilityChange?.(false);
-  }, [clearSketchSession, clearTraceSession, onSearchPanelVisibilityChange]);
+  }, [clearTraceSession, onSearchPanelVisibilityChange]);
 
   useBackHandler(isPickingOnMap, closeMapPickers, 130);
 
@@ -368,7 +361,7 @@ export function CreateOrEditReportPage({
       return;
     }
 
-    const action = getSketchToolActionById(toolId);
+    const action = getSketchToolAction(toolId);
     if (!action) return;
 
     triggerSketchAction(action);
@@ -463,7 +456,7 @@ export function CreateOrEditReportPage({
           );
           return undefined;
         },
-        { hitTolerance: 10 }
+        { hitTolerance: LAYER_OBJECT_HIT_TOLERANCE }
       );
 
       for (const communityLayer of vectorLayers) {
@@ -489,7 +482,7 @@ export function CreateOrEditReportPage({
           source: collabSource,
           communityLayer,
           table: communityLayer.table,
-          hitTolerance: 10,
+          hitTolerance: LAYER_OBJECT_HIT_TOLERANCE,
           fallbackLabel: defaultObjectLabel,
         });
 
@@ -532,11 +525,9 @@ export function CreateOrEditReportPage({
     };
   }, [isOpen, isPickingObject, map, vectorLayers, form, closeMapPickers, t]);
 
-  const handleValidateSketch = useCallback(async () => {
+  const handleValidateSketch = useCallback(() => {
     if (currentSketchMode === 'draw-linestring') {
       finalizeCurrentDrawing();
-      // Let OL emit drawend/addfeature before reading the source snapshot.
-      await Promise.resolve();
     }
 
     const sketchFeatures = getSketchFeatures();
@@ -704,7 +695,6 @@ export function CreateOrEditReportPage({
     if (isPickingPosition) {
       return (
         <div className={styles.locationPickerOverlay}>
-          <MapLocationPointer />
           <div className={styles.validateButtonContainer}>
             <Button
               color="primary"
@@ -811,7 +801,13 @@ export function CreateOrEditReportPage({
   ]);
 
   const canPersistReport = position !== null;
-  const hideDockedPanel = isWideLayout && isUsingFullMapTool;
+  const hideDockedPanel = isWideLayout && isPickingOnMap;
+  const showReportLocationMarker =
+    isOpen &&
+    !isEditMode &&
+    !isTraceReport &&
+    !isPickingPosition &&
+    position !== null;
 
   return (
     <>
@@ -822,7 +818,7 @@ export function CreateOrEditReportPage({
         presentation={keepsMapVisible || hideDockedPanel ? 'sheet' : 'fullscreen'}
         reserveMapSpace={!hideDockedPanel}
         className={
-          !isUsingFullMapTool
+          !isPickingOnMap
             ? undefined
             : hideDockedPanel
               ? styles.locationPickerSheetDocked
@@ -860,8 +856,8 @@ export function CreateOrEditReportPage({
             isLocating={isLocating}
             isTraceMode={isTraceReport}
             onEditPosition={canEditPosition ? handleStartPositionPicker : undefined}
-            onAddObject={canPickObjects ? handleStartObjectPicker : undefined}
-            onAddSketch={canPickSketches ? handleStartSketchPicker : undefined}
+            onAddObject={canPickObjectsOrSketches ? handleStartObjectPicker : undefined}
+            onAddSketch={canPickObjectsOrSketches ? handleStartSketchPicker : undefined}
             onAddTrace={canPickTrace ? handleStartTracePicker : undefined}
             isPickingObject={isPickingObject}
             isPickingSketch={isPickingSketch}
@@ -935,6 +931,14 @@ export function CreateOrEditReportPage({
       {mapPickerOverlay && typeof document !== 'undefined'
         ? createPortal(mapPickerOverlay, document.body)
         : null}
+
+      {isOpen && isPickingPosition && map
+        ? createPortal(<MapLocationPointer />, map.getViewport())
+        : null}
+
+      {showReportLocationMarker && map && position && (
+        <ReportLocationMarker map={map} position={position} />
+      )}
 
       <FeatureChoiceAlert
         isOpen={isObjectChoiceOpen}
