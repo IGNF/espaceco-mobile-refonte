@@ -223,6 +223,7 @@ export function HomePage() {
     isSessionActive: isDirectContributionSessionActive,
     toolbarItems: directContributionToolbarItems,
     toolbarStatusText: directContributionToolbarStatusText,
+    toolbarMeasureText: directContributionToolbarMeasureText,
     featureFormState: directContributionFeatureFormState,
     featureCandidates: directContributionFeatureCandidates,
     isFeatureChoiceOpen: isDirectContributionFeatureChoiceOpen,
@@ -1246,6 +1247,7 @@ export function HomePage() {
         isBehind={isSearchOpen || isLayersPanelOpen}
         items={directContributionToolbarItems}
         statusText={directContributionToolbarStatusText}
+        measureText={directContributionToolbarMeasureText}
         onItemClick={triggerDirectContributionToolbarAction}
         onClose={closeDirectContributionSession}
       />

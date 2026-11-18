@@ -71,3 +71,14 @@
   border-radius: 999px;
   padding: 4px 10px;
 }
+
+/* Same look as the total of the measure tool */
+.measure {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary-contrast);
+  background: var(--color-primary);
+  border-radius: 999px;
+  padding: 6px 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+}

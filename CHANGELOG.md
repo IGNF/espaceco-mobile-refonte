@@ -18,6 +18,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 - Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket [#41](https://github.com/IGNF/espaceco-mobile-refonte/issues/41))
 - On peut maintenant cloner un signalement (ticket [#46](https://github.com/IGNF/espaceco-mobile-refonte/issues/46))
+- La longueur d'une ligne ou la surface d'un polygone s'affiche sous la barre d'outils pendant la saisie d'un croquis ou d'un objet en contribution directe (ticket [#83](https://github.com/IGNF/espaceco-mobile-refonte/issues/83))
 
 ### Changed
 - La couleur des boutons de centrage et de navigatiopn sont maintenant en vert plus foncé lorsqu'ils sont activés (ticket [#86](https://github.com/IGNF/espaceco-mobile-refonte/issues/86))
