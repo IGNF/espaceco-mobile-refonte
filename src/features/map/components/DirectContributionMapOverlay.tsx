@@ -12,6 +12,7 @@ export interface DirectContributionMapOverlayProps {
   isOpen: boolean;
   items: MapToolbarItem[];
   statusText?: string;
+  measureText: string | null;
   onItemClick: (toolId: string) => void;
   onClose: () => void;
   /**
@@ -25,6 +26,7 @@ export function DirectContributionMapOverlay({
   isOpen,
   items,
   statusText,
+  measureText,
   onItemClick,
   onClose,
   isBehind = false,
@@ -44,6 +46,7 @@ export function DirectContributionMapOverlay({
           items={items}
           onItemClick={onItemClick}
           statusText={statusText}
+          measureText={measureText}
         />
       </div>
     </div>,
