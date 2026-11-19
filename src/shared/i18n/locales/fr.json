@@ -1205,7 +1205,7 @@
   },
   "aboutGeneral": {
     "title": "À propos",
-    "subtitle": "<b>Espace collaboratif IGN v.3.0.8</b>",
+    "subtitle": "<b>Espace collaboratif IGN {{version}}</b>",
     "tagline": "La solution IGN pour gérer une base de données de façon collaborative.",
     "intro1": "\"<b>Espace collaboratif IGN</b>\" est une application personnalisable qui permet à un groupe d'utilisateurs de constituer et faire vivre une base de données métier (saisir, éditer, supprimer des objets de cette base) sur fonds cartographiques de I'IGN. La définition et la configuration du guichet se fait sur l'<mainWebsiteLink>Espace collaboratif de l'IGN</mainWebsiteLink>.",
     "intro2": "<i>Vous devez avoir un compte sur cet espace pour avoir accès à toutes les fonctionnalités de l'application</i>. Un outil collaboratif de signalement (remontée d'anomalie, information erronée...) est inclus. Les signalements permettent aux utilisateurs authentifiés de l'Espace collaboratif d'indiquer des modifications, des manques ou des incohérences dans la base de données. Vous gardez le contrôle intégral de vos données.",

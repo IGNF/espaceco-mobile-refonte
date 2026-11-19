@@ -26,6 +26,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Fixed
 - Correctif au niveau de la gestion du token expiré : en cas d'ouverture de l'app sans réseau avec un token expiré, puis après une reconnexion au réseau, on affiche maintenant une alerte proposant la reconnexion (ticket [#38](https://github.com/IGNF/espaceco-mobile-refonte/issues/38))
 - Sur une tablette type Galaxy tab, la vue de l'app ne passe maintenant plus derrière le dock de la tablette (ticket [#40](https://github.com/IGNF/espaceco-mobile-refonte/issues/40))
+- Le numéro de version de l'app affiché dans la page 'À propos' est maintenant le bon (ticket [#92](https://github.com/IGNF/espaceco-mobile-refonte/issues/92))
 
 ## [0.0.25] - 2026-11-13
 

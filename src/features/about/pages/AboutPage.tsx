@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 
 import { EXTERNAL_LINKS } from '@/shared/constants/externalLinks';
@@ -5,6 +6,7 @@ import { Divider } from '@/shared/ui/Divider/Divider';
 import { ExternalLink } from '@/shared/ui/ExternalLink';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
+import { getAppVersion } from '@/platform/app/versionManager';
 
 import screen from '@/shared/styles/screen.module.css';
 import typography from '@/shared/styles/typography.module.css';
@@ -17,6 +19,20 @@ export interface AboutPageProps {
 
 export function AboutPage({ isOpen, onClose }: AboutPageProps) {
   const { t } = useTranslation();
+  const [version, setVersion] = useState<string>();
+
+  useEffect(() => {
+    let isActive = true;
+    void getAppVersion()
+      .then((appVersion) => {
+        if (isActive) setVersion(appVersion);
+      })
+      .catch(() => undefined);
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const transComponents = {
     b: <strong />,
     i: <em />,
@@ -32,7 +48,7 @@ export function AboutPage({ isOpen, onClose }: AboutPageProps) {
       <main className={screen.screenContainer}>
         <h1 className={typography.title}>{t('aboutGeneral.title')}</h1>
         <p className={typography.paragraph}>
-          <Trans i18nKey="aboutGeneral.subtitle" components={transComponents} />
+          <Trans i18nKey="aboutGeneral.subtitle" values={{ version: version ? `v${version}` : '' }} components={transComponents} />
         </p>
         <p className={typography.paragraph}>{t('aboutGeneral.tagline')}</p>
 
