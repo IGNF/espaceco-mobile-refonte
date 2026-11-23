@@ -222,8 +222,6 @@ export function CreateOrEditReportPage({
   const isPickingOnMap = mapPickerMode !== 'none';
   const keepsMapVisible =
     Boolean(map) &&
-    !isGnssDraftSetup &&
-    !isTraceReport &&
     !isPickingOnMap;
 
   useEffect(() => {
