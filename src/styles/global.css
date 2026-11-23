@@ -1,7 +1,10 @@
 :root {
   /* Prefer Capacitor SystemBars insets (Android 15+), then CSS env() (iOS / WebView 140+). */
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
-  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  /* Distance to the bottom edge of the screen. Never overridden. */
+  --safe-bottom-screen: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  /* Bottom inset left to handle. A container that already ends above the system bar sets it to 0px for its children. */
+  --safe-bottom: var(--safe-bottom-screen);
   --safe-left: var(--safe-area-inset-left, env(safe-area-inset-left, 0px));
   --safe-right: var(--safe-area-inset-right, env(safe-area-inset-right, 0px));
   --map-panel-width: 400px;

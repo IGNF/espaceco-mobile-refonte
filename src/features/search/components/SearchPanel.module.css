@@ -4,7 +4,8 @@
 	top: 8px;
 	left: 12px;
 	right: 12px;
-	z-index: 50;
+	/* Above the home map controls (zoom buttons at top: 180px, z-index 100). */
+	z-index: 101;
 	background: white;
 	border: 1px solid var(--color-light-shade);
 	border-radius: 10px;
@@ -15,15 +16,18 @@
 /* Header with radio group and close button */
 .header {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	justify-content: space-between;
+	gap: 8px;
 	margin-bottom: 12px;
 }
 
-/* Radio group layout (radio element styles in shared/ui/Input/Input.module.css) */
+/* Radio group layout (radio element styles in shared/ui/Input/Input.module.css).
+   Wraps on narrow phones so the close button stays inside the panel. */
 .radioGroup {
 	display: flex;
-	gap: 20px;
+	flex-wrap: wrap;
+	gap: 10px 20px;
 }
 
 /* Close button */

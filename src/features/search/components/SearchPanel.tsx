@@ -2,8 +2,10 @@ import { useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useBackHandler } from "@/shared/hooks/useBackHandler";
 import type Map from "ol/Map";
+import { fromLonLat } from "ol/proj";
 import { useSearchGeoportail } from "../hooks/useSearchGeoportail";
 import type { SearchMode } from "../types";
+import { CoordinateSearchForm } from "./CoordinateSearchForm";
 import styles from "./SearchPanel.module.css";
 import inputStyles from "@/shared/ui/Input/Input.module.css";
 
@@ -21,7 +23,7 @@ export function SearchPanel({ isOpen, onClose, map }: SearchPanelProps) {
 	const addressContainerRef = useRef<HTMLDivElement>(null);
 	const parcelleContainerRef = useRef<HTMLDivElement>(null);
 
-	const { clearMarker } = useSearchGeoportail({
+	const { clearMarker, showMarkerAtCoordinate } = useSearchGeoportail({
 		map,
 		addressContainerRef,
 		parcelleContainerRef,
@@ -65,6 +67,18 @@ export function SearchPanel({ isOpen, onClose, map }: SearchPanelProps) {
 						<span className={inputStyles.radioCircle} />
 						<span>{t("search.modeParcelle")}</span>
 					</label>
+					<label className={inputStyles.radioLabel}>
+						<input
+							type="radio"
+							name="searchMode"
+							value="coordinates"
+							checked={mode === "coordinates"}
+							onChange={() => setMode("coordinates")}
+							className={inputStyles.radioInput}
+						/>
+						<span className={inputStyles.radioCircle} />
+						<span>{t("search.modeCoordinates")}</span>
+					</label>
 				</div>
 				<button
 					className={styles.closeButton}
@@ -84,6 +98,11 @@ export function SearchPanel({ isOpen, onClose, map }: SearchPanelProps) {
 				className={styles.searchContainer}
 				style={{ display: mode === "parcelle" ? "block" : "none" }}
 			/>
+			{mode === "coordinates" && (
+				<CoordinateSearchForm
+					onLocate={(longitude, latitude) => showMarkerAtCoordinate(fromLonLat([longitude, latitude]))}
+				/>
+			)}
 		</div>
 	);
 }

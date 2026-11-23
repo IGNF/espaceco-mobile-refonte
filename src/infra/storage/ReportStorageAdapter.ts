@@ -9,7 +9,7 @@
  * - Photos: FileSystem (binary blobs in DATA directory)
  * - Params: Storage (transient parameters in Preferences)
  */
-import type { IReportStorage, Report, ReportPhoto } from '@ign/mobile-core';
+import { ReportStatus, type IReportStorage, type Report, type ReportPhoto, type User } from '@ign/mobile-core';
 import { Storage, FileSystem } from '@ign/mobile-device';
 import type Feature from 'ol/Feature';
 import GeoJSON from 'ol/format/GeoJSON';
@@ -162,6 +162,45 @@ export class ReportStorageAdapter implements IReportStorage {
     allReports[report.id] = serializable;
     await Storage.set(storageKey(REPORTS_KEY), allReports, 'object');
     emitReportStorageChange();
+  }
+
+  /**
+   * Creates a local draft from an existing report.
+   * Copies the theme, attributes, comment and location only:
+   * photos, sketch, objects and files are left out.
+   */
+  async cloneReport(report: Report, user: User): Promise<Report> {
+    const allReports = await this.getAllReports();
+    let id = Date.now();
+    while (allReports[id]) {
+      id += 1;
+    }
+
+    await this.saveReport({
+      id,
+      communityId: report.communityId,
+      themeId: report.themeId,
+      geometry: report.geometry,
+      comment: report.comment,
+      attributes: cloneReportAttributes(report.attributes),
+      status: ReportStatus.Draft,
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+      userId: user.id,
+      author: {
+        id: user.id,
+        username: user.username,
+      },
+      commune: report.commune,
+      departement: report.departement,
+      territory: report.territory,
+    });
+
+    const stored = await this.getReport(id);
+    if (!stored) {
+      throw new Error('Failed to clone report');
+    }
+    return stored;
   }
 
   async getReport(reportId: number): Promise<Report | null> {
@@ -335,4 +374,32 @@ export class ReportStorageAdapter implements IReportStorage {
       report.status === 'pending2'
     );
   }
+}
+
+function cloneReportAttributes(attributes?: Report['attributes']): Report['attributes'] {
+  if (!attributes) return undefined;
+
+  const record = attributes as Record<string, unknown>;
+  const raw = Array.isArray(record.raw) ? record.raw[0] : undefined;
+  const rawRecord = raw && typeof raw === 'object' ? raw as Record<string, unknown> : undefined;
+  const rawValues = rawRecord?.attributes && typeof rawRecord.attributes === 'object' && !Array.isArray(rawRecord.attributes)
+    ? rawRecord.attributes as Record<string, unknown>
+    : undefined;
+
+  const values: Record<string, unknown> = { ...(rawValues ?? {}) };
+  for (const [key, value] of Object.entries(record)) {
+    if (key === 'themeName' || key === 'raw' || key === 'attributes') continue;
+    values[key] = value;
+  }
+
+  const themeName = typeof record.themeName === 'string' && record.themeName
+    ? record.themeName
+    : typeof rawRecord?.theme === 'string'
+      ? rawRecord.theme
+      : undefined;
+  if (themeName) {
+    values.themeName = themeName;
+  }
+
+  return Object.keys(values).length > 0 ? values : undefined;
 }

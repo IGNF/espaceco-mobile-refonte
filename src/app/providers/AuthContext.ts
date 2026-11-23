@@ -10,6 +10,7 @@ export interface AuthContextType {
   loginWithOAuth: () => Promise<AuthResult>;
   setUserFromOAuthCallback: (user: AppUser) => Promise<void>;
   refreshCurrentUser: () => Promise<AppUser | null>;
+  restorePendingSession: () => Promise<boolean>;
   continueWithoutAccount: () => Promise<{ success: boolean; user: AppUser | null; error?: Error | null }>;
   continueOffline: () => Promise<boolean>;
   logout: () => Promise<void>;

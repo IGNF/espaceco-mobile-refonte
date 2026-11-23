@@ -24,6 +24,7 @@ import {
   getSketchToolbarItems,
   type SketchMode,
 } from '@/features/map/constants/sketchTools.constants';
+import { useSketchMeasure } from '@/features/map/hooks/useSketchMeasure';
 import type { DirectContributionFeatureCandidate } from '@/features/map/types/directContributionFeatureCandidate';
 import { getDirectContributionFeatureCandidatesAtPixel } from '@/features/map/utils/directContributionFeatureCandidates';
 import { getSketchDraw, undoDrawingStep } from '@/features/map/utils/sketchUndo';
@@ -58,6 +59,8 @@ export interface UseDirectContributionSessionReturn {
   activeLayer: CommunityLayer | null;
   toolbarItems: MapToolbarItem[];
   toolbarStatusText?: string;
+  /** Length or area of the object being drawn. */
+  toolbarMeasureText: string | null;
   featureFormState: DirectContributionFeatureFormState | null;
   featureCandidates: DirectContributionFeatureCandidate[];
   isFeatureChoiceOpen: boolean;
@@ -104,6 +107,12 @@ export function useDirectContributionSession({
     DirectContributionFeatureCandidate[]
   >([]);
   const [isFeatureChoiceOpen, setIsFeatureChoiceOpen] = useState(false);
+  const {
+    sketchMeasure,
+    followSketchMeasure,
+    clearSketchMeasure,
+    clearRemovedSketchMeasure,
+  } = useSketchMeasure();
 
   const sketchManagerRef = useRef<SketchManager | null>(null);
   const currentModeRef = useRef<SketchMode>(DEFAULT_DIRECT_CONTRIBUTION_MODE);
@@ -220,7 +229,13 @@ export function useDirectContributionSession({
           unByKey(drawListenerKeys);
           const draw = getSketchDraw(sketchManagerRef.current);
           drawListenerKeys = draw
-            ? [draw.on('drawstart', () => setSelectedFeature(null))]
+            ? [
+                draw.on('drawstart', (event) => {
+                  setSelectedFeature(null);
+                  followSketchMeasure(event.feature, map.getView().getProjection());
+                }),
+                draw.on('drawabort', clearSketchMeasure),
+              ]
             : [];
 
           if (nextMode) {
@@ -270,6 +285,7 @@ export function useDirectContributionSession({
     const removeFeatureListenerKey = activeCollabSource.on('removefeature', (event) => {
       if (event.feature) {
         clearRemovedFeatureState(event.feature as Feature<Geometry>);
+        clearRemovedSketchMeasure(event.feature as Feature<Geometry>);
       }
     });
 
@@ -284,13 +300,17 @@ export function useDirectContributionSession({
       setSelectedFeature(null);
       setFeatureFormState(null);
       closeFeatureChoice();
+      clearSketchMeasure();
     };
   }, [
     activeCollabLayer,
     activeCollabSource,
     activeLayerKey,
     clearRemovedFeatureState,
+    clearRemovedSketchMeasure,
+    clearSketchMeasure,
     closeFeatureChoice,
+    followSketchMeasure,
     hasActiveLayer,
     map,
     openFeatureForm,
@@ -418,8 +438,9 @@ export function useDirectContributionSession({
 
       createdFeaturesRef.current.delete(formState.feature);
       setFeatureFormState(null);
+      clearSketchMeasure();
     },
-    [featureFormState]
+    [clearSketchMeasure, featureFormState]
   );
 
   const cancelFeatureForm = useCallback(() => {
@@ -478,6 +499,7 @@ export function useDirectContributionSession({
     activeLayer,
     toolbarItems,
     toolbarStatusText,
+    toolbarMeasureText: sketchMeasure,
     featureFormState,
     featureCandidates,
     isFeatureChoiceOpen,

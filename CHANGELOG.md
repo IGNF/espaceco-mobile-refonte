@@ -13,6 +13,21 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+## [0.0.26] - 2026-11-20
+
+### Added
+- Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket [#41](https://github.com/IGNF/espaceco-mobile-refonte/issues/41))
+- On peut maintenant cloner un signalement (ticket [#46](https://github.com/IGNF/espaceco-mobile-refonte/issues/46))
+- La longueur d'une ligne ou la surface d'un polygone s'affiche sous la barre d'outils pendant la saisie d'un croquis ou d'un objet en contribution directe (ticket [#83](https://github.com/IGNF/espaceco-mobile-refonte/issues/83))
+
+### Changed
+- La couleur des boutons de centrage et de navigatiopn sont maintenant en vert plus foncé lorsqu'ils sont activés (ticket [#86](https://github.com/IGNF/espaceco-mobile-refonte/issues/86))
+ 
+### Fixed
+- Correctif au niveau de la gestion du token expiré : en cas d'ouverture de l'app sans réseau avec un token expiré, puis après une reconnexion au réseau, on affiche maintenant une alerte proposant la reconnexion (ticket [#38](https://github.com/IGNF/espaceco-mobile-refonte/issues/38))
+- Sur une tablette type Galaxy tab, la vue de l'app ne passe maintenant plus derrière le dock de la tablette (ticket [#40](https://github.com/IGNF/espaceco-mobile-refonte/issues/40))
+- Le numéro de version de l'app affiché dans la page 'À propos' est maintenant le bon (ticket [#92](https://github.com/IGNF/espaceco-mobile-refonte/issues/92))
+
 ## [0.0.25] - 2026-11-13
 
 ### Added

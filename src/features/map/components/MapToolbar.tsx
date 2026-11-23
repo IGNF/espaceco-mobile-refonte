@@ -14,12 +14,14 @@ export interface MapToolbarProps {
   items: MapToolbarItem[];
   onItemClick: (id: string) => void;
   statusText?: string;
+  measureText?: string | null;
 }
 
 export function MapToolbar({
   items,
   onItemClick,
   statusText,
+  measureText,
 }: MapToolbarProps) {
   return (
     <div className={styles.root}>
@@ -40,6 +42,11 @@ export function MapToolbar({
       {statusText && (
         <div className={styles.status}>
           {statusText}
+        </div>
+      )}
+      {measureText && (
+        <div className={styles.measure}>
+          {measureText}
         </div>
       )}
     </div>

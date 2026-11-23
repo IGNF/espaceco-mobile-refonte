@@ -1,5 +1,6 @@
 import type { Coordinate } from 'ol/coordinate';
 import type { FeatureLike } from 'ol/Feature';
+import type Geometry from 'ol/geom/Geometry';
 import LineString from 'ol/geom/LineString';
 import Point from 'ol/geom/Point';
 import Polygon from 'ol/geom/Polygon';
@@ -51,6 +52,24 @@ export function buildMeasureSketch(
     ? null
     : labels.find((label) => label.kind === 'total')?.text ?? null;
   return { geometry, labels, summary };
+}
+
+/**
+ * Length of a line or area of a polygon, formatted like the measure tool.
+ * A point has no measure, and neither has a polygon with less than three vertices, since its area is zero.
+ */
+export function formatSketchMeasure(geometry: Geometry, projection: ProjectionLike): string | null {
+  if (geometry.getType() === 'LineString') {
+    const meters = getLength(geometry, { projection });
+    return meters > 0 ? formatLength(meters) : null;
+  }
+
+  if (geometry.getType() === 'Polygon') {
+    const squareMeters = Math.abs(getArea(geometry, { projection }));
+    return squareMeters > 0 ? formatArea(squareMeters) : null;
+  }
+
+  return null;
 }
 
 export function measureStyle(feature: FeatureLike): Style[] {

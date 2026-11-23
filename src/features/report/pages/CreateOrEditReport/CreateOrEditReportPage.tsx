@@ -271,6 +271,7 @@ export function CreateOrEditReportPage({
   const {
     currentSketchMode,
     sketchFeatureCount,
+    sketchMeasure,
     isDrawingInProgress,
     triggerSketchAction,
     finalizeCurrentDrawing,
@@ -735,6 +736,7 @@ export function CreateOrEditReportPage({
               items={sketchToolItems}
               onItemClick={handleSketchToolClick}
               statusText={t('reports.createOrEdit.form.sketchCount', { count: sketchFeatureCount })}
+              measureText={sketchMeasure}
             />
           </div>
 
@@ -791,6 +793,7 @@ export function CreateOrEditReportPage({
     isTraceRecording,
     startTraceRecording,
     sketchFeatureCount,
+    sketchMeasure,
     sketchToolItems,
     toggleTraceAudio,
     toggleTracePause,

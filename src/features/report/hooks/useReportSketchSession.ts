@@ -11,6 +11,7 @@ import VectorSource from 'ol/source/Vector';
 import { SketchManager, type SketchAction } from '@ign/mobile-core';
 
 import type { SketchMode } from '@/features/map/constants/sketchTools.constants';
+import { useSketchMeasure } from '@/features/map/hooks/useSketchMeasure';
 import { getSketchDraw, undoDrawingStep } from '@/features/map/utils/sketchUndo';
 import {
   DEFAULT_SKETCH_MODE,
@@ -27,6 +28,8 @@ export interface UseReportSketchSessionOptions {
 export interface UseReportSketchSessionReturn {
   currentSketchMode: SketchMode;
   sketchFeatureCount: number;
+  /** Length or area of the latest sketch, until the next drawing starts. */
+  sketchMeasure: string | null;
   isDrawingInProgress: boolean;
   triggerSketchAction: (action: SketchAction) => void;
   finalizeCurrentDrawing: () => void;
@@ -40,6 +43,13 @@ export function useReportSketchSession({
   const [currentSketchMode, setCurrentSketchMode] = useState<SketchMode>(DEFAULT_SKETCH_MODE);
   const [sketchFeatureCount, setSketchFeatureCount] = useState(0);
   const [isDrawingInProgress, setIsDrawingInProgress] = useState(false);
+
+  const {
+    sketchMeasure,
+    followSketchMeasure,
+    clearSketchMeasure,
+    clearRemovedSketchMeasure,
+  } = useSketchMeasure();
 
   const sketchManagerRef = useRef<SketchManager | null>(null);
   const latestFinishedSketchRef = useRef<Feature<Geometry> | null>(null);
@@ -94,9 +104,15 @@ export function useReportSketchSession({
           const draw = getSketchDraw(sketchManagerRef.current);
           drawListenerKeys = draw
             ? [
-                draw.on('drawstart', () => setIsDrawingInProgress(true)),
+                draw.on('drawstart', (event) => {
+                  setIsDrawingInProgress(true);
+                  followSketchMeasure(event.feature, map.getView().getProjection());
+                }),
                 draw.on('drawend', () => setIsDrawingInProgress(false)),
-                draw.on('drawabort', () => setIsDrawingInProgress(false)),
+                draw.on('drawabort', () => {
+                  setIsDrawingInProgress(false);
+                  clearSketchMeasure();
+                }),
               ]
             : [];
 
@@ -125,7 +141,12 @@ export function useReportSketchSession({
 
     const sourceListenerKeys = [
       sketchSource.on('addfeature', syncSketchFeatureCount),
-      sketchSource.on('removefeature', syncSketchFeatureCount),
+      sketchSource.on('removefeature', (event) => {
+        syncSketchFeatureCount();
+        if (event.feature) {
+          clearRemovedSketchMeasure(event.feature);
+        }
+      }),
     ];
 
     syncSketchFeatureCount();
@@ -139,12 +160,14 @@ export function useReportSketchSession({
       setCurrentSketchMode(DEFAULT_SKETCH_MODE);
       setSketchFeatureCount(0);
       setIsDrawingInProgress(false);
+      clearSketchMeasure();
     };
-  }, [enabled, map]);
+  }, [clearRemovedSketchMeasure, clearSketchMeasure, enabled, followSketchMeasure, map]);
 
   return {
     currentSketchMode,
     sketchFeatureCount,
+    sketchMeasure,
     isDrawingInProgress,
     triggerSketchAction,
     finalizeCurrentDrawing,

@@ -155,6 +155,7 @@
   "search": {
     "modeAddress": "Adresse",
     "modeParcelle": "Parcelle",
+    "modeCoordinates": "Coordonnées",
     "close": "Fermer la recherche",
     "addressPlaceholder": "Rechercher une adresse",
     "parcelle": {
@@ -163,6 +164,35 @@
       "prefixLabel": "Préfixe",
       "sectionLabel": "Section",
       "numberLabel": "Numéro"
+    },
+    "coordinates": {
+      "formatLabel": "Format des coordonnées",
+      "formatDecimal": "Degrés décimaux",
+      "formatDms": "DMS",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "latitudePlaceholder": "ex. 48.8566",
+      "longitudePlaceholder": "ex. 2.3522",
+      "latitudeHemisphere": "Hémisphère de la latitude",
+      "longitudeHemisphere": "Hémisphère de la longitude",
+      "degrees": "degrés",
+      "minutes": "minutes",
+      "seconds": "secondes",
+      "hemispheres": {
+        "N": "N",
+        "S": "S",
+        "E": "E",
+        "W": "O"
+      },
+      "submit": "Aller à ces coordonnées",
+      "errors": {
+        "required": "Saisissez une valeur.",
+        "invalidNumber": "Saisissez un nombre valide.",
+        "latitudeOutOfRange": "La latitude ne peut pas dépasser 90°.",
+        "longitudeOutOfRange": "La longitude ne peut pas dépasser 180°.",
+        "minutesRange": "Les minutes doivent être comprises entre 0 et 59.",
+        "secondsRange": "Les secondes doivent être inférieures à 60."
+      }
     }
   },
   "geometry": {
@@ -207,7 +237,7 @@
       },
       "search": {
         "title": "Rechercher",
-        "subtitle": "Utilisez ce bouton pour ouvrir le menu de recherche. Vous pouvez rechercher des adresses ou des parcelles."
+        "subtitle": "Utilisez ce bouton pour ouvrir le menu de recherche. Vous pouvez rechercher des adresses, des parcelles ou des coordonnées."
       }
     }
   },
@@ -1004,7 +1034,7 @@
       "comment": "Commentaire",
       "responses": "Réponses",
       "noResponses": "Aucune réponse",
-      "respondButton": "Répondre à ce signalement",
+      "respondButton": "Répondre",
       "viewOnMapButton": "Visualiser sur la carte",
       "backToReportButton": "Retour au signalement",
       "previousReportButton": "Signalement précédent",
@@ -1012,6 +1042,9 @@
       "editButton": "Modifier",
       "sendButton": "Envoyer",
       "deleteButton": "Supprimer",
+      "cloneButton": "Cloner",
+      "cloneSuccessMessage": "Le signalement a été cloné avec succès.",
+      "cloneErrorMessage": "Impossible de cloner le signalement.",
       "sendError": "L'envoi du signalement a échoué. Le brouillon a été conservé.",
       "attachmentUploadWarning": "Le signalement a été envoyé, mais l'envoi des photos a échoué. Le brouillon a été conservé pour réessayer.",
       "sendSuccess": {
@@ -1172,7 +1205,7 @@
   },
   "aboutGeneral": {
     "title": "À propos",
-    "subtitle": "<b>Espace collaboratif IGN v.3.0.8</b>",
+    "subtitle": "<b>Espace collaboratif IGN {{version}}</b>",
     "tagline": "La solution IGN pour gérer une base de données de façon collaborative.",
     "intro1": "\"<b>Espace collaboratif IGN</b>\" est une application personnalisable qui permet à un groupe d'utilisateurs de constituer et faire vivre une base de données métier (saisir, éditer, supprimer des objets de cette base) sur fonds cartographiques de I'IGN. La définition et la configuration du guichet se fait sur l'<mainWebsiteLink>Espace collaboratif de l'IGN</mainWebsiteLink>.",
     "intro2": "<i>Vous devez avoir un compte sur cet espace pour avoir accès à toutes les fonctionnalités de l'application</i>. Un outil collaboratif de signalement (remontée d'anomalie, information erronée...) est inclus. Les signalements permettent aux utilisateurs authentifiés de l'Espace collaboratif d'indiquer des modifications, des manques ou des incohérences dans la base de données. Vous gardez le contrôle intégral de vos données.",

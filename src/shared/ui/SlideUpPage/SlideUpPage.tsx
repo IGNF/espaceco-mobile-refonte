@@ -45,6 +45,11 @@ export interface SlideUpPageProps {
 	onClose: () => void;
 	className?: string;
 	/**
+	 * Class added to the content wrapper, which is at least as tall as the page.
+	 * Used to lay the children out, e.g. to push an element to the bottom.
+	 */
+	contentClassName?: string;
+	/**
 	 * Stack level for nested modals. Higher levels appear on top.
 	 * Default is 1. Use 2 for modals opened from within another modal.
 	 */
@@ -105,6 +110,7 @@ export function SlideUpPage({
 	isOpen,
 	onClose,
 	className,
+	contentClassName,
 	level = 1,
 	fullPage = true,
 	presentation = 'fullscreen',
@@ -247,7 +253,8 @@ export function SlideUpPage({
 
 	const innerClassNames = joinCSSClassNames(
 		styles.slideUpPageInner,
-		fullPage ? styles.slideUpPageInnerFullPage : ''
+		fullPage ? styles.slideUpPageInnerFullPage : '',
+		contentClassName
 	);
 
 	const dragHandle: SheetDragHandle | null = canResize
@@ -270,6 +277,7 @@ export function SlideUpPage({
 					height: canResize ? `${heightPercent}vh` : undefined,
 				}}
 				data-scroll-root='true'
+				data-docked={isDocked ? 'true' : undefined}
 			>
 				<div className={innerClassNames}>
 					{children}
