@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
-## [0.0.26] - 2026-11-xx
+## [0.0.26] - 2026-11-20
 
 ### Added
 - Ajout de la recherche par coordonnées, en degrés décimaux ou DMS (ticket [#41](https://github.com/IGNF/espaceco-mobile-refonte/issues/41))
