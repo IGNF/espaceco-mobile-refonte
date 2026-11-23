@@ -10,7 +10,16 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ### Added
 
 ### Changed
- 
+
+### Fixed
+
+## [0.0.27] - 2026-11-xx
+
+### Added
+
+### Changed
+- La page de création d'un signalement GNSS s'ouvre maintenant en modale flottante (ticket [#97](https://github.com/IGNF/espaceco-mobile-refonte/issues/97))
+
 ### Fixed
 
 ## [0.0.26] - 2026-11-20
