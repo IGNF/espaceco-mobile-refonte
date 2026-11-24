@@ -7,7 +7,8 @@ export const GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS = 1000;
 export const GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS = 10000;
 export const GEOLOCATION_WATCH_TIMEOUT_MS = 15000;
 // The first centering accepts a position the system already knows, up to this age, instead of waiting for a new GPS fix.
-export const INITIAL_LOCATION_MAXIMUM_AGE_MS = 60000;
+// Kept short because the app needs an accurate position. Only used on Android: the iOS plugin ignores maximumAge.
+export const INITIAL_LOCATION_MAXIMUM_AGE_MS = 30000;
 
 export const DEFAULT_MAP_CENTER_LON_LAT: [number, number] = [2.3522, 48.8566];
 export const DEFAULT_MAP_ZOOM = 11;

@@ -19,8 +19,12 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Changed
 - La page de création d'un signalement GNSS s'ouvre maintenant en modale flottante (ticket [#97](https://github.com/IGNF/espaceco-mobile-refonte/issues/97))
+- Chargement initial plus rapide : le premier centrage utilise une position récente déjà connue du téléphone (moins de 30 s, sur Android) et se fait sans animation, et la géolocalisation n'attend plus qu'une fois en cas de délai dépassé (15 s au plus au lieu de 30) (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
 
 ### Fixed
+- Le message "Une erreur est survenue lors du chargement de l'application" ne s'affiche plus quand le chargement initial dépasse 20 s : ce n'était pas une erreur. Seul un message d'information s'affiche désormais, si des données du guichet sont encore en cours de chargement (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
+- Au premier lancement, la carte se centre maintenant bien sur la position de l'utilisateur après l'acceptation de la permission de localisation (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
+- Sur Android, la position approximative est maintenant acceptée pour centrer la carte (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
 
 ## [0.0.26] - 2026-11-20
 
