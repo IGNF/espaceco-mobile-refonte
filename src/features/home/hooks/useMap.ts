@@ -24,6 +24,7 @@ import {
   GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS,
   GEOLOCATION_TRACKING_RECENTER_INTERVAL_MS,
   GEOLOCATION_WATCH_TIMEOUT_MS,
+  INITIAL_LOCATION_MAXIMUM_AGE_MS,
 } from "@/shared/constants/map";
 import {
   initGeoportailCapabilities,
@@ -67,6 +68,10 @@ const USER_LOCATION_BORDER_PADDING_PX = 48;
 const USER_LOCATION_OPTIONS: PositionOptions = {
   enableHighAccuracy: true,
   timeout: GEOLOCATION_WATCH_TIMEOUT_MS,
+};
+const INITIAL_USER_LOCATION_OPTIONS: PositionOptions = {
+  ...USER_LOCATION_OPTIONS,
+  maximumAge: INITIAL_LOCATION_MAXIMUM_AGE_MS,
 };
 
 interface UseMapReturn {
@@ -360,7 +365,10 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
     isLocatingRef.current = true;
     setIsLocating(true);
     try {
-      const position = await EspaceCo_Geolocation.getUsersLocation(USER_LOCATION_OPTIONS);
+      const positionOptions = origin === CENTER_LOCATION_ORIGIN.INITIAL
+        ? INITIAL_USER_LOCATION_OPTIONS
+        : USER_LOCATION_OPTIONS;
+      const position = await EspaceCo_Geolocation.getUsersLocation(positionOptions);
 
       if (!position) {
         // A failed fix must not move the view. The previous fallback recentered on Paris.
@@ -626,8 +634,9 @@ export function useMap(options: UseMapOptions = {}): UseMapReturn {
       return;
     }
 
+    // No animation: the loading overlay hides the map during this first centering.
     void (async () => {
-      await centerOnUserLocation();
+      await centerOnUserLocation(0, CENTER_LOCATION_ORIGIN.INITIAL);
     })();
   }, [
     centerOnUserLocation,

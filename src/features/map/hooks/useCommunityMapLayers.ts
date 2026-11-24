@@ -203,8 +203,21 @@ export function useCommunityMapLayers(
   isOnlineVectorCacheEnabled: boolean,
   activeCommunityCache: OfflineCommunityCache | null
 ): UseCommunityMapLayersResult {
-  const [isVectorLayersLoading, setIsVectorLayersLoading] = useState(false);
+  // Kept here, not inside the effect that listens to the sources: that effect runs again each time
+  // the layer list changes, and must not forget the loads already started (a source reports a start only once).
+  const [loadingByLayerKey, setLoadingByLayerKey] = useState<Record<string, boolean>>({});
   const isOfflineMode = mode === 'offline';
+
+  // A layer removed from the map while loading sends its "loadend" after its listeners are gone: forget it.
+  const mountedLayerKeys = vectorLayers.map(getCommunityLayerKey);
+  if (Object.keys(loadingByLayerKey).some((layerKey) => !mountedLayerKeys.includes(layerKey))) {
+    setLoadingByLayerKey(
+      Object.fromEntries(
+        Object.entries(loadingByLayerKey).filter(([layerKey]) => mountedLayerKeys.includes(layerKey))
+      )
+    );
+  }
+  const isVectorLayersLoading = Object.values(loadingByLayerKey).some((isLoading) => isLoading);
 
   useEffect(() => {
     if (!isMapReady) return;
@@ -292,16 +305,11 @@ export function useCommunityMapLayers(
     const guichet = findLayerGroupByName(map, 'guichet');
     if (!guichet) return;
 
-    const loadingByLayerKey: Record<string, boolean> = {};
     const cleanupTasks: Array<() => void> = [];
     const setLayerLoadingState = (layerKey: string, isLoading: boolean) => {
-      if (isLoading) {
-        loadingByLayerKey[layerKey] = true;
-      } else {
-        delete loadingByLayerKey[layerKey];
-      }
-
-      setIsVectorLayersLoading(Object.keys(loadingByLayerKey).length > 0);
+      setLoadingByLayerKey((current) =>
+        current[layerKey] === isLoading ? current : { ...current, [layerKey]: isLoading }
+      );
     };
 
     for (const layer of guichet.getLayers().getArray()) {
@@ -328,6 +336,7 @@ export function useCommunityMapLayers(
         setLayerLoadingState(layerKey, true);
       };
 
+      // `remains` is the number of loads still running on the source after this one.
       const handleLoadEnd = (event: unknown) => {
         const remains = (event as { remains?: unknown } | undefined)?.remains;
         setLayerLoadingState(layerKey, typeof remains === 'number' ? remains > 0 : false);
@@ -345,8 +354,6 @@ export function useCommunityMapLayers(
       for (const cleanup of cleanupTasks) {
         cleanup();
       }
-
-      setIsVectorLayersLoading(false);
     };
   }, [isMapReady, mapRef, vectorLayers]);
 

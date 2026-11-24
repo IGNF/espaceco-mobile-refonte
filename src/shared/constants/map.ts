@@ -6,6 +6,8 @@ export const GEOLOCATION_LOCK_RECENTER_INTERVAL_MS = 30000;
 export const GEOLOCATION_LOCK_RECENTER_ANIMATION_DURATION_MS = 1000;
 export const GEOLOCATION_RECENTER_AFTER_MOVEMENT_MS = 10000;
 export const GEOLOCATION_WATCH_TIMEOUT_MS = 15000;
+// The first centering accepts a position the system already knows, up to this age, instead of waiting for a new GPS fix.
+export const INITIAL_LOCATION_MAXIMUM_AGE_MS = 60000;
 
 export const DEFAULT_MAP_CENTER_LON_LAT: [number, number] = [2.3522, 48.8566];
 export const DEFAULT_MAP_ZOOM = 11;
@@ -28,6 +30,7 @@ export const COMMUNITY_FEATURE_CONSULTATION_HIT_TOLERANCE = 16;
 export const LAYER_OBJECT_HIT_TOLERANCE = 32;
 
 export const CENTER_LOCATION_ORIGIN = {
+  INITIAL: 'initial',
   SIMPLE_TAP: 'simple-tap',
   LOCKED_LOCATION: 'locked-location',
   TRACE_MODE: 'trace-mode',

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { APP_LOADING_TIMEOUT_MS } from '@/shared/constants/map';
 import { showToastSafe } from '@/shared/utils/toast';
@@ -32,10 +32,16 @@ export function useInitialAppLoading({
   const [isInitialLoadingComplete, setIsInitialLoadingComplete] = useState(false);
   const [hasInitialLoadingTimedOut, setHasInitialLoadingTimedOut] = useState(false);
   const [isSkipped, setIsSkipped] = useState(false);
+  // The timeout callback only sees the first render values, so it reads the latest state from here.
+  const isWaitingForDataRef = useRef(false);
 
   if (!isEnabled && !isSkipped) {
     setIsSkipped(true);
   }
+
+  useEffect(() => {
+    isWaitingForDataRef.current = hasInitialCenterCompleted && isAppDataLoading;
+  }, [hasInitialCenterCompleted, isAppDataLoading]);
 
   useEffect(() => {
     if (isSkipped || isInitialLoadingComplete || hasInitialLoadingTimedOut) return;
@@ -69,11 +75,15 @@ export function useInitialAppLoading({
 
     const timeoutId = window.setTimeout(() => {
       setHasInitialLoadingTimedOut(true);
-      void showToastSafe({
-        text: t('home.loading.timeoutError'),
-        duration: 'short',
-        position: 'top',
-      });
+
+      // A slow geolocation is not reported here: useMap already shows a message when it fails.
+      if (isWaitingForDataRef.current) {
+        void showToastSafe({
+          text: t('home.loading.dataStillLoading'),
+          duration: 'short',
+          position: 'top',
+        });
+      }
     }, timeoutMs);
 
     return () => {
