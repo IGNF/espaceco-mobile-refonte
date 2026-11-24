@@ -3,7 +3,7 @@
  * This class centralizes geolocation access for the whole app.
  * It keeps Capacitor permission handling and uses a source-aware strategy:
  * - external GPS source: prefer navigator.geolocation (Cordova source override)
- * - internal source: prefer Capacitor geolocation, then fallback to navigator
+ * - internal source: prefer Capacitor geolocation, then fallback to navigator (except after a timeout)
  */
 import {
   Geolocation,
@@ -25,6 +25,8 @@ export type {
 
 const NAVIGATOR_WATCH_PREFIX = 'navigator:';
 const CAPACITOR_WATCH_PREFIX = 'capacitor:';
+// Error code sent by the plugin on Android and iOS when no position was found before `timeout`.
+const CAPACITOR_TIMEOUT_ERROR_CODE = 'OS-PLUG-GLOC-0010';
 
 const navigatorWatchMap = new Map<CallbackID, number>();
 
@@ -72,7 +74,9 @@ async function getUsersLocationWithCapacitorFallback(options?: PositionOptions):
   try {
     return await Geolocation.getCurrentPosition(options);
   } catch (capacitorError) {
-    if (hasNavigatorGeolocation()) {
+    // After a timeout, navigator would wait the same timeout again for the same GPS.
+    const isTimeout = (capacitorError as { code?: unknown }).code === CAPACITOR_TIMEOUT_ERROR_CODE;
+    if (!isTimeout && hasNavigatorGeolocation()) {
       return await getUsersLocationWithNavigator(options);
     }
     throw capacitorError;
@@ -122,19 +126,41 @@ function toErrorMessage(error: unknown): string {
   return String(error ?? 'Unknown geolocation error');
 }
 
+/**
+ * "Approximate location" on Android only grants coarseLocation: the plugin still returns a position with it.
+ */
+function isLocationGranted(permissions: PermissionStatus): boolean {
+  return permissions.location === 'granted' || permissions.coarseLocation === 'granted';
+}
+
 export class EspaceCo_Geolocation {
+  /**
+   * Android shows one permission dialog at a time and cancels any request made meanwhile.
+   * Callers starting together (initial centering, location marker) share the same request.
+   */
+  private static permissionRequest: Promise<boolean> | null = null;
+
   /**
    * Ensures location permission using Capacitor APIs.
    * Returns true on unsupported environments so navigator fallback can still be attempted.
    */
   static async ensurePermissions(): Promise<boolean> {
+    if (!this.permissionRequest) {
+      this.permissionRequest = this.checkOrRequestPermissions().finally(() => {
+        this.permissionRequest = null;
+      });
+    }
+    return await this.permissionRequest;
+  }
+
+  private static async checkOrRequestPermissions(): Promise<boolean> {
     try {
       const permissions = await this.checkPermissions();
-      if (permissions.location !== 'granted') {
-        const newPermissions = await this.requestPermissions();
-        return newPermissions.location === 'granted';
+      if (isLocationGranted(permissions)) {
+        return true;
       }
-      return true;
+      const newPermissions = await this.requestPermissions();
+      return isLocationGranted(newPermissions);
     } catch {
       // On unsupported environments, navigator.geolocation may still work.
       return true;

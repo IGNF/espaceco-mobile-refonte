@@ -111,7 +111,7 @@
     },
     "loading": {
       "message": "Chargement de l'application...",
-      "timeoutError": "Une erreur est survenue lors du chargement de l'application."
+      "dataStillLoading": "Certaines données du guichet sont encore en cours de chargement."
     },
     "geolocation": {
       "unavailable": "Impossible d'obtenir votre position."
