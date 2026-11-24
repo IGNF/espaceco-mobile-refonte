@@ -25,6 +25,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Le message "Une erreur est survenue lors du chargement de l'application" ne s'affiche plus quand le chargement initial dépasse 20 s : ce n'était pas une erreur. Seul un message d'information s'affiche désormais, si des données du guichet sont encore en cours de chargement (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
 - Au premier lancement, la carte se centre maintenant bien sur la position de l'utilisateur après l'acceptation de la permission de localisation (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
 - Sur Android, la position approximative est maintenant acceptée pour centrer la carte (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
+- Un appui long sur la carte n'ouvre plus en même temps la sélection des objets du guichet, des signalements ou des croquis situés sous le doigt (ticket [#98](https://github.com/IGNF/espaceco-mobile-refonte/issues/98))
 
 ## [0.0.26] - 2026-11-20
 
