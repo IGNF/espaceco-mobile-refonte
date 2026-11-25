@@ -217,7 +217,7 @@
     "steps": {
       "signalement": {
         "title": "Signalement",
-        "subtitle": "Utilisez ce bouton pour faire un nouveau signalement."
+        "subtitle": "Utilisez ce bouton pour faire un nouveau signalement ou faites un appui long sur la carte à l'emplacemet désiré."
       },
       "guichet": {
         "title": "Guichet",
