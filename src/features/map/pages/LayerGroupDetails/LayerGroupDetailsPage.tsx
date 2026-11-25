@@ -57,6 +57,7 @@ function getInitialLayerDraftState(item: LayerGroupItem): LayerDraftState {
 export interface LayerGroupDetailsPageProps {
   isOpen: boolean;
   onClose: () => void;
+  onBack: () => void;
   group: LayerGroupDetails | null;
   isLoading?: boolean;
   groupVisible?: boolean;
@@ -75,6 +76,7 @@ export interface LayerGroupDetailsPageProps {
 export function LayerGroupDetailsPage({
   isOpen,
   onClose,
+  onBack,
   group,
   isLoading = false,
   groupVisible = true,
@@ -210,7 +212,7 @@ export function LayerGroupDetailsPage({
     onSetGroupLayerOrder(group.id, nextOrderedLayerKeys);
   };
 
-  const handleClose = () => {
+  const applyChangesAndResetState = () => {
     applyDraftChanges();
     applyLayerOrderChanges();
     setLayerDraftByKey({});
@@ -218,7 +220,16 @@ export function LayerGroupDetailsPage({
     setSelectedItem(null);
     setStyleItem(null);
     setDeleteItem(null);
+  };
+
+  const handleClose = () => {
+    applyChangesAndResetState();
     onClose();
+  };
+
+  const handleBack = () => {
+    applyChangesAndResetState();
+    onBack();
   };
 
   const updateLayerDraft = (
@@ -375,9 +386,9 @@ export function LayerGroupDetailsPage({
       >
         <PageHeader
           title={title}
-          // showBackButton
+          showBackButton={true}
           showCloseButton={true}
-          // onBack={handleClose}
+          onBack={handleBack}
           onClose={handleClose}
         />
 

@@ -138,6 +138,12 @@ export function LayersPanelFlow({
     // }
   };
 
+  // Close the group details and show the list of layer groups again
+  const handleBackToLayerGroups = () => {
+    setDismissedInitialLayerGroupRequestKey(initialLayerGroupRequestKey);
+    setActiveLayerGroupState(null);
+  };
+
   const handleSendGroupDirectContributions = (groupId: LayerGroupId) => {
     // If the parent has a dedicated group level implementation to send direct contributions, prefer it
     if (onSendGroupDirectContributions) {
@@ -198,6 +204,7 @@ export function LayersPanelFlow({
       <LayerGroupDetailsPage
         isOpen={isLayerGroupOpen && selectedLayerGroup !== null}
         onClose={handleCloseLayerGroup}
+        onBack={handleBackToLayerGroups}
         group={selectedLayerGroup}
         isLoading={isLoading}
         groupVisible={selectedLayerGroup ? groupVisibility[selectedLayerGroup.id] : true}
