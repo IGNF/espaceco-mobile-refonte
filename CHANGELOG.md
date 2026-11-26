@@ -13,6 +13,10 @@ et le projet suit [Semantic Versioning](http://semver.org/).
  
 ### Fixed
 
+### Security
+- Passage de Capacitor (`@capacitor/android`, `@capacitor/ios`, `@capacitor/core`, `@capacitor/cli`) en 8.6.3 pour corriger la faille [GHSA-jjx3-p5hf-mvvc](https://github.com/ionic-team/capacitor/security/advisories/GHSA-jjx3-p5hf-mvvc) (routes internes et parcours de chemin permettant à du contenu non fiable de s'exécuter avec l'origine de l'app)
+- La description HTML d'une communauté, affichée dans la page « À propos de la communauté », est maintenant nettoyée avec DOMPurify avant affichage (suppression des scripts, iframes et gestionnaires d'événements)
+
 ## [0.0.26] - 2026-11-20
 
 ### Added

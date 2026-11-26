@@ -1,4 +1,5 @@
 import type { CommunityLayer } from '@ign/mobile-core';
+import DOMPurify from 'dompurify';
 import { PageHeader } from '@/shared/ui/PageHeader';
 import { SlideUpPage } from '@/shared/ui/SlideUpPage';
 import { Divider } from '@/shared/ui/Divider/Divider';
@@ -42,7 +43,11 @@ function LegendSwatch({
 export function AboutCommunityPage({ isOpen, onClose, layers }: AboutCommunityPageProps) {
   const { t } = useTranslation();
   const { activeCommunity } = useCommunity();
-  const communityDescription = activeCommunity?.editorial || activeCommunity?.description || '';
+  // The description is HTML written by the community managers: remove scripts, iframes
+  // and event handlers before displaying it in the WebView.
+  const communityDescription = DOMPurify.sanitize(
+    activeCommunity?.editorial || activeCommunity?.description || '',
+  );
   const legends = getCommunityLayerLegends(layers);
   const legendImages = useLegendImages(legends);
 
