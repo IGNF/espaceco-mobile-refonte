@@ -1,5 +1,5 @@
 PODS:
-  - Capacitor (8.5.2):
+  - Capacitor (8.6.3):
     - CapacitorCordova
   - CapacitorAndroidNavMode (3.0.0):
     - Capacitor
@@ -16,7 +16,7 @@ PODS:
     - Capacitor
   - CapacitorCommunityKeepAwake (8.0.1):
     - Capacitor
-  - CapacitorCordova (8.5.2)
+  - CapacitorCordova (8.6.3)
   - CapacitorDevice (8.0.3):
     - Capacitor
   - CapacitorEmailComposer (8.0.0):
@@ -40,7 +40,7 @@ PODS:
     - Capacitor
   - CapacitorToast (8.0.1):
     - Capacitor
-  - CordovaPlugins (8.5.2):
+  - CordovaPlugins (8.6.3):
     - CapacitorCordova
   - IONCameraLib (2.0.0)
   - IONFilesystemLib (2.0.1)
@@ -119,7 +119,7 @@ EXTERNAL SOURCES:
     :path: "../capacitor-cordova-ios-plugins"
 
 SPEC CHECKSUMS:
-  Capacitor: 59aea4e8bd98b24b798919b4c55ae90c6ded1b0d
+  Capacitor: a3728d1a2e1c630fc295be0ec079c45db38cef0c
   CapacitorAndroidNavMode: 59bda37fe8c603957b6d31cea35bc757d72a562b
   CapacitorApp: 9fd99482b6536ddf1a54721ce678145fc7fa3418
   CapacitorAppLauncher: fc7c313549920528d0f28493b60d20de679deba4
@@ -127,7 +127,7 @@ SPEC CHECKSUMS:
   CapacitorCamera: 2019e4a5a860c4d966eb685a40f53722277f0018
   CapacitorCommunityDevice: 4b1c180a28bf7b639c1f33348629f02627fc8f17
   CapacitorCommunityKeepAwake: 4eaeafc83573f2520fac18e136254ef34694f75b
-  CapacitorCordova: 5bec5648cbd09a176ce34ce5e7b6cdabb2c8a327
+  CapacitorCordova: f626648e769cb79faff38be441cc1b658665985a
   CapacitorDevice: e5599fa82274e59220170995826a16095ad20c40
   CapacitorEmailComposer: 4dc7fde6f40db29b10cc1e998aa3b577e06164fb
   CapacitorFilesystem: 23beb239d41c889b38be13fe6a7a2f28d8250b62
@@ -138,7 +138,7 @@ SPEC CHECKSUMS:
   CapacitorShare: fdeee71ebc13dca43967805adf2dea57871c216a
   CapacitorStatusBar: 40bdc21352ecc617ec71c45ea06d669cdd2da8df
   CapacitorToast: 0432f40d66143ab56a322095e09740aa2c9a88a5
-  CordovaPlugins: fbc74bdb71c735df05cab233e0c3f84b7b81346d
+  CordovaPlugins: 5662aac18b6b97ebd5ac97a5382e835d61bbb862
   IONCameraLib: 729cae576e1a952602ce750a9790b6dc7d7e2e95
   IONFilesystemLib: 306469e4c563f61de82d7bca2bbfed9e64d1b2d2
   IONGeolocationLib: 6a7b6f76063fb1b01cfb14fae7d0f526e3c9b271

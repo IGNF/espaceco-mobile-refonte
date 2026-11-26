@@ -28,6 +28,11 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 - Sur Android, la position approximative est maintenant acceptée pour centrer la carte (ticket [#100](https://github.com/IGNF/espaceco-mobile-refonte/issues/100))
 - Un appui long sur la carte n'ouvre plus en même temps la sélection des objets du guichet, des signalements ou des croquis situés sous le doigt (ticket [#98](https://github.com/IGNF/espaceco-mobile-refonte/issues/98))
 
+### Security
+- Passage de Capacitor (`@capacitor/android`, `@capacitor/ios`, `@capacitor/core`, `@capacitor/cli`) en 8.6.3 pour corriger la faille [GHSA-jjx3-p5hf-mvvc](https://github.com/ionic-team/capacitor/security/advisories/GHSA-jjx3-p5hf-mvvc) (routes internes et parcours de chemin permettant à du contenu non fiable de s'exécuter avec l'origine de l'app)
+- La description HTML d'une communauté, affichée dans la page « À propos de la communauté », est maintenant nettoyée avec DOMPurify avant affichage (suppression des scripts, iframes et gestionnaires d'événements)
+
+
 ## [0.0.26] - 2026-11-20
 
 ### Added
