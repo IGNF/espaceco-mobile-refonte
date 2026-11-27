@@ -13,7 +13,7 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 
 ### Fixed
 
-## [0.0.27] - 2026-11-xx
+## [0.0.27] - 2026-11-27
 
 ### Added
 - Ajout d'un outil "snap" pour accrocher de nouveaux points à des objets existants, lors de l'édition géométrique ou la création de croquis (ticket [#47](https://github.com/IGNF/espaceco-mobile-refonte/issues/47))
