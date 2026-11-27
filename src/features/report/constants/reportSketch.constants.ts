@@ -16,6 +16,7 @@ export const SKETCH_TOOL_LABEL_KEYS: Record<SketchToolId, string> = {
   select: 'reports.createOrEdit.form.sketchToolSelect',
   delete: 'reports.createOrEdit.form.sketchToolDelete',
   undo: 'reports.createOrEdit.form.sketchToolUndo',
+  snap: 'reports.createOrEdit.form.sketchToolSnap',
   close: 'reports.createOrEdit.form.sketchToolClose',
 };
 

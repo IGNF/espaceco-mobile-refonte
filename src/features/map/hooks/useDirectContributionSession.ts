@@ -31,6 +31,8 @@ import { getSketchDraw, undoDrawingStep } from '@/features/map/utils/sketchUndo'
 
 import { serializeDirectContributionDocumentAttributes } from '@/infra/map/directContribution/directContributionDocuments';
 import { DirectContributionLayerService } from '@/infra/map/directContribution/DirectContributionLayerService';
+import { getVisibleGuichetVectorSources } from '@/infra/map/openlayers/layerGroups';
+import { SketchPrecisionTools } from '@/infra/map/openlayers/SketchPrecisionTools';
 
 import { LAYER_OBJECT_HIT_TOLERANCE } from '@/shared/constants/map';
 import {
@@ -38,6 +40,7 @@ import {
   getCommunityLayerTitle,
 } from '@/shared/utils/communityLayer';
 import { getCommunityLayerKey } from '@/shared/utils/layerKey';
+import { runAfterNextPaint } from '@/shared/utils/paint';
 
 export type DirectContributionFeatureFormMode = 'create' | 'edit';
 
@@ -107,6 +110,7 @@ export function useDirectContributionSession({
     DirectContributionFeatureCandidate[]
   >([]);
   const [isFeatureChoiceOpen, setIsFeatureChoiceOpen] = useState(false);
+  const [isSnapEnabled, setIsSnapEnabled] = useState(false);
   const {
     sketchMeasure,
     followSketchMeasure,
@@ -115,6 +119,7 @@ export function useDirectContributionSession({
   } = useSketchMeasure();
 
   const sketchManagerRef = useRef<SketchManager | null>(null);
+  const precisionToolsRef = useRef<SketchPrecisionTools | null>(null);
   const currentModeRef = useRef<SketchMode>(DEFAULT_DIRECT_CONTRIBUTION_MODE);
   const createdFeaturesRef = useRef(new WeakSet<Feature<Geometry>>());
   const pendingFeatureEditionRef = useRef<PendingFeatureEdition | null>(null);
@@ -214,6 +219,7 @@ export function useDirectContributionSession({
     }
 
     let drawListenerKeys: EventsKey[] = [];
+    const precisionTools = new SketchPrecisionTools(map);
 
     const sketchManager = new SketchManager({
       map,
@@ -228,6 +234,7 @@ export function useDirectContributionSession({
           // Every mode change replaces the Draw interaction.
           unByKey(drawListenerKeys);
           const draw = getSketchDraw(sketchManagerRef.current);
+          precisionTools.handleModeChange(nextMode, draw);
           drawListenerKeys = draw
             ? [
                 draw.on('drawstart', (event) => {
@@ -270,6 +277,7 @@ export function useDirectContributionSession({
     });
 
     sketchManagerRef.current = sketchManager;
+    precisionToolsRef.current = precisionTools;
     sketchManager.setMode(DEFAULT_DIRECT_CONTRIBUTION_MODE);
 
     const pendingFeatureEdition = pendingFeatureEditionRef.current;
@@ -293,12 +301,14 @@ export function useDirectContributionSession({
       unByKey(removeFeatureListenerKey);
       sketchManager.destroy();
       sketchManagerRef.current = null;
+      precisionToolsRef.current = null;
       createdFeaturesRef.current = new WeakSet<Feature<Geometry>>();
       latestFinishedSketchRef.current = null;
       setCurrentMode(DEFAULT_DIRECT_CONTRIBUTION_MODE);
       currentModeRef.current = DEFAULT_DIRECT_CONTRIBUTION_MODE;
       setSelectedFeature(null);
       setFeatureFormState(null);
+      setIsSnapEnabled(false);
       closeFeatureChoice();
       clearSketchMeasure();
     };
@@ -316,6 +326,24 @@ export function useDirectContributionSession({
     openFeatureForm,
     syncSelectedFeature,
   ]);
+
+  // Snapping onto the layers shown when the user switches it on, the edited layer included.
+  useEffect(() => {
+    if (!isSnapEnabled || !map) {
+      return;
+    }
+
+    const precisionTools = precisionToolsRef.current!;
+    // Indexing the objects of the layers can take a second on a phone: the magnet button is shown as active first.
+    const cancelSnapSources = runAfterNextPaint(() => {
+      precisionTools.setSnapSources(getVisibleGuichetVectorSources(map));
+    });
+
+    return () => {
+      cancelSnapSources();
+      precisionTools.setSnapSources([]);
+    };
+  }, [isSnapEnabled, map]);
 
   useEffect(() => {
     if (!map || !activeCollabLayer || !activeCollabSource) {
@@ -396,6 +424,11 @@ export function useDirectContributionSession({
     (toolId: string) => {
       if (toolId === 'close') {
         closeSession();
+        return;
+      }
+
+      if (toolId === 'snap') {
+        setIsSnapEnabled((wasSnapEnabled) => !wasSnapEnabled);
         return;
       }
 
@@ -480,11 +513,12 @@ export function useDirectContributionSession({
         DIRECT_CONTRIBUTION_TOOL_LABEL_KEYS,
         currentMode,
         t,
+        isSnapEnabled,
         (tool) =>
           !isCompatibleDrawAction(tool.drawGeometryType, activeGeometryType) ||
           (tool.id === 'delete' && !selectedFeature)
       ),
-    [activeGeometryType, currentMode, selectedFeature, t]
+    [activeGeometryType, currentMode, isSnapEnabled, selectedFeature, t]
   );
 
   const layerTitle = activeLayer ? getCommunityLayerTitle(activeLayer) : '';

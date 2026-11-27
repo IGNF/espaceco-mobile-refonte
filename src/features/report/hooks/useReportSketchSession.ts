@@ -20,6 +20,11 @@ import {
   SKETCH_STYLE,
 } from '@/features/report/constants/reportSketch.constants';
 
+import { getVisibleGuichetVectorSources } from '@/infra/map/openlayers/layerGroups';
+import { SketchPrecisionTools } from '@/infra/map/openlayers/SketchPrecisionTools';
+
+import { runAfterNextPaint } from '@/shared/utils/paint';
+
 export interface UseReportSketchSessionOptions {
   map?: OlMap | null;
   enabled: boolean;
@@ -31,6 +36,8 @@ export interface UseReportSketchSessionReturn {
   /** Length or area of the latest sketch, until the next drawing starts. */
   sketchMeasure: string | null;
   isDrawingInProgress: boolean;
+  isSnapEnabled: boolean;
+  toggleSnap: () => void;
   triggerSketchAction: (action: SketchAction) => void;
   finalizeCurrentDrawing: () => void;
   getSketchFeatures: () => Feature<Geometry>[];
@@ -43,6 +50,7 @@ export function useReportSketchSession({
   const [currentSketchMode, setCurrentSketchMode] = useState<SketchMode>(DEFAULT_SKETCH_MODE);
   const [sketchFeatureCount, setSketchFeatureCount] = useState(0);
   const [isDrawingInProgress, setIsDrawingInProgress] = useState(false);
+  const [isSnapEnabled, setIsSnapEnabled] = useState(false);
 
   const {
     sketchMeasure,
@@ -52,7 +60,13 @@ export function useReportSketchSession({
   } = useSketchMeasure();
 
   const sketchManagerRef = useRef<SketchManager | null>(null);
+  const sketchSourceRef = useRef<VectorSource<Feature<Geometry>> | null>(null);
+  const precisionToolsRef = useRef<SketchPrecisionTools | null>(null);
   const latestFinishedSketchRef = useRef<Feature<Geometry> | null>(null);
+
+  const toggleSnap = useCallback(() => {
+    setIsSnapEnabled((wasSnapEnabled) => !wasSnapEnabled);
+  }, []);
 
   const triggerSketchAction = useCallback((action: SketchAction) => {
     const sketchManager = sketchManagerRef.current;
@@ -92,6 +106,7 @@ export function useReportSketchSession({
     map.addLayer(sketchLayer);
 
     let drawListenerKeys: EventsKey[] = [];
+    const precisionTools = new SketchPrecisionTools(map);
 
     const sketchManager = new SketchManager({
       map,
@@ -102,6 +117,7 @@ export function useReportSketchSession({
           // Every mode change replaces the Draw interaction.
           unByKey(drawListenerKeys);
           const draw = getSketchDraw(sketchManagerRef.current);
+          precisionTools.handleModeChange(nextMode, draw);
           drawListenerKeys = draw
             ? [
                 draw.on('drawstart', (event) => {
@@ -133,6 +149,8 @@ export function useReportSketchSession({
     });
 
     sketchManagerRef.current = sketchManager;
+    sketchSourceRef.current = sketchSource;
+    precisionToolsRef.current = precisionTools;
     sketchManager.setMode(DEFAULT_SKETCH_MODE);
 
     const syncSketchFeatureCount = () => {
@@ -156,19 +174,41 @@ export function useReportSketchSession({
       sketchManager.destroy();
       map.removeLayer(sketchLayer);
       sketchManagerRef.current = null;
+      sketchSourceRef.current = null;
+      precisionToolsRef.current = null;
       latestFinishedSketchRef.current = null;
       setCurrentSketchMode(DEFAULT_SKETCH_MODE);
       setSketchFeatureCount(0);
       setIsDrawingInProgress(false);
+      setIsSnapEnabled(false);
       clearSketchMeasure();
     };
   }, [clearRemovedSketchMeasure, clearSketchMeasure, enabled, followSketchMeasure, map]);
+
+  // Snapping onto the sketches already drawn and onto the layers shown when the user switches it on.
+  useEffect(() => {
+    if (!isSnapEnabled || !map) return;
+
+    const precisionTools = precisionToolsRef.current!;
+    const snapSources = [sketchSourceRef.current!, ...getVisibleGuichetVectorSources(map)];
+    // Indexing the objects of the layers can take a second on a phone: the magnet button is shown as active first.
+    const cancelSnapSources = runAfterNextPaint(() => {
+      precisionTools.setSnapSources(snapSources);
+    });
+
+    return () => {
+      cancelSnapSources();
+      precisionTools.setSnapSources([]);
+    };
+  }, [isSnapEnabled, map]);
 
   return {
     currentSketchMode,
     sketchFeatureCount,
     sketchMeasure,
     isDrawingInProgress,
+    isSnapEnabled,
+    toggleSnap,
     triggerSketchAction,
     finalizeCurrentDrawing,
     getSketchFeatures,

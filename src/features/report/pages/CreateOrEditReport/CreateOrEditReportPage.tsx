@@ -271,6 +271,8 @@ export function CreateOrEditReportPage({
     sketchFeatureCount,
     sketchMeasure,
     isDrawingInProgress,
+    isSnapEnabled,
+    toggleSnap,
     triggerSketchAction,
     finalizeCurrentDrawing,
     getSketchFeatures,
@@ -286,8 +288,8 @@ export function CreateOrEditReportPage({
   );
 
   const sketchToolItems = useMemo(
-    () => getSketchToolbarItems(SKETCH_TOOL_LABEL_KEYS, currentSketchMode, t),
-    [currentSketchMode, t]
+    () => getSketchToolbarItems(SKETCH_TOOL_LABEL_KEYS, currentSketchMode, t, isSnapEnabled),
+    [currentSketchMode, isSnapEnabled, t]
   );
 
   const {
@@ -360,11 +362,16 @@ export function CreateOrEditReportPage({
       return;
     }
 
+    if (toolId === 'snap') {
+      toggleSnap();
+      return;
+    }
+
     const action = getSketchToolAction(toolId);
     if (!action) return;
 
     triggerSketchAction(action);
-  }, [closeMapPickers, triggerSketchAction]);
+  }, [closeMapPickers, toggleSnap, triggerSketchAction]);
 
   const resetMapPickers = useCallback(() => {
     closeMapPickers();

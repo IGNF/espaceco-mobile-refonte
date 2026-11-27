@@ -16,6 +16,8 @@ et le projet suit [Semantic Versioning](http://semver.org/).
 ## [0.0.27] - 2026-11-xx
 
 ### Added
+- Ajout d'un outil "snap" pour accrocher de nouveaux points à des objets existants, lors de l'édition géométrique ou la création de croquis (ticket [#47](https://github.com/IGNF/espaceco-mobile-refonte/issues/47))
+- Ajout d'un viseur à l'appui long sur la carte lors de l'édition géométrique ou la création de croquis (ticket [#47](https://github.com/IGNF/espaceco-mobile-refonte/issues/47))
 
 ### Changed
 - La page de création d'un signalement GNSS s'ouvre maintenant en modale flottante (ticket [#97](https://github.com/IGNF/espaceco-mobile-refonte/issues/97))

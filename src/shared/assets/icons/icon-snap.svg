@@ -1,0 +1,6 @@
+<svg id="icon-snap" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30">
+  <rect id="Rectangle_snap" data-name="Rectangle snap" width="30" height="30" fill="none"/>
+  <path id="Aimant" data-name="Aimant" d="M8,11h4v5a3,3,0,0,0,6,0V11h4v5A7,7,0,0,1,8,16Z" fill="#091625"/>
+  <path id="Pole_gauche" data-name="Pôle gauche" d="M8,7h4v3H8Z" fill="#091625"/>
+  <path id="Pole_droit" data-name="Pôle droit" d="M18,7h4v3H18Z" fill="#091625"/>
+</svg>

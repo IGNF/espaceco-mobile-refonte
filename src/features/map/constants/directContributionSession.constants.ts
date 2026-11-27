@@ -10,5 +10,6 @@ export const DIRECT_CONTRIBUTION_TOOL_LABEL_KEYS: Record<SketchToolId, string> =
   select: 'layers.directContribution.tools.select',
   delete: 'layers.directContribution.tools.delete',
   undo: 'layers.directContribution.tools.undo',
+  snap: 'layers.directContribution.tools.snap',
   close: 'layers.directContribution.tools.close',
 };

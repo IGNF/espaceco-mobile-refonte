@@ -639,6 +639,7 @@
         "select": "Sélectionner un objet",
         "delete": "Supprimer l'objet sélectionné",
         "undo": "Annuler la dernière action",
+        "snap": "Accrocher aux objets existants",
         "close": "Quitter l'édition"
       },
       "objectChoice": {
@@ -936,6 +937,7 @@
         "sketchToolSelect": "Sélectionner un objet",
         "sketchToolDelete": "Supprimer la sélection",
         "sketchToolUndo": "Annuler la dernière action",
+        "sketchToolSnap": "Accrocher aux objets existants",
         "sketchToolClose": "Fermer l'outil croquis",
         "trace": "Trace",
         "traceAdd": "Ajouter une trace",

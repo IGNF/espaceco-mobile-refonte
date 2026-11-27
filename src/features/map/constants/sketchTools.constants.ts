@@ -12,6 +12,7 @@ import IconEdit from '@/shared/assets/icons/icon-edit.svg?react';
 import IconSelect from '@/shared/assets/icons/icon-select.svg?react';
 import IconDelete from '@/shared/assets/icons/icon-delete.svg?react';
 import IconReset from '@/shared/assets/icons/icon-reset.svg?react';
+import IconSnap from '@/shared/assets/icons/icon-snap.svg?react';
 
 export type SketchMode = Exclude<InteractionMode, null>;
 
@@ -23,6 +24,7 @@ export type SketchToolId =
   | 'select'
   | 'delete'
   | 'undo'
+  | 'snap'
   | 'close';
 
 export interface SketchTool {
@@ -41,6 +43,7 @@ const SKETCH_TOOLS: SketchTool[] = [
   { id: 'select', Icon: IconSelect, activeMode: 'select', action: 'select' },
   { id: 'delete', Icon: IconDelete, action: 'delete' },
   { id: 'undo', Icon: IconReset, action: 'undo' },
+  { id: 'snap', Icon: IconSnap },
   { id: 'close', Icon: IconClose },
 ];
 
@@ -48,13 +51,14 @@ export function getSketchToolbarItems(
   labelKeys: Record<SketchToolId, string>,
   currentMode: SketchMode,
   t: TFunction,
+  isSnapEnabled: boolean,
   isDisabled?: (tool: SketchTool) => boolean,
 ): MapToolbarItem[] {
   return SKETCH_TOOLS.map((tool) => ({
     id: tool.id,
     Icon: tool.Icon,
     label: t(labelKeys[tool.id]),
-    active: tool.activeMode === currentMode,
+    active: tool.id === 'snap' ? isSnapEnabled : tool.activeMode === currentMode,
     disabled: isDisabled?.(tool),
   }));
 }
